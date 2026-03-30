@@ -6,13 +6,12 @@ export default defineConfig({
     plugins: [
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.js'],
-            refresh: true,
+            refresh: false,          // dev server tidak dibutuhkan di production
         }),
         tailwindcss(),
     ],
-    server: {
-        watch: {
-            ignored: ['**/storage/framework/views/**'],
-        },
+    build: {
+        outDir: 'public/build',     // pastikan output ke public/build
+        emptyOutDir: true,          // hapus build lama
     },
 });
