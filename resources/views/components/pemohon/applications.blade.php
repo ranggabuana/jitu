@@ -69,7 +69,7 @@
                             <p class="text-gray-500 text-sm mb-4 max-w-md mx-auto">
                                 Anda belum memiliki pengajuan perizinan. Mulai ajukan perizinan Anda sekarang untuk mengakses layanan perizinan terpadu.
                             </p>
-                            <a href="#" class="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2.5 px-6 rounded-xl transition-all shadow-md">
+                            <a href="{{ route('pemohon.perijinan') }}" class="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2.5 px-6 rounded-xl transition-all shadow-md">
                                 <i class="fas fa-plus"></i> Ajukan Izin Baru
                             </a>
                         </td>

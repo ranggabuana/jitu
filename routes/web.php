@@ -116,9 +116,12 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('data', PenggunaController::class);
     });
 
-    // Pemohon Routes (Admin Only - except dashboard)
-    Route::prefix('pemohon')->name('pemohon.')->group(function () {
+    // Pemohon Routes (accessible by authenticated pemohon users)
+    Route::middleware(['auth'])->prefix('pemohon')->name('pemohon.')->group(function () {
         Route::get('/dashboard', [PemohonDashboardController::class, 'index'])->name('dashboard');
+        // Perijinan Routes for Pemohon
+        Route::get('/perijinan', [PemohonDashboardController::class, 'perijinan'])->name('perijinan');
+        Route::get('/perijinan/{id}/detail', [PemohonDashboardController::class, 'perijinanDetail'])->name('perijinan.detail');
         // Profile Routes for Pemohon
         Route::prefix('profile')->name('profile.')->group(function () {
             Route::get('/', [PemohonProfileController::class, 'show'])->name('show');
