@@ -91,6 +91,7 @@ Route::middleware(['auth'])->group(function () {
     // Berita Routes (Admin Only)
     Route::middleware(['admin.role'])->group(function () {
         Route::resource('berita', BeritaController::class);
+        Route::post('berita/{id}/toggle-slider', [BeritaController::class, 'toggleSlider'])->name('berita.toggle-slider');
     });
 
     // Regulasi Routes (Admin Only)

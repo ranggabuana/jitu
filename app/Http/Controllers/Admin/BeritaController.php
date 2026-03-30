@@ -79,7 +79,6 @@ class BeritaController extends Controller
             'konten' => 'required|string',
             'gambar' => 'nullable|image|max:2048',
             'status' => 'required|in:aktif,tidak_aktif',
-            'is_featured' => 'boolean',
         ]);
 
         $data = $request->except('gambar');
@@ -153,7 +152,6 @@ class BeritaController extends Controller
             'konten' => 'required|string',
             'gambar' => 'nullable|image|max:2048',
             'status' => 'required|in:aktif,tidak_aktif',
-            'is_featured' => 'boolean',
         ]);
 
         $data = $request->except('gambar');
@@ -214,5 +212,32 @@ class BeritaController extends Controller
 
         return redirect()->route('berita.index')
             ->with('success', 'Berita berhasil dihapus.');
+    }
+
+    /**
+     * Toggle slider status for the specified news.
+     */
+    public function toggleSlider(string $id)
+    {
+        $berita = Berita::findOrFail($id);
+        $oldStatus = $berita->is_featured;
+        $newStatus = !$oldStatus;
+        
+        $berita->update(['is_featured' => $newStatus]);
+
+        // Log activity
+        ActivityLog::log(
+            'Mengubah status slider berita',
+            $berita,
+            'updated',
+            [
+                'old' => ['is_featured' => $oldStatus],
+                'new' => ['is_featured' => $newStatus]
+            ],
+            'berita'
+        );
+
+        return redirect()->route('berita.index')
+            ->with('success', 'Status slider berhasil diubah menjadi ' . ($newStatus ? 'Aktif' : 'Tidak Aktif'));
     }
 }

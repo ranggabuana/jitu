@@ -95,4 +95,12 @@ class Berita extends Model
     {
         return $query->where('is_featured', true);
     }
+
+    /**
+     * Scope a query to only include slider news.
+     */
+    public function scopeSlider($query)
+    {
+        return $query->where('is_featured', true);
+    }
 }

@@ -24,14 +24,22 @@ class InformasiController extends Controller
             });
         }
 
-        // Get latest 3 berita for secondary section
-        $secondaryBerita = (clone $query)->orderBy('created_at', 'desc')->limit(3)->get();
+        // Get slider berita (is_featured = true)
+        $sliderBerita = (clone $query)->where('is_featured', true)
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
 
-        // Get featured berita (latest)
-        $featuredBerita = (clone $query)->orderBy('created_at', 'desc')->first();
+        // Get latest 3 berita for secondary section (excluding slider)
+        $sliderIds = $sliderBerita->pluck('id')->toArray();
+        $secondaryBerita = (clone $query)
+            ->whereNotIn('id', $sliderIds)
+            ->orderBy('created_at', 'desc')
+            ->limit(3)
+            ->get();
 
-        // Get remaining berita for grid (exclude featured and secondary)
-        $excludeIds = [$featuredBerita?->id, ...$secondaryBerita->pluck('id')->toArray()];
+        // Get remaining berita for grid (exclude slider and secondary)
+        $excludeIds = [...$sliderIds, ...$secondaryBerita->pluck('id')->toArray()];
         $beritaGrid = $query->whereNotIn('id', array_filter($excludeIds))
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
@@ -44,7 +52,7 @@ class InformasiController extends Controller
         $totalViews = Berita::where('status', 'aktif')->sum('views');
 
         return view('front.informasi', compact(
-            'featuredBerita',
+            'sliderBerita',
             'secondaryBerita',
             'beritaGrid',
             'totalArtikel',

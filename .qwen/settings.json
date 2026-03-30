@@ -6,7 +6,8 @@
       "Bash(mkdir *)",
       "Bash(composer *)",
       "Bash(cd *)",
-      "Bash(c:\\laragon\\www\\perijinan\\vendor\\bin\\composer *)"
+      "Bash(c:\\laragon\\www\\perijinan\\vendor\\bin\\composer *)",
+      "Bash(c:\\laragon\\www\\perijinan\\php *)"
     ]
   },
   "$version": 3

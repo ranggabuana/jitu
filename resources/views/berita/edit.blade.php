@@ -121,20 +121,6 @@
                 @enderror
             </div>
 
-            <div class="mb-6">
-                <label class="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" name="is_featured" value="1" {{ old('is_featured', $berita->is_featured) ? 'checked' : '' }}
-                        class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2">
-                    <div>
-                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Tampilkan di Slider Homepage</span>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">
-                            <i class="fas fa-info-circle mr-1"></i>
-                            Artikel ini akan muncul sebagai slider di halaman depan
-                        </p>
-                    </div>
-                </label>
-            </div>
-
             <div class="flex gap-3">
                 <button type="submit"
                     class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">

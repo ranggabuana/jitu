@@ -82,7 +82,7 @@
                             </div>
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                            Featured
+                            Aksi Slider
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                             onclick="updateSort('views')">
@@ -139,14 +139,19 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                @if($berita->is_featured)
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                                        <i class="fas fa-star text-xs"></i>
-                                        Featured
-                                    </span>
-                                @else
-                                    <span class="text-gray-400 text-xs">-</span>
-                                @endif
+                                <form action="{{ route('berita.toggle-slider', $berita->id) }}" method="POST" class="toggle-slider-form">
+                                    @csrf
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" 
+                                            class="sr-only peer slider-toggle" 
+                                            data-action="{{ route('berita.toggle-slider', $berita->id) }}"
+                                            {{ $berita->is_featured ? 'checked' : '' }}>
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                                        <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300 slider-status">
+                                            {{ $berita->is_featured ? 'Aktif' : 'Tidak Aktif' }}
+                                        </span>
+                                    </label>
+                                </form>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
                                 <i class="mdi mdi-eye text-gray-400 mr-1"></i>{{ $berita->views }}
@@ -241,5 +246,24 @@
         searchTimeout = setTimeout(() => {
             document.getElementById('search_form').submit();
         }, 500);
+    });
+
+    // Toggle slider functionality
+    document.querySelectorAll('.slider-toggle').forEach(toggle => {
+        toggle.addEventListener('change', function() {
+            const form = this.closest('form');
+            const action = this.dataset.action;
+            const statusLabel = this.parentElement.querySelector('.slider-status');
+            const isChecked = this.checked;
+            const statusText = isChecked ? 'Aktif' : 'Tidak Aktif';
+            
+            if (confirm(`Apakah Anda yakin ingin mengubah status slider menjadi ${statusText}?`)) {
+                form.action = action;
+                form.submit();
+            } else {
+                // Revert the toggle if user cancels
+                this.checked = !isChecked;
+            }
+        });
     });
 </script>
