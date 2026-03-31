@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\View;
 use Carbon\Carbon;
 
 class AppServiceProvider extends ServiceProvider
@@ -23,5 +24,8 @@ class AppServiceProvider extends ServiceProvider
     {
         // Set locale to Indonesian for Carbon dates
         Carbon::setLocale('id');
+
+        // Register View Composer for Sidebar
+        View::composer('components.sidebar', \App\Http\ViewComposers\SidebarComposer::class);
     }
 }

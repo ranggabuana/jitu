@@ -36,7 +36,7 @@
         <!-- Master Data Dropdown -->
         <div class="relative">
             <button onclick="toggleSubmenu('master-data-submenu', 'master-data-icon')"
-                class="w-full flex items-center justify-between px-6 py-3 text-gray-700 dark:text-gray-300 transition-colors group menu-item">
+                class="w-full flex items-center justify-between px-6 py-3 text-gray-700 dark:text-gray-300 transition-colors group menu-item {{ request()->routeIs('opd.*') || request()->routeIs('perijinan.*') ? 'active-menu' : '' }}">
                 <div class="flex items-center">
                     <i
                         class="mdi mdi-database mr-3 text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors text-lg"></i>
@@ -48,12 +48,12 @@
 
             <div id="master-data-submenu" class="submenu pl-10 mt-1" style="max-height: 0;">
                 <a href="{{ route('opd.index') }}"
-                    class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-md mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('opd.*') ? 'active-menu' : '' }}">
+                    class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-lg mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('opd.*') ? 'active-menu' : '' }}">
                     <i class="mdi mdi-circle text-[8px] mr-2 text-gray-500 dark:text-gray-400"></i>
                     <span>Data OPD</span>
                 </a>
                 <a href="{{ route('perijinan.index') }}"
-                    class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-md mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('perijinan.*') ? 'active-menu' : '' }}">
+                    class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-lg mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('perijinan.*') ? 'active-menu' : '' }}">
                     <i class="mdi mdi-circle text-[8px] mr-2 text-gray-500 dark:text-gray-400"></i>
                     <span>Jenis Perijinan</span>
                 </a>
@@ -63,7 +63,7 @@
         <!-- Perijinan Dropdown -->
         <div class="relative">
             <button onclick="toggleSubmenu('perijinan-submenu', 'perijinan-icon')"
-                class="w-full flex items-center justify-between px-6 py-3 text-gray-700 dark:text-gray-300 transition-colors group menu-item">
+                class="w-full flex items-center justify-between px-6 py-3 text-gray-700 dark:text-gray-300 transition-colors group menu-item {{ request()->routeIs('data-perijinan.*') ? 'active-menu' : '' }}">
                 <div class="flex items-center">
                     <i
                         class="mdi mdi-file-document mr-3 text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors text-lg"></i>
@@ -74,20 +74,22 @@
             </button>
 
             <div id="perijinan-submenu" class="submenu pl-10 mt-1" style="max-height: 0;">
-                <a href="#"
-                    class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-md mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700">
-                    <i class="mdi mdi-circle text-[8px] mr-2 text-gray-500 dark:text-gray-400"></i>
-                    <span>Dalam Proses</span>
+                <a href="{{ route('data-perijinan.dalam-proses') }}"
+                    class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-lg mx-2 my-1 flex items-center justify-between submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('data-perijinan.dalam-proses') ? 'active-menu' : '' }}">
+                    <div class="flex items-center">
+                        <i class="mdi mdi-circle text-[8px] mr-2 text-gray-500 dark:text-gray-400"></i>
+                        <span>Dalam Proses</span>
+                    </div>
+                    @if($countDalamProses > 0)
+                        <span class="inline-flex items-center justify-center min-w-5 h-5 px-1.5 ml-2 text-xs font-bold text-white bg-red-500 rounded-full">
+                            {{ $countDalamProses }}
+                        </span>
+                    @endif
                 </a>
-                <a href="#"
-                    class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-md mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700">
+                <a href="{{ route('data-perijinan.selesai') }}"
+                    class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-lg mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('data-perijinan.selesai') ? 'active-menu' : '' }}">
                     <i class="mdi mdi-circle text-[8px] mr-2 text-gray-500 dark:text-gray-400"></i>
                     <span>Selesai</span>
-                </a>
-                <a href="#"
-                    class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-md mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700">
-                    <i class="mdi mdi-circle text-[8px] mr-2 text-gray-500 dark:text-gray-400"></i>
-                    <span>Semua</span>
                 </a>
             </div>
         </div>
@@ -117,7 +119,7 @@
         </a>
 
         <!-- Pengaduan (Only for authorized users) -->
-        @if(\App\Models\PengaduanHandler::canAccessPengaduan())
+        @if (\App\Models\PengaduanHandler::canAccessPengaduan())
             <a href="{{ route('admin.pengaduan.index') }}"
                 class="flex items-center px-6 py-3 text-gray-700 dark:text-gray-300 transition-colors group menu-item {{ request()->routeIs('admin.pengaduan.*') ? 'active-menu' : '' }}">
                 <i
@@ -143,12 +145,12 @@
 
             <div id="skm-submenu" class="submenu pl-10 mt-1" style="max-height: 0;">
                 <a href="{{ route('skm.data.index') }}"
-                    class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-md mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('skm.data.*') ? 'active-menu' : '' }}">
+                    class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-lg mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('skm.data.*') ? 'active-menu' : '' }}">
                     <i class="mdi mdi-circle text-[8px] mr-2 text-gray-500 dark:text-gray-400"></i>
                     <span>Data SKM</span>
                 </a>
                 <a href="{{ route('skm.hasil.index') }}"
-                    class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-md mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('skm.hasil.*') ? 'active-menu' : '' }}">
+                    class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-lg mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('skm.hasil.*') ? 'active-menu' : '' }}">
                     <i class="mdi mdi-circle text-[8px] mr-2 text-gray-500 dark:text-gray-400"></i>
                     <span>Laporan SKM</span>
                 </a>
@@ -176,12 +178,12 @@
 
             <div id="pengguna-submenu" class="submenu pl-10 mt-1" style="max-height: 0;">
                 <a href="{{ route('pengguna.data.index') }}"
-                    class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-md mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('pengguna.data.*') ? 'active-menu' : '' }}">
+                    class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-lg mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('pengguna.data.*') ? 'active-menu' : '' }}">
                     <i class="mdi mdi-circle text-[8px] mr-2 text-gray-500 dark:text-gray-400"></i>
                     <span>Data Pengguna</span>
                 </a>
                 <a href="{{ route('pemohon.index') }}"
-                    class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-md mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('pemohon.*') ? 'active-menu' : '' }}">
+                    class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-lg mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('pemohon.*') ? 'active-menu' : '' }}">
                     <i class="mdi mdi-circle text-[8px] mr-2 text-gray-500 dark:text-gray-400"></i>
                     <span>Data Pemohon</span>
                 </a>
@@ -203,25 +205,25 @@
             </button>
 
             <div id="pengaturan-submenu" class="submenu pl-10 mt-1" style="max-height: 0;">
-                @if(Auth::user()->role === 'admin')
+                @if (Auth::user()->role === 'admin')
                     <a href="{{ route('settings.pengaduan-handlers') }}"
-                        class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-md mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('settings.pengaduan-handlers') ? 'active-menu' : '' }}">
+                        class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-lg mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('settings.pengaduan-handlers') ? 'active-menu' : '' }}">
                         <i class="mdi mdi-circle text-[8px] mr-2 text-gray-500 dark:text-gray-400"></i>
                         <span>Petugas Pengaduan</span>
                     </a>
                 @endif
                 <a href="{{ route('settings.application') }}"
-                    class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-md mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('settings.application') ? 'active-menu' : '' }}">
+                    class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-lg mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('settings.application') ? 'active-menu' : '' }}">
                     <i class="mdi mdi-circle text-[8px] mr-2 text-gray-500 dark:text-gray-400"></i>
                     <span>Pengaturan Aplikasi</span>
                 </a>
                 <a href="{{ route('settings.database') }}"
-                    class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-md mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('settings.database') ? 'active-menu' : '' }}">
+                    class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-lg mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('settings.database') ? 'active-menu' : '' }}">
                     <i class="mdi mdi-circle text-[8px] mr-2 text-gray-500 dark:text-gray-400"></i>
                     <span>Database</span>
                 </a>
                 <a href="{{ route('settings.logs') }}"
-                    class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-md mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('settings.logs') ? 'active-menu' : '' }}">
+                    class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-lg mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('settings.logs') ? 'active-menu' : '' }}">
                     <i class="mdi mdi-circle text-[8px] mr-2 text-gray-500 dark:text-gray-400"></i>
                     <span>Log Aplikasi</span>
                 </a>
@@ -255,6 +257,40 @@
                 icon.classList.add('rotate-180');
             }
         }
+
+        // Auto-open submenu if active menu item is inside
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check for active submenu items and open parent submenu
+            const activeSubmenuItems = document.querySelectorAll('.submenu .active-menu');
+            activeSubmenuItems.forEach(function(item) {
+                const submenu = item.closest('.submenu');
+                if (submenu && !submenu.classList.contains('open')) {
+                    const submenuId = submenu.id;
+                    // Find the button that controls this submenu
+                    const button = submenu.previousElementSibling;
+                    if (button && button.tagName === 'BUTTON') {
+                        // Extract submenuId from onclick attribute
+                        const onclickAttr = button.getAttribute('onclick');
+                        if (onclickAttr) {
+                            // Extract iconId from onclick parameter
+                            const match = onclickAttr.match(/toggleSubmenu\(['"]([^'"]+)['"],\s*['"]([^'"]+)['"]\)/);
+                            if (match) {
+                                const targetSubmenuId = match[1];
+                                const targetIconId = match[2];
+                                // Open the submenu
+                                const targetSubmenu = document.getElementById(targetSubmenuId);
+                                const targetIcon = document.getElementById(targetIconId);
+                                if (targetSubmenu && targetIcon) {
+                                    targetSubmenu.classList.add('open');
+                                    targetSubmenu.style.maxHeight = targetSubmenu.scrollHeight + 'px';
+                                    targetIcon.classList.add('rotate-180');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
 
         // Handle window resize to adjust submenu height
         window.addEventListener('resize', function() {

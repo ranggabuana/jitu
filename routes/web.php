@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\OpdController;
 use App\Http\Controllers\Admin\PerijinanController;
+use App\Http\Controllers\Admin\DataPerijinanController;
 use App\Http\Controllers\Admin\BeritaController;
 use App\Http\Controllers\Admin\RegulasiController;
 use App\Http\Controllers\Admin\PengaduanController as AdminPengaduanController;
@@ -114,6 +115,14 @@ Route::middleware(['auth'])->group(function () {
     // Pengguna Routes (Admin Only)
     Route::middleware(['admin.role'])->prefix('pengguna')->name('pengguna.')->group(function () {
         Route::resource('data', PenggunaController::class);
+    });
+
+    // Data Perijinan Routes (Admin Only)
+    Route::middleware(['admin.role'])->prefix('data-perijinan')->name('data-perijinan.')->group(function () {
+        Route::get('/dalam-proses', [DataPerijinanController::class, 'dalamProses'])->name('dalam-proses');
+        Route::get('/selesai', [DataPerijinanController::class, 'selesai'])->name('selesai');
+        Route::get('/{id}', [DataPerijinanController::class, 'show'])->name('show');
+        Route::patch('/{id}/status', [DataPerijinanController::class, 'updateStatus'])->name('update-status');
     });
 
     // Pemohon Routes (accessible by authenticated pemohon users)

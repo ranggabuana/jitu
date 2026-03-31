@@ -95,6 +95,18 @@
             border-left: 4px solid #3b82f6;
         }
 
+        /* Submenu active state */
+        .submenu .active-menu {
+            background: linear-gradient(to right, #dbeafe, #e0e7ff) !important;
+            color: #2563eb !important;
+            border-left: none !important;
+        }
+
+        .dark .submenu .active-menu {
+            background: linear-gradient(to right, #1e3a8a, #1e40af) !important;
+            color: #93c5fd !important;
+        }
+
         .menu-item {
             transition: all 0.3s ease;
             position: relative;
