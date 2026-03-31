@@ -214,6 +214,18 @@ class PemohonController extends Controller
             ? 'Pemohon berhasil diaktifkan.'
             : 'Status pemohon diubah menjadi tidak aktif.';
 
+        // Return JSON for AJAX requests
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'data' => [
+                    'id' => $pemohon->id,
+                    'status' => $pemohon->status,
+                ]
+            ]);
+        }
+
         return redirect()->back()->with('success', $message);
     }
 

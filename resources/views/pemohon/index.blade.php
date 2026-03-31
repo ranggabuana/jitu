@@ -176,17 +176,24 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4">
-                                @if ($item->status === 'aktif')
-                                    <span
-                                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                        <i class="mdi mdi-check-circle"></i> Aktif
-                                    </span>
-                                @else
-                                    <span
-                                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                                        <i class="mdi mdi-clock-outline"></i> Tidak Aktif
-                                    </span>
-                                @endif
+                                <form method="POST" action="{{ route('pemohon.update-status', $item->id) }}"
+                                    class="status-toggle-form">
+                                    @csrf
+                                    @method('PATCH')
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" name="status" value="1"
+                                            class="sr-only peer status-toggle"
+                                            data-id="{{ $item->id }}"
+                                            {{ $item->status === 'aktif' ? 'checked' : '' }}>
+                                        <div
+                                            class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer dark:bg-gray-600 peer-checked:bg-green-500 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600">
+                                        </div>
+                                        <span
+                                            class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300 status-label">
+                                            {{ $item->status === 'aktif' ? 'Aktif' : 'Tidak Aktif' }}
+                                        </span>
+                                    </label>
+                                </form>
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                                 {{ $item->created_at->format('d M Y') }}
@@ -194,29 +201,15 @@
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex justify-end gap-2 flex-wrap">
                                     <a href="{{ route('pemohon.show', $item->id) }}"
-                                        class="inline-flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors">
+                                        class="inline-flex items-center justify-center bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                                        title="Detail">
                                         <i class="mdi mdi-eye"></i>
-                                        <span>Detail</span>
                                     </a>
                                     <a href="{{ route('pemohon.edit', $item->id) }}"
-                                        class="inline-flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors">
+                                        class="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                                        title="Edit">
                                         <i class="mdi mdi-pencil"></i>
-                                        <span>Edit</span>
                                     </a>
-
-                                    <!-- Toggle Status Form -->
-                                    <form method="POST" action="{{ route('pemohon.update-status', $item->id) }}"
-                                        class="inline-block">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button type="submit" name="status"
-                                            value="{{ $item->status === 'aktif' ? 'tidak_aktif' : 'aktif' }}"
-                                            class="inline-flex items-center gap-1 {{ $item->status === 'aktif' ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-green-600 hover:bg-green-700' }} text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors">
-                                            <i
-                                                class="mdi mdi-{{ $item->status === 'aktif' ? 'clock-outline' : 'check-circle' }}"></i>
-                                            <span>{{ $item->status === 'aktif' ? 'Nonaktifkan' : 'Aktifkan' }}</span>
-                                        </button>
-                                    </form>
 
                                     <!-- Delete Form -->
                                     <form action="{{ route('pemohon.destroy', $item->id) }}" method="POST"
@@ -224,10 +217,10 @@
                                         @csrf
                                         @method('DELETE')
                                         <button type="button"
-                                            class="inline-flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors btn-delete"
-                                            data-action="{{ route('pemohon.destroy', $item->id) }}">
+                                            class="inline-flex items-center justify-center bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors btn-delete"
+                                            data-action="{{ route('pemohon.destroy', $item->id) }}"
+                                            title="Hapus">
                                             <i class="mdi mdi-delete"></i>
-                                            <span>Hapus</span>
                                         </button>
                                     </form>
                                 </div>
@@ -253,4 +246,81 @@
             {{ $pemohon->links() }}
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle status toggle with AJAX
+            const statusToggles = document.querySelectorAll('.status-toggle');
+            
+            statusToggles.forEach(toggle => {
+                toggle.addEventListener('change', function() {
+                    const form = this.closest('.status-toggle-form');
+                    const statusLabel = form.querySelector('.status-label');
+                    const newStatus = this.checked ? 'aktif' : 'tidak_aktif';
+                    const originalChecked = this.checked;
+                    
+                    // Disable toggle during request
+                    toggle.disabled = true;
+                    
+                    // Update label text temporarily
+                    statusLabel.textContent = 'Mengubah...';
+                    
+                    // Submit form via AJAX
+                    fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': form.querySelector('input[name="_token"]').value,
+                            'X-HTTP-Method-Override': 'PATCH',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ status: newStatus })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Update label text on success
+                            statusLabel.textContent = newStatus === 'aktif' ? 'Aktif' : 'Tidak Aktif';
+                            
+                            // Show success message using SweetAlert2
+                            Swal.fire({
+                                title: 'Berhasil!',
+                                text: data.message,
+                                icon: 'success',
+                                confirmButtonText: 'OK',
+                                timer: 2000,
+                                timerProgressBar: true
+                            });
+                        } else {
+                            // Revert toggle on error
+                            toggle.checked = !originalChecked;
+                            statusLabel.textContent = originalChecked ? 'Aktif' : 'Tidak Aktif';
+                            toggle.disabled = false;
+                            
+                            Swal.fire({
+                                title: 'Error!',
+                                text: data.message || 'Gagal mengubah status pemohon.',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        // Revert toggle on error
+                        toggle.checked = !originalChecked;
+                        statusLabel.textContent = originalChecked ? 'Aktif' : 'Tidak Aktif';
+                        toggle.disabled = false;
+                        
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Terjadi kesalahan saat mengubah status.',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    });
+                });
+            });
+        });
+    </script>
 </x-layout>
