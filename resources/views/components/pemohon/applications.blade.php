@@ -2,8 +2,12 @@
     <div class="p-6 border-b border-amber-100 flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
         <div>
             <h2 class="text-lg font-bold text-gray-800">Daftar Pengajuan</h2>
-            <p class="text-sm text-gray-500">Riwayat pengajuan perizinan Anda akan muncul di sini.</p>
+            <p class="text-sm text-gray-500">Riwayat pengajuan perizinan Anda</p>
         </div>
+        <a href="{{ route('pemohon.tracking') }}"
+            class="inline-flex items-center gap-2 text-amber-600 hover:text-amber-700 font-semibold text-sm">
+            Lihat Semua <i class="fas fa-arrow-right"></i>
+        </a>
     </div>
 
     <div class="overflow-x-auto">
@@ -21,42 +25,24 @@
                 @forelse($applications as $app)
                     <tr class="hover:bg-amber-50 transition-colors">
                         <td class="p-4 border-b">
-                            <span class="font-mono font-semibold text-amber-700">{{ $app->no_registrasi ?? 'N/A' }}</span>
+                            <span class="font-mono font-semibold text-amber-700">{{ $app->no_registrasi }}</span>
                         </td>
                         <td class="p-4 border-b">
-                            <span class="font-medium text-gray-800">{{ $app->perijinan->nama_perijinan ?? 'N/A' }}</span>
+                            <span class="font-medium text-gray-800">{{ $app->perijinan->nama_perijinan }}</span>
                         </td>
                         <td class="p-4 border-b">
                             <span class="text-sm text-gray-500">{{ $app->created_at->format('d M Y') }}</span>
                         </td>
                         <td class="p-4 border-b">
-                            @php
-                                $statusColors = [
-                                    'pending' => 'bg-yellow-100 text-yellow-800',
-                                    'proses' => 'bg-amber-100 text-amber-800',
-                                    'validasi' => 'bg-purple-100 text-purple-800',
-                                    'perbaikan' => 'bg-red-100 text-red-800',
-                                    'selesai' => 'bg-green-100 text-green-800',
-                                    'approved' => 'bg-green-100 text-green-800',
-                                ];
-                                $statusLabels = [
-                                    'pending' => 'Menunggu',
-                                    'proses' => 'Diproses',
-                                    'validasi' => 'Validasi',
-                                    'perbaikan' => 'Perbaikan',
-                                    'selesai' => 'Selesai',
-                                    'approved' => 'Disetujui',
-                                ];
-                            @endphp
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {{ $statusColors[$app->status] ?? 'bg-gray-100 text-gray-800' }}">
-                                {{ $statusLabels[$app->status] ?? $app->status }}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $app->status_color }}">
+                                {{ $app->status_label }}
                             </span>
                         </td>
                         <td class="p-4 border-b text-right">
-                            <button onclick="openDetail('{{ $app->id }}')" 
+                            <a href="{{ route('pemohon.tracking.detail', $app->id) }}"
                                 class="text-amber-700 hover:text-amber-900 font-medium text-sm">
                                 <i class="fas fa-eye mr-1"></i> Detail
-                            </button>
+                            </a>
                         </td>
                     </tr>
                 @empty

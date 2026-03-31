@@ -107,7 +107,7 @@ class AuthController extends Controller
 
         $user = User::create($userData);
 
-        // Log activity
+        // Log activity dengan user_id dari user yang baru dibuat
         ActivityLog::log(
             'Pemohon baru mendaftar',
             $user,
@@ -122,7 +122,8 @@ class AuthController extends Controller
                 ],
                 'role' => $user->role,
             ],
-            'pemohon'
+            'pemohon',
+            $user->id  // Pass user ID explicitly
         );
 
         return redirect()->route('login')->with('success', 'Registrasi berhasil! Akun Anda menunggu aktivasi dari admin.');

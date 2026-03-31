@@ -48,10 +48,10 @@ class ActivityLog extends Model
     /**
      * Log an activity.
      */
-    public static function log(string $description, $subject = null, string $event = null, array $properties = [], string $logName = 'default')
+    public static function log(string $description, $subject = null, string $event = null, array $properties = [], string $logName = 'default', $userId = null)
     {
         return static::create([
-            'user_id' => auth()->id(),
+            'user_id' => $userId ?? auth()->id(), // Use provided userId or fallback to auth
             'log_name' => $logName,
             'description' => $description,
             'subject_type' => $subject ? get_class($subject) : null,

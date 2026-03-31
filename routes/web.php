@@ -122,6 +122,13 @@ Route::middleware(['auth'])->group(function () {
         // Perijinan Routes for Pemohon
         Route::get('/perijinan', [PemohonDashboardController::class, 'perijinan'])->name('perijinan');
         Route::get('/perijinan/{id}/detail', [PemohonDashboardController::class, 'perijinanDetail'])->name('perijinan.detail');
+        // Pengajuan Routes for Pemohon
+        Route::get('/pengajuan/create/{perijinanId}', [PemohonDashboardController::class, 'createPengajuan'])->name('pengajuan.create');
+        Route::post('/pengajuan', [PemohonDashboardController::class, 'storePengajuan'])->name('pengajuan.store');
+        Route::get('/pengajuan/success/{id}', [PemohonDashboardController::class, 'successPengajuan'])->name('pengajuan.success');
+        // Tracking Routes for Pemohon
+        Route::get('/tracking', [PemohonDashboardController::class, 'tracking'])->name('tracking');
+        Route::get('/tracking/{id}', [PemohonDashboardController::class, 'trackingDetail'])->name('tracking.detail');
         // Profile Routes for Pemohon
         Route::prefix('profile')->name('profile.')->group(function () {
             Route::get('/', [PemohonProfileController::class, 'show'])->name('show');
