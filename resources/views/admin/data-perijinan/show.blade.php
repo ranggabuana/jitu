@@ -1,37 +1,36 @@
 <x-layout>
     <x-slot:title>Detail Perijinan - {{ $application->no_registrasi }}</x-slot:title>
 
-    <div class="mb-6">
-        <a href="{{ url()->previous() }}" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium">
-            <i class="mdi mdi-arrow-left"></i>
-            <span>Kembali</span>
-        </a>
+    <!-- Sticky Header Card -->
+    <div class="sticky top-4 z-40 mb-6">
+        <div class="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 rounded-2xl shadow-xl p-6 text-white backdrop-blur-sm">
+            <div class="flex items-center justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center gap-3 mb-2 flex-wrap">
+                        <a href="{{ url()->previous() }}" class="inline-flex items-center gap-1 text-blue-100 hover:text-white transition-colors mr-2">
+                            <i class="mdi mdi-arrow-left"></i>
+                            <span class="text-sm">Kembali</span>
+                        </a>
+                        <span class="font-mono text-lg">{{ $application->no_registrasi }}</span>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/20">
+                            {{ $application->status_label }}
+                        </span>
+                    </div>
+                    <h1 class="text-2xl font-bold">{{ $application->perijinan->nama_perijinan }}</h1>
+                    <p class="text-blue-100 text-sm mt-1">Diajukan pada {{ $application->created_at->format('d M Y, H:i') }} WIB</p>
+                </div>
+                <div class="text-right flex-shrink-0 ml-4">
+                    <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                        <i class="mdi mdi-file-document text-4xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     @if (session('success'))
         <meta name="success-message" content="{{ session('success') }}">
     @endif
-
-    <!-- Header Card -->
-    <div class="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 rounded-2xl shadow-xl p-6 text-white mb-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <div class="flex items-center gap-3 mb-2">
-                    <span class="font-mono text-lg">{{ $application->no_registrasi }}</span>
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/20">
-                        {{ $application->status_label }}
-                    </span>
-                </div>
-                <h1 class="text-2xl font-bold">{{ $application->perijinan->nama_perijinan }}</h1>
-                <p class="text-blue-100 text-sm mt-1">Diajukan pada {{ $application->created_at->format('d M Y, H:i') }} WIB</p>
-            </div>
-            <div class="text-right">
-                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
-                    <i class="mdi mdi-file-document text-4xl"></i>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Left Column - Application Details -->
