@@ -7,6 +7,7 @@ use App\Models\DataPerijinan;
 use App\Models\Perijinan;
 use App\Models\User;
 use App\Models\DataPerijinanValidasi;
+use App\Models\PerijinanValidationFlow;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +19,50 @@ class DataPerijinanController extends Controller
      */
     public function dalamProses(Request $request)
     {
+        $user = auth()->user();
+        
         $query = DataPerijinan::with(['user', 'perijinan']);
+
+        // Filter data based on user's assigned validation flows
+        // Admin can see all, other users only see their assigned perijinan
+        if (!$user->isAdmin()) {
+            $accessiblePerijinanIds = $user->getAccessiblePerijinanIds();
+            
+            // Debug: Log accessible IDs
+            \Log::info('User ID: ' . $user->id . ', Role: ' . $user->role . ', Accessible Perijinan IDs: ' . json_encode($accessiblePerijinanIds));
+            
+            // If user has assigned perijinan, filter by those IDs
+            if (!empty($accessiblePerijinanIds)) {
+                // Filter by perijinan IDs
+                $query->whereIn('perijinan_id', $accessiblePerijinanIds);
+                
+                // For collective roles (FO, BO, Verifikator, Kadin), also filter by their role
+                $collectiveRoles = ['fo', 'bo', 'verifikator', 'kadin'];
+                if (in_array($user->role, $collectiveRoles)) {
+                    // Get validation flow IDs for this role
+                    $validationFlowIds = PerijinanValidationFlow::whereIn('role', $collectiveRoles)
+                        ->where('is_active', true)
+                        ->pluck('id');
+                    
+                    // Filter applications that have validation flow for this role
+                    $query->whereHas('validasiRecords', function($q) use ($validationFlowIds) {
+                        $q->whereIn('validation_flow_id', $validationFlowIds);
+                    });
+                }
+            } else {
+                // User has no assigned perijinan yet, show empty result with pagination
+                $applications = DataPerijinan::where('id', 0)->paginate(15);
+                
+                return view('admin.data-perijinan.dalam-proses', [
+                    'applications' => $applications,
+                    'totalDalamProses' => 0,
+                    'totalSubmitted' => 0,
+                    'totalInProgress' => 0,
+                    'totalPerbaikan' => 0,
+                    'perijinanTypes' => collect([])
+                ]);
+            }
+        }
 
         // Search filter
         if ($request->filled('search')) {
@@ -57,11 +101,23 @@ class DataPerijinanController extends Controller
 
         $applications = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
 
-        // Statistics
-        $totalDalamProses = DataPerijinan::whereNotIn('status', ['approved', 'completed'])->count();
-        $totalSubmitted = DataPerijinan::where('status', 'submitted')->count();
-        $totalInProgress = DataPerijinan::where('status', 'in_progress')->count();
-        $totalPerbaikan = DataPerijinan::where('status', 'perbaikan')->count();
+        // Statistics - only count for accessible perijinan
+        if ($user->isAdmin()) {
+            $totalDalamProses = DataPerijinan::whereNotIn('status', ['approved', 'completed'])->count();
+            $totalSubmitted = DataPerijinan::where('status', 'submitted')->count();
+            $totalInProgress = DataPerijinan::where('status', 'in_progress')->count();
+            $totalPerbaikan = DataPerijinan::where('status', 'perbaikan')->count();
+        } else {
+            $accessibleIds = $user->getAccessiblePerijinanIds();
+            $totalDalamProses = DataPerijinan::whereIn('perijinan_id', $accessibleIds)
+                ->whereNotIn('status', ['approved', 'completed'])->count();
+            $totalSubmitted = DataPerijinan::whereIn('perijinan_id', $accessibleIds)
+                ->where('status', 'submitted')->count();
+            $totalInProgress = DataPerijinan::whereIn('perijinan_id', $accessibleIds)
+                ->where('status', 'in_progress')->count();
+            $totalPerbaikan = DataPerijinan::whereIn('perijinan_id', $accessibleIds)
+                ->where('status', 'perbaikan')->count();
+        }
 
         // Perijinan types for filter
         $perijinanTypes = Perijinan::orderBy('nama_perijinan')->get();
@@ -93,7 +149,45 @@ class DataPerijinanController extends Controller
      */
     public function selesai(Request $request)
     {
+        $user = auth()->user();
+        
         $query = DataPerijinan::with(['user', 'perijinan']);
+
+        // Filter data based on user's assigned validation flows
+        // Admin can see all, other users only see their assigned perijinan
+        if (!$user->isAdmin()) {
+            $accessiblePerijinanIds = $user->getAccessiblePerijinanIds();
+            
+            // If user has assigned perijinan, filter by those IDs
+            if (!empty($accessiblePerijinanIds)) {
+                // Filter by perijinan IDs
+                $query->whereIn('perijinan_id', $accessiblePerijinanIds);
+                
+                // For collective roles (FO, BO, Verifikator, Kadin), also filter by their role
+                $collectiveRoles = ['fo', 'bo', 'verifikator', 'kadin'];
+                if (in_array($user->role, $collectiveRoles)) {
+                    // Get validation flow IDs for this role
+                    $validationFlowIds = PerijinanValidationFlow::whereIn('role', $collectiveRoles)
+                        ->where('is_active', true)
+                        ->pluck('id');
+                    
+                    // Filter applications that have validation flow for this role
+                    $query->whereHas('validasiRecords', function($q) use ($validationFlowIds) {
+                        $q->whereIn('validation_flow_id', $validationFlowIds);
+                    });
+                }
+            } else {
+                // User has no assigned perijinan yet, show empty result with pagination
+                $applications = DataPerijinan::where('id', 0)->paginate(15);
+                
+                return view('admin.data-perijinan.selesai', [
+                    'applications' => $applications,
+                    'totalSelesai' => 0,
+                    'totalApproved' => 0,
+                    'perijinanTypes' => collect([])
+                ]);
+            }
+        }
 
         // Search filter
         if ($request->filled('search')) {
@@ -122,9 +216,17 @@ class DataPerijinanController extends Controller
 
         $applications = $query->orderBy('approved_at', 'desc')->paginate(15)->withQueryString();
 
-        // Statistics
-        $totalSelesai = DataPerijinan::where('status', 'approved')->count();
-        $totalApproved = DataPerijinan::where('status', 'approved')->count();
+        // Statistics - only count for accessible perijinan
+        if ($user->isAdmin()) {
+            $totalSelesai = DataPerijinan::where('status', 'approved')->count();
+            $totalApproved = DataPerijinan::where('status', 'approved')->count();
+        } else {
+            $accessibleIds = $user->getAccessiblePerijinanIds();
+            $totalSelesai = DataPerijinan::whereIn('perijinan_id', $accessibleIds)
+                ->where('status', 'approved')->count();
+            $totalApproved = DataPerijinan::whereIn('perijinan_id', $accessibleIds)
+                ->where('status', 'approved')->count();
+        }
 
         // Perijinan types for filter
         $perijinanTypes = Perijinan::orderBy('nama_perijinan')->get();
@@ -153,6 +255,8 @@ class DataPerijinanController extends Controller
      */
     public function show($id)
     {
+        $user = auth()->user();
+        
         $application = DataPerijinan::with([
             'user',
             'perijinan',
@@ -161,6 +265,17 @@ class DataPerijinanController extends Controller
             'validasiRecords.validator'
         ])->findOrFail($id);
 
+        // Check if user has access to this application
+        if (!$user->isAdmin()) {
+            $accessibleIds = $user->getAccessiblePerijinanIds();
+            if (!empty($accessibleIds) && !in_array($application->perijinan_id, $accessibleIds)) {
+                abort(403, 'Unauthorized access to this application');
+            }
+        }
+
+        // Ensure form_files is available (it's already in the model's fillable/casts)
+        // Files should be stored in form_files column as JSON
+        
         // Log activity
         ActivityLog::log(
             'Melihat detail perijinan',

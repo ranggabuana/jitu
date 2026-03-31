@@ -77,12 +77,12 @@
                 </div>
             </div>
 
-            <!-- Form Data -->
-            @if($application->perijinan->activeFormFields->count() > 0 && count($application->form_data) > 0)
+            <!-- Form Data & Attachments -->
+            @if($application->perijinan->activeFormFields->count() > 0 && (count($application->form_data) > 0 || $application->form_files))
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <h2 class="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
                         <i class="mdi mdi-form-textbox text-blue-600"></i>
-                        Data Pengajuan
+                        Data Pengajuan & Lampiran
                     </h2>
                     <div class="space-y-4">
                         @foreach($application->perijinan->activeFormFields as $field)
@@ -92,19 +92,41 @@
                                     <p class="text-gray-800 dark:text-white mt-1">
                                         @if($field->type === 'file')
                                             @php
-                                                $files = is_array($application->form_data[$field->id]) 
-                                                    ? $application->form_data[$field->id] 
-                                                    : [$application->form_data[$field->id]];
+                                                // Check if files are stored in form_files or form_data
+                                                $files = [];
+                                                if ($application->form_files && isset($application->form_files[$field->id])) {
+                                                    $files = is_array($application->form_files[$field->id]) 
+                                                        ? $application->form_files[$field->id] 
+                                                        : [$application->form_files[$field->id]];
+                                                } elseif (isset($application->form_data[$field->id])) {
+                                                    $files = is_array($application->form_data[$field->id]) 
+                                                        ? $application->form_data[$field->id] 
+                                                        : [$application->form_data[$field->id]];
+                                                }
                                             @endphp
-                                            <div class="space-y-2">
-                                                @foreach($files as $file)
-                                                    <a href="{{ asset('storage/' . $file) }}" target="_blank" 
-                                                       class="inline-flex items-center gap-2 text-blue-600 hover:underline">
-                                                        <i class="mdi mdi-file-download"></i>
-                                                        {{ basename($file) }}
-                                                    </a>
-                                                @endforeach
-                                            </div>
+                                            @if(!empty($files))
+                                                <div class="space-y-2 mt-2">
+                                                    @foreach($files as $file)
+                                                        @if($file && file_exists(storage_path('app/public/' . $file)))
+                                                            <a href="{{ asset('storage/' . $file) }}" target="_blank"
+                                                               class="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
+                                                                <i class="mdi mdi-file-download text-blue-600 dark:text-blue-400"></i>
+                                                                <div class="flex-1">
+                                                                    <span class="text-sm font-medium text-blue-700 dark:text-blue-300">{{ basename($file) }}</span>
+                                                                </div>
+                                                                <i class="mdi mdi-open-in-new text-xs text-blue-500"></i>
+                                                            </a>
+                                                        @else
+                                                            <div class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
+                                                                <i class="mdi mdi-file-off text-gray-400"></i>
+                                                                <span class="text-sm text-gray-500 dark:text-gray-400">File tidak ditemukan: {{ basename($file) }}</span>
+                                                            </div>
+                                                        @endif
+                                                    @endforeach
+                                                </div>
+                                            @else
+                                                <p class="text-gray-400 text-sm italic mt-1">Tidak ada file dilampirkan</p>
+                                            @endif
                                         @elseif(is_array($application->form_data[$field->id]))
                                             {{ implode(', ', $application->form_data[$field->id]) }}
                                         @else

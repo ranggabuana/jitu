@@ -33,7 +33,8 @@
             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">MAIN</span>
         </div>
 
-        <!-- Master Data Dropdown -->
+        <!-- Master Data Dropdown (Admin Only) -->
+        @if(Auth::user()->canAccessAdminMenus())
         <div class="relative">
             <button onclick="toggleSubmenu('master-data-submenu', 'master-data-icon')"
                 class="w-full flex items-center justify-between px-6 py-3 text-gray-700 dark:text-gray-300 transition-colors group menu-item {{ request()->routeIs('opd.*') || request()->routeIs('perijinan.*') ? 'active-menu' : '' }}">
@@ -59,8 +60,10 @@
                 </a>
             </div>
         </div>
+        @endif
 
-        <!-- Perijinan Dropdown -->
+        <!-- Perijinan Dropdown (Admin & Assigned Users) -->
+        @if(Auth::user()->canAccessDataPerijinan())
         <div class="relative">
             <button onclick="toggleSubmenu('perijinan-submenu', 'perijinan-icon')"
                 class="w-full flex items-center justify-between px-6 py-3 text-gray-700 dark:text-gray-300 transition-colors group menu-item {{ request()->routeIs('data-perijinan.*') ? 'active-menu' : '' }}">
@@ -93,8 +96,10 @@
                 </a>
             </div>
         </div>
+        @endif
 
-        <!-- Divider: FRONTPAGE -->
+        <!-- Divider: FRONTPAGE (Admin Only) -->
+        @if(Auth::user()->canAccessAdminMenus())
         <div class="my-4 ml-6">
             <span
                 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">FRONTPAGE</span>
@@ -117,9 +122,10 @@
             <span
                 class="font-medium {{ request()->routeIs('regulasi.*') ? 'text-blue-500 dark:text-blue-400' : '' }}">Regulasi</span>
         </a>
+        @endif
 
-        <!-- Pengaduan (Only for authorized users) -->
-        @if (\App\Models\PengaduanHandler::canAccessPengaduan())
+        <!-- Pengaduan (Only for authorized users - Admin & Assigned Handlers) -->
+        @if(Auth::user()->canAccessPengaduanMenu())
             <a href="{{ route('admin.pengaduan.index') }}"
                 class="flex items-center px-6 py-3 text-gray-700 dark:text-gray-300 transition-colors group menu-item {{ request()->routeIs('admin.pengaduan.*') ? 'active-menu' : '' }}">
                 <i
@@ -129,7 +135,8 @@
             </a>
         @endif
 
-        <!-- SKM (Survey Kepuasan Masyarakat) -->
+        <!-- SKM (Survey Kepuasan Masyarakat) - Admin Only -->
+        @if(Auth::user()->canAccessAdminMenus())
         <div class="relative">
             <button onclick="toggleSubmenu('skm-submenu', 'skm-icon')"
                 class="w-full flex items-center justify-between px-6 py-3 text-gray-700 dark:text-gray-300 transition-colors group menu-item {{ request()->routeIs('skm.*') ? 'active-menu' : '' }}">
@@ -156,8 +163,10 @@
                 </a>
             </div>
         </div>
+        @endif
 
-        <!-- Divider: SETTING -->
+        <!-- Divider: SETTING (Admin Only) -->
+        @if(Auth::user()->canAccessAdminMenus())
         <div class="my-4 ml-6">
             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Setting</span>
         </div>
@@ -229,6 +238,7 @@
                 </a>
             </div>
         </div>
+        @endif
 
         <hr class="my-3">
         <!-- Logout Button -->
