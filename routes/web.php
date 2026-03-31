@@ -192,6 +192,9 @@ Route::get('/pengaduan/success', [FrontPengaduanController::class, 'success'])->
 Route::get('/pengaduan/refresh-captcha', [FrontPengaduanController::class, 'refreshCaptcha'])->name('pengaduan.refresh-captcha');
 Route::post('/pengaduan/track', [FrontPengaduanController::class, 'track'])->name('pengaduan.track');
 
+// Track Perizinan (Front-end - Public)
+Route::post('/perizinan/track', [LandingPageController::class, 'trackPerizinan'])->name('front.perizinan.track');
+
 // Regulasi page (Front-end - Public) - Use different path to avoid conflict with admin
 Route::get('/regulasi-public', [FrontRegulasiController::class, 'index'])->name('regulasi.public');
 Route::get('/regulasi-public/{id}/download', [FrontRegulasiController::class, 'download'])->name('regulasi.public.download');

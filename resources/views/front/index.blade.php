@@ -220,17 +220,19 @@
                             </div>
                             <div>
                                 <h3 class="font-bold text-gray-800 text-lg">Lacak Perizinan</h3>
-                                <p class="text-xs text-gray-500">Cek status permohonan perizinan Anda</p>
+                                <p class="text-xs text-gray-500">Cek status & progress permohonan perizinan Anda</p>
                             </div>
                         </div>
                         <div class="flex gap-3">
                             <div class="relative flex-1">
                                 <i class="fas fa-qrcode absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                                <input type="text" 
+                                <input type="text"
+                                    id="trackPerizinanInput"
                                     placeholder="Masukkan Nomor Registrasi Izin"
-                                    class="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                                    class="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                    onkeypress="if(event.key === 'Enter') trackPerizinan()">
                             </div>
-                            <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-all flex items-center gap-2">
+                            <button onclick="trackPerizinan()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-all flex items-center gap-2">
                                 <i class="fas fa-search"></i>
                                 <span class="hidden lg:inline">Lacak</span>
                             </button>
@@ -267,6 +269,40 @@
             </div>
         </div>
     </section>
+
+    <!-- Track Perizinan Modal -->
+    <div id="trackPerizinanModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeTrackPerizinanModal()"></div>
+
+        <!-- Modal Content -->
+        <div class="flex items-center justify-center min-h-screen px-4 py-8">
+            <div class="bg-white rounded-3xl shadow-2xl max-w-3xl w-full relative z-10 overflow-hidden animate-modalSlideUp">
+                <!-- Modal Header -->
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                                <i class="fas fa-file-contract text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold">Progress Validasi Perizinan</h3>
+                                <p class="text-sm text-blue-100">Status & tahapan validasi permohonan Anda</p>
+                            </div>
+                        </div>
+                        <button onclick="closeTrackPerizinanModal()" class="w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Modal Body -->
+                <div id="trackPerizinanModalBody" class="p-6">
+                    <!-- Content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Track Pengaduan Modal -->
     <div id="trackModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
@@ -308,6 +344,15 @@
         <div class="bg-white rounded-2xl shadow-2xl p-8 relative z-10 text-center">
             <div class="w-16 h-16 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mx-auto mb-4"></div>
             <p class="text-gray-600 font-medium">Memuat data pengaduan...</p>
+        </div>
+    </div>
+
+    <!-- Modal Loading Perizinan -->
+    <div id="trackPerizinanLoading" class="fixed inset-0 z-50 hidden items-center justify-center">
+        <div class="bg-black/60 backdrop-blur-sm absolute inset-0" onclick="closeTrackPerizinanModal()"></div>
+        <div class="bg-white rounded-2xl shadow-2xl p-8 relative z-10 text-center">
+            <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <p class="text-gray-600 font-medium">Memuat data perizinan...</p>
         </div>
     </div>
 
@@ -480,6 +525,283 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeTrackModal();
+            }
+        });
+
+        // Track Perizinan Functions
+        function trackPerizinan() {
+            const noRegistrasi = document.getElementById('trackPerizinanInput').value.trim();
+
+            if (!noRegistrasi) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Peringatan',
+                    text: 'Silakan masukkan nomor registrasi perizinan!',
+                    confirmButtonColor: '#2563eb',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+
+            // Show loading
+            document.getElementById('trackPerizinanLoading').classList.remove('hidden');
+            document.getElementById('trackPerizinanLoading').classList.add('flex');
+
+            // Fetch data
+            fetch('{{ route("front.perizinan.track") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ no_registrasi: noRegistrasi })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('trackPerizinanLoading').classList.add('hidden');
+                document.getElementById('trackPerizinanLoading').classList.remove('flex');
+
+                if (data.success) {
+                    showTrackPerizinanModal(data.data);
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Tidak Ditemukan',
+                        text: data.message || 'Nomor registrasi tidak ditemukan!',
+                        confirmButtonColor: '#2563eb',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            })
+            .catch(error => {
+                document.getElementById('trackPerizinanLoading').classList.add('hidden');
+                document.getElementById('trackPerizinanLoading').classList.remove('flex');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Terjadi kesalahan. Silakan coba lagi.',
+                    confirmButtonColor: '#2563eb',
+                    confirmButtonText: 'OK'
+                });
+                console.error('Error:', error);
+            });
+        }
+
+        function showTrackPerizinanModal(data) {
+            const statusColors = {
+                submitted: 'bg-green-100 text-green-800 border-green-300',
+                in_progress: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+                perbaikan: 'bg-orange-100 text-orange-800 border-orange-300',
+                approved: 'bg-blue-100 text-blue-800 border-blue-300',
+                rejected: 'bg-red-100 text-red-800 border-red-300'
+            };
+
+            const statusLabels = {
+                submitted: 'Diajukan',
+                in_progress: 'Dalam Proses',
+                perbaikan: 'Perlu Perbaikan',
+                approved: 'Disetujui',
+                rejected: 'Ditolak'
+            };
+
+            const statusIcons = {
+                submitted: 'fa-check-circle',
+                in_progress: 'fa-spinner fa-spin',
+                perbaikan: 'fa-exclamation-triangle',
+                approved: 'fa-badge-check',
+                rejected: 'fa-times-circle'
+            };
+
+            // Build validation timeline HTML
+            let timelineHtml = '';
+            if (data.validasi_records && data.validasi_records.length > 0) {
+                timelineHtml = '<div class="relative mt-6">';
+                timelineHtml += '<div class="absolute left-8 top-4 bottom-4 w-0.5 bg-gradient-to-b from-blue-400 via-purple-400 to-pink-400 rounded-full"></div>';
+                timelineHtml += '<div class="space-y-6">';
+
+                data.validasi_records.forEach((validasi, index) => {
+                    const isCompleted = validasi.status === 'approved';
+                    const isRejected = validasi.status === 'rejected';
+                    const isRevision = validasi.status === 'revision';
+                    const isPending = validasi.status === 'pending';
+
+                    let bgClass = 'bg-gradient-to-br from-gray-300 to-gray-400';
+                    let iconClass = 'fa-hourglass-start';
+                    
+                    if (isCompleted) {
+                        bgClass = 'bg-gradient-to-br from-green-500 to-green-600';
+                        iconClass = 'fa-check';
+                    } else if (isRejected) {
+                        bgClass = 'bg-gradient-to-br from-red-500 to-red-600';
+                        iconClass = 'fa-times';
+                    } else if (isRevision) {
+                        bgClass = 'bg-gradient-to-br from-orange-500 to-orange-600';
+                        iconClass = 'fa-exclamation';
+                    }
+
+                    const borderClass = isCompleted ? 'border-green-200' : 
+                                       isRejected ? 'border-red-200' : 
+                                       isRevision ? 'border-orange-200' : 'border-gray-200';
+
+                    timelineHtml += `
+                        <div class="relative flex items-start gap-4 pl-4">
+                            <div class="relative z-10 w-16 h-16 rounded-full flex items-center justify-center shadow-lg flex-shrink-0 border-4 border-white ${bgClass}">
+                                <i class="fas ${iconClass} text-white text-xl"></i>
+                            </div>
+                            <div class="flex-1 bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border-2 ${borderClass}">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div>
+                                        <h4 class="font-bold text-gray-800">${validasi.validation_flow?.role_label || 'Tahap ' + (index + 1)}</h4>
+                                        <p class="text-xs text-gray-500">${validasi.validation_flow?.description || 'Proses validasi'}</p>
+                                    </div>
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${statusColors[validasi.status] || statusColors.submitted}">
+                                        ${statusLabels[validasi.status] || validasi.status}
+                                    </span>
+                                </div>
+                                ${validasi.catatan ? `
+                                    <div class="mt-3 bg-white rounded-lg p-3 border border-gray-200">
+                                        <p class="text-sm text-gray-700">
+                                            <i class="fas fa-comment-alt text-blue-500 mr-2"></i>
+                                            <strong>Catatan:</strong> ${validasi.catatan}
+                                        </p>
+                                    </div>
+                                ` : ''}
+                                ${validasi.validated_at ? `
+                                    <p class="text-xs text-gray-500 mt-2">
+                                        <i class="fas fa-clock mr-1"></i>
+                                        Divalidasi pada ${new Date(validasi.validated_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} WIB
+                                    </p>
+                                ` : ''}
+                                ${validasi.validator ? `
+                                    <div class="flex items-center gap-2 mt-2 text-sm text-gray-600">
+                                        <i class="fas fa-user-circle text-blue-500"></i>
+                                        <span>${validasi.validator.name}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                timelineHtml += '</div></div>';
+            }
+
+            const html = `
+                <div class="space-y-4">
+                    <!-- Nomor & Status -->
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Nomor Registrasi</p>
+                            <p class="text-lg font-bold text-gray-800 font-mono">${data.no_registrasi}</p>
+                        </div>
+                        <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border-2 ${statusColors[data.status] || statusColors.submitted}">
+                            <i class="fas ${statusIcons[data.status] || statusIcons.submitted}"></i>
+                            ${statusLabels[data.status] || data.status}
+                        </span>
+                    </div>
+
+                    <!-- Pemohon Info -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 bg-blue-50 rounded-xl">
+                            <p class="text-xs text-blue-600 font-semibold mb-1"><i class="fas fa-user mr-1"></i> Pemohon</p>
+                            <p class="text-gray-800 font-medium">${data.data_pemohon?.name || data.user?.name || '-'}</p>
+                        </div>
+                        <div class="p-4 bg-green-50 rounded-xl">
+                            <p class="text-xs text-green-600 font-semibold mb-1"><i class="fas fa-envelope mr-1"></i> Email</p>
+                            <p class="text-gray-800 font-medium">${data.data_pemohon?.email || data.user?.email || '-'}</p>
+                        </div>
+                    </div>
+
+                    <!-- Jenis & Tanggal -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 bg-purple-50 rounded-xl">
+                            <p class="text-xs text-purple-600 font-semibold mb-1"><i class="fas fa-folder mr-1"></i> Jenis Perizinan</p>
+                            <p class="text-gray-800 font-medium">${data.perijinan?.nama_perijinan || '-'}</p>
+                        </div>
+                        <div class="p-4 bg-orange-50 rounded-xl">
+                            <p class="text-xs text-orange-600 font-semibold mb-1"><i class="fas fa-calendar mr-1"></i> Tanggal Pengajuan</p>
+                            <p class="text-gray-800 font-medium">${new Date(data.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-bold text-blue-800">Progress Validasi</span>
+                            <span class="text-sm font-bold text-blue-600">${data.progress_percentage || 0}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-4">
+                            <div class="bg-gradient-to-r from-blue-500 to-indigo-600 h-4 rounded-full transition-all duration-500" style="width: ${data.progress_percentage || 0}%"></div>
+                        </div>
+                        <p class="text-xs text-blue-600 mt-2">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Tahap ${data.current_step || 1} dari ${data.total_steps || '?'}
+                        </p>
+                    </div>
+
+                    <!-- Validation Timeline -->
+                    ${timelineHtml}
+
+                    <!-- Catatan -->
+                    ${data.catatan_perbaikan ? `
+                        <div class="p-4 bg-orange-50 border-l-4 border-orange-400 rounded-r-xl">
+                            <div class="flex items-start gap-3">
+                                <i class="fas fa-exclamation-triangle text-orange-500 text-xl mt-0.5"></i>
+                                <div class="flex-1">
+                                    <h4 class="font-bold text-orange-800 mb-1">Catatan Perbaikan</h4>
+                                    <p class="text-orange-700 text-sm">${data.catatan_perbaikan}</p>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    ${data.catatan_reject ? `
+                        <div class="p-4 bg-red-50 border-l-4 border-red-400 rounded-r-xl">
+                            <div class="flex items-start gap-3">
+                                <i class="fas fa-times-circle text-red-500 text-xl mt-0.5"></i>
+                                <div class="flex-1">
+                                    <h4 class="font-bold text-red-800 mb-1">Penolakan</h4>
+                                    <p class="text-red-700 text-sm">${data.catatan_reject}</p>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="mt-6 pt-6 border-t border-gray-200 flex justify-end gap-3">
+                    <button onclick="closeTrackPerizinanModal()" class="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-semibold transition-all">
+                        <i class="fas fa-times mr-2"></i>Tutup
+                    </button>
+                    ${data.status === 'perbaikan' ? `
+                        <a href="{{ url('/login') }}" class="px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white rounded-xl font-semibold transition-all shadow-lg">
+                            <i class="fas fa-edit mr-2"></i>Perbaiki Pengajuan
+                        </a>
+                    ` : ''}
+                    ${data.status === 'approved' ? `
+                        <button onclick="alert('Fitur download sertifikat akan segera tersedia')" class="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-semibold transition-all shadow-lg">
+                            <i class="fas fa-download mr-2"></i>Download Sertifikat
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+
+            document.getElementById('trackPerizinanModalBody').innerHTML = html;
+            document.getElementById('trackPerizinanModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeTrackPerizinanModal() {
+            document.getElementById('trackPerizinanModal').classList.add('hidden');
+            document.body.style.overflow = '';
+            document.getElementById('trackPerizinanInput').value = '';
+        }
+
+        // Close modal on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeTrackModal();
+                closeTrackPerizinanModal();
             }
         });
     </script>
