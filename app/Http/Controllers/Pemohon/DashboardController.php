@@ -120,23 +120,78 @@ class DashboardController extends Controller
     public function storePengajuan(Request $request)
     {
         $user = Auth::user();
-        
-        // Validate required fields
+
         $request->validate([
             'perijinan_id' => 'required|exists:perijinan,id',
             'form_fields' => 'nullable|array',
         ]);
 
+        $perijinan = Perijinan::findOrFail($request->perijinan_id);
+        
+        // Build validation rules based on perijinan's form fields
+        $validationRules = [];
+        $validationMessages = [];
+        
+        if ($perijinan->activeFormFields->count() > 0) {
+            foreach ($perijinan->activeFormFields as $field) {
+                $fieldKey = 'form_fields.' . $field->id;
+                $rules = [];
+
+                if ($field->is_required) {
+                    $rules[] = 'required';
+                    $validationMessages[$fieldKey . '.required'] = "Field {$field->label} wajib diisi.";
+                } else {
+                    $rules[] = 'nullable';
+                }
+
+                // Add type-specific validation
+                if ($field->type === 'email') {
+                    $rules[] = 'email';
+                } elseif ($field->type === 'number') {
+                    $rules[] = 'numeric';
+                } elseif ($field->type === 'file') {
+                    // File validation handled separately below
+                    continue;
+                }
+
+                $validationRules[$fieldKey] = $rules;
+            }
+        }
+
+        // Validate files
+        if ($request->hasFile('form_files')) {
+            foreach ($request->form_files as $fieldId => $file) {
+                $field = $perijinan->activeFormFields->firstWhere('id', $fieldId);
+                if ($field) {
+                    if ($field->is_required) {
+                        $validationRules['form_files.' . $fieldId] = 'required|file|max:10240';
+                        $validationMessages['form_files.' . $fieldId . '.required'] = "File {$field->label} wajib diunggah.";
+                    } else {
+                        $validationRules['form_files.' . $fieldId] = 'nullable|file|max:10240';
+                    }
+                }
+            }
+        } else {
+            // Check for required files that weren't uploaded
+            foreach ($perijinan->activeFormFields as $field) {
+                if ($field->type === 'file' && $field->is_required) {
+                    $validationRules['form_files.' . $field->id] = 'required';
+                    $validationMessages['form_files.' . $field->id . '.required'] = "File {$field->label} wajib diunggah.";
+                }
+            }
+        }
+        
+        $request->validate($validationRules, $validationMessages);
+
         try {
             DB::beginTransaction();
-
-            $perijinan = Perijinan::findOrFail($request->perijinan_id);
 
             // Create application with unique registration number
             $data = DataPerijinan::create([
                 'user_id' => $user->id,
                 'perijinan_id' => $perijinan->id,
                 'status' => 'submitted',
+                'current_step' => 1,
                 'form_data' => $request->form_fields ?? [],
                 'data_pemohon' => [
                     'name' => $user->name,

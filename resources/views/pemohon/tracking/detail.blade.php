@@ -1,5 +1,5 @@
 <x-pemohon.layout>
-    <x-slot:title>Detail Tracking - {{ $aplikasi->no_registrasi }} - JITU Banjarnegara</x-slot:title>
+    <x-slot:title>Detail Tracking - {{ $data->no_registrasi }} - JITU Banjarnegara</x-slot:title>
 
     <!-- Navbar -->
     <x-pemohon.navbar></x-pemohon.navbar>

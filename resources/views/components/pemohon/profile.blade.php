@@ -33,7 +33,7 @@
                 </span>
             </div>
         </div>
-        <a href="{{ route('profile.edit') }}" class="mt-4 block w-full text-center bg-amber-50 hover:bg-amber-100 text-amber-700 font-semibold py-2.5 rounded-xl transition-all text-sm">
+        <a href="{{ route('pemohon.profile.edit') }}" class="mt-4 block w-full text-center bg-amber-50 hover:bg-amber-100 text-amber-700 font-semibold py-2.5 rounded-xl transition-all text-sm">
             <i class="fas fa-edit mr-1"></i> Edit Profil
         </a>
     </div>

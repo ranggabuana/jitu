@@ -19,6 +19,39 @@
             </div>
         </div>
 
+        <!-- Error Alert -->
+        @if ($errors->any())
+            <div class="bg-red-50 border border-red-200 rounded-2xl p-4">
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-exclamation-circle text-red-600"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-red-800">Mohon Perbaiki Error Berikut</h3>
+                        <ul class="mt-2 text-sm text-red-700 space-y-1">
+                            @foreach ($errors->all() as $error)
+                                <li>• {{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        @if (session('error'))
+            <div class="bg-red-50 border border-red-200 rounded-2xl p-4">
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-exclamation-circle text-red-600"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-red-800">Error</h3>
+                        <p class="text-sm text-red-700 mt-1">{{ session('error') }}</p>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <!-- Form -->
         <form action="{{ route('pemohon.pengajuan.store') }}" method="POST" enctype="multipart/form-data"
             id="pengajuanForm" class="space-y-6">
@@ -86,10 +119,12 @@
                                         </label>
                                         <input type="{{ $field->type }}" name="form_fields[{{ $field->id }}]"
                                             value="{{ old('form_fields.' . $field->id) }}"
-                                            @if ($field->is_required) required @endif
-                                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                            class="w-full px-4 py-3 border @error('form_fields.' . $field->id) border-red-500 @else border-gray-300 @endif rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                                             placeholder="{{ $field->placeholder ?? 'Masukkan ' . strtolower($field->label) }}">
-                                        @if ($field->help_text)
+                                        @error('form_fields.' . $field->id)
+                                            <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                                        @enderror
+                                        @if ($field->help_text && !$errors->has('form_fields.' . $field->id))
                                             <p class="mt-1 text-xs text-gray-500">{{ $field->help_text }}</p>
                                         @endif
                                     </div>
@@ -101,10 +136,13 @@
                                                 <span class="text-red-500">*</span>
                                             @endif
                                         </label>
-                                        <textarea name="form_fields[{{ $field->id }}]" rows="4" @if ($field->is_required) required @endif
-                                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                        <textarea name="form_fields[{{ $field->id }}]" rows="4"
+                                            class="w-full px-4 py-3 border @error('form_fields.' . $field->id) border-red-500 @else border-gray-300 @endif rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                                             placeholder="{{ $field->placeholder ?? 'Masukkan ' . strtolower($field->label) }}">{{ old('form_fields.' . $field->id) }}</textarea>
-                                        @if ($field->help_text)
+                                        @error('form_fields.' . $field->id)
+                                            <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                                        @enderror
+                                        @if ($field->help_text && !$errors->has('form_fields.' . $field->id))
                                             <p class="mt-1 text-xs text-gray-500">{{ $field->help_text }}</p>
                                         @endif
                                     </div>
@@ -117,8 +155,7 @@
                                             @endif
                                         </label>
                                         <select name="form_fields[{{ $field->id }}]"
-                                            @if ($field->is_required) required @endif
-                                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                                            class="w-full px-4 py-3 border @error('form_fields.' . $field->id) border-red-500 @else border-gray-300 @endif rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent">
                                             <option value="">Pilih {{ strtolower($field->label) }}</option>
                                             @if (is_array($field->options))
                                                 @foreach ($field->options as $option)
@@ -129,7 +166,10 @@
                                                 @endforeach
                                             @endif
                                         </select>
-                                        @if ($field->help_text)
+                                        @error('form_fields.' . $field->id)
+                                            <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                                        @enderror
+                                        @if ($field->help_text && !$errors->has('form_fields.' . $field->id))
                                             <p class="mt-1 text-xs text-gray-500">{{ $field->help_text }}</p>
                                         @endif
                                     </div>
@@ -148,14 +188,16 @@
                                                         <input type="radio" name="form_fields[{{ $field->id }}]"
                                                             value="{{ $option }}"
                                                             @if (old('form_fields.' . $field->id) == $option) checked @endif
-                                                            @if ($field->is_required && $loop->first) required @endif
                                                             class="w-4 h-4 text-amber-600 focus:ring-amber-500">
                                                         <span class="text-sm text-gray-700">{{ $option }}</span>
                                                     </label>
                                                 @endforeach
                                             @endif
                                         </div>
-                                        @if ($field->help_text)
+                                        @error('form_fields.' . $field->id)
+                                            <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                                        @enderror
+                                        @if ($field->help_text && !$errors->has('form_fields.' . $field->id))
                                             <p class="mt-1 text-xs text-gray-500">{{ $field->help_text }}</p>
                                         @endif
                                     </div>
@@ -178,7 +220,10 @@
                                                 @endforeach
                                             @endif
                                         </div>
-                                        @if ($field->help_text)
+                                        @error('form_fields.' . $field->id)
+                                            <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                                        @enderror
+                                        @if ($field->help_text && !$errors->has('form_fields.' . $field->id))
                                             <p class="mt-1 text-xs text-gray-500">{{ $field->help_text }}</p>
                                         @endif
                                     </div>
@@ -191,10 +236,9 @@
                                             @endif
                                         </label>
                                         <div
-                                            class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-amber-500 transition-colors">
+                                            class="border-2 @error('form_files.' . $field->id) border-red-500 @else border-gray-300 @endif border-dashed rounded-xl p-6 text-center hover:border-amber-500 transition-colors">
                                             <input type="file" name="form_files[{{ $field->id }}]"
                                                 id="file_{{ $field->id }}"
-                                                @if ($field->is_required) required @endif
                                                 accept="{{ $field->file_types ?? '*' }}" class="hidden"
                                                 onchange="previewFile(this, {{ $field->id }})">
                                             <label for="file_{{ $field->id }}" class="cursor-pointer">
@@ -210,7 +254,10 @@
                                             </label>
                                             <div id="preview_{{ $field->id }}" class="mt-3 hidden"></div>
                                         </div>
-                                        @if ($field->help_text)
+                                        @error('form_files.' . $field->id)
+                                            <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                                        @enderror
+                                        @if ($field->help_text && !$errors->has('form_files.' . $field->id))
                                             <p class="mt-1 text-xs text-gray-500">{{ $field->help_text }}</p>
                                         @endif
                                     </div>
@@ -278,24 +325,22 @@
             }
         }
 
-        // Form validation
-        document.getElementById('pengajuanForm').addEventListener('submit', function(e) {
-            const requiredFields = this.querySelectorAll('[required]');
-            let isValid = true;
+        // Scroll to error alert if there are validation errors
+        @if ($errors->any())
+            document.addEventListener('DOMContentLoaded', function() {
+                const errorAlert = document.querySelector('.bg-red-50');
+                if (errorAlert) {
+                    errorAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
 
-            requiredFields.forEach(field => {
-                if (!field.value.trim()) {
-                    isValid = false;
-                    field.classList.add('border-red-500');
-                } else {
-                    field.classList.remove('border-red-500');
+                // Add click handler to focus on first error field
+                const firstErrorField = document.querySelector('.border-red-500');
+                if (firstErrorField) {
+                    setTimeout(() => {
+                        firstErrorField.focus();
+                    }, 500);
                 }
             });
-
-            if (!isValid) {
-                e.preventDefault();
-                alert('Mohon lengkapi semua field yang wajib diisi!');
-            }
-        });
+        @endif
     </script>
 </x-pemohon.layout>
