@@ -259,10 +259,14 @@ class DashboardController extends Controller
             $validationFlows = $perijinan->activeValidationFlows()->orderBy('order')->get();
 
             foreach ($validationFlows as $index => $flow) {
+                // Untuk role tertentu (FO, BO, Verifikator, Kadin), user_id bisa NULL
+                // karena semua user dengan role tersebut bisa validasi
+                $assignedUserId = $flow->assigned_user_id;
+                
                 DataPerijinanValidasi::create([
                     'data_perijinan_id' => $data->id,
                     'validation_flow_id' => $flow->id,
-                    'user_id' => $flow->user_id,
+                    'user_id' => $assignedUserId, // NULL untuk FO/BO/Verifikator/Kadin jika tidak di-assign
                     'status' => 'pending',
                     'order' => $index + 1,
                 ]);

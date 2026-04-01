@@ -202,6 +202,122 @@
                 </div>
             </div>
 
+            @if($application->status === 'perbaikan')
+                <!-- Info Box - Status Perbaikan -->
+                <div class="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-900/10 border-2 border-orange-300 dark:border-orange-700 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <div class="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="mdi mdi-arrow-return text-white text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-orange-800 dark:text-orange-300 mb-2">
+                                <i class="mdi mdi-information"></i>
+                                Menunggu Perbaikan Pemohon
+                            </h3>
+                            <p class="text-orange-700 dark:text-orange-400 text-sm mb-3">
+                                Pengajuan ini telah dikembalikan untuk diperbaiki. Validator tidak dapat melakukan validasi sampai pemohon submit ulang.
+                            </p>
+                            @if($application->catatan_perbaikan)
+                                <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border border-orange-200 dark:border-orange-700">
+                                    <p class="text-xs text-orange-800 dark:text-orange-300 font-semibold mb-1">Catatan Perbaikan:</p>
+                                    <p class="text-sm text-gray-700 dark:text-gray-300">{{ $application->catatan_perbaikan }}</p>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            <!-- Validation Form - Only show if user can validate current step -->
+            @php
+                $canValidate = false;
+                $currentValidasi = null;
+                $isPerbaikan = $application->status === 'perbaikan';
+                
+                // Admin hanya bisa memantau, tidak bisa validasi
+                if (Auth::user()->isAdmin()) {
+                    $canValidate = false; // Admin tidak bisa validasi
+                } elseif ($isPerbaikan) {
+                    $canValidate = false; // Status perbaikan - tunggu submit ulang
+                } else {
+                    // Cek apakah user ditugaskan di tahap validasi saat ini
+                    $currentValidasi = $application->validasiRecords()
+                        ->where('order', $application->current_step)
+                        ->first();
+                    
+                    if ($currentValidasi) {
+                        $validationFlow = $currentValidasi->validationFlow;
+                        $userRole = Auth::user()->role;
+                        
+                        // Role yang tidak memerlukan assigned_user_id (semua user dengan role ini bisa validasi)
+                        $rolesWithoutAssignment = ['fo', 'bo', 'verifikator', 'kadin'];
+                        
+                        if (in_array($userRole, $rolesWithoutAssignment)) {
+                            // Cek apakah role user match dengan role di validation flow
+                            $canValidate = ($userRole === $validationFlow->role) &&
+                                           $currentValidasi->status === 'pending' &&
+                                           !in_array($application->status, ['rejected', 'approved']);
+                        } else {
+                            // Role yang memerlukan assigned_user_id (Operator OPD, Kepala OPD)
+                            $canValidate = ($currentValidasi->user_id === Auth::id()) &&
+                                           $currentValidasi->status === 'pending' &&
+                                           !in_array($application->status, ['rejected', 'approved']);
+                        }
+                    }
+                }
+                
+                $isRejected = $application->status === 'rejected';
+                $isApproved = $application->status === 'approved';
+            @endphp
+
+            @if($canValidate && !$isRejected && !$isApproved)
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border-2 border-blue-200 dark:border-blue-800 p-5">
+                    <h3 class="font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+                        <i class="mdi mdi-clipboard-check text-blue-600"></i>
+                        Aksi Validasi
+                    </h3>
+                    
+                    <div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                        <p class="text-sm text-blue-800 dark:text-blue-300">
+                            <i class="mdi mdi-information"></i>
+                            <strong>Anda dapat melakukan validasi pada tahap ini.</strong>
+                        </p>
+                    </div>
+
+                    <form action="{{ route('data-perijinan.validate', $application->id) }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="action" id="validationAction" value="">
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Catatan <span class="text-gray-400">(Opsional)</span>
+                            </label>
+                            <textarea name="catatan" id="catatan" rows="3" 
+                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Tambahkan catatan untuk pemohon..."></textarea>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" onclick="submitValidation('approved')" 
+                                class="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all">
+                                <i class="mdi mdi-check-circle"></i>
+                                <span>Setujui</span>
+                            </button>
+                            <button type="button" onclick="showRejectForm()" 
+                                class="flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-all">
+                                <i class="mdi mdi-close-circle"></i>
+                                <span>Tolak</span>
+                            </button>
+                        </div>
+                        <button type="button" onclick="showRevisionForm()" 
+                            class="w-full mt-2 flex items-center justify-center gap-2 px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-semibold transition-all">
+                            <i class="mdi mdi-arrow-return"></i>
+                            <span>Kembalikan untuk Perbaikan</span>
+                        </button>
+                    </form>
+                </div>
+            @endif
+
             @if($application->catatan_perbaikan)
                 <div class="bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-400 p-4 rounded-r-xl">
                     <h4 class="font-bold text-orange-800 dark:text-orange-300 mb-2 flex items-center gap-2">
@@ -310,5 +426,113 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') closeImagePreview();
         });
+
+        // Validation Form Functions
+        function submitValidation(action) {
+            const catatan = document.getElementById('catatan').value;
+            
+            let confirmMessage = '';
+            let confirmTitle = '';
+            let confirmIcon = '';
+            let confirmColor = '';
+
+            if (action === 'approved') {
+                confirmTitle = 'Setujui Pengajuan?';
+                confirmMessage = 'Apakah Anda yakin ingin menyetujui pengajuan ini?';
+                confirmIcon = 'check-circle';
+                confirmColor = '#16a34a';
+            } else if (action === 'rejected') {
+                confirmTitle = 'Tolak Pengajuan?';
+                confirmMessage = 'Apakah Anda yakin ingin menolak pengajuan ini? Pengajuan akan dihentikan dan tidak dapat dilanjutkan.';
+                confirmIcon = 'close-circle';
+                confirmColor = '#dc2626';
+            } else if (action === 'revision') {
+                confirmTitle = 'Kembalikan untuk Perbaikan?';
+                confirmMessage = 'Pengajuan akan dikembalikan ke pemohon untuk diperbaiki.';
+                confirmIcon = 'arrow-return';
+                confirmColor = '#ea580c';
+            }
+
+            Swal.fire({
+                title: confirmTitle,
+                text: confirmMessage,
+                icon: action === 'approved' ? 'question' : 'warning',
+                showCancelButton: true,
+                confirmButtonColor: confirmColor,
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Ya, Lanjutkan',
+                cancelButtonText: 'Batal',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('validationAction').value = action;
+                    document.querySelector('form').submit();
+                }
+            });
+        }
+
+        function showRejectForm() {
+            Swal.fire({
+                title: 'Tolak Pengajuan',
+                html: `
+                    <p class="text-left text-sm text-gray-600 mb-3">
+                        <i class="mdi mdi-alert text-red-500"></i>
+                        Penolakan akan menghentikan proses validasi. Pastikan alasan penolakan jelas.
+                    </p>
+                    <textarea id="swal-catatan" class="swal2-textarea" rows="4" placeholder="Masukkan alasan penolakan..."></textarea>
+                `,
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Tolak Pengajuan',
+                cancelButtonText: 'Batal',
+                reverseButtons: true,
+                preConfirm: () => {
+                    const catatan = document.getElementById('swal-catatan').value;
+                    if (!catatan || catatan.trim() === '') {
+                        Swal.showValidationMessage('Alasan penolakan wajib diisi');
+                        return false;
+                    }
+                    return catatan;
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('catatan').value = result.value;
+                    submitValidation('rejected');
+                }
+            });
+        }
+
+        function showRevisionForm() {
+            Swal.fire({
+                title: 'Kembalikan untuk Perbaikan',
+                html: `
+                    <p class="text-left text-sm text-gray-600 mb-3">
+                        <i class="mdi mdi-information text-orange-500"></i>
+                        Berikan catatan perbaikan yang jelas untuk membantu pemohon.
+                    </p>
+                    <textarea id="swal-catatan-revision" class="swal2-textarea" rows="4" placeholder="Masukkan catatan perbaikan..."></textarea>
+                `,
+                showCancelButton: true,
+                confirmButtonColor: '#ea580c',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Kembalikan',
+                cancelButtonText: 'Batal',
+                reverseButtons: true,
+                preConfirm: () => {
+                    const catatan = document.getElementById('swal-catatan-revision').value;
+                    if (!catatan || catatan.trim() === '') {
+                        Swal.showValidationMessage('Catatan perbaikan wajib diisi');
+                        return false;
+                    }
+                    return catatan;
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('catatan').value = result.value;
+                    submitValidation('revision');
+                }
+            });
+        }
     </script>
 </x-layout>

@@ -89,10 +89,34 @@
                         </span>
                     @endif
                 </a>
+                <a href="{{ route('data-perijinan.perlu-perbaikan') }}"
+                    class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-lg mx-2 my-1 flex items-center justify-between submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('data-perijinan.perlu-perbaikan') ? 'active-menu' : '' }}">
+                    <div class="flex items-center">
+                        <i class="mdi mdi-circle text-[8px] mr-2 text-orange-500"></i>
+                        <span class="text-orange-600 dark:text-orange-400">Perlu Perbaikan</span>
+                    </div>
+                    @if($countPerluPerbaikan > 0)
+                        <span class="inline-flex items-center justify-center min-w-5 h-5 px-1.5 ml-2 text-xs font-bold text-white bg-orange-500 rounded-full">
+                            {{ $countPerluPerbaikan }}
+                        </span>
+                    @endif
+                </a>
                 <a href="{{ route('data-perijinan.selesai') }}"
                     class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-lg mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('data-perijinan.selesai') ? 'active-menu' : '' }}">
                     <i class="mdi mdi-circle text-[8px] mr-2 text-gray-500 dark:text-gray-400"></i>
                     <span>Selesai</span>
+                </a>
+                <a href="{{ route('data-perijinan.ditolak') }}"
+                    class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-lg mx-2 my-1 flex items-center justify-between submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('data-perijinan.ditolak') ? 'active-menu' : '' }}">
+                    <div class="flex items-center">
+                        <i class="mdi mdi-circle text-[8px] mr-2 text-red-500"></i>
+                        <span class="text-red-600 dark:text-red-400">Ditolak</span>
+                    </div>
+                    @if($countDitolak > 0)
+                        <span class="inline-flex items-center justify-center min-w-5 h-5 px-1.5 ml-2 text-xs font-bold text-white bg-red-600 rounded-full">
+                            {{ $countDitolak }}
+                        </span>
+                    @endif
                 </a>
             </div>
         </div>

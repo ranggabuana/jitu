@@ -120,8 +120,11 @@ Route::middleware(['auth'])->group(function () {
     // Data Perijinan Routes (Admin Only)
     Route::middleware(['admin.role'])->prefix('data-perijinan')->name('data-perijinan.')->group(function () {
         Route::get('/dalam-proses', [DataPerijinanController::class, 'dalamProses'])->name('dalam-proses');
+        Route::get('/perlu-perbaikan', [DataPerijinanController::class, 'perluPerbaikan'])->name('perlu-perbaikan');
         Route::get('/selesai', [DataPerijinanController::class, 'selesai'])->name('selesai');
+        Route::get('/ditolak', [DataPerijinanController::class, 'ditolak'])->name('ditolak');
         Route::get('/{id}', [DataPerijinanController::class, 'show'])->name('show');
+        Route::post('/{id}/validate', [DataPerijinanController::class, 'processValidation'])->name('validate');
         Route::patch('/{id}/status', [DataPerijinanController::class, 'updateStatus'])->name('update-status');
     });
 

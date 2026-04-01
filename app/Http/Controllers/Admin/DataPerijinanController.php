@@ -150,19 +150,19 @@ class DataPerijinanController extends Controller
     public function selesai(Request $request)
     {
         $user = auth()->user();
-        
+
         $query = DataPerijinan::with(['user', 'perijinan']);
 
         // Filter data based on user's assigned validation flows
         // Admin can see all, other users only see their assigned perijinan
         if (!$user->isAdmin()) {
             $accessiblePerijinanIds = $user->getAccessiblePerijinanIds();
-            
+
             // If user has assigned perijinan, filter by those IDs
             if (!empty($accessiblePerijinanIds)) {
                 // Filter by perijinan IDs
                 $query->whereIn('perijinan_id', $accessiblePerijinanIds);
-                
+
                 // For collective roles (FO, BO, Verifikator, Kadin), also filter by their role
                 $collectiveRoles = ['fo', 'bo', 'verifikator', 'kadin'];
                 if (in_array($user->role, $collectiveRoles)) {
@@ -170,7 +170,7 @@ class DataPerijinanController extends Controller
                     $validationFlowIds = PerijinanValidationFlow::whereIn('role', $collectiveRoles)
                         ->where('is_active', true)
                         ->pluck('id');
-                    
+
                     // Filter applications that have validation flow for this role
                     $query->whereHas('validasiRecords', function($q) use ($validationFlowIds) {
                         $q->whereIn('validation_flow_id', $validationFlowIds);
@@ -179,7 +179,7 @@ class DataPerijinanController extends Controller
             } else {
                 // User has no assigned perijinan yet, show empty result with pagination
                 $applications = DataPerijinan::where('id', 0)->paginate(15);
-                
+
                 return view('admin.data-perijinan.selesai', [
                     'applications' => $applications,
                     'totalSelesai' => 0,
@@ -248,6 +248,308 @@ class DataPerijinanController extends Controller
             'totalApproved',
             'perijinanTypes'
         ));
+    }
+
+    /**
+     * Display rejected applications (ditolak).
+     */
+    public function ditolak(Request $request)
+    {
+        $user = auth()->user();
+
+        $query = DataPerijinan::with(['user', 'perijinan', 'validasiRecords']);
+
+        // Filter data based on user's assigned validation flows
+        if (!$user->isAdmin()) {
+            $accessiblePerijinanIds = $user->getAccessiblePerijinanIds();
+
+            if (!empty($accessiblePerijinanIds)) {
+                $query->whereIn('perijinan_id', $accessiblePerijinanIds);
+            } else {
+                $applications = DataPerijinan::where('id', 0)->paginate(15);
+
+                return view('admin.data-perijinan.ditolak', [
+                    'applications' => $applications,
+                    'totalDitolak' => 0,
+                    'perijinanTypes' => collect([])
+                ]);
+            }
+        }
+
+        // Search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('no_registrasi', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('perijinan', function ($q) use ($search) {
+                        $q->where('nama_perijinan', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        // Filter by perijinan type
+        if ($request->filled('perijinan_id')) {
+            $query->where('perijinan_id', $request->perijinan_id);
+        }
+
+        // Get only rejected applications
+        $query->where('status', 'rejected');
+
+        $applications = $query->orderBy('rejected_at', 'desc')->paginate(15)->withQueryString();
+
+        // Statistics
+        if ($user->isAdmin()) {
+            $totalDitolak = DataPerijinan::where('status', 'rejected')->count();
+        } else {
+            $accessibleIds = $user->getAccessiblePerijinanIds();
+            $totalDitolak = DataPerijinan::whereIn('perijinan_id', $accessibleIds)
+                ->where('status', 'rejected')->count();
+        }
+
+        // Perijinan types for filter
+        $perijinanTypes = Perijinan::orderBy('nama_perijinan')->get();
+
+        // Log activity
+        ActivityLog::log(
+            'Melihat daftar perijinan ditolak',
+            null,
+            'viewed',
+            [
+                'search' => $request->search,
+            ],
+            'data_perijinan'
+        );
+
+        return view('admin.data-perijinan.ditolak', compact(
+            'applications',
+            'totalDitolak',
+            'perijinanTypes'
+        ));
+    }
+
+    /**
+     * Display applications that need revision (perlu perbaikan).
+     */
+    public function perluPerbaikan(Request $request)
+    {
+        $user = auth()->user();
+
+        $query = DataPerijinan::with(['user', 'perijinan', 'validasiRecords']);
+
+        // Filter data based on user's assigned validation flows
+        if (!$user->isAdmin()) {
+            $accessiblePerijinanIds = $user->getAccessiblePerijinanIds();
+
+            if (!empty($accessiblePerijinanIds)) {
+                $query->whereIn('perijinan_id', $accessiblePerijinanIds);
+            } else {
+                $applications = DataPerijinan::where('id', 0)->paginate(15);
+
+                return view('admin.data-perijinan.perlu-perbaikan', [
+                    'applications' => $applications,
+                    'totalPerluPerbaikan' => 0,
+                    'perijinanTypes' => collect([])
+                ]);
+            }
+        }
+
+        // Search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('no_registrasi', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('perijinan', function ($q) use ($search) {
+                        $q->where('nama_perijinan', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        // Filter by perijinan type
+        if ($request->filled('perijinan_id')) {
+            $query->where('perijinan_id', $request->perijinan_id);
+        }
+
+        // Get only applications that need revision
+        $query->where('status', 'perbaikan');
+
+        $applications = $query->orderBy('updated_at', 'desc')->paginate(15)->withQueryString();
+
+        // Statistics
+        if ($user->isAdmin()) {
+            $totalPerluPerbaikan = DataPerijinan::where('status', 'perbaikan')->count();
+        } else {
+            $accessibleIds = $user->getAccessiblePerijinanIds();
+            $totalPerluPerbaikan = DataPerijinan::whereIn('perijinan_id', $accessibleIds)
+                ->where('status', 'perbaikan')->count();
+        }
+
+        // Perijinan types for filter
+        $perijinanTypes = Perijinan::orderBy('nama_perijinan')->get();
+
+        // Log activity
+        ActivityLog::log(
+            'Melihat daftar perijinan perlu perbaikan',
+            null,
+            'viewed',
+            [
+                'search' => $request->search,
+            ],
+            'data_perijinan'
+        );
+
+        return view('admin.data-perijinan.perlu-perbaikan', compact(
+            'applications',
+            'totalPerluPerbaikan',
+            'perijinanTypes'
+        ));
+    }
+
+    /**
+     * Process validation (approve/reject) for current step.
+     */
+    public function processValidation(Request $request, $id)
+    {
+        $request->validate([
+            'action' => 'required|in:approved,rejected,revision',
+            'catatan' => 'nullable|string|max:1000',
+        ]);
+
+        $user = auth()->user();
+        $application = DataPerijinan::with([
+            'perijinan.activeValidationFlows',
+            'validasiRecords.validationFlow'
+        ])->findOrFail($id);
+
+        DB::beginTransaction();
+        try {
+            // Admin hanya bisa memantau, tidak bisa validasi
+            if ($user->isAdmin()) {
+                return redirect()->back()->with('error', 'Admin tidak dapat melakukan validasi. Hanya user yang ditugaskan di alur validasi yang dapat melakukan validasi.');
+            }
+
+            // Cek jika status aplikasi adalah 'perbaikan' - tidak bisa divalidasi sebelum disubmit ulang
+            if ($application->status === 'perbaikan') {
+                return redirect()->back()->with('error', 'Pengajuan sedang dalam tahap perbaikan oleh pemohon. Tidak dapat divalidasi sebelum pemohon submit ulang.');
+            }
+
+            // Get current validation step
+            $currentValidasi = $application->validasiRecords()
+                ->where('order', $application->current_step)
+                ->first();
+
+            if (!$currentValidasi) {
+                return redirect()->back()->with('error', 'Tahap validasi saat ini tidak ditemukan.');
+            }
+
+            $validationFlow = $currentValidasi->validationFlow;
+            $userRole = $user->role;
+            
+            // Role yang tidak memerlukan assigned_user_id (semua user dengan role ini bisa validasi)
+            $rolesWithoutAssignment = ['fo', 'bo', 'verifikator', 'kadin'];
+            
+            if (in_array($userRole, $rolesWithoutAssignment)) {
+                // Cek apakah role user match dengan role di validation flow
+                if ($userRole !== $validationFlow->role) {
+                    return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk melakukan validasi pada tahap ini.');
+                }
+            } else {
+                // Role yang memerlukan assigned_user_id (Operator OPD, Kepala OPD, Admin)
+                if ($currentValidasi->user_id !== $user->id) {
+                    return redirect()->back()->with('error', 'Anda tidak ditugaskan untuk melakukan validasi pada tahap ini.');
+                }
+            }
+
+            // Check if already validated
+            if ($currentValidasi->status !== 'pending') {
+                return redirect()->back()->with('error', 'Tahap validasi ini sudah diselesaikan.');
+            }
+
+            // Update validation status
+            $currentValidasi->update([
+                'status' => $request->action,
+                'catatan' => $request->catatan,
+                'validated_at' => now(),
+            ]);
+
+            // Handle based on action
+            if ($request->action === 'approved') {
+                // Check if this is the last validation step
+                $totalSteps = $application->perijinan->activeValidationFlows()->count();
+                
+                if ($application->current_step >= $totalSteps) {
+                    // All validations complete - approve application
+                    $application->update([
+                        'status' => 'approved',
+                        'approved_at' => now(),
+                        'completed_at' => now(),
+                    ]);
+                } else {
+                    // Move to next step
+                    $application->update([
+                        'current_step' => $application->current_step + 1,
+                        'status' => 'in_progress',
+                    ]);
+
+                    // Activate next validation step
+                    $nextValidasi = $application->validasiRecords()
+                        ->where('order', $application->current_step + 1)
+                        ->first();
+                    
+                    if ($nextValidasi) {
+                        $nextValidasi->update(['status' => 'pending']);
+                    }
+                }
+            } elseif ($request->action === 'rejected') {
+                // Reject application - stop all validations
+                $application->update([
+                    'status' => 'rejected',
+                    'catatan_reject' => $request->catatan,
+                    'rejected_at' => now(),
+                ]);
+
+                // Mark all remaining validations as rejected
+                $application->validasiRecords()
+                    ->where('status', 'pending')
+                    ->update(['status' => 'rejected']);
+            } elseif ($request->action === 'revision') {
+                // Send back for revision
+                $application->update([
+                    'status' => 'perbaikan',
+                    'catatan_perbaikan' => $request->catatan,
+                ]);
+            }
+
+            // Log activity
+            $actionLabel = $request->action === 'approved' ? 'Menyetujui' : ($request->action === 'rejected' ? 'Menolak' : 'Meminta perbaikan');
+            ActivityLog::log(
+                "{$actionLabel} validasi perijinan",
+                $application,
+                'updated',
+                [
+                    'action' => $request->action,
+                    'catatan' => $request->catatan,
+                    'current_step' => $application->current_step,
+                    'no_registrasi' => $application->no_registrasi,
+                ],
+                'data_perijinan'
+            );
+
+            DB::commit();
+
+            $successMessage = $request->action === 'approved' ? 'Validasi berhasil disetujui.' : ($request->action === 'rejected' ? 'Pengajuan ditolak.' : 'Pengajuan dikembalikan untuk perbaikan.');
+            return redirect()->route('data-perijinan.show', $id)->with('success', $successMessage);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error processing validation: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat memproses validasi.');
+        }
     }
 
     /**
