@@ -209,8 +209,10 @@ class DashboardController extends Controller
 
                             if ($file && $file->isValid()) {
 
-                                // Generate nama file unik
-                                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                                // Generate nama file unik dengan tetap mempertahankan nama asli
+                                $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                                $extension = $file->getClientOriginalExtension();
+                                $filename = $originalName . '_' . time() . '.' . $extension;
 
                                 // Path upload
                                 $uploadPath = public_path('uploads/perijinan/' . $perijinan->id);
