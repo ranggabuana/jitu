@@ -256,7 +256,7 @@ class DataPerijinanController extends Controller
     public function show($id)
     {
         $user = auth()->user();
-        
+
         $application = DataPerijinan::with([
             'user',
             'perijinan',
@@ -273,9 +273,6 @@ class DataPerijinanController extends Controller
             }
         }
 
-        // Ensure form_files is available (it's already in the model's fillable/casts)
-        // Files should be stored in form_files column as JSON
-        
         // Log activity
         ActivityLog::log(
             'Melihat detail perijinan',
