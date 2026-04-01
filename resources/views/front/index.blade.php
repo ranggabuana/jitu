@@ -7,16 +7,19 @@
             <div class="slide active absolute inset-0 transition-opacity duration-1000">
                 <!-- Background Image with Overlay -->
                 <div class="absolute inset-0 z-0">
-                    <img src="{{ asset('assets/images/slider1.jpg') }}" alt="Layanan Perizinan" class="w-full h-full object-cover">
+                    <img src="{{ asset('assets/images/slider1.jpg') }}" alt="Layanan Perizinan"
+                        class="w-full h-full object-cover">
                     <div class="absolute inset-0 bg-blue-900/70"></div>
                 </div>
 
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 h-full flex items-center">
                     <div class="w-full md:w-1/2 space-y-6 animate-fadeInUp">
-                        <div class="inline-block bg-blue-500/30 backdrop-blur-sm px-4 py-1.5 rounded-full border border-blue-400/30 text-blue-100 text-sm font-semibold mb-2">
+                        <div
+                            class="inline-block bg-blue-500/30 backdrop-blur-sm px-4 py-1.5 rounded-full border border-blue-400/30 text-blue-100 text-sm font-semibold mb-2">
                             <i class="fas fa-star text-yellow-400 mr-2"></i> Layanan Perizinan Terpadu Satu Pintu
                         </div>
-                        <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight text-white">
+                        <h1
+                            class="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight text-white">
                             Urus Izin Kini <br>
                             <span class="text-blue-300">Lebih Mudah & Cepat</span>
                         </h1>
@@ -39,12 +42,13 @@
             </div>
 
             <!-- Slide 2+: Berita Articles -->
-            @foreach($beritaSlider as $berita)
+            @foreach ($beritaSlider as $berita)
                 <div class="slide absolute inset-0 transition-opacity duration-1000 opacity-0">
                     <!-- Background Image with Overlay -->
                     <div class="absolute inset-0 z-0">
-                        @if($berita->gambar)
-                            <img src="{{ asset($berita->gambar) }}" alt="{{ $berita->judul }}" class="w-full h-full object-cover">
+                        @if ($berita->gambar)
+                            <img src="{{ asset($berita->gambar) }}" alt="{{ $berita->judul }}"
+                                class="w-full h-full object-cover">
                         @else
                             <div class="w-full h-full bg-gradient-to-br from-blue-800 via-blue-700 to-indigo-900"></div>
                         @endif
@@ -54,27 +58,29 @@
                     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 h-full flex items-center">
                         <div class="w-full md:w-2/3 space-y-6 animate-fadeInUp">
                             <!-- Category Badge -->
-                            <div class="inline-block bg-red-500/90 backdrop-blur-sm px-4 py-1.5 rounded-full border border-red-400/30 text-white text-sm font-semibold">
+                            <div
+                                class="inline-block bg-red-500/90 backdrop-blur-sm px-4 py-1.5 rounded-full border border-red-400/30 text-white text-sm font-semibold">
                                 <i class="fas fa-newspaper mr-2"></i> Berita Terbaru
                             </div>
-                            
+
                             <!-- Title with Overlay Effect -->
-                            <h2 class="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight text-white drop-shadow-lg">
+                            <h2
+                                class="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight text-white drop-shadow-lg">
                                 {{ $berita->judul }}
                             </h2>
-                            
+
                             <!-- Excerpt -->
                             <p class="text-lg text-gray-200 max-w-2xl leading-relaxed">
                                 {{ Str::limit(strip_tags($berita->konten), 200) }}
                             </p>
-                            
+
                             <!-- Meta Info -->
                             <div class="flex items-center gap-6 text-gray-300">
                                 <span class="flex items-center gap-2">
                                     <i class="far fa-calendar text-yellow-400"></i>
                                     {{ $berita->created_at->isoFormat('D MMMM Y') }}
                                 </span>
-                                @if($berita->user)
+                                @if ($berita->user)
                                     <span class="flex items-center gap-2">
                                         <i class="far fa-user text-yellow-400"></i>
                                         {{ $berita->user->name }}
@@ -85,7 +91,7 @@
                                     {{ number_format($berita->views) }} views
                                 </span>
                             </div>
-                            
+
                             <!-- Read More Button -->
                             <div class="pt-4 flex flex-wrap gap-4">
                                 <a href="{{ route('berita.show', $berita->id) }}"
@@ -108,8 +114,8 @@
         <!-- Slider Navigation Dots -->
         <div class="absolute bottom-12 left-1/2 transform -translate-x-1/2 z-30 flex items-center gap-3">
             @php $totalSlides = 1 + $beritaSlider->count(); @endphp
-            @for($i = 0; $i < $totalSlides; $i++)
-                <button onclick="goToSlide({{ $i }})" 
+            @for ($i = 0; $i < $totalSlides; $i++)
+                <button onclick="goToSlide({{ $i }})"
                     class="slider-dot w-3 h-3 rounded-full border-2 border-white transition-all duration-300 {{ $i === 0 ? 'bg-white' : 'bg-white/30' }}"
                     aria-label="Slide {{ $i + 1 }}">
                 </button>
@@ -117,10 +123,12 @@
         </div>
 
         <!-- Slider Arrows -->
-        <button onclick="prevSlide()" class="absolute left-4 top-1/2 transform -translate-y-1/2 z-20 bg-white/20 hover:bg-white/40 backdrop-blur-sm text-white p-4 rounded-full transition-all">
+        <button onclick="prevSlide()"
+            class="absolute left-4 top-1/2 transform -translate-y-1/2 z-20 bg-white/20 hover:bg-white/40 backdrop-blur-sm text-white p-4 rounded-full transition-all">
             <i class="fas fa-chevron-left text-2xl"></i>
         </button>
-        <button onclick="nextSlide()" class="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 bg-white/20 hover:bg-white/40 backdrop-blur-sm text-white p-4 rounded-full transition-all">
+        <button onclick="nextSlide()"
+            class="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 bg-white/20 hover:bg-white/40 backdrop-blur-sm text-white p-4 rounded-full transition-all">
             <i class="fas fa-chevron-right text-2xl"></i>
         </button>
     </header>
@@ -144,7 +152,7 @@
                 slide.classList.remove('active');
                 slide.classList.remove('opacity-100');
                 slide.classList.add('opacity-0');
-                
+
                 if (i === currentSlide) {
                     slide.classList.add('active');
                     slide.classList.remove('opacity-0');
@@ -207,15 +215,16 @@
         <div class="max-w-7xl mx-auto">
             <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
                 <h2 class="text-center text-xl font-bold text-gray-800 mb-6 flex items-center justify-center gap-2">
-                    <i class="fas fa-search-location text-blue-600"></i> 
+                    <i class="fas fa-search-location text-blue-600"></i>
                     Lacak Status Permohonan
                 </h2>
-                
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Track Perizinan -->
                     <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
                         <div class="flex items-center gap-3 mb-4">
-                            <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white text-xl">
+                            <div
+                                class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white text-xl">
                                 <i class="fas fa-file-contract"></i>
                             </div>
                             <div>
@@ -225,14 +234,15 @@
                         </div>
                         <div class="flex gap-3">
                             <div class="relative flex-1">
-                                <i class="fas fa-qrcode absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                                <input type="text"
-                                    id="trackPerizinanInput"
+                                <i
+                                    class="fas fa-qrcode absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                <input type="text" id="trackPerizinanInput"
                                     placeholder="Masukkan Nomor Registrasi Izin"
                                     class="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                                     onkeypress="if(event.key === 'Enter') trackPerizinan()">
                             </div>
-                            <button onclick="trackPerizinan()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-all flex items-center gap-2">
+                            <button onclick="trackPerizinan()"
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-all flex items-center gap-2">
                                 <i class="fas fa-search"></i>
                                 <span class="hidden lg:inline">Lacak</span>
                             </button>
@@ -242,7 +252,8 @@
                     <!-- Track Pengaduan -->
                     <div class="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-6 border border-orange-100">
                         <div class="flex items-center gap-3 mb-4">
-                            <div class="w-12 h-12 bg-orange-600 rounded-xl flex items-center justify-center text-white text-xl">
+                            <div
+                                class="w-12 h-12 bg-orange-600 rounded-xl flex items-center justify-center text-white text-xl">
                                 <i class="fas fa-bullhorn"></i>
                             </div>
                             <div>
@@ -252,14 +263,14 @@
                         </div>
                         <div class="flex gap-3">
                             <div class="relative flex-1">
-                                <i class="fas fa-ticket-alt absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                                <input type="text" 
-                                    id="trackPengaduanInput"
-                                    placeholder="Masukkan Nomor Pengaduan"
+                                <i
+                                    class="fas fa-ticket-alt absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                <input type="text" id="trackPengaduanInput" placeholder="Masukkan Nomor Pengaduan"
                                     class="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all"
                                     onkeypress="if(event.key === 'Enter') trackPengaduan()">
                             </div>
-                            <button onclick="trackPengaduan()" class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-all flex items-center gap-2">
+                            <button onclick="trackPengaduan()"
+                                class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-all flex items-center gap-2">
                                 <i class="fas fa-search"></i>
                                 <span class="hidden lg:inline">Lacak</span>
                             </button>
@@ -273,16 +284,19 @@
     <!-- Track Perizinan Modal -->
     <div id="trackPerizinanModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
         <!-- Backdrop -->
-        <div class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeTrackPerizinanModal()"></div>
+        <div class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+            onclick="closeTrackPerizinanModal()"></div>
 
         <!-- Modal Content -->
         <div class="flex items-center justify-center min-h-screen px-4 py-8">
-            <div class="bg-white rounded-3xl shadow-2xl max-w-3xl w-full relative z-10 overflow-hidden animate-modalSlideUp">
+            <div
+                class="bg-white rounded-3xl shadow-2xl max-w-3xl w-full relative z-10 overflow-hidden animate-modalSlideUp">
                 <!-- Modal Header -->
                 <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                            <div
+                                class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
                                 <i class="fas fa-file-contract text-xl"></i>
                             </div>
                             <div>
@@ -290,7 +304,8 @@
                                 <p class="text-sm text-blue-100">Status & tahapan validasi permohonan Anda</p>
                             </div>
                         </div>
-                        <button onclick="closeTrackPerizinanModal()" class="w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all">
+                        <button onclick="closeTrackPerizinanModal()"
+                            class="w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
@@ -308,15 +323,17 @@
     <div id="trackModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
         <!-- Backdrop -->
         <div class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeTrackModal()"></div>
-        
+
         <!-- Modal Content -->
         <div class="flex items-center justify-center min-h-screen px-4 py-8">
-            <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full relative z-10 overflow-hidden animate-modalSlideUp">
+            <div
+                class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full relative z-10 overflow-hidden animate-modalSlideUp">
                 <!-- Modal Header -->
                 <div class="bg-gradient-to-r from-orange-600 to-red-600 text-white p-6">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                            <div
+                                class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
                                 <i class="fas fa-bullhorn text-xl"></i>
                             </div>
                             <div>
@@ -324,7 +341,8 @@
                                 <p class="text-sm text-orange-100">Status tindak lanjut pengaduan Anda</p>
                             </div>
                         </div>
-                        <button onclick="closeTrackModal()" class="w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all">
+                        <button onclick="closeTrackModal()"
+                            class="w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
@@ -342,7 +360,9 @@
     <div id="trackLoading" class="fixed inset-0 z-50 hidden items-center justify-center">
         <div class="bg-black/60 backdrop-blur-sm absolute inset-0" onclick="closeTrackModal()"></div>
         <div class="bg-white rounded-2xl shadow-2xl p-8 relative z-10 text-center">
-            <div class="w-16 h-16 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <div
+                class="w-16 h-16 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mx-auto mb-4">
+            </div>
             <p class="text-gray-600 font-medium">Memuat data pengaduan...</p>
         </div>
     </div>
@@ -351,7 +371,8 @@
     <div id="trackPerizinanLoading" class="fixed inset-0 z-50 hidden items-center justify-center">
         <div class="bg-black/60 backdrop-blur-sm absolute inset-0" onclick="closeTrackPerizinanModal()"></div>
         <div class="bg-white rounded-2xl shadow-2xl p-8 relative z-10 text-center">
-            <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4">
+            </div>
             <p class="text-gray-600 font-medium">Memuat data perizinan...</p>
         </div>
     </div>
@@ -377,43 +398,45 @@
             document.getElementById('trackLoading').classList.add('flex');
 
             // Fetch data
-            fetch('{{ route("pengaduan.track") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({ no_pengaduan: noPengaduan })
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('trackLoading').classList.add('hidden');
-                document.getElementById('trackLoading').classList.remove('flex');
+            fetch('{{ route('pengaduan.track') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        no_pengaduan: noPengaduan
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('trackLoading').classList.add('hidden');
+                    document.getElementById('trackLoading').classList.remove('flex');
 
-                if (data.success) {
-                    showTrackModal(data.data);
-                } else {
+                    if (data.success) {
+                        showTrackModal(data.data);
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Tidak Ditemukan',
+                            text: data.message || 'Nomor pengaduan tidak ditemukan!',
+                            confirmButtonColor: '#ea580c',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('trackLoading').classList.add('hidden');
+                    document.getElementById('trackLoading').classList.remove('flex');
                     Swal.fire({
                         icon: 'error',
-                        title: 'Tidak Ditemukan',
-                        text: data.message || 'Nomor pengaduan tidak ditemukan!',
+                        title: 'Error',
+                        text: 'Terjadi kesalahan. Silakan coba lagi.',
                         confirmButtonColor: '#ea580c',
                         confirmButtonText: 'OK'
                     });
-                }
-            })
-            .catch(error => {
-                document.getElementById('trackLoading').classList.add('hidden');
-                document.getElementById('trackLoading').classList.remove('flex');
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Terjadi kesalahan. Silakan coba lagi.',
-                    confirmButtonColor: '#ea580c',
-                    confirmButtonText: 'OK'
+                    console.error('Error:', error);
                 });
-                console.error('Error:', error);
-            });
         }
 
         function showTrackModal(data) {
@@ -478,25 +501,25 @@
 
                     <!-- Respon -->
                     ${data.respon ? `
-                        <div class="p-4 bg-green-50 border-2 border-green-200 rounded-xl">
-                            <div class="flex items-center gap-2 mb-2">
-                                <i class="fas fa-reply text-green-600"></i>
-                                <p class="text-sm text-green-600 font-semibold">Respon / Tindak Lanjut</p>
-                            </div>
-                            <p class="text-gray-700 leading-relaxed mb-2">${data.respon}</p>
-                            ${data.tanggal_respon ? `
+                            <div class="p-4 bg-green-50 border-2 border-green-200 rounded-xl">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <i class="fas fa-reply text-green-600"></i>
+                                    <p class="text-sm text-green-600 font-semibold">Respon / Tindak Lanjut</p>
+                                </div>
+                                <p class="text-gray-700 leading-relaxed mb-2">${data.respon}</p>
+                                ${data.tanggal_respon ? `
                                 <p class="text-xs text-green-600 mt-2"><i class="fas fa-clock mr-1"></i> Ditanggapi pada: ${data.tanggal_respon}</p>
                             ` : ''}
-                        </div>
-                    ` : `
-                        <div class="p-4 bg-yellow-50 border-2 border-yellow-200 rounded-xl">
-                            <div class="flex items-center gap-2">
-                                <i class="fas fa-info-circle text-yellow-600"></i>
-                                <p class="text-sm text-yellow-600 font-semibold">Pengaduan belum ditanggapi</p>
                             </div>
-                            <p class="text-xs text-yellow-600 mt-2">Tim kami akan segera menindaklanjuti pengaduan Anda.</p>
-                        </div>
-                    `}
+                        ` : `
+                            <div class="p-4 bg-yellow-50 border-2 border-yellow-200 rounded-xl">
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-info-circle text-yellow-600"></i>
+                                    <p class="text-sm text-yellow-600 font-semibold">Pengaduan belum ditanggapi</p>
+                                </div>
+                                <p class="text-xs text-yellow-600 mt-2">Tim kami akan segera menindaklanjuti pengaduan Anda.</p>
+                            </div>
+                        `}
                 </div>
 
                 <!-- Modal Footer -->
@@ -548,43 +571,45 @@
             document.getElementById('trackPerizinanLoading').classList.add('flex');
 
             // Fetch data
-            fetch('{{ route("front.perizinan.track") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({ no_registrasi: noRegistrasi })
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('trackPerizinanLoading').classList.add('hidden');
-                document.getElementById('trackPerizinanLoading').classList.remove('flex');
+            fetch('{{ route('front.perizinan.track') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        no_registrasi: noRegistrasi
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('trackPerizinanLoading').classList.add('hidden');
+                    document.getElementById('trackPerizinanLoading').classList.remove('flex');
 
-                if (data.success) {
-                    showTrackPerizinanModal(data.data);
-                } else {
+                    if (data.success) {
+                        showTrackPerizinanModal(data.data);
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Tidak Ditemukan',
+                            text: data.message || 'Nomor registrasi tidak ditemukan!',
+                            confirmButtonColor: '#2563eb',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('trackPerizinanLoading').classList.add('hidden');
+                    document.getElementById('trackPerizinanLoading').classList.remove('flex');
                     Swal.fire({
                         icon: 'error',
-                        title: 'Tidak Ditemukan',
-                        text: data.message || 'Nomor registrasi tidak ditemukan!',
+                        title: 'Error',
+                        text: 'Terjadi kesalahan. Silakan coba lagi.',
                         confirmButtonColor: '#2563eb',
                         confirmButtonText: 'OK'
                     });
-                }
-            })
-            .catch(error => {
-                document.getElementById('trackPerizinanLoading').classList.add('hidden');
-                document.getElementById('trackPerizinanLoading').classList.remove('flex');
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Terjadi kesalahan. Silakan coba lagi.',
-                    confirmButtonColor: '#2563eb',
-                    confirmButtonText: 'OK'
+                    console.error('Error:', error);
                 });
-                console.error('Error:', error);
-            });
         }
 
         function showTrackPerizinanModal(data) {
@@ -616,7 +641,8 @@
             let timelineHtml = '';
             if (data.validasi_records && data.validasi_records.length > 0) {
                 timelineHtml = '<div class="relative mt-6">';
-                timelineHtml += '<div class="absolute left-8 top-4 bottom-4 w-0.5 bg-gradient-to-b from-blue-400 via-purple-400 to-pink-400 rounded-full"></div>';
+                timelineHtml +=
+                    '<div class="absolute left-8 top-4 bottom-4 w-0.5 bg-gradient-to-b from-blue-400 via-purple-400 to-pink-400 rounded-full"></div>';
                 timelineHtml += '<div class="space-y-6">';
 
                 data.validasi_records.forEach((validasi, index) => {
@@ -627,7 +653,7 @@
 
                     let bgClass = 'bg-gradient-to-br from-gray-300 to-gray-400';
                     let iconClass = 'fa-hourglass-start';
-                    
+
                     if (isCompleted) {
                         bgClass = 'bg-gradient-to-br from-green-500 to-green-600';
                         iconClass = 'fa-check';
@@ -639,9 +665,9 @@
                         iconClass = 'fa-exclamation';
                     }
 
-                    const borderClass = isCompleted ? 'border-green-200' : 
-                                       isRejected ? 'border-red-200' : 
-                                       isRevision ? 'border-orange-200' : 'border-gray-200';
+                    const borderClass = isCompleted ? 'border-green-200' :
+                        isRejected ? 'border-red-200' :
+                        isRevision ? 'border-orange-200' : 'border-gray-200';
 
                     timelineHtml += `
                         <div class="relative flex items-start gap-4 pl-4">
@@ -659,25 +685,25 @@
                                     </span>
                                 </div>
                                 ${validasi.catatan ? `
-                                    <div class="mt-3 bg-white rounded-lg p-3 border border-gray-200">
-                                        <p class="text-sm text-gray-700">
-                                            <i class="fas fa-comment-alt text-blue-500 mr-2"></i>
-                                            <strong>Catatan:</strong> ${validasi.catatan}
-                                        </p>
-                                    </div>
-                                ` : ''}
+                                        <div class="mt-3 bg-white rounded-lg p-3 border border-gray-200">
+                                            <p class="text-sm text-gray-700">
+                                                <i class="fas fa-comment-alt text-blue-500 mr-2"></i>
+                                                <strong>Catatan:</strong> ${validasi.catatan}
+                                            </p>
+                                        </div>
+                                    ` : ''}
                                 ${validasi.validated_at ? `
-                                    <p class="text-xs text-gray-500 mt-2">
-                                        <i class="fas fa-clock mr-1"></i>
-                                        Divalidasi pada ${new Date(validasi.validated_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} WIB
-                                    </p>
-                                ` : ''}
+                                        <p class="text-xs text-gray-500 mt-2">
+                                            <i class="fas fa-clock mr-1"></i>
+                                            Divalidasi pada ${new Date(validasi.validated_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} WIB
+                                        </p>
+                                    ` : ''}
                                 ${validasi.validator ? `
-                                    <div class="flex items-center gap-2 mt-2 text-sm text-gray-600">
-                                        <i class="fas fa-user-circle text-blue-500"></i>
-                                        <span>${validasi.validator.name}</span>
-                                    </div>
-                                ` : ''}
+                                        <div class="flex items-center gap-2 mt-2 text-sm text-gray-600">
+                                            <i class="fas fa-user-circle text-blue-500"></i>
+                                            <span>${validasi.validator.name}</span>
+                                        </div>
+                                    ` : ''}
                             </div>
                         </div>
                     `;
@@ -744,28 +770,60 @@
 
                     <!-- Catatan -->
                     ${data.catatan_perbaikan ? `
-                        <div class="p-4 bg-orange-50 border-l-4 border-orange-400 rounded-r-xl">
-                            <div class="flex items-start gap-3">
-                                <i class="fas fa-exclamation-triangle text-orange-500 text-xl mt-0.5"></i>
-                                <div class="flex-1">
-                                    <h4 class="font-bold text-orange-800 mb-1">Catatan Perbaikan</h4>
-                                    <p class="text-orange-700 text-sm">${data.catatan_perbaikan}</p>
+                            <div class="p-4 bg-orange-50 border-l-4 border-orange-400 rounded-r-xl">
+                                <div class="flex items-start gap-3">
+                                    <i class="fas fa-exclamation-triangle text-orange-500 text-xl mt-0.5"></i>
+                                    <div class="flex-1">
+                                        <h4 class="font-bold text-orange-800 mb-1">Catatan Perbaikan</h4>
+                                        <p class="text-orange-700 text-sm">${data.catatan_perbaikan}</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ` : ''}
+                        ` : ''}
 
                     ${data.catatan_reject ? `
-                        <div class="p-4 bg-red-50 border-l-4 border-red-400 rounded-r-xl">
-                            <div class="flex items-start gap-3">
-                                <i class="fas fa-times-circle text-red-500 text-xl mt-0.5"></i>
-                                <div class="flex-1">
-                                    <h4 class="font-bold text-red-800 mb-1">Penolakan</h4>
-                                    <p class="text-red-700 text-sm">${data.catatan_reject}</p>
+                            <div class="p-4 bg-red-50 border-l-4 border-red-400 rounded-r-xl">
+                                <div class="flex items-start gap-3">
+                                    <i class="fas fa-times-circle text-red-500 text-xl mt-0.5"></i>
+                                    <div class="flex-1">
+                                        <h4 class="font-bold text-red-800 mb-1">Penolakan</h4>
+                                        <p class="text-red-700 text-sm">${data.catatan_reject}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                    <!-- Info Download untuk Semua Status -->
+                    <div class="p-5 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl">
+                        <div class="flex items-start gap-3">
+                            <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-info text-white text-xl"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-bold text-blue-800 mb-2 flex items-center gap-2">
+                                    <i class="fas fa-lightbulb"></i>
+                                    Informasi Pengunduhan Berkas
+                                </h4>
+                                <div class="space-y-2 text-blue-700 text-sm">
+                                    ${data.status === 'approved' ? `
+                                            <p class="flex items-center gap-2">
+                                                <i class="fas fa-check-circle text-green-500"></i>
+                                                <span><strong>Validasi Selesai!</strong> Berkas izin Anda sudah dapat diunduh.</span>
+                                            </p>
+                                        ` : `
+                                            <p class="flex items-center gap-2">
+                                                <i class="fas fa-clock text-yellow-500"></i>
+                                                <span><strong>Validasi Belum Selesai.</strong> Berkas izin dapat diunduh setelah semua tahap validasi selesai.</span>
+                                            </p>
+                                        `}
+                                    <div class="flex items-start gap-2 mt-3 p-3 bg-white/60 rounded-lg">
+                                        <i class="fas fa-key text-blue-500 mt-0.5"></i>
+                                        <span><strong>Cara Unduh:</strong> Login ke akun Anda, kemudian akses dashboard untuk mengunduh berkas izin.</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    ` : ''}
+                    </div>
                 </div>
 
                 <!-- Modal Footer -->
@@ -774,15 +832,10 @@
                         <i class="fas fa-times mr-2"></i>Tutup
                     </button>
                     ${data.status === 'perbaikan' ? `
-                        <a href="{{ url('/login') }}" class="px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white rounded-xl font-semibold transition-all shadow-lg">
-                            <i class="fas fa-edit mr-2"></i>Perbaiki Pengajuan
-                        </a>
-                    ` : ''}
-                    ${data.status === 'approved' ? `
-                        <button onclick="alert('Fitur download sertifikat akan segera tersedia')" class="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-semibold transition-all shadow-lg">
-                            <i class="fas fa-download mr-2"></i>Download Sertifikat
-                        </button>
-                    ` : ''}
+                            <a href="{{ url('/login') }}" class="px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white rounded-xl font-semibold transition-all shadow-lg">
+                                <i class="fas fa-edit mr-2"></i>Perbaiki Pengajuan
+                            </a>
+                        ` : ''}
                 </div>
             `;
 
@@ -812,11 +865,13 @@
                 opacity: 0;
                 transform: translateY(30px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
+
         .animate-modalSlideUp {
             animation: modalSlideUp 0.3s ease-out forwards;
         }
@@ -837,44 +892,48 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 @forelse($layanan as $item)
-                <a href="{{ route('layanan.show', $item->id) }}" class="group">
-                    <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full group-hover:-translate-y-1">
-                        <div class="p-6">
-                            <!-- Icon -->
-                            <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                                <i class="fas fa-file-signature text-white text-2xl"></i>
-                            </div>
-                            
-                            <!-- Title -->
-                            <h3 class="text-lg font-bold text-gray-800 mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors">
-                                {{ $item->nama_perijinan }}
-                            </h3>
-                            
-                            <!-- Description -->
-                            <p class="text-gray-500 text-sm mb-4 line-clamp-3">
-                                {{ strip_tags($item->dasar_hukum) ?: 'Tidak ada deskripsi tersedia' }}
-                            </p>
-                            
-                            <!-- Footer -->
-                            <div class="flex items-center justify-between pt-4 border-t border-gray-100">
-                                <span class="text-xs text-gray-400">
-                                    <i class="fas fa-clock mr-1"></i> Online
-                                </span>
-                                <span class="inline-flex items-center gap-1 text-blue-600 font-semibold text-sm group-hover:gap-2 transition-all">
-                                    Detail <i class="fas fa-arrow-right"></i>
-                                </span>
+                    <a href="{{ route('layanan.show', $item->id) }}" class="group">
+                        <div
+                            class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full group-hover:-translate-y-1">
+                            <div class="p-6">
+                                <!-- Icon -->
+                                <div
+                                    class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                                    <i class="fas fa-file-signature text-white text-2xl"></i>
+                                </div>
+
+                                <!-- Title -->
+                                <h3
+                                    class="text-lg font-bold text-gray-800 mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                                    {{ $item->nama_perijinan }}
+                                </h3>
+
+                                <!-- Description -->
+                                <p class="text-gray-500 text-sm mb-4 line-clamp-3">
+                                    {{ strip_tags($item->dasar_hukum) ?: 'Tidak ada deskripsi tersedia' }}
+                                </p>
+
+                                <!-- Footer -->
+                                <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+                                    <span class="text-xs text-gray-400">
+                                        <i class="fas fa-clock mr-1"></i> Online
+                                    </span>
+                                    <span
+                                        class="inline-flex items-center gap-1 text-blue-600 font-semibold text-sm group-hover:gap-2 transition-all">
+                                        Detail <i class="fas fa-arrow-right"></i>
+                                    </span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </a>
+                    </a>
                 @empty
-                <!-- Placeholder jika tidak ada data -->
-                <div class="col-span-full text-center py-12">
-                    <div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-folder-open text-gray-400 text-3xl"></i>
+                    <!-- Placeholder jika tidak ada data -->
+                    <div class="col-span-full text-center py-12">
+                        <div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-folder-open text-gray-400 text-3xl"></i>
+                        </div>
+                        <p class="text-gray-500 font-medium">Belum ada layanan tersedia</p>
                     </div>
-                    <p class="text-gray-500 font-medium">Belum ada layanan tersedia</p>
-                </div>
                 @endforelse
             </div>
 
