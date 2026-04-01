@@ -16,36 +16,22 @@
         <meta name="error-message" content="{{ session('error') }}">
     @endif
 
-    <!-- Statistics Card -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <!-- Total Selesai -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 transform transition-all hover:scale-105 hover:shadow-lg">
+    <!-- Header Stats -->
+    <div class="mb-6">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 w-1/3">
             <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Total Selesai</p>
-                    <h3 class="text-3xl font-bold text-gray-800 dark:text-white mt-1">{{ number_format($totalSelesai) }}</h3>
-                    <p class="text-xs text-green-500 mt-2">
-                        <i class="mdi mdi-check-circle"></i> Telah disetujui
-                    </p>
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <i class="mdi mdi-folder-check text-white text-3xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-800 dark:text-white">Total Pengajuan</h2>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Pengajuan selesai</p>
+                    </div>
                 </div>
-                <div class="p-4 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
-                    <i class="mdi mdi-file-check text-2xl"></i>
-                </div>
-            </div>
-        </div>
-
-        <!-- Approved -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 transform transition-all hover:scale-105 hover:shadow-lg">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Telah Disetujui</p>
-                    <h3 class="text-3xl font-bold text-gray-800 dark:text-white mt-1">{{ number_format($totalApproved) }}</h3>
-                    <p class="text-xs text-blue-500 mt-2">
-                        <i class="mdi mdi-badge-check"></i> Validasi lengkap
-                    </p>
-                </div>
-                <div class="p-4 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
-                    <i class="mdi mdi-shield-check text-2xl"></i>
+                <div class="text-right">
+                    <div class="text-4xl font-bold text-green-600 dark:text-green-400">{{ number_format($totalSelesai) }}</div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">pengajuan</p>
                 </div>
             </div>
         </div>
@@ -146,10 +132,11 @@
                     @empty
                         <tr>
                             <td colspan="6" class="px-6 py-12 text-center">
-                                <div class="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <i class="mdi mdi-file-document-off text-gray-400 dark:text-gray-500 text-3xl"></i>
+                                <div class="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i class="mdi mdi-inbox-check text-green-400 dark:text-green-500 text-3xl"></i>
                                 </div>
-                                <p class="text-gray-500 dark:text-gray-400">Belum ada pengajuan selesai</p>
+                                <p class="text-gray-500 dark:text-gray-400 font-medium">Belum ada pengajuan selesai</p>
+                                <p class="text-gray-400 dark:text-gray-500 text-sm mt-2">Pengajuan yang telah disetujui akan muncul disini</p>
                             </td>
                         </tr>
                     @endforelse

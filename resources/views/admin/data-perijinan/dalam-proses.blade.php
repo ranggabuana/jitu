@@ -16,68 +16,22 @@
         <meta name="error-message" content="{{ session('error') }}">
     @endif
 
-    <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        <!-- Total Dalam Proses -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 transform transition-all hover:scale-105 hover:shadow-lg">
+    <!-- Header Stats -->
+    <div class="mb-6">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 w-1/3">
             <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Total Dalam Proses</p>
-                    <h3 class="text-3xl font-bold text-gray-800 dark:text-white mt-1">{{ number_format($totalDalamProses) }}</h3>
-                    <p class="text-xs text-blue-500 mt-2">
-                        <i class="mdi mdi-progress-clock"></i> Sedang diproses
-                    </p>
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <i class="mdi mdi-folder-open text-white text-3xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-800 dark:text-white">Total Pengajuan</h2>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Semua pengajuan dalam proses</p>
+                    </div>
                 </div>
-                <div class="p-4 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
-                    <i class="mdi mdi-timer-outline text-2xl"></i>
-                </div>
-            </div>
-        </div>
-
-        <!-- Submitted -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 transform transition-all hover:scale-105 hover:shadow-lg">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Diajukan</p>
-                    <h3 class="text-3xl font-bold text-gray-800 dark:text-white mt-1">{{ number_format($totalSubmitted) }}</h3>
-                    <p class="text-xs text-green-500 mt-2">
-                        <i class="mdi mdi-check-all"></i> Baru diajukan
-                    </p>
-                </div>
-                <div class="p-4 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
-                    <i class="mdi mdi-file-upload text-2xl"></i>
-                </div>
-            </div>
-        </div>
-
-        <!-- In Progress -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 transform transition-all hover:scale-105 hover:shadow-lg">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Dalam Validasi</p>
-                    <h3 class="text-3xl font-bold text-gray-800 dark:text-white mt-1">{{ number_format($totalInProgress) }}</h3>
-                    <p class="text-xs text-yellow-500 mt-2">
-                        <i class="mdi mdi-progress-download"></i> Sedang divalidasi
-                    </p>
-                </div>
-                <div class="p-4 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400">
-                    <i class="mdi mdi-file-document-edit text-2xl"></i>
-                </div>
-            </div>
-        </div>
-
-        <!-- Perlu Perbaikan -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 transform transition-all hover:scale-105 hover:shadow-lg">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Perlu Perbaikan</p>
-                    <h3 class="text-3xl font-bold text-gray-800 dark:text-white mt-1">{{ number_format($totalPerbaikan) }}</h3>
-                    <p class="text-xs text-orange-500 mt-2">
-                        <i class="mdi mdi-alert-circle"></i> Menunggu revisi
-                    </p>
-                </div>
-                <div class="p-4 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400">
-                    <i class="mdi mdi-file-alert text-2xl"></i>
+                <div class="text-right">
+                    <div class="text-4xl font-bold text-blue-600 dark:text-blue-400">{{ number_format($totalDalamProses) }}</div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">pengajuan</p>
                 </div>
             </div>
         </div>
@@ -90,18 +44,6 @@
                 <span class="text-sm text-gray-600 dark:text-gray-400">
                     Total: <strong class="text-gray-800 dark:text-white">{{ $applications->total() }} pengajuan</strong>
                 </span>
-            </div>
-
-            <div class="flex items-center gap-2">
-                <form method="GET" action="{{ route('data-perijinan.dalam-proses') }}" class="flex items-center gap-2">
-                    <select name="status" onchange="this.form.submit()"
-                        class="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">Semua Status</option>
-                        <option value="submitted" {{ request('status') == 'submitted' ? 'selected' : '' }}>Diajukan</option>
-                        <option value="in_progress" {{ request('status') == 'in_progress' ? 'selected' : '' }}>Dalam Validasi</option>
-                        <option value="perbaikan" {{ request('status') == 'perbaikan' ? 'selected' : '' }}>Perlu Perbaikan</option>
-                    </select>
-                </form>
             </div>
 
             <div class="flex items-center gap-2">
@@ -200,10 +142,11 @@
                     @empty
                         <tr>
                             <td colspan="6" class="px-6 py-12 text-center">
-                                <div class="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <i class="mdi mdi-file-document-off text-gray-400 dark:text-gray-500 text-3xl"></i>
+                                <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i class="mdi mdi-inbox text-blue-400 dark:text-blue-500 text-3xl"></i>
                                 </div>
-                                <p class="text-gray-500 dark:text-gray-400">Belum ada pengajuan dalam proses</p>
+                                <p class="text-gray-500 dark:text-gray-400 font-medium">Belum ada pengajuan dalam proses</p>
+                                <p class="text-gray-400 dark:text-gray-500 text-sm mt-2">Pengajuan akan muncul disini setelah ada pemohon yang mengajukan perijinan</p>
                             </td>
                         </tr>
                     @endforelse
