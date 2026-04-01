@@ -147,6 +147,7 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/update-password', [PemohonProfileController::class, 'updatePassword'])->name('update-password');
         });
     });
+
     Route::middleware(['admin.role'])->prefix('pemohon')->name('pemohon.')->group(function () {
         Route::get('/', [PemohonController::class, 'index'])->name('index');
         Route::get('/create', [PemohonController::class, 'create'])->name('create');

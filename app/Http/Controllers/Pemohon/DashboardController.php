@@ -59,10 +59,10 @@ class DashboardController extends Controller
         // Search filter
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('nama_perijinan', 'like', "%{$search}%")
-                  ->orWhere('dasar_hukum', 'like', "%{$search}%")
-                  ->orWhere('persyaratan', 'like', "%{$search}%");
+                    ->orWhere('dasar_hukum', 'like', "%{$search}%")
+                    ->orWhere('persyaratan', 'like', "%{$search}%");
             });
         }
 
@@ -88,7 +88,7 @@ class DashboardController extends Controller
             ]);
         } catch (\Exception $e) {
             \Log::error('Error loading perijinan detail: ' . $e->getMessage());
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal memuat detail perizinan: ' . $e->getMessage()
@@ -104,9 +104,9 @@ class DashboardController extends Controller
         $user = Auth::user();
 
         $perijinan = Perijinan::with([
-            'activeFormFields' => function($query) {
+            'activeFormFields' => function ($query) {
                 $query->orderBy('order', 'asc')
-                      ->orderBy('id', 'asc'); // Fallback sorting by ID if order is same
+                    ->orderBy('id', 'asc'); // Fallback sorting by ID if order is same
             },
             'activeValidationFlows'
         ])->findOrFail($perijinanId);
@@ -126,15 +126,20 @@ class DashboardController extends Controller
             'form_fields' => 'nullable|array',
         ]);
 
-        $perijinan = Perijinan::findOrFail($request->perijinan_id);
-        
-        // Build validation rules based on perijinan's form fields
+        $perijinan = Perijinan::with('activeFormFields')->findOrFail($request->perijinan_id);
+
+        // ===============================
+        // 🔹 VALIDASI DINAMIS
+        // ===============================
         $validationRules = [];
         $validationMessages = [];
-        
-        if ($perijinan->activeFormFields->count() > 0) {
-            foreach ($perijinan->activeFormFields as $field) {
-                $fieldKey = 'form_fields.' . $field->id;
+
+        foreach ($perijinan->activeFormFields as $field) {
+
+            $fieldKey = 'form_fields.' . $field->id;
+
+            if ($field->type !== 'file') {
+
                 $rules = [];
 
                 if ($field->is_required) {
@@ -144,55 +149,96 @@ class DashboardController extends Controller
                     $rules[] = 'nullable';
                 }
 
-                // Add type-specific validation
                 if ($field->type === 'email') {
                     $rules[] = 'email';
-                } elseif ($field->type === 'number') {
+                }
+
+                if ($field->type === 'number') {
                     $rules[] = 'numeric';
-                } elseif ($field->type === 'file') {
-                    // File validation handled separately below
-                    continue;
                 }
 
                 $validationRules[$fieldKey] = $rules;
             }
         }
 
-        // Validate files
-        if ($request->hasFile('form_files')) {
-            foreach ($request->form_files as $fieldId => $file) {
+        // ===============================
+        // 🔹 VALIDASI FILE DINAMIS
+        // ===============================
+        $formFiles = $request->file('form_files');
+
+        if ($formFiles) {
+            foreach ($formFiles as $fieldId => $files) {
+
                 $field = $perijinan->activeFormFields->firstWhere('id', $fieldId);
+
                 if ($field) {
-                    if ($field->is_required) {
-                        $validationRules['form_files.' . $fieldId] = 'required|file|max:10240';
-                        $validationMessages['form_files.' . $fieldId . '.required'] = "File {$field->label} wajib diunggah.";
-                    } else {
-                        $validationRules['form_files.' . $fieldId] = 'nullable|file|max:10240';
+                    foreach ((array) $files as $index => $file) {
+
+                        $ruleKey = "form_files.$fieldId.$index";
+
+                        $rules = ['file', 'max:10240']; // max 10MB
+
+                        if ($field->is_required) {
+                            $rules[] = 'required';
+                        }
+
+                        $validationRules[$ruleKey] = $rules;
                     }
                 }
             }
-        } else {
-            // Check for required files that weren't uploaded
-            foreach ($perijinan->activeFormFields as $field) {
-                if ($field->type === 'file' && $field->is_required) {
-                    $validationRules['form_files.' . $field->id] = 'required';
-                    $validationMessages['form_files.' . $field->id . '.required'] = "File {$field->label} wajib diunggah.";
-                }
-            }
         }
-        
+
         $request->validate($validationRules, $validationMessages);
 
+        // ===============================
+        // 🔹 PROSES SIMPAN
+        // ===============================
         try {
             DB::beginTransaction();
 
-            // Create application with unique registration number
+            $uploadedFiles = [];
+
+            if ($formFiles) {
+                foreach ($formFiles as $fieldId => $files) {
+
+                    $field = $perijinan->activeFormFields->firstWhere('id', $fieldId);
+
+                    if ($field) {
+
+                        foreach ((array) $files as $file) {
+
+                            if ($file && $file->isValid()) {
+
+                                // Generate nama file unik
+                                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+
+                                // Path upload
+                                $uploadPath = public_path('uploads/perijinan/' . $perijinan->id);
+
+                                if (!file_exists($uploadPath)) {
+                                    mkdir($uploadPath, 0755, true);
+                                }
+
+                                // Simpan file
+                                $file->move($uploadPath, $filename);
+
+                                $uploadedFiles[$fieldId][] = 'uploads/perijinan/' . $perijinan->id . '/' . $filename;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ===============================
+            // 🔹 SIMPAN DATA
+            // ===============================
             $data = DataPerijinan::create([
                 'user_id' => $user->id,
                 'perijinan_id' => $perijinan->id,
                 'status' => 'submitted',
                 'current_step' => 1,
                 'form_data' => $request->form_fields ?? [],
+                'form_files' => !empty($uploadedFiles) ? $uploadedFiles : null,
                 'data_pemohon' => [
                     'name' => $user->name,
                     'email' => $user->email,
@@ -205,14 +251,16 @@ class DashboardController extends Controller
                 'submitted_at' => now(),
             ]);
 
-            // Create validation records based on perijinan validation flows
+            // ===============================
+            // 🔹 VALIDASI FLOW
+            // ===============================
             $validationFlows = $perijinan->activeValidationFlows()->orderBy('order')->get();
-            
+
             foreach ($validationFlows as $index => $flow) {
                 DataPerijinanValidasi::create([
                     'data_perijinan_id' => $data->id,
                     'validation_flow_id' => $flow->id,
-                    'user_id' => $flow->user_id, // Assigned validator
+                    'user_id' => $flow->user_id,
                     'status' => 'pending',
                     'order' => $index + 1,
                 ]);
@@ -222,13 +270,14 @@ class DashboardController extends Controller
 
             return redirect()->route('pemohon.pengajuan.success', $data->id)
                 ->with('success', 'Pengajuan berhasil dikirim. Nomor registrasi: ' . $data->no_registrasi);
-            
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Error storing pengajuan: ' . $e->getMessage());
-            
+
+            \Log::error('Error storePengajuan: ' . $e->getMessage());
+
             return redirect()->back()
-                ->with('error', 'Terjadi kesalahan saat mengirim pengajuan. Silakan coba lagi.');
+                ->withInput()
+                ->with('error', 'Terjadi kesalahan saat mengirim pengajuan.');
         }
     }
 
@@ -252,7 +301,7 @@ class DashboardController extends Controller
     public function tracking()
     {
         $user = Auth::user();
-        
+
         $data = DataPerijinan::with(['perijinan', 'validasiRecords.validationFlow'])
             ->where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
@@ -267,7 +316,7 @@ class DashboardController extends Controller
     public function trackingDetail($id)
     {
         $user = Auth::user();
-        
+
         $data = DataPerijinan::with([
             'perijinan',
             'validasiRecords.validationFlow',

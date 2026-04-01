@@ -236,23 +236,24 @@
                                             @endif
                                         </label>
                                         <div
-                                            class="border-2 @error('form_files.' . $field->id) border-red-500 @else border-gray-300 @endif border-dashed rounded-xl p-6 text-center hover:border-amber-500 transition-colors">
-                                            <input type="file" name="form_files[{{ $field->id }}]"
+                                            class="border-2 @error('form_files.' . $field->id) border-red-500 @else border-gray-300 @endif border-dashed rounded-xl p-6 text-center hover:border-amber-500 transition-colors cursor-pointer"
+                                            onclick="document.getElementById('file_{{ $field->id }}').click()">
+                                            <input type="file" name="form_files[{{ $field->id }}][]"
                                                 id="file_{{ $field->id }}"
-                                                accept="{{ $field->file_types ?? '*' }}" class="hidden"
-                                                onchange="previewFile(this, {{ $field->id }})">
-                                            <label for="file_{{ $field->id }}" class="cursor-pointer">
-                                                <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3"></i>
-                                                <p class="text-sm text-gray-600">
-                                                    <span class="font-semibold text-amber-600">Klik untuk upload</span>
-                                                    atau drag & drop
-                                                </p>
-                                                <p class="text-xs text-gray-500 mt-1">
-                                                    {{ $field->file_types ?? 'Semua format' }} (Max
-                                                    {{ $field->file_size ?? '2MB' }})
-                                                </p>
-                                            </label>
-                                            <div id="preview_{{ $field->id }}" class="mt-3 hidden"></div>
+                                                accept="{{ $field->file_types ?? '*' }}"
+                                                style="position: absolute; left: -9999px; opacity: 0;"
+                                                multiple
+                                                onchange="previewFiles(this, {{ $field->id }})">
+                                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3"></i>
+                                            <p class="text-sm text-gray-600">
+                                                <span class="font-semibold text-amber-600">Klik untuk upload</span>
+                                                atau drag & drop
+                                            </p>
+                                            <p class="text-xs text-gray-500 mt-1">
+                                                {{ $field->file_types ?? 'Semua format' }} (Max
+                                                {{ $field->file_size ?? '2MB' }}) - Multiple files
+                                            </p>
+                                            <div id="preview_{{ $field->id }}" class="mt-3"></div>
                                         </div>
                                         @error('form_files.' . $field->id)
                                             <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
@@ -303,25 +304,31 @@
 
     <!-- Scripts -->
     <script>
-        function previewFile(input, fieldId) {
+        function previewFiles(input, fieldId) {
             const preview = document.getElementById('preview_' + fieldId);
-
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                const fileName = file.name;
-                const fileSize = (file.size / 1024).toFixed(2); // KB
-
-                preview.innerHTML = `
-                    <div class="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-3">
-                        <i class="fas fa-file text-green-600 text-2xl"></i>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-semibold text-gray-800 truncate">${fileName}</p>
-                            <p class="text-xs text-gray-500">${fileSize} KB</p>
+            
+            if (input.files && input.files.length > 0) {
+                let html = '<div class="space-y-2">';
+                
+                for (let i = 0; i < input.files.length; i++) {
+                    const file = input.files[i];
+                    const fileName = file.name;
+                    const fileSize = (file.size / 1024).toFixed(2); // KB
+                    
+                    html += `
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-3">
+                            <i class="fas fa-file text-green-600 text-xl"></i>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-semibold text-gray-800 truncate">${fileName}</p>
+                                <p class="text-xs text-gray-500">${fileSize} KB</p>
+                            </div>
+                            <i class="fas fa-check-circle text-green-500"></i>
                         </div>
-                        <i class="fas fa-check-circle text-green-500"></i>
-                    </div>
-                `;
-                preview.classList.remove('hidden');
+                    `;
+                }
+                
+                html += '</div>';
+                preview.innerHTML = html;
             }
         }
 
