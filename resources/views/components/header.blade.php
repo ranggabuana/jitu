@@ -141,18 +141,14 @@
                     <i class="mdi mdi-account-outline text-blue-500 dark:text-blue-400 text-lg mr-3"></i>
                     <span>Profil Saya</span>
                 </a>
-                {{-- <a href="#"
-                    class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
-                    <i class="mdi mdi-cog-outline text-blue-500 dark:text-blue-400 text-lg mr-3"></i>
-                    <span>Settings</span>
-                </a>
-                <a href="#"
-                    class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
-                    <i class="mdi mdi-email-outline text-blue-500 dark:text-blue-400 text-lg mr-3"></i>
-                    <span>Messages</span>
-                    <span
-                        class="ml-auto bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-xs font-medium px-2 py-0.5 rounded-full">3</span>
-                </a> --}}
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit"
+                        class="w-full flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
+                        <i class="mdi mdi-logout text-red-500 dark:text-red-400 text-lg mr-3"></i>
+                        <span>Logout</span>
+                    </button>
+                </form>
             </div>
         </div>
     </div>
