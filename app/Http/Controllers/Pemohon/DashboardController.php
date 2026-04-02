@@ -7,6 +7,7 @@ use App\Models\Perijinan;
 use App\Models\PerijinanFormField;
 use App\Models\DataPerijinan;
 use App\Models\DataPerijinanValidasi;
+use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -38,14 +39,10 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        // Sample messages (placeholder)
-        $messages = [];
-
         return view('pemohon.dashboard.index', compact(
             'user',
             'stats',
-            'recentApplications',
-            'messages'
+            'recentApplications'
         ));
     }
 
@@ -333,6 +330,173 @@ class DashboardController extends Controller
             ->firstOrFail();
 
         return view('pemohon.tracking.detail', compact('data'));
+    }
+
+    /**
+     * Show edit form for pengajuan that needs revision.
+     */
+    public function editPengajuan($id)
+    {
+        $user = Auth::user();
+
+        $data = DataPerijinan::with([
+            'perijinan.activeFormFields' => function ($query) {
+                $query->orderBy('order', 'asc')->orderBy('id', 'asc');
+            }
+        ])
+            ->where('id', $id)
+            ->where('user_id', $user->id)
+            ->where('status', 'perbaikan') // Only allow edit if status is 'perbaikan'
+            ->firstOrFail();
+
+        return view('pemohon.pengajuan.edit', compact('data'));
+    }
+
+    /**
+     * Update pengajuan after revision.
+     */
+    public function updatePengajuan(Request $request, $id)
+    {
+        $user = Auth::user();
+
+        $data = DataPerijinan::with([
+            'perijinan.activeFormFields'
+        ])
+            ->where('id', $id)
+            ->where('user_id', $user->id)
+            ->where('status', 'perbaikan')
+            ->firstOrFail();
+
+        $request->validate([
+            'form_fields' => 'nullable|array',
+        ]);
+
+        $perijinan = $data->perijinan;
+
+        // ===============================
+        // 🔹 VALIDASI DINAMIS
+        // ===============================
+        $validationRules = [];
+        $validationMessages = [];
+
+        foreach ($perijinan->activeFormFields as $field) {
+            $fieldKey = 'form_fields.' . $field->id;
+
+            if ($field->type !== 'file') {
+                $rules = [];
+
+                if ($field->is_required) {
+                    $rules[] = 'required';
+                    $validationMessages[$fieldKey . '.required'] = "Field {$field->label} wajib diisi.";
+                } else {
+                    $rules[] = 'nullable';
+                }
+
+                if ($field->type === 'email') {
+                    $rules[] = 'email';
+                }
+
+                if ($field->type === 'number') {
+                    $rules[] = 'numeric';
+                }
+
+                if ($field->type === 'date') {
+                    $rules[] = 'date';
+                }
+
+                if ($field->type === 'url') {
+                    $rules[] = 'url';
+                }
+
+                $validationRules[$fieldKey] = $rules;
+            } else {
+                // File type - optional for update (only validate new files)
+                $validationRules[$fieldKey] = 'nullable|array';
+            }
+        }
+
+        $request->validate($validationRules, $validationMessages);
+
+        // ===============================
+        // 🔹 UPLOAD FILES
+        // ===============================
+        $formFiles = $request->file('form_fields');
+        $uploadedFiles = [];
+
+        if ($formFiles) {
+            foreach ($formFiles as $fieldId => $files) {
+                $field = $perijinan->activeFormFields->firstWhere('id', $fieldId);
+
+                if ($field) {
+                    foreach ((array) $files as $file) {
+                        if ($file && $file->isValid()) {
+                            // Generate nama file unik dengan tetap mempertahankan nama asli
+                            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                            $extension = $file->getClientOriginalExtension();
+                            $filename = $originalName . '_' . time() . '.' . $extension;
+
+                            // Path upload
+                            $uploadPath = public_path('uploads/perijinan/' . $perijinan->id);
+
+                            if (!file_exists($uploadPath)) {
+                                mkdir($uploadPath, 0755, true);
+                            }
+
+                            // Simpan file
+                            $file->move($uploadPath, $filename);
+
+                            $uploadedFiles[$fieldId][] = 'uploads/perijinan/' . $perijinan->id . '/' . $filename;
+                        }
+                    }
+                }
+            }
+        }
+
+        // ===============================
+        // 🔹 UPDATE DATA
+        // ===============================
+        $formData = array_merge($data->form_data ?? [], $request->form_fields ?? []);
+
+        // Merge files
+        $existingFiles = $data->form_files ?? [];
+        $mergedFiles = array_merge_recursive($existingFiles, $uploadedFiles);
+
+        $data->update([
+            'form_data' => $formData,
+            'form_files' => !empty($mergedFiles) ? $mergedFiles : $existingFiles,
+            'status' => 'submitted', // Back to submitted status
+            'catatan_perbaikan' => null, // Clear catatan perbaikan
+            'current_step' => 1, // Reset to first validation step
+        ]);
+
+        // Reset all validation steps to pending
+        $data->validasiRecords()->update([
+            'status' => 'pending',
+            'user_id' => null, // Clear assigned user for collective roles
+            'catatan' => null,
+            'validated_at' => null,
+        ]);
+
+        // Activate first validation step
+        $firstValidasi = $data->validasiRecords()->where('order', 1)->first();
+        if ($firstValidasi) {
+            $firstValidasi->update(['status' => 'pending']);
+        }
+
+        // Log activity
+        ActivityLog::log(
+            'Memperbaiki pengajuan perijinan',
+            $data,
+            'updated',
+            [
+                'no_registrasi' => $data->no_registrasi,
+                'status' => 'submitted',
+            ],
+            'data_perijinan'
+        );
+
+        return redirect()->route('pemohon.tracking.detail', $id)
+            ->with('success', 'Pengajuan berhasil diperbaiki dan dikirim kembali untuk validasi.');
     }
 
     /**

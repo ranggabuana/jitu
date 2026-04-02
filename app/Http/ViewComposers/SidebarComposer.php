@@ -27,20 +27,27 @@ class SidebarComposer
             $countPerluPerbaikan = DataPerijinan::where('status', 'perbaikan')->count();
             $countDitolak = DataPerijinan::where('status', 'rejected')->count();
         } elseif (in_array($user->role, ['fo', 'bo', 'verifikator', 'kadin'])) {
-            // Collective roles: count perijinan with their role in validation flow
-            $accessiblePerijinanIds = PerijinanValidationFlow::whereIn('role', ['fo', 'bo', 'verifikator', 'kadin'])
+            // Collective roles: count perijinan where user can validate at current step
+            // Get perijinan IDs where this role is active in validation flow
+            $accessiblePerijinanIds = PerijinanValidationFlow::where('role', $user->role)
                 ->where('is_active', true)
                 ->pluck('perijinan_id')
                 ->unique();
 
+            // For "Dalam Proses": count applications that are NOT approved/completed
+            // AND where current step matches user's role
             $countDalamProses = DataPerijinan::whereIn('perijinan_id', $accessiblePerijinanIds)
-                ->whereNotIn('status', ['approved', 'completed'])
+                ->whereNotIn('status', ['approved', 'completed', 'rejected'])
+                ->where('status', '!=', 'perbaikan') // Exclude perbaikan from dalam proses
                 ->count();
-            
+
+            // For "Perlu Perbaikan": count applications with status 'perbaikan'
+            // where user's role is in the validation flow
             $countPerluPerbaikan = DataPerijinan::whereIn('perijinan_id', $accessiblePerijinanIds)
                 ->where('status', 'perbaikan')
                 ->count();
-            
+
+            // For "Ditolak": count rejected applications
             $countDitolak = DataPerijinan::whereIn('perijinan_id', $accessiblePerijinanIds)
                 ->where('status', 'rejected')
                 ->count();
@@ -57,13 +64,14 @@ class SidebarComposer
                 $countDitolak = 0;
             } else {
                 $countDalamProses = DataPerijinan::whereIn('perijinan_id', $accessiblePerijinanIds)
-                    ->whereNotIn('status', ['approved', 'completed'])
+                    ->whereNotIn('status', ['approved', 'completed', 'rejected'])
+                    ->where('status', '!=', 'perbaikan')
                     ->count();
-                
+
                 $countPerluPerbaikan = DataPerijinan::whereIn('perijinan_id', $accessiblePerijinanIds)
                     ->where('status', 'perbaikan')
                     ->count();
-                
+
                 $countDitolak = DataPerijinan::whereIn('perijinan_id', $accessiblePerijinanIds)
                     ->where('status', 'rejected')
                     ->count();

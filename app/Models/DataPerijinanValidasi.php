@@ -80,6 +80,14 @@ class DataPerijinanValidasi extends Model
     }
 
     /**
+     * Check if user has validated (approved, rejected, or revision).
+     */
+    public function hasValidated(): bool
+    {
+        return in_array($this->status, ['approved', 'rejected', 'revision']);
+    }
+
+    /**
      * Get status label.
      */
     public function getStatusLabelAttribute(): string
@@ -90,7 +98,7 @@ class DataPerijinanValidasi extends Model
             'rejected' => 'Ditolak',
             'revision' => 'Perlu Perbaikan',
         ];
-        
+
         return $labels[$this->status] ?? $this->status;
     }
 

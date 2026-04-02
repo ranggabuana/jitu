@@ -50,17 +50,23 @@ class ActivityLog extends Model
      */
     public static function log(string $description, $subject = null, string $event = null, array $properties = [], string $logName = 'default', $userId = null)
     {
-        return static::create([
-            'user_id' => $userId ?? auth()->id(), // Use provided userId or fallback to auth
-            'log_name' => $logName,
-            'description' => $description,
-            'subject_type' => $subject ? get_class($subject) : null,
-            'subject_id' => $subject ? $subject->id : null,
-            'event' => $event,
-            'properties' => !empty($properties) ? $properties : null,
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent(),
-        ]);
+        try {
+            return static::create([
+                'user_id' => $userId ?? auth()->id(), // Use provided userId or fallback to auth
+                'log_name' => $logName,
+                'description' => $description,
+                'subject_type' => $subject ? get_class($subject) : null,
+                'subject_id' => $subject ? $subject->id : null,
+                'event' => $event,
+                'properties' => !empty($properties) ? $properties : null,
+                'ip_address' => request()->ip() ?? null,
+                'user_agent' => request()->userAgent() ?? null,
+            ]);
+        } catch (\Exception $e) {
+            // Log error tapi jangan gagalkan operasi utama
+            \Log::error('Failed to create activity log: ' . $e->getMessage());
+            return null;
+        }
     }
 
     /**

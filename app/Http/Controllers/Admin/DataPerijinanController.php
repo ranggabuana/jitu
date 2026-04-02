@@ -416,12 +416,21 @@ class DataPerijinanController extends Controller
      */
     public function processValidation(Request $request, $id)
     {
+        \Log::info('processValidation called', [
+            'user_id' => auth()->id(),
+            'user_role' => auth()->user()->role,
+            'application_id' => $id,
+            'action' => $request->action
+        ]);
+        
         $request->validate([
             'action' => 'required|in:approved,rejected,revision',
             'catatan' => 'nullable|string|max:1000',
         ]);
 
         $user = auth()->user();
+        \Log::info('User retrieved', ['user_id' => $user->id, 'role' => $user->role]);
+        
         $application = DataPerijinan::with([
             'perijinan.activeValidationFlows',
             'validasiRecords.validationFlow'
@@ -448,35 +457,77 @@ class DataPerijinanController extends Controller
                 return redirect()->back()->with('error', 'Tahap validasi saat ini tidak ditemukan.');
             }
 
+            \Log::info('Current validation found', [
+                'validation_id' => $currentValidasi->id,
+                'order' => $currentValidasi->order,
+                'status' => $currentValidasi->status,
+                'user_id' => $currentValidasi->user_id
+            ]);
+
             $validationFlow = $currentValidasi->validationFlow;
             $userRole = $user->role;
-            
+
             // Role yang tidak memerlukan assigned_user_id (semua user dengan role ini bisa validasi)
             $rolesWithoutAssignment = ['fo', 'bo', 'verifikator', 'kadin'];
-            
+
             if (in_array($userRole, $rolesWithoutAssignment)) {
                 // Cek apakah role user match dengan role di validation flow
                 if ($userRole !== $validationFlow->role) {
                     return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk melakukan validasi pada tahap ini.');
+                }
+                
+                // Cek apakah user sudah pernah validasi di tahap ini
+                // Untuk role kolektif, kita track berdasarkan user_id yang validasi
+                $existingValidasi = $application->validasiRecords()
+                    ->where('order', $application->current_step)
+                    ->whereNotNull('user_id')
+                    ->where('user_id', $user->id)
+                    ->where('status', '!=', 'pending')
+                    ->first();
+                
+                if ($existingValidasi) {
+                    return redirect()->back()->with('error', 'Anda telah memvalidasi pengajuan ini sebelumnya. Satu user hanya bisa validasi sekali per tahap.');
+                }
+                
+                // Cek apakah tahap ini sudah ada yang validasi (satu tahap hanya butuh 1 validasi dari role yang sesuai)
+                $tahapSudahDivalidasi = $application->validasiRecords()
+                    ->where('order', $application->current_step)
+                    ->where('status', '!=', 'pending')
+                    ->exists();
+                
+                if ($tahapSudahDivalidasi) {
+                    return redirect()->back()->with('error', 'Tahap validasi ini sudah diselesaikan oleh user lain.');
                 }
             } else {
                 // Role yang memerlukan assigned_user_id (Operator OPD, Kepala OPD, Admin)
                 if ($currentValidasi->user_id !== $user->id) {
                     return redirect()->back()->with('error', 'Anda tidak ditugaskan untuk melakukan validasi pada tahap ini.');
                 }
+                
+                // Cek apakah sudah validasi (untuk assigned user)
+                if ($currentValidasi->status !== 'pending') {
+                    return redirect()->back()->with('error', 'Anda telah memvalidasi pengajuan ini sebelumnya.');
+                }
             }
 
-            // Check if already validated
+            // Check if already validated by anyone
             if ($currentValidasi->status !== 'pending') {
                 return redirect()->back()->with('error', 'Tahap validasi ini sudah diselesaikan.');
             }
 
-            // Update validation status
-            $currentValidasi->update([
+            // Update validation status - simpan juga user_id untuk tracking
+            $updateData = [
                 'status' => $request->action,
                 'catatan' => $request->catatan,
                 'validated_at' => now(),
-            ]);
+            ];
+            
+            // Untuk role kolektif (FO, BO, Verifikator, Kadin), simpan user_id validator
+            if (in_array($userRole, $rolesWithoutAssignment)) {
+                $updateData['user_id'] = $user->id;
+            }
+            
+            $currentValidasi->update($updateData);
 
             // Handle based on action
             if ($request->action === 'approved') {
@@ -526,29 +577,48 @@ class DataPerijinanController extends Controller
                 ]);
             }
 
-            // Log activity
+            // Log activity (sebelum commit untuk menghindari masalah session)
             $actionLabel = $request->action === 'approved' ? 'Menyetujui' : ($request->action === 'rejected' ? 'Menolak' : 'Meminta perbaikan');
-            ActivityLog::log(
-                "{$actionLabel} validasi perijinan",
-                $application,
-                'updated',
-                [
-                    'action' => $request->action,
-                    'catatan' => $request->catatan,
-                    'current_step' => $application->current_step,
-                    'no_registrasi' => $application->no_registrasi,
-                ],
-                'data_perijinan'
-            );
+
+            try {
+                ActivityLog::log(
+                    "{$actionLabel} validasi perijinan",
+                    $application,
+                    'updated',
+                    [
+                        'action' => $request->action,
+                        'catatan' => $request->catatan,
+                        'current_step' => $application->current_step,
+                        'no_registrasi' => $application->no_registrasi,
+                    ],
+                    'data_perijinan',
+                    auth()->id() // Explicitly pass user_id
+                );
+            } catch (\Exception $logException) {
+                // Log error tapi jangan gagalkan validasi
+                \Log::error('Failed to log activity: ' . $logException->getMessage());
+            }
 
             DB::commit();
+            
+            \Log::info('Validation committed successfully', [
+                'application_id' => $id,
+                'user_id' => auth()->id(),
+                'action' => $request->action,
+                'session_status' => auth()->check() ? 'active' : 'lost'
+            ]);
 
             $successMessage = $request->action === 'approved' ? 'Validasi berhasil disetujui.' : ($request->action === 'rejected' ? 'Pengajuan ditolak.' : 'Pengajuan dikembalikan untuk perbaikan.');
-            return redirect()->route('data-perijinan.show', $id)->with('success', $successMessage);
+
+            // Redirect dengan session flash
+            return redirect()->route('data-perijinan.show', $id)
+                ->with('success', $successMessage);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Error processing validation: ' . $e->getMessage());
+            \Log::error('Error processing validation: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
             return redirect()->back()->with('error', 'Terjadi kesalahan saat memproses validasi.');
         }
     }

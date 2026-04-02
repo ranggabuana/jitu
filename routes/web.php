@@ -139,6 +139,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/pengajuan/create/{perijinanId}', [PemohonDashboardController::class, 'createPengajuan'])->name('pengajuan.create');
         Route::post('/pengajuan', [PemohonDashboardController::class, 'storePengajuan'])->name('pengajuan.store');
         Route::get('/pengajuan/success/{id}', [PemohonDashboardController::class, 'successPengajuan'])->name('pengajuan.success');
+        // Edit Pengajuan (for perbaikan)
+        Route::get('/pengajuan/{id}/edit', [PemohonDashboardController::class, 'editPengajuan'])->name('pengajuan.edit');
+        Route::post('/pengajuan/{id}/update', [PemohonDashboardController::class, 'updatePengajuan'])->name('pengajuan.update');
         // Tracking Routes for Pemohon
         Route::get('/tracking', [PemohonDashboardController::class, 'tracking'])->name('tracking');
         Route::get('/tracking/{id}', [PemohonDashboardController::class, 'trackingDetail'])->name('tracking.detail');

@@ -20,10 +20,9 @@
                 <x-pemohon.applications :applications="$recentApplications"></x-pemohon.applications>
             </div>
 
-            <!-- Right Column - Profile & Messages (1/3 width) -->
+            <!-- Right Column - Profile (1/3 width) -->
             <div class="space-y-6">
                 <x-pemohon.profile :user="$user"></x-pemohon.profile>
-                <x-pemohon.messages :messages="$messages"></x-pemohon.messages>
             </div>
         </section>
 
