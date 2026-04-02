@@ -359,6 +359,12 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
+        \Log::info('updatePengajuan called', [
+            'user_id' => $user->id,
+            'application_id' => $id,
+            'status' => $request->status
+        ]);
+
         $data = DataPerijinan::with([
             'perijinan.activeFormFields'
         ])
@@ -366,6 +372,12 @@ class DashboardController extends Controller
             ->where('user_id', $user->id)
             ->where('status', 'perbaikan')
             ->firstOrFail();
+
+        \Log::info('Application found', [
+            'application_id' => $id,
+            'current_status' => $data->status,
+            'perijinan_id' => $data->perijinan_id
+        ]);
 
         $request->validate([
             'form_fields' => 'nullable|array',
@@ -385,7 +397,12 @@ class DashboardController extends Controller
             if ($field->type !== 'file') {
                 $rules = [];
 
-                if ($field->is_required) {
+                // Check if field has value in request
+                $hasValue = isset($request->form_fields[$field->id]) && 
+                           !empty($request->form_fields[$field->id]);
+                
+                // Only validate required if field is being submitted
+                if ($field->is_required && $hasValue) {
                     $rules[] = 'required';
                     $validationMessages[$fieldKey . '.required'] = "Field {$field->label} wajib diisi.";
                 } else {
@@ -410,12 +427,16 @@ class DashboardController extends Controller
 
                 $validationRules[$fieldKey] = $rules;
             } else {
-                // File type - optional for update (only validate new files)
+                // File type - always optional for update (only validate if uploading)
                 $validationRules[$fieldKey] = 'nullable|array';
             }
         }
 
-        $request->validate($validationRules, $validationMessages);
+        \Log::info('Validation rules', $validationRules);
+
+        $validatedData = $request->validate($validationRules, $validationMessages);
+
+        \Log::info('Validation passed', $validatedData);
 
         // ===============================
         // 🔹 UPLOAD FILES
@@ -455,18 +476,75 @@ class DashboardController extends Controller
         // ===============================
         // 🔹 UPDATE DATA
         // ===============================
-        $formData = array_merge($data->form_data ?? [], $request->form_fields ?? []);
+        // Keep existing form data and update only submitted fields
+        $formData = $data->form_data ?? [];
+        
+        // Update form data with new values (only for fields that were submitted)
+        if ($request->form_fields) {
+            foreach ($request->form_fields as $fieldId => $value) {
+                // Handle checkbox arrays
+                if (is_array($value)) {
+                    $formData[$fieldId] = implode(',', $value);
+                } else {
+                    $formData[$fieldId] = $value;
+                }
+            }
+        }
 
-        // Merge files
+        // Merge files - keep existing files and add new files
         $existingFiles = $data->form_files ?? [];
-        $mergedFiles = array_merge_recursive($existingFiles, $uploadedFiles);
+        $mergedFiles = $existingFiles; // Start with existing files
+        
+        // Add new files for each field (without removing old files)
+        foreach ($uploadedFiles as $fieldId => $newFiles) {
+            if (!isset($mergedFiles[$fieldId])) {
+                $mergedFiles[$fieldId] = [];
+            }
+            // Merge new files with existing files for this field
+            $mergedFiles[$fieldId] = array_merge($mergedFiles[$fieldId], $newFiles);
+        }
+        
+        // Handle deleted files
+        if ($request->deleted_files) {
+            foreach ($request->deleted_files as $fieldId => $deletedFilesString) {
+                if ($deletedFilesString && isset($mergedFiles[$fieldId])) {
+                    $deletedFiles = explode(',', $deletedFilesString);
+                    // Remove deleted files from merged files
+                    $mergedFiles[$fieldId] = array_filter($mergedFiles[$fieldId], function($file) use ($deletedFiles) {
+                        return !in_array($file, $deletedFiles);
+                    });
+                    
+                    // Re-index array
+                    $mergedFiles[$fieldId] = array_values($mergedFiles[$fieldId]);
+                    
+                    // Remove field if no files left
+                    if (empty($mergedFiles[$fieldId])) {
+                        unset($mergedFiles[$fieldId]);
+                    }
+                }
+            }
+        }
+
+        \Log::info('Files merged', [
+            'existing_count' => count($existingFiles),
+            'uploaded_count' => count($uploadedFiles),
+            'deleted_count' => $request->deleted_files ? count($request->deleted_files) : 0,
+            'final_count' => count($mergedFiles)
+        ]);
 
         $data->update([
             'form_data' => $formData,
-            'form_files' => !empty($mergedFiles) ? $mergedFiles : $existingFiles,
+            'form_files' => $mergedFiles,
             'status' => 'submitted', // Back to submitted status
             'catatan_perbaikan' => null, // Clear catatan perbaikan
             'current_step' => 1, // Reset to first validation step
+        ]);
+
+        \Log::info('Application updated', [
+            'application_id' => $id,
+            'new_status' => 'submitted',
+            'form_data_count' => count($formData),
+            'form_files_count' => count($mergedFiles)
         ]);
 
         // Reset all validation steps to pending
@@ -477,10 +555,19 @@ class DashboardController extends Controller
             'validated_at' => null,
         ]);
 
+        \Log::info('Validation records reset', [
+            'application_id' => $id,
+            'validation_count' => $data->validasiRecords()->count()
+        ]);
+
         // Activate first validation step
         $firstValidasi = $data->validasiRecords()->where('order', 1)->first();
         if ($firstValidasi) {
             $firstValidasi->update(['status' => 'pending']);
+            \Log::info('First validation step activated', [
+                'validation_id' => $firstValidasi->id,
+                'order' => 1
+            ]);
         }
 
         // Log activity
@@ -494,6 +581,10 @@ class DashboardController extends Controller
             ],
             'data_perijinan'
         );
+
+        \Log::info('Redirecting to tracking detail', [
+            'application_id' => $id
+        ]);
 
         return redirect()->route('pemohon.tracking.detail', $id)
             ->with('success', 'Pengajuan berhasil diperbaiki dan dikirim kembali untuk validasi.');

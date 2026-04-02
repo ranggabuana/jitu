@@ -240,12 +240,12 @@
                     class="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-900/10 border-2 border-orange-300 dark:border-orange-700 rounded-xl p-5">
                     <div class="flex items-start gap-3">
                         <div
-                            class="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
-                            <i class="mdi mdi-arrow-return text-white text-xl"></i>
+                            class="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
+                            <i class="mdi mdi-file-document-edit text-white text-2xl"></i>
                         </div>
                         <div class="flex-1">
                             <h3 class="font-bold text-orange-800 dark:text-orange-300 mb-2">
-                                <i class="mdi mdi-information"></i>
+                                <i class="mdi mdi-clock-outline"></i>
                                 Menunggu Perbaikan Pemohon
                             </h3>
                             <p class="text-orange-700 dark:text-orange-400 text-sm mb-3">
@@ -601,27 +601,76 @@
 
         function showRejectForm() {
             Swal.fire({
-                title: 'Tolak Pengajuan',
+                title: '<div class="flex items-center gap-2 mb-2"><i class="mdi mdi-close-circle text-red-500 text-2xl"></i><span class="text-gray-800 dark:text-gray-200">Tolak Pengajuan</span></div>',
                 html: `
-                    <p class="text-left text-sm text-gray-600 mb-3">
-                        <i class="mdi mdi-alert text-red-500"></i>
-                        Penolakan akan menghentikan proses validasi. Pastikan alasan penolakan jelas.
-                    </p>
-                    <textarea id="swal-catatan" class="swal2-textarea" rows="4" placeholder="Masukkan alasan penolakan..."></textarea>
+                    <div class="text-left">
+                        <div class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded-r-lg p-4 mb-4">
+                            <div class="flex items-start gap-3">
+                                <i class="mdi mdi-alert text-red-500 text-xl mt-0.5"></i>
+                                <div>
+                                    <p class="text-sm font-semibold text-red-800 dark:text-red-300 mb-1">
+                                        Penolakan akan menghentikan proses validasi
+                                    </p>
+                                    <p class="text-xs text-red-600 dark:text-red-400">
+                                        Pengajuan tidak dapat dilanjutkan lagi. Pastikan alasan penolakan sudah tepat.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="swal-catatan" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="mdi mdi-comment-text text-gray-500 mr-1"></i>
+                                Alasan Penolakan <span class="text-red-500">*</span>
+                            </label>
+                            <textarea 
+                                id="swal-catatan" 
+                                class="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white text-sm transition-all resize-none"
+                                rows="5" 
+                                placeholder="Contoh:&#10;- Dokumen tidak sesuai dengan persyaratan yang ditetapkan&#10;- Data yang diajukan tidak valid berdasarkan verifikasi&#10;- Pemohon tidak memenuhi syarat untuk jenis perizinan ini"
+                            ></textarea>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-1">
+                                <i class="mdi mdi-keyboard"></i>
+                                <span id="char-count-reject">0</span> karakter
+                            </p>
+                        </div>
+                    </div>
                 `,
                 showCancelButton: true,
                 confirmButtonColor: '#dc2626',
                 cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Tolak Pengajuan',
-                cancelButtonText: 'Batal',
+                confirmButtonText: '<i class="mdi mdi-check mr-2"></i>Tolak Pengajuan',
+                cancelButtonText: '<i class="mdi mdi-close mr-2"></i>Batal',
                 reverseButtons: true,
+                customClass: {
+                    popup: 'rounded-2xl shadow-2xl',
+                    title: 'text-center border-b border-gray-200 dark:border-gray-700 pb-3 mb-3',
+                    htmlContainer: 'px-2',
+                    actions: 'border-t border-gray-200 dark:border-gray-700 pt-3 mt-3'
+                },
                 preConfirm: () => {
                     const catatan = document.getElementById('swal-catatan').value;
                     if (!catatan || catatan.trim() === '') {
-                        Swal.showValidationMessage('Alasan penolakan wajib diisi');
+                        Swal.showValidationMessage(
+                            '<i class="mdi mdi-alert-circle mr-2"></i>Alasan penolakan wajib diisi');
+                        return false;
+                    }
+                    if (catatan.length < 10) {
+                        Swal.showValidationMessage(
+                            '<i class="mdi mdi-alert-circle mr-2"></i>Alasan minimal 10 karakter');
                         return false;
                     }
                     return catatan;
+                },
+                didOpen: () => {
+                    const textarea = document.getElementById('swal-catatan');
+                    const charCount = document.getElementById('char-count-reject');
+
+                    textarea.focus();
+
+                    textarea.addEventListener('input', () => {
+                        charCount.textContent = textarea.value.length;
+                    });
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
@@ -633,27 +682,76 @@
 
         function showRevisionForm() {
             Swal.fire({
-                title: 'Kembalikan untuk Perbaikan',
+                title: '<div class="flex items-center gap-2 mb-2"><i class="mdi mdi-arrow-return text-orange-500 text-2xl"></i><span class="text-gray-800 dark:text-gray-200">Kembalikan untuk Perbaikan</span></div>',
                 html: `
-                    <p class="text-left text-sm text-gray-600 mb-3">
-                        <i class="mdi mdi-information text-orange-500"></i>
-                        Berikan catatan perbaikan yang jelas untuk membantu pemohon.
-                    </p>
-                    <textarea id="swal-catatan-revision" class="swal2-textarea" rows="4" placeholder="Masukkan catatan perbaikan..."></textarea>
+                    <div class="text-left">
+                        <div class="bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-500 rounded-r-lg p-4 mb-4">
+                            <div class="flex items-start gap-3">
+                                <i class="mdi mdi-information text-orange-500 text-xl mt-0.5"></i>
+                                <div>
+                                    <p class="text-sm font-semibold text-orange-800 dark:text-orange-300 mb-1">
+                                        Catatan ini akan dikirim ke pemohon
+                                    </p>
+                                    <p class="text-xs text-orange-600 dark:text-orange-400">
+                                        Berikan instruksi yang jelas agar pemohon dapat memperbaiki pengajuan dengan tepat.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="swal-catatan-revision" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="mdi mdi-comment-text text-gray-500 mr-1"></i>
+                                Catatan Perbaikan <span class="text-red-500">*</span>
+                            </label>
+                            <textarea 
+                                id="swal-catatan-revision" 
+                                class="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white text-sm transition-all resize-none"
+                                rows="5" 
+                                placeholder="Contoh:&#10;- Dokumen KTP belum terbaca dengan jelas, mohon upload ulang dengan resolusi lebih tinggi&#10;- KK perlu diperbarui karena tanggal terbit sudah kadaluarsa&#10;- Lampiran NPWP belum dilampirkan"
+                            ></textarea>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-1">
+                                <i class="mdi mdi-keyboard"></i>
+                                <span id="char-count">0</span> karakter
+                            </p>
+                        </div>
+                    </div>
                 `,
                 showCancelButton: true,
                 confirmButtonColor: '#ea580c',
                 cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Kembalikan',
-                cancelButtonText: 'Batal',
+                confirmButtonText: '<i class="mdi mdi-check mr-2"></i>Kembalikan untuk Perbaikan',
+                cancelButtonText: '<i class="mdi mdi-close mr-2"></i>Batal',
                 reverseButtons: true,
+                customClass: {
+                    popup: 'rounded-2xl shadow-2xl',
+                    title: 'text-center border-b border-gray-200 dark:border-gray-700 pb-3 mb-3',
+                    htmlContainer: 'px-2',
+                    actions: 'border-t border-gray-200 dark:border-gray-700 pt-3 mt-3'
+                },
                 preConfirm: () => {
                     const catatan = document.getElementById('swal-catatan-revision').value;
                     if (!catatan || catatan.trim() === '') {
-                        Swal.showValidationMessage('Catatan perbaikan wajib diisi');
+                        Swal.showValidationMessage(
+                            '<i class="mdi mdi-alert-circle mr-2"></i>Catatan perbaikan wajib diisi');
+                        return false;
+                    }
+                    if (catatan.length < 10) {
+                        Swal.showValidationMessage(
+                            '<i class="mdi mdi-alert-circle mr-2"></i>Catatan minimal 10 karakter');
                         return false;
                     }
                     return catatan;
+                },
+                didOpen: () => {
+                    const textarea = document.getElementById('swal-catatan-revision');
+                    const charCount = document.getElementById('char-count');
+
+                    textarea.focus();
+
+                    textarea.addEventListener('input', () => {
+                        charCount.textContent = textarea.value.length;
+                    });
                 }
             }).then((result) => {
                 if (result.isConfirmed) {

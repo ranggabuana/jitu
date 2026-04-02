@@ -152,14 +152,23 @@
                     <i class="fas fa-exclamation-triangle text-orange-500 text-2xl mt-0.5"></i>
                     <div class="flex-1">
                         <h3 class="font-bold text-orange-800 mb-2">Catatan Perbaikan</h3>
-                        <p class="text-orange-700">{{ $data->catatan_perbaikan }}</p>
-                        <div class="mt-4">
-                            <a href="{{ route('pemohon.pengajuan.edit', $data->id) }}"
-                                class="inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 px-4 rounded-xl transition-colors text-sm">
-                                <i class="fas fa-edit"></i>
-                                Perbaiki Pengajuan
-                            </a>
-                        </div>
+                        <p class="text-orange-700 mb-3">{{ $data->catatan_perbaikan }}</p>
+                        
+                        @php
+                            // Find the validator who gave the revision note
+                            $revisionValidasi = $data->validasiRecords->firstWhere('status', 'revision');
+                        @endphp
+                        
+                        @if($revisionValidasi)
+                            <div class="flex items-center gap-2 text-sm text-orange-600 bg-orange-100 rounded-lg p-3">
+                                <i class="fas fa-user-circle text-orange-500"></i>
+                                <span><strong>Validator:</strong> {{ $revisionValidasi->validator->name ?? 'N/A' }}</span>
+                                @if($revisionValidasi->validated_at)
+                                    <span class="text-orange-500">•</span>
+                                    <span><i class="fas fa-clock mr-1"></i>{{ $revisionValidasi->validated_at->format('d M Y, H:i') }} WIB</span>
+                                @endif
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

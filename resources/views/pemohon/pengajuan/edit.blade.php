@@ -61,7 +61,6 @@
         <form action="{{ route('pemohon.pengajuan.update', $data->id) }}" method="POST" enctype="multipart/form-data"
             id="pengajuanForm" class="space-y-6">
             @csrf
-            @method('PUT')
 
             <!-- Info Card -->
             <div class="bg-white rounded-2xl shadow-sm border border-orange-200 p-6">
@@ -100,21 +99,42 @@
                                 <input type="file" name="form_fields[{{ $field->id }}][]" multiple
                                     class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 @error('form_fields.'.$field->id) 'border-red-500' @enderror"
                                     accept="{{ $field->accepted_formats ?? '*' }}">
+                                <p class="text-xs text-gray-500 mt-1">
+                                    <i class="fas fa-info-circle"></i> 
+                                    File baru akan <strong>menambah</strong> file yang sudah ada. Hapus file lama jika perlu.
+                                </p>
                                 
                                 @if(count($fieldFiles) > 0)
                                     <div class="mt-2">
-                                        <p class="text-xs text-gray-500 mb-2">File yang sudah diupload:</p>
-                                        <div class="space-y-1">
-                                            @foreach($fieldFiles as $file)
-                                                <div class="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
+                                        <p class="text-xs text-gray-500 mb-2 font-semibold">File yang sudah diupload:</p>
+                                        <div class="space-y-1" id="file-list-{{ $field->id }}">
+                                            @foreach($fieldFiles as $index => $file)
+                                                <div class="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg file-item"
+                                                     data-file="{{ $file }}"
+                                                     data-field-id="{{ $field->id }}">
                                                     <i class="fas fa-file text-orange-500"></i>
-                                                    <span class="flex-1">{{ basename($file) }}</span>
-                                                    <a href="{{ asset($file) }}" target="_blank" class="text-orange-600 hover:text-orange-700">
-                                                        <i class="fas fa-download"></i>
-                                                    </a>
+                                                    <span class="flex-1 truncate">{{ basename($file) }}</span>
+                                                    <div class="flex items-center gap-1">
+                                                        <a href="{{ asset($file) }}" target="_blank" 
+                                                           class="text-blue-600 hover:text-blue-700 p-1" 
+                                                           title="Download">
+                                                            <i class="fas fa-download"></i>
+                                                        </a>
+                                                        <button type="button" 
+                                                                onclick="removeFile(this, '{{ $field->id }}', '{{ $file }}')"
+                                                                class="text-red-600 hover:text-red-700 p-1" 
+                                                                title="Hapus">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             @endforeach
                                         </div>
+                                        <!-- Hidden input untuk track file yang dihapus -->
+                                        <input type="hidden" 
+                                               name="deleted_files[{{ $field->id }}]" 
+                                               id="deleted-files-{{ $field->id }}" 
+                                               value="">
                                     </div>
                                 @endif
                             </div>
@@ -189,25 +209,82 @@
     <!-- Footer -->
     <x-pemohon.footer></x-pemohon.footer>
 
+    <!-- SweetAlert2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
-        // Confirm before submit
-        document.getElementById('pengajuanForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
+        // Remove file function
+        function removeFile(button, fieldId, filePath) {
             Swal.fire({
-                title: 'Kirim Perbaikan?',
-                text: 'Pastikan semua data sudah diperbaiki dengan benar. Pengajuan akan dikirim kembali untuk validasi dari awal.',
-                icon: 'question',
+                title: 'Hapus File?',
+                text: 'File akan dihapus dari pengajuan. Anda yakin?',
+                icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#ea580c',
+                confirmButtonColor: '#dc2626',
                 cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Ya, Kirim',
+                confirmButtonText: 'Ya, Hapus',
                 cancelButtonText: 'Batal'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    this.submit();
+                    // Remove from DOM
+                    const fileItem = button.closest('.file-item');
+                    fileItem.style.opacity = '0';
+                    fileItem.style.transform = 'translateX(-20px)';
+                    fileItem.style.transition = 'all 0.3s ease';
+                    
+                    setTimeout(() => {
+                        fileItem.remove();
+                        
+                        // Add to deleted files hidden input
+                        const deletedInput = document.getElementById('deleted-files-' + fieldId);
+                        const currentDeleted = deletedInput.value ? deletedInput.value.split(',') : [];
+                        currentDeleted.push(filePath);
+                        deletedInput.value = currentDeleted.join(',');
+                        
+                        // Show file list empty message if no files left
+                        const fileList = document.getElementById('file-list-' + fieldId);
+                        if (fileList.children.length === 0) {
+                            fileList.innerHTML = '<p class="text-xs text-gray-400 italic text-center py-2">Semua file telah dihapus</p>';
+                        }
+                    }, 300);
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil',
+                        text: 'File berhasil dihapus',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
                 }
             });
+        }
+
+        // Confirm before submit
+        document.getElementById('pengajuanForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Check if Swal is available
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Kirim Perbaikan?',
+                    text: 'Pastikan semua data sudah diperbaiki dengan benar. Pengajuan akan dikirim kembali untuk validasi dari awal.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ea580c',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'Ya, Kirim',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.submit();
+                    }
+                });
+            } else {
+                // Fallback if Swal is not available
+                if (confirm('Kirim Perbaikan?\n\nPastikan semua data sudah diperbaiki dengan benar. Pengajuan akan dikirim kembali untuk validasi dari awal.')) {
+                    this.submit();
+                }
+            }
         });
     </script>
 </x-pemohon.layout>
