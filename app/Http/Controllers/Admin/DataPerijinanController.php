@@ -11,6 +11,7 @@ use App\Models\PerijinanValidationFlow;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class DataPerijinanController extends Controller
 {
@@ -640,5 +641,26 @@ class DataPerijinanController extends Controller
         );
 
         return redirect()->back()->with('success', 'Status perijinan berhasil diperbarui.');
+    }
+
+    /**
+     * Download uploaded file from application.
+     */
+    public function downloadFile($filename)
+    {
+        // Security: Remove any directory traversal attempts
+        $filename = basename($filename);
+        
+        // Get the path relative to public folder
+        $relativePath = 'uploads/perijinan/' . $filename;
+        $path = public_path($relativePath);
+
+        // Check if file exists
+        if (file_exists($path)) {
+            return response()->download($path);
+        }
+
+        return redirect()->back()
+            ->with('error', 'File tidak ditemukan.');
     }
 }

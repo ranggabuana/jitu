@@ -101,7 +101,7 @@
                         <ul class="list-disc list-inside space-y-1 text-xs">
                             <li>Pastikan mysqldump tersedia di server untuk backup database</li>
                             <li>Backup akan disimpan di <code
-                                    class="bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 rounded">storage/app/backups/</code>
+                                    class="bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 rounded">public/backups/</code>
                             </li>
                             <li>Full backup akan membuat file zip berisi database dan storage</li>
                             <li>Disarankan melakukan backup secara berkala</li>

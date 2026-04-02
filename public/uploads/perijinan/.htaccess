@@ -1,0 +1,10 @@
+# Apache: Deny all direct access to this folder
+<Files "*">
+    Order Allow,Deny
+    Deny from all
+</Files>
+
+# Apache 2.4+
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>

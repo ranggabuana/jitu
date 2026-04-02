@@ -87,12 +87,12 @@
                                             </div>
                                             <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 @if($isImage)
-                                                    <button onclick="previewImage('{{ asset($file) }}', '{{ basename($file) }}')" 
+                                                    <button onclick="previewImage('{{ route('data-perijinan.download-file', basename($file)) }}', '{{ basename($file) }}')"
                                                         class="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors" title="Preview">
                                                         <i class="mdi mdi-eye"></i>
                                                     </button>
                                                 @endif
-                                                <a href="{{ asset($file) }}" target="_blank" download
+                                                <a href="{{ route('data-perijinan.download-file', basename($file)) }}"
                                                     class="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-colors" title="Unduh">
                                                     <i class="mdi mdi-download"></i>
                                                 </a>
@@ -532,6 +532,36 @@
                     document.getElementById('catatan').value = result.value;
                     submitValidation('revision');
                 }
+            });
+        }
+
+        function previewImage(url, title) {
+            // Fetch the image through the authenticated route
+            fetch(url, {
+                headers: {
+                    'Accept': 'image/*'
+                }
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                const imageUrl = URL.createObjectURL(blob);
+                Swal.fire({
+                    title: title,
+                    imageUrl: imageUrl,
+                    imageAlt: title,
+                    imageClass: 'max-w-full',
+                    confirmButtonText: 'Tutup',
+                    confirmButtonColor: '#2563eb'
+                });
+            })
+            .catch(error => {
+                console.error('Error loading image:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal',
+                    text: 'Gagal memuat preview gambar',
+                    confirmButtonColor: '#2563eb'
+                });
             });
         }
     </script>

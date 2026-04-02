@@ -74,8 +74,8 @@ class SettingsController extends Controller
     {
         try {
             $filename = 'backup_db_' . Carbon::now()->format('Y-m-d_His') . '.sql';
-            $path = storage_path('app/backups/database/' . $filename);
-            
+            $path = public_path('backups/database/' . $filename);
+
             // Create backups directory if not exists
             if (!file_exists(dirname($path))) {
                 mkdir(dirname($path), 0755, true);
@@ -142,8 +142,8 @@ class SettingsController extends Controller
     {
         try {
             $filename = 'backup_aplikasi_' . Carbon::now()->format('Y-m-d_His') . '.zip';
-            $path = storage_path('app/backups/aplikasi/' . $filename);
-            
+            $path = public_path('backups/aplikasi/' . $filename);
+
             // Create backups directory if not exists
             if (!file_exists(dirname($path))) {
                 mkdir(dirname($path), 0755, true);
@@ -176,8 +176,8 @@ class SettingsController extends Controller
     {
         try {
             $timestamp = Carbon::now()->format('Y-m-d_His');
-            $backupDir = storage_path('app/backups/full');
-            
+            $backupDir = public_path('backups/full');
+
             // Create backup directory
             if (!file_exists($backupDir)) {
                 mkdir($backupDir, 0755, true);
@@ -280,8 +280,8 @@ class SettingsController extends Controller
      */
     public function downloadBackup($type, $filename)
     {
-        $path = storage_path('app/backups/' . $type . '/' . $filename);
-        
+        $path = public_path('backups/' . $type . '/' . $filename);
+
         if (file_exists($path)) {
             return response()->download($path);
         }
@@ -296,8 +296,8 @@ class SettingsController extends Controller
     public function deleteBackup($type, $filename)
     {
         try {
-            $path = storage_path('app/backups/' . $type . '/' . $filename);
-            
+            $path = public_path('backups/' . $type . '/' . $filename);
+
             if (file_exists($path)) {
                 unlink($path);
                 return response()->json(['success' => true, 'message' => 'Backup berhasil dihapus.']);
@@ -314,9 +314,9 @@ class SettingsController extends Controller
      */
     public function listBackups($type)
     {
-        $path = storage_path('app/backups/' . $type);
+        $path = public_path('backups/' . $type);
         $files = [];
-        
+
         if (file_exists($path)) {
             $scanFiles = scandir($path);
             foreach ($scanFiles as $file) {
