@@ -54,6 +54,13 @@ class User extends Authenticatable
     }
 
     /**
+     * The accessors to append to the model's array form.
+     */
+    protected $appends = [
+        'role_label',
+    ];
+
+    /**
      * Get the OPD that the user belongs to.
      */
     public function opd()

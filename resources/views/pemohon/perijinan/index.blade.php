@@ -279,13 +279,13 @@
                             </div>
                             <div class="text-gray-700 leading-relaxed prose prose-sm max-w-none">
                                 ${perijinan.dasar_hukum ? perijinan.dasar_hukum : `
-                                                <div class="text-center py-8">
-                                                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                                        <i class="fas fa-file-alt text-gray-400 text-2xl"></i>
+                                                    <div class="text-center py-8">
+                                                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                            <i class="fas fa-file-alt text-gray-400 text-2xl"></i>
+                                                        </div>
+                                                        <p class="text-gray-400 italic">Dasar hukum belum tersedia</p>
                                                     </div>
-                                                    <p class="text-gray-400 italic">Dasar hukum belum tersedia</p>
-                                                </div>
-                                            `}
+                                                `}
                             </div>
                         </div>
 
@@ -299,13 +299,13 @@
                             </div>
                             <div class="text-gray-700 leading-relaxed prose prose-sm max-w-none">
                                 ${perijinan.persyaratan ? perijinan.persyaratan : `
-                                                <div class="text-center py-8">
-                                                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                                        <i class="fas fa-clipboard-list text-gray-400 text-2xl"></i>
+                                                    <div class="text-center py-8">
+                                                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                            <i class="fas fa-clipboard-list text-gray-400 text-2xl"></i>
+                                                        </div>
+                                                        <p class="text-gray-400 italic">Persyaratan belum tersedia</p>
                                                     </div>
-                                                    <p class="text-gray-400 italic">Persyaratan belum tersedia</p>
-                                                </div>
-                                            `}
+                                                `}
                             </div>
                         </div>
 
@@ -319,13 +319,13 @@
                             </div>
                             <div class="text-gray-700 leading-relaxed prose prose-sm max-w-none">
                                 ${perijinan.prosedur ? perijinan.prosedur : `
-                                                <div class="text-center py-8">
-                                                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                                        <i class="fas fa-tasks text-gray-400 text-2xl"></i>
+                                                    <div class="text-center py-8">
+                                                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                            <i class="fas fa-tasks text-gray-400 text-2xl"></i>
+                                                        </div>
+                                                        <p class="text-gray-400 italic">Prosedur belum tersedia</p>
                                                     </div>
-                                                    <p class="text-gray-400 italic">Prosedur belum tersedia</p>
-                                                </div>
-                                            `}
+                                                `}
                             </div>
                         </div>
 
@@ -343,8 +343,8 @@
                                 </span>
                             </div>
                             ${activeFormFieldsCount > 0 ? `
-                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                ${perijinan.active_form_fields.map(field => `
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    ${perijinan.active_form_fields.map(field => `
                                         <div class="flex items-start gap-3 p-4 rounded-xl border border-gray-100 hover:border-orange-300 hover:bg-orange-50/50 transition-all">
                                             <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
                                                 ${getFieldIcon(field.type)}
@@ -359,15 +359,15 @@
                                             </div>
                                         </div>
                                     `).join('')}
-                                            </div>
-                                        ` : `
-                                            <div class="text-center py-8">
-                                                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                                    <i class="fas fa-file-alt text-gray-400 text-2xl"></i>
                                                 </div>
-                                                <p class="text-gray-400 italic">Formulir belum tersedia</p>
-                                            </div>
-                                        `}
+                                            ` : `
+                                                <div class="text-center py-8">
+                                                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                        <i class="fas fa-file-alt text-gray-400 text-2xl"></i>
+                                                    </div>
+                                                    <p class="text-gray-400 italic">Formulir belum tersedia</p>
+                                                </div>
+                                            `}
                         </div>
 
                         <!-- Alur Validasi Tab -->
@@ -384,12 +384,12 @@
                                 </span>
                             </div>
                             ${activeValidationFlowsCount > 0 ? `
-                                            <div class="relative">
-                                                <!-- Timeline Line -->
-                                                <div class="absolute left-6 top-4 bottom-4 w-0.5 bg-gradient-to-b from-indigo-400 via-purple-400 to-pink-400 rounded-full"></div>
+                                                <div class="relative">
+                                                    <!-- Timeline Line -->
+                                                    <div class="absolute left-6 top-4 bottom-4 w-0.5 bg-gradient-to-b from-indigo-400 via-purple-400 to-pink-400 rounded-full"></div>
 
-                                                <div class="space-y-4">
-                                                    ${perijinan.active_validation_flows.map((flow, index) => `
+                                                    <div class="space-y-4">
+                                                        ${perijinan.active_validation_flows.map((flow, index) => `
                                             <div class="relative flex items-start gap-4 pl-2">
                                                 <!-- Timeline Dot -->
                                                 <div class="relative z-10 w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg flex-shrink-0 border-2 border-white">
@@ -399,33 +399,52 @@
                                                 <!-- Content -->
                                                 <div class="flex-1 bg-gradient-to-br from-gray-50 to-white rounded-xl p-4 border border-gray-100 hover:border-indigo-200 hover:shadow-sm transition-all">
                                                     <div class="flex items-center justify-between mb-2">
-                                                        <h3 class="font-bold text-gray-800">${flow.role_label || flow.role || 'Role ' + (index + 1)}</h3>
+                                                        <h3 class="font-bold text-gray-800">${flow.role_label || flow.role || 'Validator'}</h3>
                                                         ${flow.sla_hours ? `
-                                                                        <span class="bg-indigo-100 text-indigo-600 text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
-                                                                            <i class="fas fa-clock mr-1"></i>${flow.sla_hours}j
-                                                                        </span>
-                                                                    ` : ''}
+                                                                            <span class="bg-indigo-100 text-indigo-600 text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
+                                                                                <i class="fas fa-clock mr-1"></i>${flow.sla_hours}j
+                                                                            </span>
+                                                                        ` : ''}
                                                     </div>
                                                     ${flow.description ? `<p class="text-gray-600 text-sm mb-2">${flow.description}</p>` : ''}
-                                                    ${flow.assigned_user ? `
-                                                                    <div class="flex items-center gap-2 text-sm text-gray-500">
-                                                                        <i class="fas fa-user-circle text-indigo-500"></i>
-                                                                        <span>${flow.assigned_user.name || 'User'}</span>
-                                                                    </div>
-                                                                ` : ''}
+                                                    ${flow.assigned_user_id && flow.assigned_user ? `
+                                                            <div class="mt-2 flex items-center gap-2 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-2 border border-indigo-200">
+                                                                <div class="w-6 h-6 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                                                    <i class="fas fa-user-check text-white text-xs"></i>
+                                                                </div>
+                                                                <div class="flex-1">
+                                                                    <p class="text-xs font-semibold text-gray-800">
+                                                                        <i class="fas fa-user-tie mr-1"></i>
+                                                                        ${flow.assigned_user.name}
+                                                                    </p>
+                                                                    <p class="text-xs text-gray-500">${flow.assigned_user.role_label || 'Validator'}</p>
+                                                                </div>
+                                                            </div>
+                                                        ` : ''}
+                                                    ${!flow.assigned_user_id && ['fo', 'bo', 'verifikator', 'kadin'].includes(flow.role) ? `
+                                                            <div class="mt-2 flex items-center gap-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-2 border border-blue-200">
+                                                                <div class="w-6 h-6 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                                                    <i class="fas fa-users text-white text-xs"></i>
+                                                                </div>
+                                                                <p class="text-xs font-semibold text-gray-800">
+                                                                    <i class="fas fa-user-check mr-1"></i>
+                                                                    Divalidasi oleh ${flow.role_label || 'Validator'}
+                                                                </p>
+                                                            </div>
+                                                        ` : ''}
                                                 </div>
                                             </div>
                                         `).join('')}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ` : `
-                                            <div class="text-center py-8">
-                                                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                                    <i class="fas fa-sitemap text-gray-400 text-2xl"></i>
+                                            ` : `
+                                                <div class="text-center py-8">
+                                                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                        <i class="fas fa-sitemap text-gray-400 text-2xl"></i>
+                                                    </div>
+                                                    <p class="text-gray-400 italic">Alur validasi belum tersedia</p>
                                                 </div>
-                                                <p class="text-gray-400 italic">Alur validasi belum tersedia</p>
-                                            </div>
-                                        `}
+                                            `}
                         </div>
                     </div>
                 </div>
@@ -480,7 +499,8 @@
         function submitPengajuan() {
             if (currentPerijinan && currentPerijinan.id) {
                 // Redirect to pengajuan form page
-                window.location.href = `{{ route('pemohon.pengajuan.create', '__ID__') }}`.replace('__ID__', currentPerijinan.id);
+                window.location.href = `{{ route('pemohon.pengajuan.create', '__ID__') }}`.replace('__ID__',
+                    currentPerijinan.id);
             } else {
                 alert('Silakan pilih perizinan yang ingin diajukan');
             }

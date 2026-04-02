@@ -132,10 +132,64 @@
                                     </p>
                                 @endif
 
-                                @if ($validasi->validator)
-                                    <div class="flex items-center gap-2 mt-2 text-sm text-gray-600">
-                                        <i class="fas fa-user-circle text-amber-500"></i>
-                                        <span>{{ $validasi->validator->name }}</span>
+                                @php
+                                    // Dapatkan validator dari assigned_user_id di validation_flow
+                                    $validatorUser = null;
+                                    $validatorRole = $validasi->validationFlow->role ?? '';
+                                    $validatorName = null;
+                                    
+                                    // Untuk operator_opd dan kepala_opd, ambil dari assigned_user_id
+                                    if (in_array($validatorRole, ['operator_opd', 'kepala_opd'])) {
+                                        // Coba ambil dari assigned_user_id di validation_flow
+                                        if ($validasi->validationFlow->assignedUser) {
+                                            $validatorName = $validasi->validationFlow->assignedUser->name;
+                                            $validatorRoleLabel = $validasi->validationFlow->assignedUser->role_label ?? $validasi->validationFlow->role_label;
+                                        }
+                                        // Atau fallback ke user_id di data_perijinan_validasi
+                                        elseif ($validasi->validator) {
+                                            $validatorName = $validasi->validator->name;
+                                            $validatorRoleLabel = $validasi->validator->role_label ?? 'Validator';
+                                        }
+                                    }
+                                    
+                                    $showValidatorName = !empty($validatorName);
+                                @endphp
+
+                                @if ($showValidatorName)
+                                    <div class="mt-3 flex items-center gap-2 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-lg p-3 border border-amber-200 dark:border-amber-800">
+                                        <div class="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+                                            <i class="fas fa-user-check text-white text-sm"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-xs text-amber-700 dark:text-amber-400 font-semibold mb-0.5">
+                                                <i class="fas fa-user-tie mr-1"></i>
+                                                Divalidasi oleh:
+                                            </p>
+                                            <p class="text-sm font-bold text-gray-800 dark:text-gray-200">
+                                                {{ $validatorName }}
+                                            </p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                                <i class="fas fa-id-badge mr-1"></i>
+                                                {{ $validatorRoleLabel ?? 'Validator' }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                @elseif($validasi->validator && in_array($validatorRole, ['fo', 'bo', 'verifikator', 'kadin']))
+                                    <!-- Untuk role kolektif, tampilkan role saja -->
+                                    <div class="mt-3 flex items-center gap-2 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
+                                        <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+                                            <i class="fas fa-users text-white text-sm"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                                <i class="fas fa-user-check mr-2"></i>
+                                                Divalidasi oleh {{ $validasi->validationFlow->role_label ?? 'Validator' }}
+                                            </p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                                <i class="fas fa-clock mr-1"></i>
+                                                {{ $validasi->validated_at ? 'Telah menyelesaikan validasi' : 'Menunggu validasi' }}
+                                            </p>
+                                        </div>
                                     </div>
                                 @endif
                             </div>

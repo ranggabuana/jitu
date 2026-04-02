@@ -39,10 +39,10 @@
                             </span>
                         </td>
                         <td class="p-4 border-b text-right">
-                            <a href="{{ route('pemohon.tracking.detail', $app->id) }}"
+                            <button onclick="openDetail({{ $app->id }})"
                                 class="text-amber-700 hover:text-amber-900 font-medium text-sm">
                                 <i class="fas fa-eye mr-1"></i> Detail
-                            </a>
+                            </button>
                         </td>
                     </tr>
                 @empty

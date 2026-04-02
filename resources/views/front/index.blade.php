@@ -699,11 +699,31 @@
                                         </p>
                                     ` : ''}
                                 ${validasi.validator ? `
-                                        <div class="flex items-center gap-2 mt-2 text-sm text-gray-600">
-                                            <i class="fas fa-user-circle text-blue-500"></i>
-                                            <span>${validasi.validator.name}</span>
+                                    ${['operator_opd', 'kepala_opd'].includes(validasi.validator.role) ? `
+                                        <div class="mt-2 flex items-center gap-2 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-2 border border-amber-200">
+                                            <div class="w-6 h-6 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                                <i class="fas fa-user-check text-white text-xs"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <p class="text-xs font-semibold text-gray-800">
+                                                    <i class="fas fa-user-tie mr-1"></i>
+                                                    ${validasi.validator.name}
+                                                </p>
+                                                <p class="text-xs text-gray-500">${validasi.validator.role_label || 'Validator'}</p>
+                                            </div>
                                         </div>
-                                    ` : ''}
+                                    ` : `
+                                        <div class="mt-2 flex items-center gap-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-2 border border-blue-200">
+                                            <div class="w-6 h-6 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                                <i class="fas fa-users text-white text-xs"></i>
+                                            </div>
+                                            <p class="text-xs font-semibold text-gray-800">
+                                                <i class="fas fa-user-check mr-1"></i>
+                                                Divalidasi oleh ${validasi.validator.role_label || validasi.validation_flow?.role_label || 'Validator'}
+                                            </p>
+                                        </div>
+                                    `}
+                                ` : ''}
                             </div>
                         </div>
                     `;

@@ -634,7 +634,7 @@ class DataPerijinanController extends Controller
             'user',
             'perijinan',
             'perijinan.activeFormFields',
-            'validasiRecords.validationFlow',
+            'validasiRecords.validationFlow.assignedUser',
             'validasiRecords.validator'
         ])->findOrFail($id);
 

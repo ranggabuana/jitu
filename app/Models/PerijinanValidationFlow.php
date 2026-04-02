@@ -30,6 +30,13 @@ class PerijinanValidationFlow extends Model
     ];
 
     /**
+     * The accessors to append to the model's array form.
+     */
+    protected $appends = [
+        'role_label',
+    ];
+
+    /**
      * Get the perijinan that owns the validation flow.
      */
     public function perijinan(): BelongsTo

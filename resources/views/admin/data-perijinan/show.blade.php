@@ -506,15 +506,44 @@
                                             {{ $validasi->validated_at->format('d M Y, H:i') }}
                                         </p>
                                     @endif
-                                    @if ($validasi->validator)
-                                        <p class="text-xs text-blue-600 dark:text-blue-400">
-                                            <i class="mdi mdi-account-check"></i>
-                                            Divalidasi oleh: {{ $validasi->validator->name }}
-                                            @if ($validasi->validator->id === Auth::id())
-                                                <span
-                                                    class="text-green-600 dark:text-green-400 font-semibold">(Anda)</span>
-                                            @endif
-                                        </p>
+                                    @php
+                                        // Determine validator based on role
+                                        $validatorUser = null;
+                                        $validatorRole = $validasi->validationFlow->role ?? '';
+                                        
+                                        // For assigned roles (operator_opd, kepala_opd), use assigned_user from validation_flow
+                                        if (in_array($validatorRole, ['operator_opd', 'kepala_opd'])) {
+                                            $validatorUser = $validasi->validationFlow->assignedUser;
+                                        } 
+                                        // For collective roles, use validator from data_perijinan_validasi
+                                        elseif ($validasi->validator) {
+                                            $validatorUser = $validasi->validator;
+                                        }
+                                    @endphp
+                                    @if ($validatorUser)
+                                        <div class="mt-2 flex items-center gap-2 {{ in_array($validatorRole, ['operator_opd', 'kepala_opd']) ? 'bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-amber-200 dark:border-amber-800' : 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800' }} rounded-lg p-2 border">
+                                            <div class="w-6 h-6 {{ in_array($validatorRole, ['operator_opd', 'kepala_opd']) ? 'bg-gradient-to-br from-amber-400 to-orange-500' : 'bg-gradient-to-br from-blue-400 to-indigo-500' }} rounded-full flex items-center justify-center flex-shrink-0">
+                                                <i class="mdi mdi-{{ in_array($validatorRole, ['operator_opd', 'kepala_opd']) ? 'account-check' : 'account-group' }} text-white text-xs"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <p class="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                                                    <i class="mdi mdi-{{ in_array($validatorRole, ['operator_opd', 'kepala_opd']) ? 'account-tie' : 'account-check' }} mr-1"></i>
+                                                    {{ in_array($validatorRole, ['operator_opd', 'kepala_opd']) ? $validatorUser->name : 'Divalidasi oleh ' . ($validatorUser->role_label ?? 'Validator') }}
+                                                </p>
+                                                @if (in_array($validatorRole, ['operator_opd', 'kepala_opd']))
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                                                        <i class="mdi mdi-badge-account-horizontal mr-1"></i>
+                                                        {{ $validatorUser->role_label ?? 'Validator' }}
+                                                    </p>
+                                                @endif
+                                                @if ($validatorUser->id === Auth::id())
+                                                    <p class="text-xs text-green-600 dark:text-green-400 font-semibold mt-0.5">
+                                                        <i class="mdi mdi-check-circle mr-1"></i>
+                                                        (Anda)
+                                                    </p>
+                                                @endif
+                                            </div>
+                                        </div>
                                     @endif
                                 </div>
                             </div>

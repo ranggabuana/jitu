@@ -37,7 +37,7 @@ class LandingPageController extends Controller
             'user',
             'perijinan',
             'perijinan.activeValidationFlows',
-            'validasiRecords.validationFlow',
+            'validasiRecords.validationFlow.assignedUser',
             'validasiRecords.validator'
         ])
         ->where('no_registrasi', $request->no_registrasi)
@@ -52,6 +52,28 @@ class LandingPageController extends Controller
 
         // Prepare validation records
         $validasiRecords = $perizinan->validasiRecords->map(function ($validasi) {
+            // Determine validator based on role
+            $validator = null;
+            
+            // For assigned roles (operator_opd, kepala_opd), use assigned_user from validation_flow
+            if (in_array($validasi->validationFlow->role ?? '', ['operator_opd', 'kepala_opd'])) {
+                if ($validasi->validationFlow->assignedUser) {
+                    $validator = [
+                        'name' => $validasi->validationFlow->assignedUser->name,
+                        'role' => $validasi->validationFlow->assignedUser->role,
+                        'role_label' => $validasi->validationFlow->assignedUser->role_label,
+                    ];
+                }
+            } 
+            // For collective roles, use validator from data_perijinan_validasi
+            elseif ($validasi->validator) {
+                $validator = [
+                    'name' => $validasi->validator->name,
+                    'role' => $validasi->validator->role,
+                    'role_label' => $validasi->validator->role_label,
+                ];
+            }
+            
             return [
                 'status' => $validasi->status,
                 'catatan' => $validasi->catatan,
@@ -60,9 +82,7 @@ class LandingPageController extends Controller
                     'role_label' => $validasi->validationFlow->role_label,
                     'description' => $validasi->validationFlow->description,
                 ],
-                'validator' => $validasi->validator ? [
-                    'name' => $validasi->validator->name,
-                ] : null,
+                'validator' => $validator,
             ];
         });
 

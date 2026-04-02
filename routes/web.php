@@ -135,6 +135,8 @@ Route::middleware(['auth'])->group(function () {
         // Perijinan Routes for Pemohon
         Route::get('/perijinan', [PemohonDashboardController::class, 'perijinan'])->name('perijinan');
         Route::get('/perijinan/{id}/detail', [PemohonDashboardController::class, 'perijinanDetail'])->name('perijinan.detail');
+        // Application Detail API for modal
+        Route::get('/perijinan/{id}/application-detail', [PemohonDashboardController::class, 'applicationDetail'])->name('application.detail');
         // Pengajuan Routes for Pemohon
         Route::get('/pengajuan/create/{perijinanId}', [PemohonDashboardController::class, 'createPengajuan'])->name('pengajuan.create');
         Route::post('/pengajuan', [PemohonDashboardController::class, 'storePengajuan'])->name('pengajuan.store');

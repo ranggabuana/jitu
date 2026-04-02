@@ -75,7 +75,7 @@ class DashboardController extends Controller
     {
         try {
             $perijinan = Perijinan::with([
-                'activeValidationFlows',
+                'activeValidationFlows.assignedUser',
                 'activeFormFields'
             ])->findOrFail($id);
 
@@ -89,6 +89,68 @@ class DashboardController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal memuat detail perizinan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get application detail as JSON for modal (with validation records).
+     */
+    public function applicationDetail($id)
+    {
+        try {
+            $user = Auth::user();
+            
+            $application = DataPerijinan::with([
+                'perijinan',
+                'validasiRecords.validationFlow.assignedUser',
+                'validasiRecords.validator'
+            ])
+                ->where('id', $id)
+                ->where('user_id', $user->id)
+                ->firstOrFail();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $application->id,
+                    'no_registrasi' => $application->no_registrasi,
+                    'status' => $application->status,
+                    'status_label' => $application->status_label,
+                    'status_color' => $application->status_color,
+                    'created_at' => $application->created_at,
+                    'perijinan' => [
+                        'id' => $application->perijinan->id,
+                        'nama_perijinan' => $application->perijinan->nama_perijinan,
+                    ],
+                    'validasi_records' => $application->validasiRecords->map(function($validasi) {
+                        return [
+                            'id' => $validasi->id,
+                            'status' => $validasi->status,
+                            'status_label' => $validasi->status_label,
+                            'status_color' => $validasi->status_color,
+                            'catatan' => $validasi->catatan,
+                            'validated_at' => $validasi->validated_at,
+                            'validation_flow' => [
+                                'role' => $validasi->validationFlow->role,
+                                'role_label' => $validasi->validationFlow->role_label,
+                            ],
+                            'validator' => $validasi->validator ? [
+                                'id' => $validasi->validator->id,
+                                'name' => $validasi->validator->name,
+                                'role' => $validasi->validator->role,
+                                'role_label' => $validasi->validator->role_label,
+                            ] : null,
+                        ];
+                    }),
+                ]
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error loading application detail: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat detail pengajuan: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -322,7 +384,7 @@ class DashboardController extends Controller
 
         $data = DataPerijinan::with([
             'perijinan',
-            'validasiRecords.validationFlow',
+            'validasiRecords.validationFlow.assignedUser',
             'validasiRecords.validator'
         ])
             ->where('id', $id)
