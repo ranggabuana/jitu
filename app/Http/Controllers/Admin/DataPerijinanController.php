@@ -646,19 +646,41 @@ class DataPerijinanController extends Controller
     /**
      * Download uploaded file from application.
      */
-    public function downloadFile($filename)
+    public function downloadFile($filepath)
     {
-        // Security: Remove any directory traversal attempts
-        $filename = basename($filename);
+        // Decode URL-encoded path
+        $filepath = urldecode($filepath);
         
-        // Get the path relative to public folder
-        $relativePath = 'uploads/perijinan/' . $filename;
+        // Security: Prevent directory traversal attacks
+        $filepath = str_replace('..', '', $filepath);
+        
+        // Get the full path relative to public folder
+        $relativePath = 'uploads/perijinan/' . $filepath;
         $path = public_path($relativePath);
 
-        // Check if file exists
-        if (file_exists($path)) {
+        // Debug logging
+        \Log::info('Download file attempt', [
+            'filepath' => $filepath,
+            'relativePath' => $relativePath,
+            'fullPath' => $path,
+            'fileExists' => file_exists($path),
+            'realPath' => realpath($path)
+        ]);
+
+        // Verify the file exists and is within the expected directory
+        $realPath = realpath($path);
+        $publicPath = realpath(public_path('uploads/perijinan'));
+        
+        if ($realPath && $publicPath && strpos($realPath, $publicPath) === 0 && file_exists($path)) {
             return response()->download($path);
         }
+
+        \Log::error('File not found or invalid path', [
+            'filepath' => $filepath,
+            'path' => $path,
+            'realPath' => $realPath,
+            'publicPath' => $publicPath
+        ]);
 
         return redirect()->back()
             ->with('error', 'File tidak ditemukan.');

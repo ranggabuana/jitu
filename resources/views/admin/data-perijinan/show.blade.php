@@ -87,12 +87,20 @@
                                             </div>
                                             <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 @if($isImage)
-                                                    <button onclick="previewImage('{{ route('data-perijinan.download-file', basename($file)) }}', '{{ basename($file) }}')"
+                                                    @php
+                                                        // Extract the path after 'uploads/perijinan/' for the route
+                                                        $routePath = str_replace('uploads/perijinan/', '', $file);
+                                                    @endphp
+                                                    <button onclick="previewImage('{{ route('data-perijinan.download-file', rawurlencode($routePath)) }}', '{{ basename($file) }}')"
                                                         class="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors" title="Preview">
                                                         <i class="mdi mdi-eye"></i>
                                                     </button>
                                                 @endif
-                                                <a href="{{ route('data-perijinan.download-file', basename($file)) }}"
+                                                @php
+                                                    // Extract the path after 'uploads/perijinan/' for the route
+                                                    $routePath = str_replace('uploads/perijinan/', '', $file);
+                                                @endphp
+                                                <a href="{{ route('data-perijinan.download-file', rawurlencode($routePath)) }}"
                                                     class="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-colors" title="Unduh">
                                                     <i class="mdi mdi-download"></i>
                                                 </a>
@@ -537,12 +545,13 @@
 
         function previewImage(url, title) {
             // Fetch the image through the authenticated route
-            fetch(url, {
-                headers: {
-                    'Accept': 'image/*'
+            fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load image');
                 }
+                return response.blob();
             })
-            .then(response => response.blob())
             .then(blob => {
                 const imageUrl = URL.createObjectURL(blob);
                 Swal.fire({

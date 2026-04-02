@@ -1,10 +1,6 @@
-# Apache: Deny all direct access to this folder
-<Files "*">
-    Order Allow,Deny
-    Deny from all
-</Files>
-
-# Apache 2.4+
-<IfModule mod_authz_core.c>
-    Require all denied
+# Redirect all requests to Laravel for authentication
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ index.php [L]
 </IfModule>

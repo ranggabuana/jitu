@@ -126,7 +126,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{id}', [DataPerijinanController::class, 'show'])->name('show');
         Route::post('/{id}/validate', [DataPerijinanController::class, 'processValidation'])->name('validate');
         Route::patch('/{id}/status', [DataPerijinanController::class, 'updateStatus'])->name('update-status');
-        Route::get('/download/{filename}', [DataPerijinanController::class, 'downloadFile'])->name('download-file');
+        Route::get('/download/{filepath}', [DataPerijinanController::class, 'downloadFile'])->name('download-file')->where('filepath', '.*');
     });
 
     // Pemohon Routes (accessible by authenticated pemohon users)
