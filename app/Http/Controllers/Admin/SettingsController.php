@@ -73,44 +73,66 @@ class SettingsController extends Controller
     public function backupDatabase()
     {
         try {
+            // Check if exec is disabled
+            if (in_array('exec', array_map('trim', explode(',', ini_get('disable_functions'))))) {
+                return redirect()->back()
+                    ->with('error', 'Fungsi exec() dinonaktifkan oleh hosting. Hubungi admin hosting.');
+            }
+
             $filename = 'backup_db_' . Carbon::now()->format('Y-m-d_His') . '.sql';
             $path = public_path('backups/database/' . $filename);
 
             // Create backups directory if not exists
             if (!file_exists(dirname($path))) {
-                mkdir(dirname($path), 0755, true);
+                if (!mkdir(dirname($path), 0755, true)) {
+                    return redirect()->back()
+                        ->with('error', 'Gagal membuat folder backup. Cek permission folder.');
+                }
             }
-            
+
+            // Check if directory is writable
+            if (!is_writable(dirname($path))) {
+                return redirect()->back()
+                    ->with('error', 'Folder backup tidak writable. Cek permission (harus 755).');
+            }
+
             // Get database credentials
             $dbHost = config('database.connections.mysql.host');
             $dbPort = config('database.connections.mysql.port');
             $dbName = config('database.connections.mysql.database');
             $dbUser = config('database.connections.mysql.username');
             $dbPass = config('database.connections.mysql.password');
-            
-            // Try to find mysqldump path (Laragon default)
+
+            // Try to find mysqldump path (Linux/Windows)
             $mysqldumpPaths = [
+                // Windows (Laragon)
                 'C:\\laragon\\bin\\mysql\\mysql-8.4.3-winx64\\bin\\mysqldump.exe',
                 'C:\\laragon\\bin\\mysql\\mysql-5.7.44-winx64\\bin\\mysqldump.exe',
                 'C:\\laragon\\bin\\mysql\\mysql-8.0.30-winx64\\bin\\mysqldump.exe',
                 'C:\\laragon\\bin\\mysql\\mysql-8.0.26-winx64\\bin\\mysqldump.exe',
                 'C:\\laragon\\bin\\mysql\\mysql-5.7.21-winx64\\bin\\mysqldump.exe',
                 'C:\\laragon\\bin\\mysql\\mysql-8.0.35-winx64\\bin\\mysqldump.exe',
+                // Linux common paths
+                '/usr/bin/mysqldump',
+                '/usr/local/bin/mysqldump',
+                '/usr/local/mysql/bin/mysqldump',
+                '/opt/lampp/bin/mysqldump',
+                '/Applications/MAMP/Library/bin/mysqldump',
                 'mysqldump', // Fallback to PATH
             ];
-            
+
             $mysqldumpPath = 'mysqldump';
             foreach ($mysqldumpPaths as $testPath) {
-                if (file_exists($testPath)) {
+                if (file_exists($testPath) && is_executable($testPath)) {
                     $mysqldumpPath = $testPath;
                     break;
                 }
             }
-            
-            // Run mysqldump
+
+            // Build command
             $command = sprintf(
-                '"%s" --host=%s --port=%s --user=%s --password=%s %s > %s',
-                $mysqldumpPath,
+                '"%s" --host=%s --port=%s --user=%s --password=%s %s > %s 2>&1',
+                escapeshellarg($mysqldumpPath),
                 escapeshellarg($dbHost),
                 escapeshellarg($dbPort),
                 escapeshellarg($dbUser),
@@ -118,18 +140,43 @@ class SettingsController extends Controller
                 escapeshellarg($dbName),
                 escapeshellarg($path)
             );
-            
+
+            // Log command for debugging (remove in production)
+            \Log::info('Backup command: ' . $command);
+
+            // Run mysqldump
             exec($command, $output, $returnCode);
-            
-            if ($returnCode === 0 && filesize($path) > 0) {
+
+            // Log result
+            \Log::info('Backup result', [
+                'returnCode' => $returnCode,
+                'output' => implode("\n", $output),
+                'fileExists' => file_exists($path),
+                'fileSize' => file_exists($path) ? filesize($path) : 0
+            ]);
+
+            if ($returnCode === 0 && file_exists($path) && filesize($path) > 0) {
                 return redirect()->back()
                     ->with('success', 'Backup database berhasil! File: ' . $filename);
             } else {
                 $errorMsg = $returnCode !== 0 ? 'Kode error: ' . $returnCode : 'File kosong';
+                $outputMsg = !empty($output) ? ' Output: ' . implode(' ', $output) : '';
+                
+                \Log::error('Backup failed', [
+                    'returnCode' => $returnCode,
+                    'output' => $outputMsg
+                ]);
+                
                 return redirect()->back()
-                    ->with('error', 'Backup database gagal. ' . $errorMsg . '. Pastikan mysqldump tersedia.');
+                    ->with('error', 'Backup database gagal. ' . $errorMsg . $outputMsg);
             }
         } catch (\Exception $e) {
+            \Log::error('Backup exception', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            
             return redirect()->back()
                 ->with('error', 'Backup database gagal: ' . $e->getMessage());
         }
