@@ -20,24 +20,42 @@
                 </div>
             </div>
             <div class="space-y-4">
-                <div class="bg-amber-50 border border-amber-200 rounded-xl p-5">
-                    <p class="text-xs font-bold uppercase text-gray-400">Status Saat Ini</p>
+                <!-- Status Card -->
+                <div class="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300 dark:from-amber-900/20 dark:to-orange-900/10 dark:border-amber-700 rounded-xl p-5 shadow-sm">
+                    <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400 mb-2">
+                        <i class="fas fa-info-circle mr-1"></i> Status Saat Ini
+                    </p>
                     <div class="mt-2" id="dStatusBadge"></div>
-                    <p class="text-xs text-gray-500 mt-3">Estimasi SLA: <span class="font-semibold text-gray-700" id="dSla">-</span></p>
+                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-3">
+                        <i class="fas fa-clock mr-1"></i> Estimasi SLA: 
+                        <span class="font-semibold text-gray-800 dark:text-gray-200" id="dSla">-</span>
+                    </p>
                 </div>
-                <div class="bg-amber-50 border border-amber-200 rounded-xl p-5">
-                    <p class="text-xs font-bold uppercase text-gray-400">Aksi</p>
-                    <div class="mt-3 space-y-2">
-                        <a href="#" class="w-full inline-flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2.5 rounded-lg font-bold transition-all">
+                
+                <!-- Action Buttons -->
+                <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm">
+                    <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400 mb-3">
+                        <i class="fas fa-bolt mr-1"></i> Aksi
+                    </p>
+                    <div class="space-y-2">
+                        <a href="#" id="btnTracking" 
+                           class="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-4 py-3 rounded-lg font-bold transition-all shadow-md hover:shadow-lg">
                             <i class="fas fa-search"></i> Buka Tracking
                         </a>
-                        <button class="w-full hidden items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg font-bold transition-all">
+                        <button id="btnDownload" 
+                                class="w-full hidden items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-4 py-3 rounded-lg font-bold transition-all shadow-md hover:shadow-lg">
                             <i class="fas fa-download"></i> Unduh SK Izin
                         </button>
-                        <a href="#" class="w-full hidden items-center justify-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2.5 rounded-lg font-bold transition-all">
+                        <a href="#" id="btnEdit" 
+                           class="w-full hidden items-center justify-center gap-2 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white px-4 py-3 rounded-lg font-bold transition-all shadow-md hover:shadow-lg">
                             <i class="fas fa-pen-to-square"></i> Perbaiki Berkas
                         </a>
                     </div>
+                </div>
+                
+                <!-- Info Card for Approved/Rejected -->
+                <div id="dInfoCard" class="hidden bg-white dark:bg-gray-800 border rounded-xl p-5 shadow-sm">
+                    <!-- Dynamic content based on status -->
                 </div>
             </div>
         </div>
