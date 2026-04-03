@@ -187,34 +187,13 @@
             document.documentElement.classList.toggle('dark');
             localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' :
                 'light');
-
-            // Update icon based on theme
-            const icon = themeToggle.querySelector('i');
-            if (document.documentElement.classList.contains('dark')) {
-                // If dark mode is enabled, show sun icon (to switch to light mode)
-                icon.className = 'mdi mdi-white-balance-sunny';
-            } else {
-                // If light mode is enabled, show moon icon (to switch to dark mode)
-                icon.className = 'mdi mdi-moon-waning-crescent';
-            }
         });
 
-        // Check for saved theme preference
-        if (localStorage.getItem('theme') === 'dark' ||
-            (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        // Check for saved theme preference - default to light mode
+        if (localStorage.getItem('theme') === 'dark') {
             document.documentElement.classList.add('dark');
-            // Set icon to sun (for switching to light mode)
-            const themeToggle = document.getElementById('theme-toggle');
-            if (themeToggle) {
-                themeToggle.querySelector('i').className = 'mdi mdi-white-balance-sunny';
-            }
         } else {
             document.documentElement.classList.remove('dark');
-            // Set icon to moon (for switching to dark mode)
-            const themeToggle = document.getElementById('theme-toggle');
-            if (themeToggle) {
-                themeToggle.querySelector('i').className = 'mdi mdi-moon-waning-crescent';
-            }
         }
 
         // Notification dropdown
