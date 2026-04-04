@@ -814,7 +814,7 @@
 
             kabupatenSelect.prop('disabled', false).trigger('change');
 
-            fetch(`/api/wilayah/provinsi/${provinsiId}/kabupaten`)
+            fetch('{{ url("api/wilayah/provinsi") }}/' + provinsiId + '/kabupaten')
                 .then(response => response.json())
                 .then(data => {
                     kabupatenSelect.empty().append('<option value="">-- Pilih Kabupaten/Kota --</option>');
@@ -850,7 +850,7 @@
 
             kecamatanSelect.prop('disabled', false).trigger('change');
 
-            fetch(`/api/wilayah/kabupaten/${kabupatenId}/kecamatan`)
+            fetch('{{ url("api/wilayah/kabupaten") }}/' + kabupatenId + '/kecamatan')
                 .then(response => response.json())
                 .then(data => {
                     kecamatanSelect.empty().append('<option value="">-- Pilih Kecamatan --</option>');
@@ -883,7 +883,7 @@
 
             kelurahanSelect.prop('disabled', false).trigger('change');
 
-            fetch(`/api/wilayah/kecamatan/${kecamatanId}/kelurahan`)
+            fetch('{{ url("api/wilayah/kecamatan") }}/' + kecamatanId + '/kelurahan')
                 .then(response => response.json())
                 .then(data => {
                     kelurahanSelect.empty().append('<option value="">-- Pilih Kelurahan/Desa --</option>');
