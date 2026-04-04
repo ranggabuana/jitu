@@ -1,6 +1,22 @@
-# Allow access via Laravel routing (for authenticated users)
+# Allow direct access to files (images/PDFs)
+# Security: Files can only be accessed if you know the exact path
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteCond %{REQUEST_FILENAME} -f
-    RewriteRule ^ ../../../index.php [L]
+</IfModule>
+
+# Set proper MIME types
+<IfModule mod_mime.c>
+    AddType image/jpeg .jpg .jpeg
+    AddType image/png .png
+    AddType image/gif .gif
+    AddType application/pdf .pdf
+</IfModule>
+
+# Enable caching for better performance
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpeg "access plus 1 day"
+    ExpiresByType image/png "access plus 1 day"
+    ExpiresByType image/gif "access plus 1 day"
+    ExpiresByType application/pdf "access plus 1 day"
 </IfModule>
