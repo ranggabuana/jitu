@@ -75,6 +75,38 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the provinsi that the user belongs to.
+     */
+    public function provinsi()
+    {
+        return $this->belongsTo(Provinsi::class);
+    }
+
+    /**
+     * Get the kabupaten that the user belongs to.
+     */
+    public function kabupaten()
+    {
+        return $this->belongsTo(Kabupaten::class);
+    }
+
+    /**
+     * Get the kecamatan that the user belongs to.
+     */
+    public function kecamatan()
+    {
+        return $this->belongsTo(Kecamatan::class);
+    }
+
+    /**
+     * Get the kelurahan that the user belongs to.
+     */
+    public function kelurahan()
+    {
+        return $this->belongsTo(Kelurahan::class);
+    }
+
+    /**
      * Get the berita created by the user.
      */
     public function berita()

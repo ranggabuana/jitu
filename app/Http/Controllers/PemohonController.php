@@ -117,6 +117,9 @@ class PemohonController extends Controller
      */
     public function show(User $pemohon)
     {
+        // Load wilayah relationships
+        $pemohon->load(['provinsi', 'kabupaten', 'kecamatan', 'kelurahan']);
+
         // Log activity
         ActivityLog::log(
             'Melihat detail pemohon',
