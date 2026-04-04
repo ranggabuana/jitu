@@ -1,0 +1,12 @@
+# Deny direct access via URL - redirect to Laravel for authentication
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Deny direct file access
+<FilesMatch "\.(jpg|jpeg|png|gif|pdf)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>

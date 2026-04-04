@@ -7,6 +7,7 @@
     <title>Login - JITU Banjarnegara</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -168,12 +169,6 @@
                         </div>
                     @endif
 
-                    @if (session('success'))
-                        <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
-                            {{ session('success') }}
-                        </div>
-                    @endif
-
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
                             <input id="remember-me" name="remember" type="checkbox"
@@ -216,7 +211,22 @@
         });
 
         @if (session('success'))
-            alert('{{ session('success') }}');
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil! 🎉',
+                html: '{{ session('success') }}',
+                confirmButtonColor: '#10b981',
+                confirmButtonText: 'OK, Mengerti',
+                width: '450px',
+                padding: '2rem',
+                backdrop: `
+                    rgba(16, 185, 129, 0.1)
+                    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='%2310b981' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 1 1-5.93-9.14'%3E%3C/path%3E%3Cpolyline points='22 4 12 14.08 9 11.08'%3E%3C/polyline%3E%3C/svg%3E")
+                    left top
+                    no-repeat
+                    opacity 0.1
+                `
+            });
         @endif
     </script>
 </body>

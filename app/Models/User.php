@@ -28,6 +28,12 @@ class User extends Authenticatable
         'nip',
         'no_hp',
         'status',
+        'provinsi_id',
+        'kabupaten_id',
+        'kecamatan_id',
+        'kelurahan_id',
+        'alamat_lengkap',
+        'foto_ktp',
     ];
 
     /**

@@ -37,6 +37,12 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/api/nik/check', [AuthController::class, 'checkNik'])->name('api.nik.check');
 Route::get('/api/refresh-captcha', [AuthController::class, 'refreshCaptcha'])->name('api.refresh-captcha');
 
+// Wilayah API routes
+Route::get('/api/wilayah/provinsi', [\App\Http\Controllers\Api\WilayahController::class, 'getProvinsi'])->name('api.wilayah.provinsi');
+Route::get('/api/wilayah/provinsi/{provinsiId}/kabupaten', [\App\Http\Controllers\Api\WilayahController::class, 'getKabupaten'])->name('api.wilayah.kabupaten');
+Route::get('/api/wilayah/kabupaten/{kabupatenId}/kecamatan', [\App\Http\Controllers\Api\WilayahController::class, 'getKecamatan'])->name('api.wilayah.kecamatan');
+Route::get('/api/wilayah/kecamatan/{kecamatanId}/kelurahan', [\App\Http\Controllers\Api\WilayahController::class, 'getKelurahan'])->name('api.wilayah.kelurahan');
+
 // Protected routes
 Route::middleware(['auth'])->group(function () {
     // Dashboard - Admin only, pemohon redirected to their own dashboard
