@@ -82,7 +82,7 @@
                 <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
                     <div class="overflow-x-auto">
                         <table class="w-full">
-                            <thead class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+                            <thead class="bg-gray-100 text-gray-700">
                                 <tr>
                                     <th class="px-6 py-4 text-left text-sm font-semibold">No.</th>
                                     <th class="px-6 py-4 text-left text-sm font-semibold">Nama Regulasi</th>
