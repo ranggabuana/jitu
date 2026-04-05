@@ -55,55 +55,54 @@
                         <div class="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent"></div>
                     </div>
 
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 h-full flex items-center">
-                        <div class="w-full md:w-2/3 space-y-6 animate-fadeInUp">
-                            <!-- Category Badge -->
-                            <div
-                                class="inline-block bg-red-500/90 backdrop-blur-sm px-4 py-1.5 rounded-full border border-red-400/30 text-white text-sm font-semibold">
-                                <i class="fas fa-newspaper mr-2"></i> Berita Terbaru
-                            </div>
+                    <!-- Bottom Center Overlay for Article Info -->
+                    <div class="absolute inset-0 z-10 flex items-end justify-center pb-16">
+                        <div class="w-full max-w-4xl mx-auto px-4">
+                            <!-- Dark Transparent Overlay Container -->
+                            <div class="bg-black/60 backdrop-blur-md rounded-2xl p-6 md:p-8 border border-white/10">
+                                <div class="space-y-4">
+                                    <!-- Category Badge & Date -->
+                                    <div class="flex items-center gap-3 flex-wrap">
+                                        <div class="inline-block bg-red-500/90 backdrop-blur-sm px-4 py-1.5 rounded-full border border-red-400/30 text-white text-sm font-semibold">
+                                            <i class="fas fa-newspaper mr-2"></i> Berita Terbaru
+                                        </div>
+                                        <span class="flex items-center gap-2 text-gray-300 text-sm">
+                                            <i class="far fa-calendar text-yellow-400"></i>
+                                            {{ $berita->created_at->isoFormat('D MMMM Y') }}
+                                        </span>
+                                    </div>
 
-                            <!-- Title with Overlay Effect -->
-                            <h2
-                                class="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight text-white drop-shadow-lg">
-                                {{ $berita->judul }}
-                            </h2>
+                                    <!-- Title -->
+                                    <h2 class="text-2xl md:text-3xl lg:text-4xl font-extrabold leading-tight text-white">
+                                        {{ $berita->judul }}
+                                    </h2>
 
-                            <!-- Excerpt -->
-                            <p class="text-lg text-gray-200 max-w-2xl leading-relaxed">
-                                {{ Str::limit(strip_tags($berita->konten), 200) }}
-                            </p>
+                                    <!-- Excerpt -->
+                                    <p class="text-sm md:text-base text-gray-200 leading-relaxed line-clamp-2">
+                                        {{ Str::limit(strip_tags($berita->konten), 150) }}
+                                    </p>
 
-                            <!-- Meta Info -->
-                            <div class="flex items-center gap-6 text-gray-300">
-                                <span class="flex items-center gap-2">
-                                    <i class="far fa-calendar text-yellow-400"></i>
-                                    {{ $berita->created_at->isoFormat('D MMMM Y') }}
-                                </span>
-                                @if ($berita->user)
-                                    <span class="flex items-center gap-2">
-                                        <i class="far fa-user text-yellow-400"></i>
-                                        {{ $berita->user->name }}
-                                    </span>
-                                @endif
-                                <span class="flex items-center gap-2">
-                                    <i class="far fa-eye text-yellow-400"></i>
-                                    {{ number_format($berita->views) }} views
-                                </span>
-                            </div>
-
-                            <!-- Read More Button -->
-                            <div class="pt-4 flex flex-wrap gap-4">
-                                <a href="{{ route('berita.show', $berita->id) }}"
-                                    class="bg-white text-blue-700 hover:bg-blue-50 px-8 py-4 rounded-xl font-bold shadow-xl transition-all flex items-center gap-3 transform hover:scale-105">
-                                    <i class="fas fa-arrow-right"></i>
-                                    <span>Baca Selengkapnya</span>
-                                </a>
-                                <a href="{{ route('berita.show', $berita->id) }}"
-                                    class="bg-blue-700/50 hover:bg-blue-700/70 text-white border border-blue-500/50 px-8 py-4 rounded-xl font-bold backdrop-blur-md transition-all flex items-center gap-3">
-                                    <i class="fas fa-newspaper"></i>
-                                    <span>Lihat Berita</span>
-                                </a>
+                                    <!-- Meta Info & Button -->
+                                    <div class="flex items-center justify-between flex-wrap gap-4 pt-2">
+                                        <div class="flex items-center gap-4 text-gray-300 text-sm">
+                                            @if ($berita->user)
+                                                <span class="flex items-center gap-2">
+                                                    <i class="far fa-user text-yellow-400"></i>
+                                                    {{ $berita->user->name }}
+                                                </span>
+                                            @endif
+                                            <span class="flex items-center gap-2">
+                                                <i class="far fa-eye text-yellow-400"></i>
+                                                {{ number_format($berita->views) }} views
+                                            </span>
+                                        </div>
+                                        <a href="{{ route('informasi.show', $berita->slug) }}"
+                                            class="bg-white hover:bg-gray-100 text-gray-900 px-6 py-3 rounded-xl font-bold shadow-lg transition-all flex items-center gap-2 transform hover:scale-105">
+                                            <i class="fas fa-arrow-right"></i>
+                                            <span>Baca Selengkapnya</span>
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

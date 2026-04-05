@@ -78,6 +78,15 @@
                 <label for="gambar" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Gambar <span class="text-gray-400 text-xs">(Opsional, max 2MB)</span>
                 </label>
+                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-3">
+                    <div class="flex items-start gap-2">
+                        <i class="fas fa-info-circle text-blue-600 dark:text-blue-400 mt-0.5"></i>
+                        <div>
+                            <p class="text-sm text-blue-800 dark:text-blue-300 font-medium">Ukuran yang Direkomendasikan</p>
+                            <p class="text-xs text-blue-700 dark:text-blue-400">Gambar akan ditampilkan pada slider landing page dengan ukuran <strong>1920 x 600 px</strong> (rasio 16:5). Gunakan ukuran ini agar gambar tampil optimal tanpa terpotong.</p>
+                        </div>
+                    </div>
+                </div>
                 @if($berita->gambar)
                     <div class="mb-2">
                         <img src="{{ asset($berita->gambar) }}" alt="{{ $berita->judul }}" class="max-h-48 rounded-lg shadow-md">
