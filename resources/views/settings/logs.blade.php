@@ -40,7 +40,21 @@
                         class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <option value="">Semua Kategori</option>
                         @foreach($logNames as $name)
-                            <option value="{{ $name }}" {{ $logName == $name ? 'selected' : '' }}>{{ ucfirst($name) }}</option>
+                            <option value="{{ $name }}" {{ $logName == $name ? 'selected' : '' }}>
+                                @php
+                                    $labels = [
+                                        'default' => 'Aktivitas Umum',
+                                        'authentication' => 'Autentikasi',
+                                        'perijinan' => 'Perizinan',
+                                        'berita' => 'Berita',
+                                        'regulasi' => 'Regulasi',
+                                        'pengaduan' => 'Pengaduan',
+                                        'user' => 'Pengguna',
+                                        'settings' => 'Pengaturan',
+                                    ];
+                                @endphp
+                                {{ $labels[$name] ?? ucfirst($name) }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
@@ -54,7 +68,22 @@
                         class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <option value="">Semua Event</option>
                         @foreach($events as $evt)
-                            <option value="{{ $evt }}" {{ $event == $evt ? 'selected' : '' }}>{{ ucfirst($evt) }}</option>
+                            @php
+                                $labels = [
+                                    'created' => 'Data Dibuat',
+                                    'updated' => 'Data Diubah',
+                                    'deleted' => 'Data Dihapus',
+                                    'login' => 'Masuk Sistem',
+                                    'logout' => 'Keluar Sistem',
+                                    'viewed' => 'Data Dilihat',
+                                    'exported' => 'Data Diekspor',
+                                    'imported' => 'Data Diimpor',
+                                    'restored' => 'Data Dipulihkan',
+                                ];
+                            @endphp
+                            <option value="{{ $evt }}" {{ $event == $evt ? 'selected' : '' }}>
+                                {{ $labels[$evt] ?? ucfirst($evt) }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
@@ -134,32 +163,46 @@
                                     @endphp
                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-{{ $color }}-100 dark:bg-{{ $color }}-900/30 text-{{ $color }}-700 dark:text-{{ $color }}-400">
                                         <i class="mdi {{ $icon }}"></i>
-                                        {{ ucfirst($log->event ?? 'Activity') }}
+                                        {{ $log->event_label }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4">
                                     <p class="text-sm text-gray-900 dark:text-gray-100">{{ $log->description }}</p>
-                                    @if($log->properties && is_array($log->properties))
-                                        <div class="mt-1">
-                                            @if(isset($log->properties['old']))
-                                                <details class="text-xs">
-                                                    <summary class="cursor-pointer text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-                                                        <i class="mdi mdi-history"></i> Lihat perubahan
-                                                    </summary>
-                                                    <div class="mt-1 p-2 bg-gray-100 dark:bg-gray-900 rounded text-xs">
-                                                        @if(isset($log->properties['old']))
-                                                            <p class="text-red-600 dark:text-red-400 mb-1">
-                                                                <strong>Old:</strong> {{ json_encode($log->properties['old']) }}
-                                                            </p>
-                                                        @endif
-                                                        @if(isset($log->properties['new']))
-                                                            <p class="text-green-600 dark:text-green-400">
-                                                                <strong>New:</strong> {{ json_encode($log->properties['new']) }}
-                                                            </p>
-                                                        @endif
-                                                    </div>
-                                                </details>
-                                            @endif
+                                    @if($log->formatted_changes && count($log->formatted_changes) > 0)
+                                        <div class="mt-2">
+                                            <details class="text-xs">
+                                                <summary class="cursor-pointer text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 font-medium">
+                                                    <i class="mdi mdi-history"></i> {{ count($log->formatted_changes) }} field berubah
+                                                </summary>
+                                                <div class="mt-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                                    <table class="w-full">
+                                                        <thead class="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                                                            <tr>
+                                                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-600 dark:text-gray-400">Field</th>
+                                                                @if($log->event === 'created')
+                                                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-600 dark:text-gray-400">Nilai</th>
+                                                                @else
+                                                                    <th class="px-3 py-2 text-left text-xs font-medium text-red-600 dark:text-red-400">Sebelum</th>
+                                                                    <th class="px-3 py-2 text-left text-xs font-medium text-green-600 dark:text-green-400">Sesudah</th>
+                                                                @endif
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                                            @foreach($log->formatted_changes as $change)
+                                                                <tr>
+                                                                    <td class="px-3 py-2 text-gray-700 dark:text-gray-300 font-medium">{{ $change['label'] }}</td>
+                                                                    @if($log->event === 'created')
+                                                                        <td class="px-3 py-2 text-gray-900 dark:text-gray-100 break-all">{{ $change['new'] ?: '-' }}</td>
+                                                                    @else
+                                                                        <td class="px-3 py-2 text-red-700 dark:text-red-300 break-all">{{ $change['old'] ?: '-' }}</td>
+                                                                        <td class="px-3 py-2 text-green-700 dark:text-green-300 break-all">{{ $change['new'] ?: '-' }}</td>
+                                                                    @endif
+                                                                </tr>
+                                                            @endforeach
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </details>
                                         </div>
                                     @endif
                                 </td>
@@ -173,21 +216,28 @@
                                             </div>
                                             <div>
                                                 <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $log->user->name }}</p>
-                                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ $log->user->role }}</p>
+                                                @php
+                                                    $roleLabels = [
+                                                        'admin' => 'Administrator',
+                                                        'operator_opd' => 'Operator OPD',
+                                                        'kepala_opd' => 'Kepala OPD',
+                                                        'pemohon' => 'Pemohon',
+                                                        'admin_publik' => 'Admin Publik',
+                                                    ];
+                                                    $roleLabel = $roleLabels[$log->user->role] ?? ucfirst(str_replace('_', ' ', $log->user->role));
+                                                @endphp
+                                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ $roleLabel }}</p>
                                             </div>
                                         </div>
                                     @else
-                                        <span class="text-sm text-gray-500 dark:text-gray-400">System</span>
+                                        <span class="text-sm text-gray-500 dark:text-gray-400">Sistem</span>
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     @if($log->subject_type && $log->subject_id)
-                                        @php
-                                            $modelName = class_exists($log->subject_type) ? class_basename($log->subject_type) : $log->subject_type;
-                                        @endphp
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
                                             <i class="mdi mdi-shape"></i>
-                                            {{ $modelName }} #{{ $log->subject_id }}
+                                            {{ $log->subject_label }}
                                         </span>
                                     @else
                                         <span class="text-sm text-gray-500 dark:text-gray-400">-</span>
