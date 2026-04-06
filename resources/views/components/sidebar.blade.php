@@ -224,6 +224,11 @@
                         <i class="mdi mdi-circle text-[8px] mr-2 text-gray-500 dark:text-gray-400"></i>
                         <span>Data Pemohon</span>
                     </a>
+                    <a href="{{ route('pemerintah.index') }}"
+                        class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-lg mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('pemerintah.*') ? 'active-menu' : '' }}">
+                        <i class="mdi mdi-circle text-[8px] mr-2 text-gray-500 dark:text-gray-400"></i>
+                        <span>Data Pemerintah</span>
+                    </a>
                 </div>
             </div>
 

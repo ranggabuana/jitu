@@ -195,6 +195,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if user has pemerintah role.
+     */
+    public function isPemerintah(): bool
+    {
+        return $this->role === 'pemerintah';
+    }
+
+    /**
      * Get role label.
      */
     public function getRoleLabelAttribute(): string
@@ -207,6 +215,7 @@ class User extends Authenticatable
             'kepala_opd' => 'Kepala OPD',
             'verifikator' => 'Verifikator',
             'kadin' => 'Kadin',
+            'pemerintah' => 'Pemerintah',
         ];
         return $labels[$this->role] ?? $this->role;
     }
@@ -224,6 +233,7 @@ class User extends Authenticatable
             'kepala_opd' => 'Kepala OPD',
             'verifikator' => 'Verifikator',
             'kadin' => 'Kadin',
+            'pemerintah' => 'Pemerintah',
         ];
     }
 

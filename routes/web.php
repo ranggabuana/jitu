@@ -122,6 +122,19 @@ Route::middleware(['auth'])->group(function () {
     // Pengguna Routes (Admin Only)
     Route::middleware(['admin.role'])->prefix('pengguna')->name('pengguna.')->group(function () {
         Route::resource('data', PenggunaController::class);
+        Route::patch('/data/{user}/status', [PenggunaController::class, 'updateStatus'])->name('data.update-status');
+    });
+
+    // Data Pemerintah Routes (Admin Only)
+    Route::middleware(['admin.role'])->prefix('pemerintah')->name('pemerintah.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\PemerintahController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\PemerintahController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\PemerintahController::class, 'store'])->name('store');
+        Route::get('/{user}', [\App\Http\Controllers\PemerintahController::class, 'show'])->name('show');
+        Route::get('/{user}/edit', [\App\Http\Controllers\PemerintahController::class, 'edit'])->name('edit');
+        Route::put('/{user}', [\App\Http\Controllers\PemerintahController::class, 'update'])->name('update');
+        Route::patch('/{user}/status', [\App\Http\Controllers\PemerintahController::class, 'updateStatus'])->name('update-status');
+        Route::delete('/{user}', [\App\Http\Controllers\PemerintahController::class, 'destroy'])->name('destroy');
     });
 
     // Data Perijinan Routes (Admin Only)

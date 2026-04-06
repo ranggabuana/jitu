@@ -6,14 +6,18 @@ use App\Models\User;
 use App\Models\Opd;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
-class PenggunaController extends Controller
+class PemerintahController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Government role.
+     */
+    private $pemerintahRole = 'pemerintah';
+
+    /**
+     * Display a listing of pemerintah users.
      */
     public function index(Request $request)
     {
@@ -21,7 +25,6 @@ class PenggunaController extends Controller
         $sortBy = $request->get('sort_by', 'name');
         $sortOrder = $request->get('sort_order', 'asc');
         $perPage = $request->get('per_page', 10);
-        $roleFilter = $request->get('role_filter', 'all');
         $statusFilter = $request->get('status_filter', 'all');
 
         $perPage = in_array($perPage, [10, 25, 50, 100]) ? $perPage : 10;
@@ -29,8 +32,7 @@ class PenggunaController extends Controller
         $sortBy = in_array($sortBy, $allowedSorts) ? $sortBy : 'name';
         $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? $sortOrder : 'asc';
 
-        // Exclude pemohon role from data pengguna
-        $query = User::where('role', '!=', 'pemohon')->with('opd');
+        $query = User::where('role', $this->pemerintahRole)->with('opd');
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -39,10 +41,6 @@ class PenggunaController extends Controller
                     ->orWhere('username', 'like', "%{$search}%")
                     ->orWhere('nip', 'like', "%{$search}%");
             });
-        }
-
-        if ($roleFilter !== 'all') {
-            $query->where('role', $roleFilter);
         }
 
         if ($statusFilter !== 'all') {
@@ -55,13 +53,14 @@ class PenggunaController extends Controller
             'sort_by' => $sortBy,
             'sort_order' => $sortOrder,
             'per_page' => $perPage,
-            'role_filter' => $roleFilter,
             'status_filter' => $statusFilter,
         ]);
 
-        $roles = User::getRoleLabels();
+        // Statistics
+        $totalPemerintah = User::where('role', $this->pemerintahRole)->count();
+        $aktifCount = User::where('role', $this->pemerintahRole)->where('status', 'aktif')->count();
 
-        return view('pengguna.index', compact('users', 'search', 'sortBy', 'sortOrder', 'perPage', 'roleFilter', 'statusFilter', 'roles'));
+        return view('pemerintah.index', compact('users', 'search', 'sortBy', 'sortOrder', 'perPage', 'statusFilter', 'totalPemerintah', 'aktifCount'));
     }
 
     /**
@@ -69,9 +68,8 @@ class PenggunaController extends Controller
      */
     public function create()
     {
-        $roles = User::getRoleLabels();
         $opds = Opd::orderBy('nama_opd')->get();
-        return view('pengguna.create', compact('roles', 'opds'));
+        return view('pemerintah.create', compact('opds'));
     }
 
     /**
@@ -84,8 +82,7 @@ class PenggunaController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'username' => 'required|string|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'role' => 'required|in:admin,fo,bo,operator_opd,kepala_opd,verifikator,kadin',
-            'opd_id' => 'nullable|exists:opd,id',
+            'opd_id' => 'required|exists:opd,id',
             'nip' => 'nullable|string|max:50',
             'no_hp' => 'nullable|string|max:20',
             'status' => 'required|in:aktif,tidak_aktif',
@@ -93,63 +90,66 @@ class PenggunaController extends Controller
 
         $data = $request->except('password', 'password_confirmation');
         $data['password'] = Hash::make($request->password);
-
-        // Validate OPD for OPD users
-        if (in_array($request->role, ['operator_opd', 'kepala_opd']) && !$request->opd_id) {
-            return back()->withErrors(['opd_id' => 'OPD harus dipilih untuk role ini.'])->withInput();
-        }
+        $data['role'] = $this->pemerintahRole;
 
         $user = User::create($data);
 
         // Log activity
         ActivityLog::log(
-            'Menambah pengguna baru',
+            'Menambah pengguna pemerintah baru',
             $user,
             'created',
             [
                 'data' => $data,
                 'role' => $user->role
             ],
-            'user'
+            'pemerintah'
         );
 
-        return redirect()->route('pengguna.data.index')
-            ->with('success', 'Pengguna berhasil ditambahkan.');
+        return redirect()->route('pemerintah.index')
+            ->with('success', 'Pengguna pemerintah berhasil ditambahkan.');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(User $user)
     {
-        $user = User::with(['opd', 'berita', 'dataSkm'])->findOrFail($id);
-        return view('pengguna.show', compact('user'));
+        if ($user->role !== $this->pemerintahRole) {
+            abort(403, 'User bukan role pemerintah.');
+        }
+
+        $user->load('opd');
+        return view('pemerintah.show', compact('user'));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(User $user)
     {
-        $user = User::findOrFail($id);
-        $roles = User::getRoleLabels();
+        if ($user->role !== $this->pemerintahRole) {
+            abort(403, 'User bukan role pemerintah.');
+        }
+
         $opds = Opd::orderBy('nama_opd')->get();
-        return view('pengguna.edit', compact('user', 'roles', 'opds'));
+        return view('pemerintah.edit', compact('user', 'opds'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, User $user)
     {
-        $user = User::findOrFail($id);
+        if ($user->role !== $this->pemerintahRole) {
+            abort(403, 'User bukan role pemerintah.');
+        }
 
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($id)],
-            'username' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($id)],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'username' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
             'password' => 'nullable|string|min:8|confirmed',
-            'role' => 'required|in:admin,fo,bo,operator_opd,kepala_opd,verifikator,kadin',
             'opd_id' => 'nullable|exists:opd,id',
             'nip' => 'nullable|string|max:50',
             'no_hp' => 'nullable|string|max:20',
@@ -162,17 +162,15 @@ class PenggunaController extends Controller
             $data['password'] = Hash::make($request->password);
         }
 
-        // Validate OPD for OPD users
-        if (in_array($request->role, ['operator_opd', 'kepala_opd']) && !$request->opd_id) {
-            return back()->withErrors(['opd_id' => 'OPD harus dipilih untuk role ini.'])->withInput();
-        }
+        // Ensure role stays as pemerintah
+        $data['role'] = $this->pemerintahRole;
 
         $oldData = $user->toArray();
         $user->update($data);
 
         // Log activity
         ActivityLog::log(
-            'Mengupdate data pengguna',
+            'Mengupdate data pengguna pemerintah',
             $user,
             'updated',
             [
@@ -180,48 +178,22 @@ class PenggunaController extends Controller
                 'new' => $data,
                 'role' => $user->role
             ],
-            'user'
+            'pemerintah'
         );
 
-        return redirect()->route('pengguna.data.index')
-            ->with('success', 'Pengguna berhasil diperbarui.');
+        return redirect()->route('pemerintah.index')
+            ->with('success', 'Pengguna pemerintah berhasil diperbarui.');
     }
 
     /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        $user = User::findOrFail($id);
-
-        // Prevent deleting own account
-        if ($user->id === auth()->id()) {
-            return back()->withErrors(['error' => 'Tidak dapat menghapus akun Anda sendiri.']);
-        }
-
-        // Log activity
-        ActivityLog::log(
-            'Menghapus pengguna',
-            $user,
-            'deleted',
-            [
-                'data' => $user->toArray(),
-                'role' => $user->role
-            ],
-            'user'
-        );
-
-        $user->delete();
-
-        return redirect()->route('pengguna.data.index')
-            ->with('success', 'Pengguna berhasil dihapus.');
-    }
-
-    /**
-     * Update the status of user.
+     * Update the status of pemerintah user.
      */
     public function updateStatus(Request $request, User $user)
     {
+        if ($user->role !== $this->pemerintahRole) {
+            abort(403, 'User bukan role pemerintah.');
+        }
+
         $request->validate([
             'status' => 'required|in:aktif,tidak_aktif',
         ]);
@@ -233,7 +205,7 @@ class PenggunaController extends Controller
 
         // Log activity
         ActivityLog::log(
-            'Mengubah status pengguna',
+            'Mengubah status pengguna pemerintah',
             $user,
             'updated',
             [
@@ -241,14 +213,13 @@ class PenggunaController extends Controller
                 'new_status' => $request->status,
                 'user_name' => $user->name,
             ],
-            'user'
+            'pemerintah'
         );
 
         $message = $request->status === 'aktif'
-            ? 'Pengguna berhasil diaktifkan.'
-            : 'Status pengguna diubah menjadi tidak aktif.';
+            ? 'Pengguna pemerintah berhasil diaktifkan.'
+            : 'Status pengguna pemerintah diubah menjadi tidak aktif.';
 
-        // Return JSON for AJAX requests
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
@@ -261,5 +232,38 @@ class PenggunaController extends Controller
         }
 
         return redirect()->back()->with('success', $message);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(User $user)
+    {
+        if ($user->role !== $this->pemerintahRole) {
+            abort(403, 'User bukan role pemerintah.');
+        }
+
+        // Prevent deleting self
+        if ($user->id === auth()->id()) {
+            return redirect()->back()->with('error', 'Anda tidak dapat menghapus akun sendiri.');
+        }
+
+        $userData = $user->toArray();
+        $user->delete();
+
+        // Log activity
+        ActivityLog::log(
+            'Menghapus pengguna pemerintah',
+            null,
+            'deleted',
+            [
+                'deleted_data' => $userData,
+                'user_name' => $userData['name'],
+                'user_role' => $userData['role'],
+            ],
+            'pemerintah'
+        );
+
+        return redirect()->route('pemerintah.index')->with('success', 'Pengguna pemerintah berhasil dihapus.');
     }
 }
