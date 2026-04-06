@@ -103,6 +103,9 @@
                             <i class="mdi mdi-drag text-gray-400"></i>
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Jenis
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                             Nama Regulasi
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -127,6 +130,11 @@
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" data-id="{{ $item->id }}">
                             <td class="px-6 py-4 whitespace-nowrap text-center">
                                 <i class="mdi mdi-drag drag-handle text-gray-400 dark:text-gray-500 text-xl"></i>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                                    {{ $item->jenisRegulasi->nama_jenis ?? '-' }}
+                                </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $item->nama_regulasi }}</div>
@@ -187,7 +195,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                            <td colspan="8" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                                 <i class="mdi mdi-folder-open text-4xl mb-2"></i>
                                 <p>Belum ada data regulasi</p>
                             </td>

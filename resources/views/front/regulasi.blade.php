@@ -53,8 +53,20 @@
                         </div>
                     </div>
 
-                    <!-- Search -->
-                    <form action="{{ route('regulasi.public') }}" method="GET" class="w-full lg:w-auto flex gap-3">
+                    <!-- Search & Filter -->
+                    <form action="{{ route('regulasi.public') }}" method="GET" class="w-full lg:w-auto flex flex-col sm:flex-row gap-3">
+                        <!-- Jenis Filter -->
+                        <select name="jenis_filter" 
+                            class="px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all bg-white text-gray-700">
+                            <option value="all">Semua Jenis</option>
+                            @foreach($jenisList as $jenis)
+                                <option value="{{ $jenis->id }}" {{ $jenisFilter == $jenis->id ? 'selected' : '' }}>
+                                    {{ $jenis->nama_jenis }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        <!-- Search Input -->
                         <div class="relative flex-1 lg:w-80">
                             <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
                                 <i class="fas fa-search"></i>
@@ -63,16 +75,20 @@
                                 placeholder="Cari regulasi..."
                                 class="w-full pl-11 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all">
                         </div>
-                        <button type="submit"
-                            class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-md hover:shadow-lg">
-                            <i class="fas fa-search"></i>
-                        </button>
-                        @if ($search)
-                            <a href="{{ route('regulasi.public') }}"
-                                class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-xl font-bold transition-all flex items-center justify-center">
-                                <i class="fas fa-times"></i>
-                            </a>
-                        @endif
+
+                        <!-- Buttons -->
+                        <div class="flex gap-3">
+                            <button type="submit"
+                                class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-md hover:shadow-lg">
+                                <i class="fas fa-search"></i>
+                            </button>
+                            @if ($search || $jenisFilter != 'all')
+                                <a href="{{ route('regulasi.public') }}"
+                                    class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-xl font-bold transition-all flex items-center justify-center">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            @endif
+                        </div>
                     </form>
                 </div>
             </div>
@@ -85,6 +101,7 @@
                             <thead class="bg-gray-100 text-gray-700">
                                 <tr>
                                     <th class="px-6 py-4 text-left text-sm font-semibold">No.</th>
+                                    <th class="px-6 py-4 text-left text-sm font-semibold">Jenis</th>
                                     <th class="px-6 py-4 text-left text-sm font-semibold">Nama Regulasi</th>
                                     <th class="px-6 py-4 text-left text-sm font-semibold">Deskripsi</th>
                                     <th class="px-6 py-4 text-left text-sm font-semibold">File</th>
@@ -99,11 +116,16 @@
                                             {{ $regulasi->firstItem() + $index }}
                                         </td>
                                         <td class="px-6 py-4">
+                                            <span class="inline-block bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-semibold">
+                                                {{ $item->jenisRegulasi->nama_jenis ?? '-' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4">
                                             <div class="flex items-center gap-3">
                                                 <div
                                                     class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white flex-shrink-0">
                                                     <i
-                                                        class="fas 
+                                                        class="fas
                                                         @if (pathinfo($item->file_regulasi, PATHINFO_EXTENSION) === 'pdf') fa-file-pdf
                                                         @elseif(pathinfo($item->file_regulasi, PATHINFO_EXTENSION) === 'doc' ||
                                                                 pathinfo($item->file_regulasi, PATHINFO_EXTENSION) === 'docx') fa-file-word

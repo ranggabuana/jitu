@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Models\Regulasi;
+use App\Models\JenisRegulasi;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -34,7 +35,7 @@ class RegulasiController extends Controller
         }
 
         // Order by urutan (custom order) instead of id
-        $regulasi = $query->with('user')->orderBy('urutan', 'asc')->paginate($perPage);
+        $regulasi = $query->with(['user', 'jenisRegulasi'])->orderBy('urutan', 'asc')->paginate($perPage);
         $regulasi->appends([
             'search' => $search,
             'per_page' => $perPage,
@@ -49,7 +50,8 @@ class RegulasiController extends Controller
      */
     public function create()
     {
-        return view('regulasi.create');
+        $jenisRegulasi = JenisRegulasi::where('status', 'aktif')->orderBy('nama_jenis')->get();
+        return view('regulasi.create', compact('jenisRegulasi'));
     }
 
     /**
@@ -63,6 +65,7 @@ class RegulasiController extends Controller
             'file_regulasi' => 'required|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,rar|max:10240',
             'deskripsi' => 'nullable|string',
             'status' => 'required|in:aktif,tidak_aktif',
+            'jenis_regulasi_id' => 'required|exists:jenis_regulasi,id',
         ]);
 
         $data = $request->except('file_regulasi');
@@ -132,7 +135,8 @@ class RegulasiController extends Controller
     public function edit(string $id)
     {
         $regulasi = Regulasi::findOrFail($id);
-        return view('regulasi.edit', compact('regulasi'));
+        $jenisRegulasi = JenisRegulasi::where('status', 'aktif')->orderBy('nama_jenis')->get();
+        return view('regulasi.edit', compact('regulasi', 'jenisRegulasi'));
     }
 
     /**
@@ -149,6 +153,7 @@ class RegulasiController extends Controller
             'file_regulasi' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,rar|max:10240',
             'deskripsi' => 'nullable|string',
             'status' => 'required|in:aktif,tidak_aktif',
+            'jenis_regulasi_id' => 'required|exists:jenis_regulasi,id',
         ]);
 
         $data = $request->except('file_regulasi');

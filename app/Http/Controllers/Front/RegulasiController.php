@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
 use App\Models\Regulasi;
+use App\Models\JenisRegulasi;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 
@@ -18,7 +19,7 @@ class RegulasiController extends Controller
         $sortBy = $request->get('sort_by', 'created_at');
         $sortOrder = $request->get('sort_order', 'desc');
         $perPage = $request->get('per_page', 9);
-        $kategoriFilter = $request->get('kategori_filter', 'all');
+        $jenisFilter = $request->get('jenis_filter', 'all');
 
         $perPage = in_array($perPage, [9, 18, 27]) ? $perPage : 9;
         $allowedSorts = ['nama_regulasi', 'created_at', 'updated_at'];
@@ -35,7 +36,12 @@ class RegulasiController extends Controller
             });
         }
 
-        $regulasi = $query->with('user')
+        // Apply jenis regulasi filter
+        if ($jenisFilter !== 'all') {
+            $query->where('jenis_regulasi_id', $jenisFilter);
+        }
+
+        $regulasi = $query->with(['user', 'jenisRegulasi'])
             ->orderBy($sortBy, $sortOrder)
             ->paginate($perPage);
 
@@ -44,7 +50,13 @@ class RegulasiController extends Controller
             'sort_by' => $sortBy,
             'sort_order' => $sortOrder,
             'per_page' => $perPage,
+            'jenis_filter' => $jenisFilter,
         ]);
+
+        // Get active jenis regulasi for dropdown
+        $jenisList = JenisRegulasi::where('status', 'aktif')
+            ->orderBy('nama_jenis')
+            ->get();
 
         // Statistics
         $totalRegulasi = Regulasi::where('status', 'aktif')->count();
@@ -58,6 +70,8 @@ class RegulasiController extends Controller
             'sortBy',
             'sortOrder',
             'perPage',
+            'jenisFilter',
+            'jenisList',
             'totalRegulasi',
             'recentCount'
         ));

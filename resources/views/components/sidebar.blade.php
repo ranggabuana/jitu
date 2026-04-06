@@ -141,14 +141,30 @@
                     class="font-medium {{ request()->routeIs('berita.*') ? 'text-blue-500 dark:text-blue-400' : '' }}">Berita</span>
             </a>
 
-            <!-- Regulasi -->
-            <a href="{{ route('regulasi.index') }}"
-                class="flex items-center px-6 py-3 text-gray-700 dark:text-gray-300 transition-colors group menu-item {{ request()->routeIs('regulasi.*') ? 'active-menu' : '' }}">
-                <i
-                    class="mdi mdi-scale-balance mr-3 text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors text-lg"></i>
-                <span
-                    class="font-medium {{ request()->routeIs('regulasi.*') ? 'text-blue-500 dark:text-blue-400' : '' }}">Regulasi</span>
-            </a>
+            <!-- Regulasi Dropdown -->
+            <div class="relative">
+                <button onclick="toggleSubmenu('regulasi-submenu', 'regulasi-icon')"
+                    class="w-full flex items-center justify-between px-6 py-3 text-gray-700 dark:text-gray-300 transition-colors group menu-item {{ request()->routeIs('regulasi.*') || request()->routeIs('jenis-regulasi.*') ? 'active-menu' : '' }}">
+                    <div class="flex items-center">
+                        <i class="mdi mdi-scale-balance mr-3 text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors text-lg"></i>
+                        <span class="font-medium {{ request()->routeIs('regulasi.*') || request()->routeIs('jenis-regulasi.*') ? 'text-blue-500 dark:text-blue-400' : '' }}">Regulasi</span>
+                    </div>
+                    <i id="regulasi-icon" class="mdi mdi-chevron-down ml-2 transition-transform duration-300 text-gray-500 dark:text-gray-400 text-lg"></i>
+                </button>
+
+                <div id="regulasi-submenu" class="submenu pl-10 mt-1" style="max-height: 0;">
+                    <a href="{{ route('jenis-regulasi.index') }}"
+                        class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-lg mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('jenis-regulasi.*') ? 'active-menu' : '' }}">
+                        <i class="mdi mdi-circle text-[8px] mr-2 text-gray-500 dark:text-gray-400"></i>
+                        <span>Jenis Regulasi</span>
+                    </a>
+                    <a href="{{ route('regulasi.index') }}"
+                        class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-lg mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('regulasi.*') ? 'active-menu' : '' }}">
+                        <i class="mdi mdi-circle text-[8px] mr-2 text-gray-500 dark:text-gray-400"></i>
+                        <span>Data Regulasi</span>
+                    </a>
+                </div>
+            </div>
         @endif
 
         <!-- Pengaduan (Only for authorized users - Admin & Assigned Handlers) -->

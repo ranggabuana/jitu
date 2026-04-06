@@ -23,6 +23,7 @@ class Regulasi extends Model
         'status',
         'user_id',
         'urutan',
+        'jenis_regulasi_id',
     ];
 
     protected $casts = [
@@ -72,6 +73,14 @@ class Regulasi extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the jenis regulasi.
+     */
+    public function jenisRegulasi(): BelongsTo
+    {
+        return $this->belongsTo(JenisRegulasi::class);
     }
 
     /**

@@ -20,6 +20,25 @@
             @method('PUT')
 
             <div>
+                <label for="jenis_regulasi_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Jenis Regulasi <span class="text-red-500">*</span>
+                </label>
+                <select name="jenis_regulasi_id" id="jenis_regulasi_id"
+                    class="w-full border border-gray-300 dark:border-gray-600 rounded-md px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 @error('jenis_regulasi_id') border-red-500 @enderror"
+                    required>
+                    <option value="">Pilih Jenis Regulasi</option>
+                    @foreach($jenisRegulasi as $jenis)
+                        <option value="{{ $jenis->id }}" {{ old('jenis_regulasi_id', $regulasi->jenis_regulasi_id) == $jenis->id ? 'selected' : '' }}>
+                            {{ $jenis->nama_jenis }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('jenis_regulasi_id')
+                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
                 <label for="nama_regulasi" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Nama Regulasi <span class="text-red-500">*</span>
                 </label>

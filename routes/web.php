@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\PerijinanController;
 use App\Http\Controllers\Admin\DataPerijinanController;
 use App\Http\Controllers\Admin\BeritaController;
 use App\Http\Controllers\Admin\RegulasiController;
+use App\Http\Controllers\Admin\JenisRegulasiController;
 use App\Http\Controllers\Admin\PengaduanController as AdminPengaduanController;
 use App\Http\Controllers\Admin\DataSkmController;
 use App\Http\Controllers\Admin\HasilSkmController;
@@ -104,6 +105,10 @@ Route::middleware(['auth'])->group(function () {
 
     // Regulasi Routes (Admin Only)
     Route::middleware(['admin.role'])->group(function () {
+        // Jenis Regulasi
+        Route::resource('jenis-regulasi', JenisRegulasiController::class);
+        
+        // Data Regulasi
         Route::post('regulasi/reorder', [RegulasiController::class, 'reorder'])->name('regulasi.reorder');
         Route::resource('regulasi', RegulasiController::class);
         Route::get('regulasi/{id}/download', [RegulasiController::class, 'download'])->name('regulasi.download');
