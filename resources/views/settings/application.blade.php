@@ -113,6 +113,41 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Gambar TTE -->
+                        <div>
+                            <label for="gambar_tte" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="mdi mdi-signature-freehand text-gray-400 mr-1"></i> Gambar TTE
+                            </label>
+                            <div class="flex items-start gap-4">
+                                @if(isset($generalSettings['gambar_tte']) && file_exists(public_path($generalSettings['gambar_tte'])))
+                                    <div class="w-32 h-32 rounded-lg border-2 border-gray-200 dark:border-gray-600 overflow-hidden flex items-center justify-center bg-gray-50 dark:bg-gray-700">
+                                        <img src="{{ asset($generalSettings['gambar_tte']) }}" alt="Gambar TTE" class="max-w-full max-h-full object-contain">
+                                    </div>
+                                @else
+                                    <div class="w-32 h-32 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center bg-gray-50 dark:bg-gray-700">
+                                        <div class="text-center text-gray-400">
+                                            <i class="mdi mdi-image-off text-3xl"></i>
+                                            <p class="text-xs mt-1">Belum ada gambar</p>
+                                        </div>
+                                    </div>
+                                @endif
+                                <div class="flex-1">
+                                    <input type="file" name="gambar_tte" id="gambar_tte" accept="image/*"
+                                        class="block w-full text-sm text-gray-500 dark:text-gray-400
+                                            file:mr-4 file:py-2 file:px-4
+                                            file:rounded-lg file:border-0
+                                            file:text-sm file:font-medium
+                                            file:bg-blue-50 file:text-blue-700
+                                            dark:file:bg-blue-900/30 dark:file:text-blue-400
+                                            hover:file:bg-blue-100 dark:hover:file:bg-blue-900/50
+                                            transition-colors cursor-pointer">
+                                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                        Format: PNG, JPG, JPEG (Max 2MB)
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

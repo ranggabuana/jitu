@@ -33,13 +33,14 @@ class ApplicationSettingsController extends Controller
             'app_name' => 'required|string|max:255',
             'app_description' => 'nullable|string',
             'app_logo' => 'nullable|image|mimes:png,jpg,jpeg,svg|max:2048',
-            
+            'gambar_tte' => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
+
             // Contact Settings
             'whatsapp' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
             'address' => 'nullable|string',
             'phone' => 'nullable|string|max:20',
-            
+
             // Social Media Settings
             'facebook' => 'nullable|url|max:255',
             'instagram' => 'nullable|url|max:255',
@@ -68,14 +69,36 @@ class ApplicationSettingsController extends Controller
             $logo = $request->file('app_logo');
             $logoName = time() . '_logo.' . $logo->getClientOriginalExtension();
             $logo->move(public_path('assets/images'), $logoName);
-            
+
             // Delete old logo if exists
             $oldLogo = Setting::where('key', 'app_logo')->first();
             if ($oldLogo && $oldLogo->value && file_exists(public_path($oldLogo->value))) {
                 unlink(public_path($oldLogo->value));
             }
-            
+
             Setting::set('app_logo', 'assets/images/' . $logoName, 'file', 'general', 'Logo Aplikasi');
+        }
+
+        // Handle Gambar TTE upload
+        if ($request->hasFile('gambar_tte')) {
+            $tteImage = $request->file('gambar_tte');
+            $tteName = time() . '_tte.' . $tteImage->getClientOriginalExtension();
+            
+            // Ensure directory exists
+            $ttePath = public_path('uploads/tte');
+            if (!file_exists($ttePath)) {
+                mkdir($ttePath, 0755, true);
+            }
+            
+            $tteImage->move($ttePath, $tteName);
+
+            // Delete old TTE image if exists
+            $oldTte = Setting::where('key', 'gambar_tte')->first();
+            if ($oldTte && $oldTte->value && file_exists(public_path($oldTte->value))) {
+                unlink(public_path($oldTte->value));
+            }
+
+            Setting::set('gambar_tte', 'uploads/tte/' . $tteName, 'file', 'general', 'Gambar TTE');
         }
 
         // General Settings
