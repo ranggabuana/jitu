@@ -714,6 +714,365 @@ class DataPerijinanController extends Controller
     }
 
     /**
+     * Export dalam proses applications to Excel.
+     */
+    public function exportDalamProses(Request $request)
+    {
+        $user = auth()->user();
+        $query = DataPerijinan::with(['user', 'perijinan']);
+
+        // Apply same access filters as index
+        if (!$user->isAdmin()) {
+            $accessiblePerijinanIds = $user->getAccessiblePerijinanIds();
+            if (!empty($accessiblePerijinanIds)) {
+                $query->whereIn('perijinan_id', $accessiblePerijinanIds);
+            } else {
+                $query->where('id', 0);
+            }
+        }
+
+        // Apply search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('no_registrasi', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('perijinan', function ($q) use ($search) {
+                        $q->where('nama_perijinan', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        // Filter by perijinan type
+        if ($request->filled('perijinan_id')) {
+            $query->where('perijinan_id', $request->perijinan_id);
+        }
+
+        // Filter by date range
+        $dateFrom = $request->get('date_from', '');
+        $dateTo = $request->get('date_to', '');
+        
+        if ($dateFrom) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
+        $query->whereNotIn('status', ['approved', 'completed']);
+        $applications = $query->orderBy('created_at', 'desc')->get();
+
+        return $this->exportToExcel($applications, 'dalam_proses', $dateFrom, $dateTo);
+    }
+
+    /**
+     * Export perlu perbaikan applications to Excel.
+     */
+    public function exportPerluPerbaikan(Request $request)
+    {
+        $user = auth()->user();
+        $query = DataPerijinan::with(['user', 'perijinan']);
+
+        if (!$user->isAdmin()) {
+            $accessiblePerijinanIds = $user->getAccessiblePerijinanIds();
+            if (!empty($accessiblePerijinanIds)) {
+                $query->whereIn('perijinan_id', $accessiblePerijinanIds);
+            } else {
+                $query->where('id', 0);
+            }
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('no_registrasi', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('perijinan', function ($q) use ($search) {
+                        $q->where('nama_perijinan', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($request->filled('perijinan_id')) {
+            $query->where('perijinan_id', $request->perijinan_id);
+        }
+
+        $dateFrom = $request->get('date_from', '');
+        $dateTo = $request->get('date_to', '');
+        
+        if ($dateFrom) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
+        $query->where('status', 'perbaikan');
+        $applications = $query->orderBy('updated_at', 'desc')->get();
+
+        return $this->exportToExcel($applications, 'perlu_perbaikan', $dateFrom, $dateTo);
+    }
+
+    /**
+     * Export selesai applications to Excel.
+     */
+    public function exportSelesai(Request $request)
+    {
+        $user = auth()->user();
+        $query = DataPerijinan::with(['user', 'perijinan']);
+
+        if (!$user->isAdmin()) {
+            $accessiblePerijinanIds = $user->getAccessiblePerijinanIds();
+            if (!empty($accessiblePerijinanIds)) {
+                $query->whereIn('perijinan_id', $accessiblePerijinanIds);
+            } else {
+                $query->where('id', 0);
+            }
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('no_registrasi', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('perijinan', function ($q) use ($search) {
+                        $q->where('nama_perijinan', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $dateFrom = $request->get('date_from', '');
+        $dateTo = $request->get('date_to', '');
+        
+        if ($dateFrom) {
+            $query->whereDate('approved_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('approved_at', '<=', $dateTo);
+        }
+
+        $query->where('status', 'approved');
+        $applications = $query->orderBy('approved_at', 'desc')->get();
+
+        return $this->exportToExcel($applications, 'selesai', $dateFrom, $dateTo);
+    }
+
+    /**
+     * Export ditolak applications to Excel.
+     */
+    public function exportDitolak(Request $request)
+    {
+        $user = auth()->user();
+        $query = DataPerijinan::with(['user', 'perijinan']);
+
+        if (!$user->isAdmin()) {
+            $accessiblePerijinanIds = $user->getAccessiblePerijinanIds();
+            if (!empty($accessiblePerijinanIds)) {
+                $query->whereIn('perijinan_id', $accessiblePerijinanIds);
+            } else {
+                $query->where('id', 0);
+            }
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('no_registrasi', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('perijinan', function ($q) use ($search) {
+                        $q->where('nama_perijinan', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($request->filled('perijinan_id')) {
+            $query->where('perijinan_id', $request->perijinan_id);
+        }
+
+        $dateFrom = $request->get('date_from', '');
+        $dateTo = $request->get('date_to', '');
+        
+        if ($dateFrom) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
+        $query->where('status', 'rejected');
+        $applications = $query->orderBy('rejected_at', 'desc')->get();
+
+        return $this->exportToExcel($applications, 'ditolak', $dateFrom, $dateTo);
+    }
+
+    /**
+     * Generate Excel export file.
+     */
+    private function exportToExcel($applications, $statusLabel, $dateFrom, $dateTo)
+    {
+        // Generate filename with date range
+        $filename = 'data_perijinan_' . $statusLabel;
+        if ($dateFrom || $dateTo) {
+            $filename .= '_';
+            if ($dateFrom) {
+                $filename .= $dateFrom;
+            }
+            $filename .= '_sd_';
+            if ($dateTo) {
+                $filename .= $dateTo;
+            }
+        }
+        $filename .= '_' . date('Y-m-d_His') . '.xls';
+
+        // Set headers for Excel
+        header('Content-Type: application/vnd.ms-excel; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+
+        echo '<?xml version="1.0" encoding="UTF-8"?>';
+        echo '<?mso-application progid="Excel.Sheet"?>';
+        echo '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">';
+        
+        echo '<Styles>
+            <Style ss:ID="Default" ss:Name="Normal">
+                <Alignment ss:Vertical="Bottom"/>
+                <Borders/>
+                <Font ss:FontName="Calibri" ss:Size="11"/>
+                <Interior/>
+                <NumberFormat/>
+                <Protection/>
+            </Style>
+            <Style ss:ID="header">
+                <Font ss:FontName="Calibri" ss:Size="12" ss:Bold="1" ss:Color="#FFFFFF"/>
+                <Interior ss:Color="#2563EB" ss:Pattern="Solid"/>
+                <Borders>
+                    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+                </Borders>
+            </Style>
+            <Style ss:ID="title">
+                <Font ss:FontName="Calibri" ss:Size="14" ss:Bold="1" ss:Color="#1F4E79"/>
+                <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+            </Style>
+            <Style ss:ID="subtitle">
+                <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#595959"/>
+                <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+            </Style>
+            <Style ss:ID="date">
+                <NumberFormat ss:Format="dd/mm/yyyy\ hh:mm"/>
+            </Style>
+            <Style ss:ID="wrap">
+                <Alignment ss:Vertical="Center" ss:WrapText="1"/>
+            </Style>
+            <Style ss:ID="center">
+                <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+            </Style>
+        </Styles>';
+
+        echo '<Worksheet ss:Name="Data Perijinan">';
+        echo '<Table>';
+        echo '<Column ss:Width="40"/>';
+        echo '<Column ss:Width="120"/>';
+        echo '<Column ss:Width="150"/>';
+        echo '<Column ss:Width="180"/>';
+        echo '<Column ss:Width="120"/>';
+        echo '<Column ss:Width="120"/>';
+        echo '<Column ss:Width="120"/>';
+        
+        // Title row
+        $statusLabels = [
+            'dalam_proses' => 'DALAM PROSES',
+            'perlu_perbaikan' => 'PERLU PERBAIKAN',
+            'selesai' => 'SELESAI',
+            'ditolak' => 'DITOLAK'
+        ];
+        
+        echo '<Row ss:Height="30">';
+        echo '<Cell ss:MergeAcross="6" ss:StyleID="title"><Data ss:Type="String">DATA PERIJINAN - ' . strtoupper($statusLabels[$statusLabel]) . '</Data></Cell>';
+        echo '</Row>';
+        
+        // Date range row
+        echo '<Row ss:Height="20">';
+        $dateRangeText = 'Periode: ';
+        if ($dateFrom && $dateTo) {
+            $dateRangeText .= date('d/m/Y', strtotime($dateFrom)) . ' s/d ' . date('d/m/Y', strtotime($dateTo));
+        } elseif ($dateFrom) {
+            $dateRangeText .= 'Dari tanggal ' . date('d/m/Y', strtotime($dateFrom)) . ' s/d sekarang';
+        } elseif ($dateTo) {
+            $dateRangeText .= 'Sampai tanggal ' . date('d/m/Y', strtotime($dateTo));
+        } else {
+            $dateRangeText .= 'Semua tanggal';
+        }
+        echo '<Cell ss:MergeAcross="6" ss:StyleID="subtitle"><Data ss:Type="String">' . $dateRangeText . '</Data></Cell>';
+        echo '</Row>';
+        
+        // Empty row
+        echo '<Row></Row>';
+        
+        // Header row
+        echo '<Row ss:Height="25">';
+        echo '<Cell ss:StyleID="header"><Data ss:Type="String">No</Data></Cell>';
+        echo '<Cell ss:StyleID="header"><Data ss:Type="String">No. Registrasi</Data></Cell>';
+        echo '<Cell ss:StyleID="header"><Data ss:Type="String">Pemohon</Data></Cell>';
+        echo '<Cell ss:StyleID="header"><Data ss:Type="String">Jenis Perijinan</Data></Cell>';
+        echo '<Cell ss:StyleID="header"><Data ss:Type="String">Tanggal Pengajuan</Data></Cell>';
+        echo '<Cell ss:StyleID="header"><Data ss:Type="String">Status</Data></Cell>';
+        echo '<Cell ss:StyleID="header"><Data ss:Type="String">Tanggal Approval/Rejection</Data></Cell>';
+        echo '</Row>';
+
+        // Data rows
+        $no = 1;
+        $statusLabelsMap = [
+            'submitted' => 'Submitted',
+            'in_progress' => 'Dalam Proses',
+            'perbaikan' => 'Perlu Perbaikan',
+            'approved' => 'Disetujui',
+            'rejected' => 'Ditolak',
+        ];
+
+        foreach ($applications as $app) {
+            echo '<Row>';
+            echo '<Cell ss:StyleID="center"><Data ss:Type="Number">' . $no++ . '</Data></Cell>';
+            echo '<Cell ss:StyleID="wrap"><Data ss:Type="String">' . htmlspecialchars($app->no_registrasi) . '</Data></Cell>';
+            echo '<Cell ss:StyleID="wrap"><Data ss:Type="String">' . htmlspecialchars($app->user->name ?? '-') . '</Data></Cell>';
+            echo '<Cell ss:StyleID="wrap"><Data ss:Type="String">' . htmlspecialchars($app->perijinan->nama_perijinan ?? '-') . '</Data></Cell>';
+            echo '<Cell ss:StyleID="date"><Data ss:Type="String">' . $app->created_at . '</Data></Cell>';
+            echo '<Cell ss:StyleID="center"><Data ss:Type="String">' . htmlspecialchars($statusLabelsMap[$app->status] ?? $app->status) . '</Data></Cell>';
+            
+            $approvalDate = '';
+            if ($app->status === 'approved' && $app->approved_at) {
+                $approvalDate = $app->approved_at;
+            } elseif ($app->status === 'rejected' && $app->rejected_at) {
+                $approvalDate = $app->rejected_at;
+            }
+            
+            if ($approvalDate) {
+                echo '<Cell ss:StyleID="date"><Data ss:Type="String">' . $approvalDate . '</Data></Cell>';
+            } else {
+                echo '<Cell ss:StyleID="wrap"><Data ss:Type="String">-</Data></Cell>';
+            }
+            echo '</Row>';
+        }
+
+        echo '</Table>';
+        echo '</Worksheet>';
+        echo '</Workbook>';
+        
+        exit;
+    }
+
+    /**
      * Download uploaded file from application.
      */
     public function downloadFile($filepath)

@@ -127,9 +127,13 @@ Route::middleware(['auth'])->group(function () {
     // Data Perijinan Routes (Admin Only)
     Route::middleware(['admin.role'])->prefix('data-perijinan')->name('data-perijinan.')->group(function () {
         Route::get('/dalam-proses', [DataPerijinanController::class, 'dalamProses'])->name('dalam-proses');
+        Route::get('/dalam-proses/export', [DataPerijinanController::class, 'exportDalamProses'])->name('dalam-proses.export');
         Route::get('/perlu-perbaikan', [DataPerijinanController::class, 'perluPerbaikan'])->name('perlu-perbaikan');
+        Route::get('/perlu-perbaikan/export', [DataPerijinanController::class, 'exportPerluPerbaikan'])->name('perlu-perbaikan.export');
         Route::get('/selesai', [DataPerijinanController::class, 'selesai'])->name('selesai');
+        Route::get('/selesai/export', [DataPerijinanController::class, 'exportSelesai'])->name('selesai.export');
         Route::get('/ditolak', [DataPerijinanController::class, 'ditolak'])->name('ditolak');
+        Route::get('/ditolak/export', [DataPerijinanController::class, 'exportDitolak'])->name('ditolak.export');
         Route::get('/{id}', [DataPerijinanController::class, 'show'])->name('show');
         Route::post('/{id}/validate', [DataPerijinanController::class, 'processValidation'])->name('validate');
         Route::patch('/{id}/status', [DataPerijinanController::class, 'updateStatus'])->name('update-status');

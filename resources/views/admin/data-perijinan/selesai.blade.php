@@ -47,6 +47,11 @@
             </div>
 
             <div class="flex items-center gap-2">
+                <button onclick="openExportModal()"
+                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium">
+                    <i class="mdi mdi-file-excel"></i>
+                    <span>Export Excel</span>
+                </button>
                 <form method="GET" action="{{ route('data-perijinan.selesai') }}" class="flex items-center gap-2">
                     <select name="perijinan_id" onchange="this.form.submit()"
                         class="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -149,4 +154,85 @@
             {{ $applications->links() }}
         </div>
     </div>
+
+    <!-- Export Modal -->
+    <div id="exportModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+            <div class="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <i class="mdi mdi-file-excel text-2xl"></i>
+                    <h3 class="text-lg font-bold">Export Data Selesai</h3>
+                </div>
+                <button onclick="closeExportModal()" class="text-white/80 hover:text-white">
+                    <i class="mdi mdi-close text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Tanggal Mulai <span class="text-gray-400 text-xs">(opsional)</span>
+                    </label>
+                    <input type="date" id="date_from" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-green-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Tanggal Sampai <span class="text-gray-400 text-xs">(opsional)</span>
+                    </label>
+                    <input type="date" id="date_to" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-green-500">
+                </div>
+                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                    <p class="text-sm text-blue-700 dark:text-blue-400">
+                        <i class="mdi mdi-information mr-1"></i>
+                        Kosongkan kedua tanggal untuk export semua data
+                    </p>
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
+                <button onclick="closeExportModal()" class="px-4 py-2 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded-lg transition-colors">
+                    Batal
+                </button>
+                <button onclick="exportData()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors inline-flex items-center gap-2">
+                    <i class="mdi mdi-download"></i>
+                    Export
+                </button>
+            </div>
+        </div>
+    </div>
 </x-layout>
+
+<script>
+    function openExportModal() {
+        document.getElementById('exportModal').classList.remove('hidden');
+        document.getElementById('exportModal').classList.add('flex');
+        document.getElementById('date_from').value = '';
+        document.getElementById('date_to').value = '';
+    }
+
+    function closeExportModal() {
+        document.getElementById('exportModal').classList.add('hidden');
+        document.getElementById('exportModal').classList.remove('flex');
+    }
+
+    function exportData() {
+        const dateFrom = document.getElementById('date_from').value;
+        const dateTo = document.getElementById('date_to').value;
+        const baseUrl = '{{ route("data-perijinan.selesai.export") }}';
+        const url = new URL(baseUrl);
+        const currentParams = new URLSearchParams(window.location.search);
+        currentParams.forEach((value, key) => {
+            if (key !== 'page') url.searchParams.set(key, value);
+        });
+        if (dateFrom) url.searchParams.set('date_from', dateFrom);
+        if (dateTo) url.searchParams.set('date_to', dateTo);
+        window.location.href = url.toString();
+        closeExportModal();
+    }
+
+    document.getElementById('exportModal')?.addEventListener('click', function(e) {
+        if (e.target === this) closeExportModal();
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeExportModal();
+    });
+</script>
