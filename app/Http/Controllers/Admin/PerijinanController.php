@@ -73,6 +73,7 @@ class PerijinanController extends Controller
             'dasar_hukum' => 'required|string',
             'persyaratan' => 'required|string',
             'prosedur' => 'required|string',
+            'informasi_biaya' => 'nullable|string',
         ]);
 
         $perijinan = Perijinan::create($request->all());
@@ -532,6 +533,7 @@ class PerijinanController extends Controller
             'dasar_hukum' => 'required|string',
             'persyaratan' => 'required|string',
             'prosedur' => 'required|string',
+            'informasi_biaya' => 'nullable|string',
         ]);
 
         $perijinan = Perijinan::findOrFail($id);

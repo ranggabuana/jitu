@@ -14,6 +14,7 @@ class Perijinan extends Model
         'dasar_hukum',
         'persyaratan',
         'prosedur',
+        'informasi_biaya',
     ];
 
     /**
