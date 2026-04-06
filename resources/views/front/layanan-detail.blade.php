@@ -127,7 +127,7 @@
                     <button onclick="switchTab('gambar-alur')" data-tab="gambar-alur"
                         class="tab-btn flex items-center gap-2 px-6 py-4 font-semibold text-sm whitespace-nowrap transition-all border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                         role="tab" aria-selected="false">
-                        <i class="fas fa-chart-timeline-variant"></i>
+                        <i class="fas fa-sitemap"></i>
                         <span>Gambar Alur</span>
                     </button>
                     <button onclick="switchTab('formulir')" data-tab="formulir"
@@ -257,7 +257,7 @@
                     <div class="flex items-center gap-3 mb-4">
                         <div
                             class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-md">
-                            <i class="fas fa-chart-timeline-variant text-white text-lg"></i>
+                            <i class="fas fa-sitemap text-white text-lg"></i>
                         </div>
                         <h2 class="text-xl font-bold text-gray-800">Gambar Alur</h2>
                     </div>
