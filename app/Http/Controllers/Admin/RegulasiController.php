@@ -17,15 +17,10 @@ class RegulasiController extends Controller
     public function index(Request $request)
     {
         $search = $request->get('search', '');
-        $sortBy = $request->get('sort_by', 'id');
-        $sortOrder = $request->get('sort_order', 'desc');
         $perPage = $request->get('per_page', 10);
         $statusFilter = $request->get('status_filter', 'all');
 
         $perPage = in_array($perPage, [10, 25, 50, 100]) ? $perPage : 10;
-        $allowedSorts = ['nama_regulasi', 'status', 'created_at', 'updated_at'];
-        $sortBy = in_array($sortBy, $allowedSorts) ? $sortBy : 'id';
-        $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? $sortOrder : 'desc';
 
         $query = Regulasi::query();
 
@@ -38,16 +33,15 @@ class RegulasiController extends Controller
             $query->where('status', $statusFilter);
         }
 
-        $regulasi = $query->with('user')->orderBy($sortBy, $sortOrder)->paginate($perPage);
+        // Order by urutan (custom order) instead of id
+        $regulasi = $query->with('user')->orderBy('urutan', 'asc')->paginate($perPage);
         $regulasi->appends([
             'search' => $search,
-            'sort_by' => $sortBy,
-            'sort_order' => $sortOrder,
             'per_page' => $perPage,
             'status_filter' => $statusFilter,
         ]);
 
-        return view('regulasi.index', compact('regulasi', 'search', 'sortBy', 'sortOrder', 'perPage', 'statusFilter'));
+        return view('regulasi.index', compact('regulasi', 'search', 'perPage', 'statusFilter'));
     }
 
     /**
@@ -73,6 +67,10 @@ class RegulasiController extends Controller
 
         $data = $request->except('file_regulasi');
         $data['user_id'] = Auth::id();
+
+        // Set urutan to max + 1
+        $maxUrutan = Regulasi::max('urutan') ?? 0;
+        $data['urutan'] = $maxUrutan + 1;
 
         // Handle file upload
         if ($request->hasFile('file_regulasi')) {
@@ -243,5 +241,35 @@ class RegulasiController extends Controller
         );
 
         return response()->download(public_path($regulasi->file_regulasi), $regulasi->nama_regulasi . '.' . pathinfo($regulasi->file_regulasi, PATHINFO_EXTENSION));
+    }
+
+    /**
+     * Reorder regulasi items.
+     */
+    public function reorder(Request $request)
+    {
+        $request->validate([
+            'order' => 'required|array',
+            'order.*.id' => 'required|exists:regulasi,id',
+            'order.*.urutan' => 'required|integer|min:0',
+        ]);
+
+        foreach ($request->order as $item) {
+            Regulasi::where('id', $item['id'])->update(['urutan' => $item['urutan']]);
+        }
+
+        // Log activity
+        ActivityLog::log(
+            'Mengurutkan ulang regulasi',
+            null,
+            'updated',
+            ['order' => $request->order],
+            'regulasi'
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Urutan regulasi berhasil diperbarui.'
+        ]);
     }
 }

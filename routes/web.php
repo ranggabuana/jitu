@@ -104,6 +104,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Regulasi Routes (Admin Only)
     Route::middleware(['admin.role'])->group(function () {
+        Route::post('regulasi/reorder', [RegulasiController::class, 'reorder'])->name('regulasi.reorder');
         Route::resource('regulasi', RegulasiController::class);
         Route::get('regulasi/{id}/download', [RegulasiController::class, 'download'])->name('regulasi.download');
     });

@@ -21,7 +21,36 @@
         <meta name="error-message" content="{{ session('error') }}">
     @endif
 
+    <!-- SortableJS CSS -->
+    <style>
+        .sortable-ghost {
+            opacity: 0.4;
+            background-color: #f3f4f6;
+        }
+        .sortable-chosen {
+            background-color: #e0e7ff !important;
+        }
+        .sortable-drag {
+            background-color: #ffffff;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .drag-handle {
+            cursor: grab;
+        }
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+    </style>
+
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+        <!-- Info Box -->
+        <div class="px-6 py-3 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
+            <div class="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-400">
+                <i class="mdi mdi-information-outline"></i>
+                <span>Seret dan lepas item pada kolom <strong>Urutan</strong> untuk mengubah urutan regulasi.</span>
+            </div>
+        </div>
+
         <!-- Toolbar: Show entries, Status Filter, and Search -->
         <div
             class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -70,23 +99,11 @@
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
-                            onclick="sortBy('id')">
-                            ID
-                            @if($sortBy === 'id')
-                                @if($sortOrder === 'asc') <i class="mdi mdi-arrow-up"></i>
-                                @else <i class="mdi mdi-arrow-down"></i>
-                                @endif
-                            @endif
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-12">
+                            <i class="mdi mdi-drag text-gray-400"></i>
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
-                            onclick="sortBy('nama_regulasi')">
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                             Nama Regulasi
-                            @if($sortBy === 'nama_regulasi')
-                                @if($sortOrder === 'asc') <i class="mdi mdi-arrow-up"></i>
-                                @else <i class="mdi mdi-arrow-down"></i>
-                                @endif
-                            @endif
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                             File
@@ -94,34 +111,22 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                             Deskripsi
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
-                            onclick="sortBy('status')">
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                             Status
-                            @if($sortBy === 'status')
-                                @if($sortOrder === 'asc') <i class="mdi mdi-arrow-up"></i>
-                                @else <i class="mdi mdi-arrow-down"></i>
-                                @endif
-                            @endif
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
-                            onclick="sortBy('created_at')">
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                             Dibuat
-                            @if($sortBy === 'created_at')
-                                @if($sortOrder === 'asc') <i class="mdi mdi-arrow-up"></i>
-                                @else <i class="mdi mdi-arrow-down"></i>
-                                @endif
-                            @endif
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                             Actions
                         </th>
                     </tr>
                 </thead>
-                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody id="regulasiTable" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse($regulasi as $item)
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                {{ $item->id }}
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" data-id="{{ $item->id }}">
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                <i class="mdi mdi-drag drag-handle text-gray-400 dark:text-gray-500 text-xl"></i>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $item->nama_regulasi }}</div>
@@ -243,6 +248,8 @@
         @endif
     </div>
 
+    <!-- SortableJS -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script>
         function updatePerPage(perPage) {
             const url = new URL(window.location.href);
@@ -257,18 +264,77 @@
             window.location.href = url.toString();
         }
 
-        function sortBy(field) {
-            const url = new URL(window.location.href);
-            const currentSort = url.searchParams.get('sort_by') || 'id';
-            const currentOrder = url.searchParams.get('sort_order') || 'desc';
-            
-            if (currentSort === field) {
-                url.searchParams.set('sort_order', currentOrder === 'asc' ? 'desc' : 'asc');
-            } else {
-                url.searchParams.set('sort_by', field);
-                url.searchParams.set('sort_order', 'desc');
+        // Initialize SortableJS
+        document.addEventListener('DOMContentLoaded', function() {
+            const tableBody = document.getElementById('regulasiTable');
+            if (tableBody) {
+                Sortable.create(tableBody, {
+                    handle: '.drag-handle',
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    chosenClass: 'sortable-chosen',
+                    dragClass: 'sortable-drag',
+                    onEnd: function(evt) {
+                        // Get new order
+                        const rows = tableBody.querySelectorAll('tr[data-id]');
+                        const order = [];
+                        
+                        rows.forEach((row, index) => {
+                            order.push({
+                                id: row.getAttribute('data-id'),
+                                urutan: index + 1
+                            });
+                        });
+
+                        // Send AJAX request
+                        fetch('{{ route("regulasi.reorder") }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({ order: order })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Show success notification
+                                Swal.fire({
+                                    title: 'Berhasil!',
+                                    text: data.message,
+                                    icon: 'success',
+                                    toast: true,
+                                    position: 'top-end',
+                                    showConfirmButton: false,
+                                    timer: 2000,
+                                    timerProgressBar: true
+                                });
+                            } else {
+                                Swal.fire({
+                                    title: 'Error!',
+                                    text: data.message || 'Gagal mengubah urutan.',
+                                    icon: 'error',
+                                    confirmButtonText: 'OK'
+                                });
+                                // Reload to reset order
+                                location.reload();
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire({
+                                title: 'Error!',
+                                text: 'Terjadi kesalahan saat mengubah urutan.',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                            // Reload to reset order
+                            location.reload();
+                        });
+                    }
+                });
             }
-            window.location.href = url.toString();
-        }
+        });
     </script>
 </x-layout>

@@ -22,6 +22,7 @@ class Regulasi extends Model
         'deskripsi',
         'status',
         'user_id',
+        'urutan',
     ];
 
     protected $casts = [
