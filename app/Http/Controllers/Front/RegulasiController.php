@@ -16,15 +16,15 @@ class RegulasiController extends Controller
     public function index(Request $request)
     {
         $search = $request->get('search', '');
-        $sortBy = $request->get('sort_by', 'created_at');
-        $sortOrder = $request->get('sort_order', 'desc');
+        $sortBy = $request->get('sort_by', 'urutan');
+        $sortOrder = $request->get('sort_order', 'asc');
         $perPage = $request->get('per_page', 9);
         $jenisFilter = $request->get('jenis_filter', 'all');
 
         $perPage = in_array($perPage, [9, 18, 27]) ? $perPage : 9;
-        $allowedSorts = ['nama_regulasi', 'created_at', 'updated_at'];
-        $sortBy = in_array($sortBy, $allowedSorts) ? $sortBy : 'created_at';
-        $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? $sortOrder : 'desc';
+        $allowedSorts = ['nama_regulasi', 'created_at', 'updated_at', 'urutan'];
+        $sortBy = in_array($sortBy, $allowedSorts) ? $sortBy : 'urutan';
+        $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? $sortOrder : 'asc';
 
         $query = Regulasi::where('status', 'aktif');
 
