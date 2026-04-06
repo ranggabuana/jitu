@@ -252,6 +252,18 @@
                                 <i class="fas fa-list-ol"></i>
                                 <span>Prosedur</span>
                             </button>
+                            <button onclick="switchModalTab('informasi-biaya')" data-tab="informasi-biaya"
+                                class="tab-btn flex items-center gap-2 px-6 py-4 font-semibold text-sm whitespace-nowrap transition-all border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                                role="tab" aria-selected="false">
+                                <i class="fas fa-money-bill-wave"></i>
+                                <span>Informasi Biaya</span>
+                            </button>
+                            <button onclick="switchModalTab('gambar-alur')" data-tab="gambar-alur"
+                                class="tab-btn flex items-center gap-2 px-6 py-4 font-semibold text-sm whitespace-nowrap transition-all border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                                role="tab" aria-selected="false">
+                                <i class="fas fa-sitemap"></i>
+                                <span>Gambar Alur</span>
+                            </button>
                             <button onclick="switchModalTab('formulir')" data-tab="formulir"
                                 class="tab-btn flex items-center gap-2 px-6 py-4 font-semibold text-sm whitespace-nowrap transition-all border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                                 role="tab" aria-selected="false">
@@ -327,6 +339,60 @@
                                                     </div>
                                                 `}
                             </div>
+                        </div>
+
+                        <!-- Informasi Biaya Tab -->
+                        <div id="informasi-biaya" class="tab-content hidden" role="tabpanel">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-700 rounded-xl flex items-center justify-center shadow-md">
+                                    <i class="fas fa-money-bill-wave text-white text-lg"></i>
+                                </div>
+                                <h2 class="text-xl font-bold text-gray-800">Informasi Biaya</h2>
+                            </div>
+                            ${perijinan.informasi_biaya ? `
+                                                <div class="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6">
+                                                    <div class="flex items-start gap-4">
+                                                        <div class="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                            <i class="fas fa-tag text-green-600 text-2xl"></i>
+                                                        </div>
+                                                        <div class="flex-1">
+                                                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Biaya Perizinan</h3>
+                                                            <p class="text-gray-700 leading-relaxed">${perijinan.informasi_biaya}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ` : `
+                                                <div class="text-center py-8">
+                                                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                        <i class="fas fa-money-bill-wave text-gray-400 text-2xl"></i>
+                                                    </div>
+                                                    <p class="text-gray-400 italic">Informasi biaya belum tersedia</p>
+                                                </div>
+                                            `}
+                        </div>
+
+                        <!-- Gambar Alur Tab -->
+                        <div id="gambar-alur" class="tab-content hidden" role="tabpanel">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-md">
+                                    <i class="fas fa-sitemap text-white text-lg"></i>
+                                </div>
+                                <h2 class="text-xl font-bold text-gray-800">Gambar Alur</h2>
+                            </div>
+                            ${perijinan.gambar_alur ? `
+                                                <div class="flex justify-center">
+                                                    <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm max-w-4xl">
+                                                        <img src="{{ url('') }}/${perijinan.gambar_alur}" alt="Gambar Alur" class="w-full h-auto rounded-lg">
+                                                    </div>
+                                                </div>
+                                            ` : `
+                                                <div class="text-center py-8">
+                                                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                        <i class="fas fa-image text-gray-400 text-2xl"></i>
+                                                    </div>
+                                                    <p class="text-gray-400 italic">Gambar alur belum tersedia</p>
+                                                </div>
+                                            `}
                         </div>
 
                         <!-- Formulir Tab -->
