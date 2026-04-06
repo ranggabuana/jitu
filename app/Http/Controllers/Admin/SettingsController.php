@@ -68,6 +68,178 @@ class SettingsController extends Controller
     }
 
     /**
+     * Export activity logs to Excel.
+     */
+    public function exportLogs(Request $request)
+    {
+        $query = ActivityLog::with('user')->orderBy('created_at', 'desc');
+
+        // Apply same filters as index
+        $logName = $request->get('log_name', '');
+        $event = $request->get('event', '');
+        $search = $request->get('search', '');
+        $dateFrom = $request->get('date_from', '');
+        $dateTo = $request->get('date_to', '');
+
+        // Filter by log name
+        if ($logName) {
+            $query->where('log_name', $logName);
+        }
+
+        // Filter by event
+        if ($event) {
+            $query->where('event', $event);
+        }
+
+        // Search
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('description', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($uq) use ($search) {
+                      $uq->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Apply date range filter
+        if ($dateFrom) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+
+        if ($dateTo) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
+        $logs = $query->get();
+
+        // Generate filename with date range
+        $filename = 'activity_logs';
+        if ($dateFrom || $dateTo) {
+            $filename .= '_';
+            if ($dateFrom) {
+                $filename .= $dateFrom;
+            }
+            $filename .= '_sd_';
+            if ($dateTo) {
+                $filename .= $dateTo;
+            }
+        }
+        $filename .= '_' . date('Y-m-d_His') . '.xls';
+
+        // Set headers for Excel
+        header('Content-Type: application/vnd.ms-excel; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+
+        echo '<?xml version="1.0" encoding="UTF-8"?>';
+        echo '<?mso-application progid="Excel.Sheet"?>';
+        echo '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">';
+        
+        echo '<Styles>
+            <Style ss:ID="Default" ss:Name="Normal">
+                <Alignment ss:Vertical="Bottom"/>
+                <Borders/>
+                <Font ss:FontName="Calibri" ss:Size="11"/>
+                <Interior/>
+                <NumberFormat/>
+                <Protection/>
+            </Style>
+            <Style ss:ID="header">
+                <Font ss:FontName="Calibri" ss:Size="12" ss:Bold="1" ss:Color="#FFFFFF"/>
+                <Interior ss:Color="#6366F1" ss:Pattern="Solid"/>
+                <Borders>
+                    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+                </Borders>
+            </Style>
+            <Style ss:ID="title">
+                <Font ss:FontName="Calibri" ss:Size="14" ss:Bold="1" ss:Color="#1F4E79"/>
+                <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+            </Style>
+            <Style ss:ID="subtitle">
+                <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#595959"/>
+                <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+            </Style>
+            <Style ss:ID="date">
+                <NumberFormat ss:Format="dd/mm/yyyy\ hh:mm"/>
+            </Style>
+            <Style ss:ID="wrap">
+                <Alignment ss:Vertical="Center" ss:WrapText="1"/>
+            </Style>
+        </Styles>';
+
+        echo '<Worksheet ss:Name="Activity Logs">';
+        echo '<Table>';
+        echo '<Column ss:Width="40"/>';
+        echo '<Column ss:Width="120"/>';
+        echo '<Column ss:Width="300"/>';
+        echo '<Column ss:Width="150"/>';
+        echo '<Column ss:Width="100"/>';
+        echo '<Column ss:Width="100"/>';
+        echo '<Column ss:Width="150"/>';
+        echo '<Column ss:Width="120"/>';
+        
+        // Title row
+        echo '<Row ss:Height="30">';
+        echo '<Cell ss:MergeAcross="7" ss:StyleID="title"><Data ss:Type="String">LAPORAN LOG AKTIVITAS</Data></Cell>';
+        echo '</Row>';
+        
+        // Date range row
+        echo '<Row ss:Height="20">';
+        $dateRangeText = 'Periode: ';
+        if ($dateFrom && $dateTo) {
+            $dateRangeText .= date('d/m/Y', strtotime($dateFrom)) . ' s/d ' . date('d/m/Y', strtotime($dateTo));
+        } elseif ($dateFrom) {
+            $dateRangeText .= 'Dari tanggal ' . date('d/m/Y', strtotime($dateFrom)) . ' s/d sekarang';
+        } elseif ($dateTo) {
+            $dateRangeText .= 'Sampai tanggal ' . date('d/m/Y', strtotime($dateTo));
+        } else {
+            $dateRangeText .= 'Semua tanggal';
+        }
+        echo '<Cell ss:MergeAcross="7" ss:StyleID="subtitle"><Data ss:Type="String">' . $dateRangeText . '</Data></Cell>';
+        echo '</Row>';
+        
+        // Empty row
+        echo '<Row></Row>';
+        
+        // Header row
+        echo '<Row ss:Height="25">';
+        echo '<Cell ss:StyleID="header"><Data ss:Type="String">No</Data></Cell>';
+        echo '<Cell ss:StyleID="header"><Data ss:Type="String">Waktu</Data></Cell>';
+        echo '<Cell ss:StyleID="header"><Data ss:Type="String">Deskripsi</Data></Cell>';
+        echo '<Cell ss:StyleID="header"><Data ss:Type="String">User</Data></Cell>';
+        echo '<Cell ss:StyleID="header"><Data ss:Type="String">Event</Data></Cell>';
+        echo '<Cell ss:StyleID="header"><Data ss:Type="String">Kategori</Data></Cell>';
+        echo '<Cell ss:StyleID="header"><Data ss:Type="String">Subject</Data></Cell>';
+        echo '<Cell ss:StyleID="header"><Data ss:Type="String">IP Address</Data></Cell>';
+        echo '</Row>';
+
+        // Data rows
+        $no = 1;
+        foreach ($logs as $log) {
+            echo '<Row>';
+            echo '<Cell ss:StyleID="wrap"><Data ss:Type="Number">' . $no++ . '</Data></Cell>';
+            echo '<Cell ss:StyleID="date"><Data ss:Type="String">' . $log->created_at . '</Data></Cell>';
+            echo '<Cell ss:StyleID="wrap"><Data ss:Type="String">' . htmlspecialchars($log->description) . '</Data></Cell>';
+            echo '<Cell ss:StyleID="wrap"><Data ss:Type="String">' . htmlspecialchars($log->user->name ?? 'Sistem') . '</Data></Cell>';
+            echo '<Cell ss:StyleID="wrap"><Data ss:Type="String">' . htmlspecialchars($log->event_label) . '</Data></Cell>';
+            echo '<Cell ss:StyleID="wrap"><Data ss:Type="String">' . htmlspecialchars($log->log_name) . '</Data></Cell>';
+            echo '<Cell ss:StyleID="wrap"><Data ss:Type="String">' . htmlspecialchars($log->subject_label ?? '-') . '</Data></Cell>';
+            echo '<Cell ss:StyleID="wrap"><Data ss:Type="String">' . htmlspecialchars($log->ip_address ?? '-') . '</Data></Cell>';
+            echo '</Row>';
+        }
+
+        echo '</Table>';
+        echo '</Worksheet>';
+        echo '</Workbook>';
+        
+        exit;
+    }
+
+    /**
      * Backup database.
      */
     public function backupDatabase()

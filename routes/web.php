@@ -67,6 +67,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/pengaduan-handlers/remove/{userId}', [PengaduanHandlerController::class, 'remove'])->name('pengaduan-handlers.remove');
         Route::get('/database', [SettingsController::class, 'database'])->name('database');
         Route::get('/logs', [SettingsController::class, 'logs'])->name('logs');
+        Route::get('/logs/export', [SettingsController::class, 'exportLogs'])->name('logs.export');
         Route::post('/backup/database', [SettingsController::class, 'backupDatabase'])->name('backup.database');
         Route::post('/backup/aplikasi', [SettingsController::class, 'backupAplikasi'])->name('backup.aplikasi');
         Route::post('/backup/full', [SettingsController::class, 'backupFull'])->name('backup.full');

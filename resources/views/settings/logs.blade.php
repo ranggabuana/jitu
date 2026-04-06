@@ -112,9 +112,16 @@
                 <i class="mdi mdi-clipboard-text-clock text-gray-500"></i>
                 Riwayat Aktivitas
             </h2>
-            <span class="text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-3 py-1 rounded-full font-medium">
-                {{ $logs->total() }} logs
-            </span>
+            <div class="flex items-center gap-3">
+                <button onclick="openExportModal()"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium flex items-center gap-2">
+                    <i class="mdi mdi-file-excel"></i>
+                    <span>Export Excel</span>
+                </button>
+                <span class="text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-3 py-1 rounded-full font-medium">
+                    {{ $logs->total() }} logs
+                </span>
+            </div>
         </div>
 
         @if($logs->count() > 0)
@@ -276,4 +283,119 @@
             </div>
         @endif
     </div>
+
+    <!-- Export Modal -->
+    <div id="exportModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <i class="mdi mdi-file-excel text-2xl"></i>
+                    <h3 class="text-lg font-bold">Export Log Aktivitas</h3>
+                </div>
+                <button onclick="closeExportModal()" class="text-white/80 hover:text-white">
+                    <i class="mdi mdi-close text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Tanggal Mulai <span class="text-gray-400 text-xs">(opsional)</span>
+                    </label>
+                    <input type="date" id="date_from" 
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Tanggal Sampai <span class="text-gray-400 text-xs">(opsional)</span>
+                    </label>
+                    <input type="date" id="date_to" 
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                    <p class="text-sm text-blue-700 dark:text-blue-400">
+                        <i class="mdi mdi-information mr-1"></i>
+                        Kosongkan kedua tanggal untuk export semua data
+                    </p>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
+                <button onclick="closeExportModal()" 
+                    class="px-4 py-2 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded-lg transition-colors">
+                    Batal
+                </button>
+                <button onclick="exportLogs()" 
+                    class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors inline-flex items-center gap-2">
+                    <i class="mdi mdi-download"></i>
+                    Export
+                </button>
+            </div>
+        </div>
+    </div>
 </x-layout>
+
+<script>
+    // Export Modal Functions
+    function openExportModal() {
+        const modal = document.getElementById('exportModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        // Reset date inputs
+        document.getElementById('date_from').value = '';
+        document.getElementById('date_to').value = '';
+    }
+
+    function closeExportModal() {
+        const modal = document.getElementById('exportModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    function exportLogs() {
+        const dateFrom = document.getElementById('date_from').value;
+        const dateTo = document.getElementById('date_to').value;
+        
+        // Build export URL with current filters + date range
+        const baseUrl = '{{ route("settings.logs.export") }}';
+        const url = new URL(baseUrl);
+        
+        // Add current filters
+        const currentParams = new URLSearchParams(window.location.search);
+        currentParams.forEach((value, key) => {
+            url.searchParams.set(key, value);
+        });
+        
+        // Add date range if provided
+        if (dateFrom) {
+            url.searchParams.set('date_from', dateFrom);
+        }
+        if (dateTo) {
+            url.searchParams.set('date_to', dateTo);
+        }
+        
+        // Redirect to export
+        window.location.href = url.toString();
+        
+        // Close modal
+        closeExportModal();
+    }
+
+    // Close modal on outside click
+    document.getElementById('exportModal')?.addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeExportModal();
+        }
+    });
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeExportModal();
+        }
+    });
+</script>
