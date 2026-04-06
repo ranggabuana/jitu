@@ -113,9 +113,9 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('data', DataSkmController::class);
 
         // Hasil SKM (Jawaban)
-        Route::resource('hasil', HasilSkmController::class)->only(['index', 'show', 'destroy']);
         Route::get('hasil/statistics', [HasilSkmController::class, 'statistics'])->name('hasil.statistics');
         Route::get('hasil/export', [HasilSkmController::class, 'export'])->name('hasil.export');
+        Route::resource('hasil', HasilSkmController::class)->only(['index', 'show', 'destroy']);
     });
 
     // Pengguna Routes (Admin Only)
