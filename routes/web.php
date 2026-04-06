@@ -182,6 +182,7 @@ Route::middleware(['auth'])->group(function () {
     // Pengaduan Routes (Admin) - Use different prefix to avoid conflict
     Route::middleware(['admin.role'])->prefix('admin/pengaduan')->name('admin.pengaduan.')->group(function () {
         Route::get('/', [AdminPengaduanController::class, 'index'])->name('index');
+        Route::get('/export', [AdminPengaduanController::class, 'export'])->name('export');
         Route::get('/{id}', [AdminPengaduanController::class, 'show'])->name('show');
         Route::patch('/{id}/update-status', [AdminPengaduanController::class, 'updateStatus'])->name('update-status');
         Route::delete('/{id}', [AdminPengaduanController::class, 'destroy'])->name('destroy');
