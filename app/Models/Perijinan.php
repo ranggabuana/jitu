@@ -15,6 +15,7 @@ class Perijinan extends Model
         'persyaratan',
         'prosedur',
         'informasi_biaya',
+        'gambar_alur',
     ];
 
     /**

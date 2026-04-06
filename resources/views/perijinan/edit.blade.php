@@ -11,31 +11,39 @@
             min-height: 300px;
             border-radius: 0.5rem !important;
         }
+
         .dark .ck-editor__editable {
             background-color: #1f2937 !important;
             color: #e5e7eb !important;
             border-color: #4b5563 !important;
         }
+
         .dark .ck-toolbar {
             background-color: #374151 !important;
             border-color: #4b5563 !important;
         }
+
         .dark .ck-toolbar .ck-button {
             color: #e5e7eb !important;
         }
+
         .dark .ck-toolbar .ck-button:hover {
             background-color: #4b5563 !important;
         }
+
         .dark .ck-toolbar .ck-button.ck-on {
             background-color: #4b5563 !important;
         }
+
         .dark .ck-dropdown__panel {
             background-color: #374151 !important;
             border-color: #4b5563 !important;
         }
+
         .dark .ck-list__item:hover {
             background-color: #4b5563 !important;
         }
+
         .dark .ck-input-text {
             background-color: #1f2937 !important;
             color: #e5e7eb !important;
@@ -44,7 +52,7 @@
     </style>
 
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 max-w-6xl">
-        <form action="{{ route('perijinan.update', $perijinan->id) }}" method="POST">
+        <form action="{{ route('perijinan.update', $perijinan->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
 
@@ -52,7 +60,8 @@
                 <label for="nama_perijinan" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Nama Perijinan <span class="text-red-500">*</span>
                 </label>
-                <input type="text" id="nama_perijinan" name="nama_perijinan" value="{{ old('nama_perijinan', $perijinan->nama_perijinan) }}"
+                <input type="text" id="nama_perijinan" name="nama_perijinan"
+                    value="{{ old('nama_perijinan', $perijinan->nama_perijinan) }}"
                     class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('nama_perijinan') border-red-500 @enderror"
                     placeholder="Masukkan nama perijinan" autofocus>
                 @error('nama_perijinan')
@@ -100,12 +109,53 @@
                 <label for="informasi_biaya" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Informasi Biaya
                 </label>
-                <input type="text" id="informasi_biaya" name="informasi_biaya" value="{{ old('informasi_biaya', $perijinan->informasi_biaya) }}"
+                <input type="text" id="informasi_biaya" name="informasi_biaya"
+                    value="{{ old('informasi_biaya', $perijinan->informasi_biaya) }}"
                     class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('informasi_biaya') border-red-500 @enderror"
                     placeholder="Contoh: Rp 150.000 atau Gratis">
                 @error('informasi_biaya')
                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
+            </div>
+
+            <div class="mb-6">
+                <label for="gambar_alur" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <i class="mdi mdi-chart-timeline-variant text-gray-400 mr-1"></i> Gambar Alur
+                </label>
+                <div class="flex items-start gap-4">
+                    @if ($perijinan->gambar_alur && file_exists(public_path($perijinan->gambar_alur)))
+                        <div
+                            class="w-48 rounded-lg border-2 border-gray-200 dark:border-gray-600 overflow-hidden flex items-center justify-center bg-gray-50 dark:bg-gray-700">
+                            <img src="{{ asset($perijinan->gambar_alur) }}" alt="Gambar Alur"
+                                class="max-w-full max-h-full object-contain">
+                        </div>
+                    @else
+                        <div
+                            class="w-48 h-32 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center bg-gray-50 dark:bg-gray-700">
+                            <div class="text-center text-gray-400">
+                                <i class="mdi mdi-image-off text-3xl"></i>
+                                <p class="text-xs mt-1">Belum ada gambar</p>
+                            </div>
+                        </div>
+                    @endif
+                    <div class="flex-1">
+                        <input type="file" name="gambar_alur" id="gambar_alur" accept="image/*"
+                            class="block w-full text-sm text-gray-500 dark:text-gray-400
+                                file:mr-4 file:py-2 file:px-4
+                                file:rounded-lg file:border-0
+                                file:text-sm file:font-medium
+                                file:bg-blue-50 file:text-blue-700
+                                dark:file:bg-blue-900/30 dark:file:text-blue-400
+                                hover:file:bg-blue-100 dark:hover:file:bg-blue-900/50
+                                transition-colors cursor-pointer">
+                        <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                            Format: PNG, JPG, JPEG (Max 2MB)
+                        </p>
+                        @error('gambar_alur')
+                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
             </div>
 
             <div class="flex gap-3">
@@ -140,14 +190,47 @@
                 'sourceEditing'
             ],
             heading: {
-                options: [
-                    { model: 'paragraph', title: 'Paragraph', class: 'ck-heading_paragraph' },
-                    { model: 'heading1', view: 'h1', title: 'Heading 1', class: 'ck-heading_heading1' },
-                    { model: 'heading2', view: 'h2', title: 'Heading 2', class: 'ck-heading_heading2' },
-                    { model: 'heading3', view: 'h3', title: 'Heading 3', class: 'ck-heading_heading3' },
-                    { model: 'heading4', view: 'h4', title: 'Heading 4', class: 'ck-heading_heading4' },
-                    { model: 'heading5', view: 'h5', title: 'Heading 5', class: 'ck-heading_heading5' },
-                    { model: 'heading6', view: 'h6', title: 'Heading 6', class: 'ck-heading_heading6' }
+                options: [{
+                        model: 'paragraph',
+                        title: 'Paragraph',
+                        class: 'ck-heading_paragraph'
+                    },
+                    {
+                        model: 'heading1',
+                        view: 'h1',
+                        title: 'Heading 1',
+                        class: 'ck-heading_heading1'
+                    },
+                    {
+                        model: 'heading2',
+                        view: 'h2',
+                        title: 'Heading 2',
+                        class: 'ck-heading_heading2'
+                    },
+                    {
+                        model: 'heading3',
+                        view: 'h3',
+                        title: 'Heading 3',
+                        class: 'ck-heading_heading3'
+                    },
+                    {
+                        model: 'heading4',
+                        view: 'h4',
+                        title: 'Heading 4',
+                        class: 'ck-heading_heading4'
+                    },
+                    {
+                        model: 'heading5',
+                        view: 'h5',
+                        title: 'Heading 5',
+                        class: 'ck-heading_heading5'
+                    },
+                    {
+                        model: 'heading6',
+                        view: 'h6',
+                        title: 'Heading 6',
+                        class: 'ck-heading_heading6'
+                    }
                 ]
             },
             fontSize: {
@@ -181,14 +264,12 @@
                 options: ['left', 'right', 'center', 'justify']
             },
             htmlSupport: {
-                allow: [
-                    {
-                        name: /.*/,
-                        attributes: true,
-                        classes: true,
-                        styles: true
-                    }
-                ]
+                allow: [{
+                    name: /.*/,
+                    attributes: true,
+                    classes: true,
+                    styles: true
+                }]
             },
             language: 'id'
         };
@@ -252,14 +333,14 @@
                     editor.updateSourceElement();
                 }
             });
-            
+
             // Manual validation for CKEditor fields
             const dasarHukum = document.querySelector('#dasar_hukum').value.trim();
             const persyaratan = document.querySelector('#persyaratan').value.trim();
             const prosedur = document.querySelector('#prosedur').value.trim();
-            
+
             let hasError = false;
-            
+
             if (!dasarHukum) {
                 alert('Dasar Hukum harus diisi!');
                 hasError = true;
@@ -270,12 +351,12 @@
                 alert('Prosedur harus diisi!');
                 hasError = true;
             }
-            
+
             if (hasError) {
                 e.preventDefault();
                 return false;
             }
-            
+
             // Debug: Log form data
             console.log('Form submitting...');
             console.log('dasar_hukum length:', dasarHukum.length);

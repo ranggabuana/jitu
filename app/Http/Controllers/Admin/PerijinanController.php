@@ -74,9 +74,27 @@ class PerijinanController extends Controller
             'persyaratan' => 'required|string',
             'prosedur' => 'required|string',
             'informasi_biaya' => 'nullable|string',
+            'gambar_alur' => 'nullable|file|mimes:png,jpg,jpeg|max:2048',
         ]);
 
-        $perijinan = Perijinan::create($request->all());
+        $data = $request->all();
+
+        // Handle gambar_alur upload
+        if ($request->hasFile('gambar_alur')) {
+            $gambarAlur = $request->file('gambar_alur');
+            $gambarAlurName = time() . '_alur_' . str_replace(' ', '_', $request->nama_perijinan) . '.' . $gambarAlur->getClientOriginalExtension();
+            
+            // Ensure directory exists
+            $uploadPath = public_path('uploads/data-perijinan');
+            if (!file_exists($uploadPath)) {
+                mkdir($uploadPath, 0755, true);
+            }
+            
+            $gambarAlur->move($uploadPath, $gambarAlurName);
+            $data['gambar_alur'] = 'uploads/data-perijinan/' . $gambarAlurName;
+        }
+
+        $perijinan = Perijinan::create($data);
 
         // Log activity
         ActivityLog::log(
@@ -534,12 +552,35 @@ class PerijinanController extends Controller
             'persyaratan' => 'required|string',
             'prosedur' => 'required|string',
             'informasi_biaya' => 'nullable|string',
+            'gambar_alur' => 'nullable|file|mimes:png,jpg,jpeg|max:2048',
         ]);
 
         $perijinan = Perijinan::findOrFail($id);
         $oldData = $perijinan->toArray();
-        
-        $perijinan->update($request->all());
+
+        $data = $request->all();
+
+        // Handle gambar_alur upload
+        if ($request->hasFile('gambar_alur')) {
+            $gambarAlur = $request->file('gambar_alur');
+            $gambarAlurName = time() . '_alur_' . str_replace(' ', '_', $request->nama_perijinan) . '.' . $gambarAlur->getClientOriginalExtension();
+            
+            // Ensure directory exists
+            $uploadPath = public_path('uploads/data-perijinan');
+            if (!file_exists($uploadPath)) {
+                mkdir($uploadPath, 0755, true);
+            }
+            
+            // Delete old image if exists
+            if ($perijinan->gambar_alur && file_exists(public_path($perijinan->gambar_alur))) {
+                unlink(public_path($perijinan->gambar_alur));
+            }
+            
+            $gambarAlur->move($uploadPath, $gambarAlurName);
+            $data['gambar_alur'] = 'uploads/data-perijinan/' . $gambarAlurName;
+        }
+
+        $perijinan->update($data);
 
         // Log activity
         ActivityLog::log(
