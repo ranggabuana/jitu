@@ -104,6 +104,13 @@
                         </a>
                     @endforeach
                 </div>
+
+                <!-- Pagination -->
+                @if ($layanan->hasPages())
+                    <div class="mt-12 flex justify-center">
+                        {{ $layanan->links() }}
+                    </div>
+                @endif
             @else
                 <!-- Empty State -->
                 <div class="text-center py-16">
