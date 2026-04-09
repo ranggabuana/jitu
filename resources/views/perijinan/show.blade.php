@@ -47,10 +47,10 @@
 
     <!-- Main Content -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
+
         <!-- Left Column: Informasi & Formulir -->
         <div class="space-y-6">
-            
+
             <!-- Informasi Umum -->
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                 <div class="px-5 py-3 border-b border-gray-200 dark:border-gray-700">
@@ -85,6 +85,60 @@
                             </div>
                         </div>
                     @endif
+
+                    @if($perijinan->informasi_biaya)
+                        <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                            <h3 class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Informasi Biaya</h3>
+                            <div class="text-sm text-gray-700 dark:text-gray-300">
+                                {!! $perijinan->informasi_biaya !!}
+                            </div>
+                        </div>
+                    @endif
+
+                    @if($perijinan->lama_waktu_proses)
+                        <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                            <h3 class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Lama Waktu Proses</h3>
+                            <div class="text-sm text-gray-700 dark:text-gray-300">
+                                {{ $perijinan->lama_waktu_proses }}
+                            </div>
+                        </div>
+                    @endif
+
+                    @if($perijinan->gambar_alur && file_exists(public_path($perijinan->gambar_alur)))
+                        <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                            <h3 class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Gambar Alur</h3>
+                            <div class="cursor-pointer group" onclick="document.getElementById('gambarAlurModal').classList.remove('hidden')">
+                                <div class="relative rounded-lg border-2 border-gray-200 dark:border-gray-700 overflow-hidden bg-gray-50 dark:bg-gray-900/50 group-hover:border-blue-400 dark:group-hover:border-blue-500 transition-colors">
+                                    <img src="{{ asset($perijinan->gambar_alur) }}" alt="Gambar Alur {{ $perijinan->nama_perijinan }}"
+                                        class="w-full h-32 object-cover">
+                                    <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                        <div class="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 dark:bg-gray-800/90 rounded-full p-2">
+                                            <i class="mdi mdi-magnify-expand text-blue-600 dark:text-blue-400 text-xl"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
+                                    <i class="mdi mdi-arrow-expand-all mr-1"></i>Klik untuk memperbesar
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Modal Preview -->
+                        <div id="gambarAlurModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onclick="this.classList.add('hidden')">
+                            <div class="relative max-w-5xl max-h-full" onclick="event.stopPropagation()">
+                                <!-- Close Button -->
+                                <button onclick="document.getElementById('gambarAlurModal').classList.add('hidden')"
+                                    class="absolute -top-10 right-0 text-white hover:text-gray-300 transition-colors">
+                                    <i class="mdi mdi-close text-3xl"></i>
+                                </button>
+                                <!-- Image -->
+                                <div class="bg-white dark:bg-gray-800 rounded-lg p-2">
+                                    <img src="{{ asset($perijinan->gambar_alur) }}" alt="Gambar Alur {{ $perijinan->nama_perijinan }}"
+                                        class="max-w-full max-h-[85vh] object-contain rounded">
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
 
@@ -99,7 +153,7 @@
                         {{ $perijinan->activeFormFields->count() }} field
                     </span>
                 </div>
-                
+
                 @if($perijinan->activeFormFields->count() > 0)
                     <div class="p-5 space-y-3">
                         @foreach($perijinan->activeFormFields as $field)
@@ -145,7 +199,7 @@
                     {{ $perijinan->validationFlows->count() }} tahap
                 </span>
             </div>
-            
+
             @if($perijinan->validationFlows->count() > 0)
                 <div class="p-5">
                     <div class="space-y-4">
@@ -157,7 +211,7 @@
                                         <span class="text-white font-bold text-sm">{{ $flow->order }}</span>
                                     </div>
                                 </div>
-                                
+
                                 <!-- Content -->
                                 <div class="flex-1 bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                                     <div class="flex items-start justify-between mb-2">
@@ -180,7 +234,7 @@
                                             <span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded font-medium">Nonaktif</span>
                                         @endif
                                     </div>
-                                    
+
                                     @if($flow->sla_hours || $flow->description)
                                         <div class="flex items-center gap-3 mt-2 text-xs text-gray-500 dark:text-gray-400">
                                             @if($flow->sla_hours)

@@ -74,6 +74,7 @@ class PerijinanController extends Controller
             'persyaratan' => 'required|string',
             'prosedur' => 'required|string',
             'informasi_biaya' => 'nullable|string',
+            'lama_waktu_proses' => 'nullable|string|max:255',
             'gambar_alur' => 'nullable|file|mimes:png,jpg,jpeg|max:2048',
         ]);
 
@@ -552,6 +553,7 @@ class PerijinanController extends Controller
             'persyaratan' => 'required|string',
             'prosedur' => 'required|string',
             'informasi_biaya' => 'nullable|string',
+            'lama_waktu_proses' => 'nullable|string|max:255',
             'gambar_alur' => 'nullable|file|mimes:png,jpg,jpeg|max:2048',
         ]);
 

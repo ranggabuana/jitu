@@ -119,6 +119,19 @@
             </div>
 
             <div class="mb-6">
+                <label for="lama_waktu_proses" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Lama Waktu Proses
+                </label>
+                <input type="text" id="lama_waktu_proses" name="lama_waktu_proses"
+                    value="{{ old('lama_waktu_proses', $perijinan->lama_waktu_proses) }}"
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('lama_waktu_proses') border-red-500 @enderror"
+                    placeholder="Contoh: 5 hari kerja, 14 hari, dll.">
+                @error('lama_waktu_proses')
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div class="mb-6">
                 <label for="gambar_alur" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     <i class="mdi mdi-chart-timeline-variant text-gray-400 mr-1"></i> Gambar Alur
                 </label>
