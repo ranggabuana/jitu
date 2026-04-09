@@ -46,6 +46,15 @@
                     <!-- Quick Stats -->
                     <div class="flex flex-wrap gap-4">
                         <div class="flex items-center gap-3 bg-white/10 backdrop-blur-sm px-5 py-3 rounded-xl">
+                            <div class="w-10 h-10 bg-amber-500/20 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-clock text-amber-400"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-blue-200">Waktu Proses</p>
+                                <p class="font-bold">{{ $layanan->lama_waktu_proses ?? '0' }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 bg-white/10 backdrop-blur-sm px-5 py-3 rounded-xl">
                             <div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
                                 <i class="fas fa-layer-group text-blue-400"></i>
                             </div>
