@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - JITU Banjarnegara</title>
+    <title>Reset Password - JITU Banjarnegara</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -115,40 +115,34 @@
                 <div class="text-center mb-8">
                     <!-- Logo -->
                     <div class="flex justify-center mb-4">
-                        <img src="{{ asset('assets/images/logo-banjarnegara.png') }}" alt="Logo Banjarnegara"
-                            class="w-16 h-16 object-contain">
+                        <div class="w-20 h-20 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
+                            <i class="mdi mdi-lock-check text-white text-4xl"></i>
+                        </div>
                     </div>
-                    <h1 class="text-3xl font-bold text-gray-800 mb-2">Selamat Datang</h1>
-                    <p class="text-gray-600">Login untuk melanjutkan</p>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">Reset Password</h1>
+                    <p class="text-gray-600">Masukkan password baru Anda</p>
                 </div>
 
                 <!-- Info Banner -->
-                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+                <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
                     <div class="flex items-start gap-3">
-                        <i class="mdi mdi-information text-blue-600 text-xl mt-0.5"></i>
-                        <div class="text-sm text-blue-800">
-                            <p class="font-semibold mb-1">Untuk Pemohon:</p>
-                            <p>Belum punya akun? <a href="{{ route('front.register') }}"
-                                    class="text-blue-700 font-semibold hover:underline">Daftar disini</a></p>
+                        <i class="mdi mdi-shield-alert text-yellow-600 text-xl mt-0.5"></i>
+                        <div class="text-sm text-yellow-800">
+                            <p class="font-semibold mb-1">Keamanan:</p>
+                            <p>Password minimal 8 karakter dan harus kombinasi huruf, angka, dan simbol.</p>
                         </div>
                     </div>
                 </div>
 
-                <form method="POST" action="{{ route('login') }}" class="space-y-6">
+                <form method="POST" action="{{ route('password.reset') }}" class="space-y-6">
                     @csrf
-                    <div class="input-field bg-gray-50 rounded-xl p-1 transition-all duration-300">
-                        <div class="flex items-center px-4 py-3">
-                            <i class="mdi mdi-account text-gray-400 text-xl mr-3"></i>
-                            <input type="text" id="username" name="username" placeholder="Username"
-                                class="bg-transparent border-0 text-gray-800 placeholder-gray-400 focus:ring-0 focus:outline-none flex-1"
-                                required value="{{ old('username') }}">
-                        </div>
-                    </div>
+                    <input type="hidden" name="token" value="{{ $token }}">
+                    <input type="hidden" name="email" value="{{ $email }}">
 
                     <div class="input-field bg-gray-50 rounded-xl p-1 transition-all duration-300">
                         <div class="flex items-center px-4 py-3">
                             <i class="mdi mdi-lock text-gray-400 text-xl mr-3"></i>
-                            <input type="password" id="password" name="password" placeholder="Password"
+                            <input type="password" id="password" name="password" placeholder="Password Baru"
                                 class="bg-transparent border-0 text-gray-800 placeholder-gray-400 focus:ring-0 focus:outline-none flex-1"
                                 required>
                             <button type="button" id="togglePassword"
@@ -158,9 +152,21 @@
                         </div>
                     </div>
 
+                    <div class="input-field bg-gray-50 rounded-xl p-1 transition-all duration-300">
+                        <div class="flex items-center px-4 py-3">
+                            <i class="mdi mdi-lock-check text-gray-400 text-xl mr-3"></i>
+                            <input type="password" id="password_confirmation" name="password_confirmation" placeholder="Konfirmasi Password"
+                                class="bg-transparent border-0 text-gray-800 placeholder-gray-400 focus:ring-0 focus:outline-none flex-1"
+                                required>
+                            <button type="button" id="togglePasswordConfirmation"
+                                class="text-gray-400 hover:text-gray-600">
+                                <i class="mdi mdi-eye text-xl"></i>
+                            </button>
+                        </div>
+                    </div>
+
                     @if ($errors->any())
-                        <div
-                            class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                             <ul class="list-disc pl-5 space-y-1">
                                 @foreach ($errors->all() as $error)
                                     <li>{{ $error }}</li>
@@ -169,29 +175,17 @@
                         </div>
                     @endif
 
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <input id="remember-me" name="remember" type="checkbox"
-                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                            <label for="remember-me" class="ml-2 block text-sm text-gray-700">Ingat
-                                saya</label>
-                        </div>
-                        <a href="{{ route('password.request') }}" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
-                            Lupa password?
-                        </a>
-                    </div>
-
                     <button type="submit"
-                        class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-4 rounded-xl font-medium hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-[1.02] cursor-pointer">
-                        <i class="mdi mdi-login mr-2"></i>Login
+                        class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-3 px-4 rounded-xl font-medium hover:from-green-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-300 transform hover:scale-[1.02] cursor-pointer">
+                        <i class="mdi mdi-check mr-2"></i>Reset Password
                     </button>
                 </form>
 
-                <!-- Back to Home -->
+                <!-- Back to Login -->
                 <div class="mt-6 text-center">
-                    <a href="{{ route('landing') }}"
+                    <a href="{{ route('login') }}"
                         class="text-gray-600 hover:text-gray-800 text-sm flex items-center justify-center gap-2">
-                        <i class="mdi mdi-home"></i> Kembali ke Beranda
+                        <i class="mdi mdi-arrow-left"></i> Kembali ke Login
                     </a>
                 </div>
             </div>
@@ -203,9 +197,19 @@
         const togglePassword = document.getElementById('togglePassword');
         const passwordInput = document.getElementById('password');
 
-        togglePassword.addEventListener('click', function() {
+        togglePassword?.addEventListener('click', function() {
             const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
             passwordInput.setAttribute('type', type);
+            this.innerHTML = type === 'password' ? '<i class="mdi mdi-eye text-xl"></i>' :
+                '<i class="mdi mdi-eye-off text-xl"></i>';
+        });
+
+        const togglePasswordConfirmation = document.getElementById('togglePasswordConfirmation');
+        const passwordConfirmationInput = document.getElementById('password_confirmation');
+
+        togglePasswordConfirmation?.addEventListener('click', function() {
+            const type = passwordConfirmationInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordConfirmationInput.setAttribute('type', type);
             this.innerHTML = type === 'password' ? '<i class="mdi mdi-eye text-xl"></i>' :
                 '<i class="mdi mdi-eye-off text-xl"></i>';
         });
@@ -219,13 +223,18 @@
                 confirmButtonText: 'OK, Mengerti',
                 width: '450px',
                 padding: '2rem',
-                backdrop: `
-                    rgba(16, 185, 129, 0.1)
-                    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='%2310b981' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 1 1-5.93-9.14'%3E%3C/path%3E%3Cpolyline points='22 4 12 14.08 9 11.08'%3E%3C/polyline%3E%3C/svg%3E")
-                    left top
-                    no-repeat
-                    opacity 0.1
-                `
+            });
+        @endif
+
+        @if (session('error'))
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal! ❌',
+                html: '{{ session('error') }}',
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'OK, Mengerti',
+                width: '450px',
+                padding: '2rem',
             });
         @endif
     </script>

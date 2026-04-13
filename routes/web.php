@@ -16,6 +16,7 @@ use App\Http\Controllers\PemohonController;
 use App\Http\Controllers\PenggunaController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ProfileController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\ApplicationSettingsController;
 use App\Http\Controllers\Admin\PengaduanHandlerController;
@@ -31,6 +32,12 @@ use Illuminate\Support\Facades\Route;
 // Public routes
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
+
+// Password reset routes (public)
+Route::get('/forgot-password', [ForgotPasswordController::class, 'showForgotPasswordForm'])->name('password.request');
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink'])->name('password.email');
+Route::get('/reset-password/{token}', [ForgotPasswordController::class, 'showResetForm'])->name('password.reset.form');
+Route::post('/reset-password', [ForgotPasswordController::class, 'reset'])->name('password.reset');
 
 // Front-end Register routes (for pemohon)
 Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('front.register');
