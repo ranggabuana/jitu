@@ -36,26 +36,30 @@
             transition: all 0.3s ease;
         }
 
-        .sidebar-header,
-        .sidebar-user-info {
-            transition: opacity 0.3s ease, visibility 0.3s ease;
+        /* Collapsed sidebar state - width becomes 0, content hidden */
+        .sidebar.collapsed {
+            width: 0 !important;
+            overflow: hidden;
         }
 
         .sidebar.collapsed .sidebar-header,
-        .sidebar.collapsed .sidebar-user-info {
+        .sidebar.collapsed .sidebar-user-info,
+        .sidebar.collapsed .sidebar-nav-content {
             opacity: 0;
             visibility: hidden;
+            width: 0;
+            padding: 0;
+            margin: 0;
+            border: none;
         }
 
-        /* Additional transition for hiding/showing the entire sidebar */
-        .sidebar.hidden {
-            transform: translateX(-100%);
-            opacity: 0;
-            visibility: hidden;
+        .sidebar-header,
+        .sidebar-user-info {
+            transition: opacity 0.3s ease, visibility 0.3s ease, width 0.3s ease, padding 0.3s ease;
         }
 
-        .sidebar {
-            transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
+        .sidebar-nav-content {
+            transition: opacity 0.3s ease, visibility 0.3s ease, width 0.3s ease;
         }
 
 
@@ -420,7 +424,7 @@
     <x-sidebar />
 
     <!-- Main Content -->
-    <div id="main-content" class="flex-1 ml-0 lg:ml-64 transition-all duration-300">
+    <div id="main-content" class="flex-1 ml-0 lg:ml-64 transition-all duration-300 ease-in-out">
         <!-- Header -->
         <x-header />
 

@@ -354,30 +354,30 @@
 
         // Collapse/expand sidebar on desktop
         sidebarCollapseBtn?.addEventListener('click', () => {
-            const isHidden = sidebar?.classList.contains('hidden');
+            const isCollapsed = sidebar?.classList.contains('collapsed');
 
-            if (isHidden) {
-                // Show sidebar
-                sidebar?.classList.remove('hidden');
+            if (isCollapsed) {
+                // Expand sidebar
+                sidebar?.classList.remove('collapsed');
 
                 // Update the icon to collapse
                 const icon = sidebarCollapseBtn.querySelector('i');
                 icon.className = 'mdi mdi-chevron-left text-xl'; // collapse icon when expanded
 
                 // Update main content margin
-                mainContent?.classList.remove('ml-0', 'lg:ml-0');
-                mainContent?.classList.add('ml-64');
+                mainContent?.classList.remove('lg:ml-0');
+                mainContent?.classList.add('lg:ml-64');
             } else {
-                // Hide entire sidebar
-                sidebar?.classList.add('hidden');
+                // Collapse sidebar
+                sidebar?.classList.add('collapsed');
 
                 // Update the icon to expand
                 const icon = sidebarCollapseBtn.querySelector('i');
                 icon.className = 'mdi mdi-chevron-right text-xl'; // expand icon when collapsed
 
                 // Update main content margin to full width
-                mainContent?.classList.remove('ml-64');
-                mainContent?.classList.add('ml-0', 'lg:ml-0');
+                mainContent?.classList.remove('lg:ml-64');
+                mainContent?.classList.add('lg:ml-0');
             }
         });
 

@@ -1,10 +1,10 @@
 <div id="sidebar"
     class="sidebar w-64 bg-white dark:bg-gray-800 shadow-lg h-screen fixed z-10 transform transition-all duration-300 ease-in-out lg:translate-x-0 -translate-x-full lg:translate-x-0">
-    <div class="p-5 border-b border-gray-200 dark:border-gray-700 flex items-center sidebar-header">
+    <div class="p-5 border-b border-gray-200 dark:border-gray-700 flex items-center sidebar-header transition-all duration-300">
         <i class="mdi mdi-chart-line text-blue-500 mr-2 text-xl"></i>
         <h1 class="text-xl font-bold text-gray-800 dark:text-white font-sans">JITU Dashboard</h1>
     </div>
-    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 sidebar-user-info">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 sidebar-user-info transition-all duration-300">
         <div class="flex items-center">
             <div class="flex-shrink-0">
                 <div
@@ -19,7 +19,7 @@
             </div>
         </div>
     </div>
-    <nav class="mt-5">
+    <nav class="mt-5 sidebar-nav-content transition-all duration-300">
         <!-- Beranda - Single Menu -->
         <a href="{{ route('dashboard') }}"
             class="flex items-center px-6 py-3 text-gray-700 dark:text-gray-300 transition-colors group {{ request()->routeIs('dashboard') ? 'active-menu' : '' }} menu-item">
