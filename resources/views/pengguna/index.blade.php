@@ -38,25 +38,29 @@
             </div>
 
             <div class="flex items-center gap-2">
-                <label for="role_filter" class="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Role:</label>
+                <label for="role_filter"
+                    class="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Role:</label>
                 <select id="role_filter" name="role_filter"
                     class="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     onchange="updateRoleFilter(this.value)">
                     <option value="all" {{ $roleFilter == 'all' ? 'selected' : '' }}>Semua</option>
-                    @foreach($roles as $value => $label)
-                        <option value="{{ $value }}" {{ $roleFilter == $value ? 'selected' : '' }}>{{ $label }}</option>
+                    @foreach ($roles as $value => $label)
+                        <option value="{{ $value }}" {{ $roleFilter == $value ? 'selected' : '' }}>
+                            {{ $label }}</option>
                     @endforeach
                 </select>
             </div>
 
             <div class="flex items-center gap-2">
-                <label for="status_filter" class="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Status:</label>
+                <label for="status_filter"
+                    class="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Status:</label>
                 <select id="status_filter" name="status_filter"
                     class="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     onchange="updateStatusFilter(this.value)">
                     <option value="all" {{ $statusFilter == 'all' ? 'selected' : '' }}>Semua</option>
                     <option value="aktif" {{ $statusFilter == 'aktif' ? 'selected' : '' }}>Aktif</option>
-                    <option value="tidak_aktif" {{ $statusFilter == 'tidak_aktif' ? 'selected' : '' }}>Tidak Aktif</option>
+                    <option value="tidak_aktif" {{ $statusFilter == 'tidak_aktif' ? 'selected' : '' }}>Tidak Aktif
+                    </option>
                 </select>
             </div>
 
@@ -75,19 +79,24 @@
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        <th
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                             Pengguna
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        <th
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                             Role
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        <th
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                             OPD
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        <th
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                             Status
                         </th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        <th
+                            class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                             Aksi
                         </th>
                     </tr>
@@ -97,14 +106,16 @@
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
+                                    <div
+                                        class="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
                                         {{ substr($user->name, 0, 1) }}
                                     </div>
                                     <div>
                                         <p class="font-medium text-gray-900 dark:text-white">{{ $user->name }}</p>
                                         <p class="text-sm text-gray-500 dark:text-gray-400">{{ $user->email }}</p>
-                                        @if($user->nip)
-                                            <p class="text-xs text-gray-400 dark:text-gray-500">NIP: {{ $user->nip }}</p>
+                                        @if ($user->nip)
+                                            <p class="text-xs text-gray-400 dark:text-gray-500">NIK:
+                                                {{ $user->nip }}</p>
                                         @endif
                                     </div>
                                 </div>
@@ -115,13 +126,17 @@
                                         'admin' => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
                                         'fo' => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
                                         'bo' => 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
-                                        'operator_opd' => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-                                        'kepala_opd' => 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-                                        'verifikator' => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+                                        'operator_opd' =>
+                                            'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+                                        'kepala_opd' =>
+                                            'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+                                        'verifikator' =>
+                                            'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
                                         'kadin' => 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200',
                                     ];
                                 @endphp
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $roleColors[$user->role] ?? 'bg-gray-100 text-gray-800' }}">
+                                <span
+                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $roleColors[$user->role] ?? 'bg-gray-100 text-gray-800' }}">
                                     {{ $user->role_label }}
                                 </span>
                             </td>
@@ -129,16 +144,19 @@
                                 {{ $user->opd->nama_opd ?? '-' }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <form method="POST" action="{{ route('pengguna.data.update-status', $user->id) }}" class="status-toggle-form">
+                                <form method="POST" action="{{ route('pengguna.data.update-status', $user->id) }}"
+                                    class="status-toggle-form">
                                     @csrf
                                     @method('PATCH')
                                     <label class="relative inline-flex items-center cursor-pointer">
                                         <input type="checkbox" name="status" value="1"
                                             class="sr-only peer status-toggle" data-id="{{ $user->id }}"
                                             {{ $user->status === 'aktif' ? 'checked' : '' }}>
-                                        <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer dark:bg-gray-600 peer-checked:bg-green-500 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600">
+                                        <div
+                                            class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer dark:bg-gray-600 peer-checked:bg-green-500 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600">
                                         </div>
-                                        <span class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300 status-label">
+                                        <span
+                                            class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300 status-label">
                                             {{ $user->status === 'aktif' ? 'Aktif' : 'Tidak Aktif' }}
                                         </span>
                                     </label>
@@ -156,7 +174,7 @@
                                         <i class="mdi mdi-pencil"></i>
                                         <span>Edit</span>
                                     </a>
-                                    @if($user->id !== auth()->id())
+                                    @if ($user->id !== auth()->id())
                                         <form action="{{ route('pengguna.data.destroy', $user->id) }}" method="POST"
                                             class="delete-form">
                                             @csrf
@@ -251,17 +269,21 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': form.querySelector('input[name="_token"]').value,
+                            'X-CSRF-TOKEN': form.querySelector('input[name="_token"]')
+                                .value,
                             'X-HTTP-Method-Override': 'PATCH',
                             'Accept': 'application/json'
                         },
-                        body: JSON.stringify({ status: newStatus })
+                        body: JSON.stringify({
+                            status: newStatus
+                        })
                     })
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
                             // Update label text on success
-                            statusLabel.textContent = newStatus === 'aktif' ? 'Aktif' : 'Tidak Aktif';
+                            statusLabel.textContent = newStatus === 'aktif' ? 'Aktif' :
+                                'Tidak Aktif';
 
                             // Show success message using SweetAlert2
                             Swal.fire({
@@ -275,12 +297,14 @@
                         } else {
                             // Revert toggle on error
                             toggle.checked = !originalChecked;
-                            statusLabel.textContent = originalChecked ? 'Aktif' : 'Tidak Aktif';
+                            statusLabel.textContent = originalChecked ? 'Aktif' :
+                                'Tidak Aktif';
                             toggle.disabled = false;
 
                             Swal.fire({
                                 title: 'Error!',
-                                text: data.message || 'Gagal mengubah status pengguna.',
+                                text: data.message ||
+                                    'Gagal mengubah status pengguna.',
                                 icon: 'error',
                                 confirmButtonText: 'OK'
                             });

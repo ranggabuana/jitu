@@ -86,7 +86,7 @@ class PenggunaController extends Controller
             'password' => 'required|string|min:8|confirmed',
             'role' => 'required|in:admin,fo,bo,operator_opd,kepala_opd,verifikator,kadin',
             'opd_id' => 'nullable|exists:opd,id',
-            'nip' => 'nullable|string|max:50',
+            'nip' => 'required|string|max:16|min:16',
             'no_hp' => 'nullable|string|max:20',
             'status' => 'required|in:aktif,tidak_aktif',
         ]);
@@ -151,7 +151,7 @@ class PenggunaController extends Controller
             'password' => 'nullable|string|min:8|confirmed',
             'role' => 'required|in:admin,fo,bo,operator_opd,kepala_opd,verifikator,kadin',
             'opd_id' => 'nullable|exists:opd,id',
-            'nip' => 'nullable|string|max:50',
+            'nip' => 'required|string|max:16|min:16',
             'no_hp' => 'nullable|string|max:20',
             'status' => 'required|in:aktif,tidak_aktif',
         ]);

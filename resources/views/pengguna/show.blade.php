@@ -33,7 +33,7 @@
         <!-- User Details -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">NIP</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">NIK</p>
                 <p class="text-gray-800 dark:text-white">{{ $user->nip ?? '-' }}</p>
             </div>
             <div>
