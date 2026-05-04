@@ -97,21 +97,21 @@ class DataPerijinanController extends Controller
             $query->whereDate('created_at', '<=', $request->end_date);
         }
 
-        // Get only in-progress applications (not approved/completed yet)
-        $query->whereNotIn('status', ['approved', 'completed']);
+        // Get only in-progress applications (not approved/completed, and not rejected)
+        $query->whereNotIn('status', ['approved', 'completed', 'rejected']);
 
         $applications = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
 
         // Statistics - only count for accessible perijinan
         if ($user->isAdmin()) {
-            $totalDalamProses = DataPerijinan::whereNotIn('status', ['approved', 'completed'])->count();
+            $totalDalamProses = DataPerijinan::whereNotIn('status', ['approved', 'completed', 'rejected'])->count();
             $totalSubmitted = DataPerijinan::where('status', 'submitted')->count();
             $totalInProgress = DataPerijinan::where('status', 'in_progress')->count();
             $totalPerbaikan = DataPerijinan::where('status', 'perbaikan')->count();
         } else {
             $accessibleIds = $user->getAccessiblePerijinanIds();
             $totalDalamProses = DataPerijinan::whereIn('perijinan_id', $accessibleIds)
-                ->whereNotIn('status', ['approved', 'completed'])->count();
+                ->whereNotIn('status', ['approved', 'completed', 'rejected'])->count();
             $totalSubmitted = DataPerijinan::whereIn('perijinan_id', $accessibleIds)
                 ->where('status', 'submitted')->count();
             $totalInProgress = DataPerijinan::whereIn('perijinan_id', $accessibleIds)
@@ -763,7 +763,7 @@ class DataPerijinanController extends Controller
             $query->whereDate('created_at', '<=', $dateTo);
         }
 
-        $query->whereNotIn('status', ['approved', 'completed']);
+        $query->whereNotIn('status', ['approved', 'completed', 'rejected']);
         $applications = $query->orderBy('created_at', 'desc')->get();
 
         return $this->exportToExcel($applications, 'dalam_proses', $dateFrom, $dateTo);

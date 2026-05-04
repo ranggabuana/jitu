@@ -23,7 +23,7 @@ class SidebarComposer
             $countDitolak = 0;
         } elseif ($user->role === 'admin') {
             // Admin sees all
-            $countDalamProses = DataPerijinan::whereNotIn('status', ['approved', 'completed'])->count();
+            $countDalamProses = DataPerijinan::whereNotIn('status', ['approved', 'completed', 'rejected'])->count();
             $countPerluPerbaikan = DataPerijinan::where('status', 'perbaikan')->count();
             $countDitolak = DataPerijinan::where('status', 'rejected')->count();
         } elseif (in_array($user->role, ['fo', 'bo', 'verifikator', 'kadin'])) {
