@@ -148,6 +148,53 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Informasi Panduan Pendaftaran -->
+                        <div>
+                            <label for="panduan_pendaftaran" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="mdi mdi-information-outline text-gray-400 mr-1"></i> Informasi Panduan Pendaftaran
+                            </label>
+                            <div class="flex items-start gap-4">
+                                @if(isset($generalSettings['panduan_pendaftaran']) && file_exists(public_path($generalSettings['panduan_pendaftaran'])))
+                                    <div class="w-32 h-32 rounded-lg border-2 border-gray-200 dark:border-gray-600 overflow-hidden flex items-center justify-center bg-gray-50 dark:bg-gray-700">
+                                        @if(pathinfo($generalSettings['panduan_pendaftaran'], PATHINFO_EXTENSION) == 'pdf')
+                                            <div class="text-center text-red-500">
+                                                <i class="mdi mdi-file-pdf-box text-5xl"></i>
+                                                <p class="text-xs mt-1 font-semibold text-gray-600 dark:text-gray-300">PDF File</p>
+                                            </div>
+                                        @else
+                                            <img src="{{ asset($generalSettings['panduan_pendaftaran']) }}" alt="Panduan" class="max-w-full max-h-full object-contain">
+                                        @endif
+                                    </div>
+                                    <div class="flex flex-col justify-center gap-2">
+                                        <a href="{{ asset($generalSettings['panduan_pendaftaran']) }}" target="_blank" class="inline-flex items-center text-sm text-blue-600 hover:text-blue-800">
+                                            <i class="mdi mdi-eye mr-1"></i> Lihat Panduan Saat Ini
+                                        </a>
+                                    </div>
+                                @else
+                                    <div class="w-32 h-32 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center bg-gray-50 dark:bg-gray-700">
+                                        <div class="text-center text-gray-400">
+                                            <i class="mdi mdi-file-document-outline text-3xl"></i>
+                                            <p class="text-xs mt-1">Belum ada panduan</p>
+                                        </div>
+                                    </div>
+                                @endif
+                                <div class="flex-1">
+                                    <input type="file" name="panduan_pendaftaran" id="panduan_pendaftaran" accept="image/*,.pdf"
+                                        class="block w-full text-sm text-gray-500 dark:text-gray-400
+                                            file:mr-4 file:py-2 file:px-4
+                                            file:rounded-lg file:border-0
+                                            file:text-sm file:font-medium
+                                            file:bg-blue-50 file:text-blue-700
+                                            dark:file:bg-blue-900/30 dark:file:text-blue-400
+                                            hover:file:bg-blue-100 dark:hover:file:bg-blue-900/50
+                                            transition-colors cursor-pointer">
+                                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                        Format: PNG, JPG, JPEG, PDF (Max 5MB)
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

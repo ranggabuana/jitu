@@ -34,6 +34,7 @@ class ApplicationSettingsController extends Controller
             'app_description' => 'nullable|string',
             'app_logo' => 'nullable|image|mimes:png,jpg,jpeg,svg|max:2048',
             'gambar_tte' => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
+            'panduan_pendaftaran' => 'nullable|mimes:png,jpg,jpeg,pdf|max:5120',
 
             // Contact Settings
             'whatsapp' => 'nullable|string|max:20',
@@ -99,6 +100,28 @@ class ApplicationSettingsController extends Controller
             }
 
             Setting::set('gambar_tte', 'uploads/tte/' . $tteName, 'file', 'general', 'Gambar TTE');
+        }
+
+        // Handle Panduan Pendaftaran upload
+        if ($request->hasFile('panduan_pendaftaran')) {
+            $panduanFile = $request->file('panduan_pendaftaran');
+            $panduanName = time() . '_panduan.' . $panduanFile->getClientOriginalExtension();
+            
+            // Ensure directory exists
+            $panduanPath = public_path('uploads/informasi');
+            if (!file_exists($panduanPath)) {
+                mkdir($panduanPath, 0755, true);
+            }
+            
+            $panduanFile->move($panduanPath, $panduanName);
+
+            // Delete old Panduan file if exists
+            $oldPanduan = Setting::where('key', 'panduan_pendaftaran')->first();
+            if ($oldPanduan && $oldPanduan->value && file_exists(public_path($oldPanduan->value))) {
+                unlink(public_path($oldPanduan->value));
+            }
+
+            Setting::set('panduan_pendaftaran', 'uploads/informasi/' . $panduanName, 'file', 'general', 'Informasi Panduan Pendaftaran');
         }
 
         // General Settings
