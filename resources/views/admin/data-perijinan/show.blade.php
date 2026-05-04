@@ -252,15 +252,26 @@
                                 Pengajuan ini telah dikembalikan untuk diperbaiki. Validator tidak dapat melakukan
                                 validasi sampai pemohon submit ulang.
                             </p>
-                            @if ($application->catatan_perbaikan)
-                                <div
-                                    class="bg-white dark:bg-gray-800 rounded-lg p-3 border border-orange-200 dark:border-orange-700">
-                                    <p class="text-xs text-orange-800 dark:text-orange-300 font-semibold mb-1">Catatan
-                                        Perbaikan:</p>
-                                    <p class="text-sm text-gray-700 dark:text-gray-300">
-                                        {{ $application->catatan_perbaikan }}</p>
-                                </div>
-                            @endif
+                        </div>
+                    </div>
+                </div>
+            @elseif ($application->status === 'rejected')
+                <!-- Info Box - Status Ditolak -->
+                <div
+                    class="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-900/10 border-2 border-red-300 dark:border-red-700 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <div
+                            class="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
+                            <i class="mdi mdi-close-circle text-white text-2xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-red-800 dark:text-red-300 mb-2">
+                                <i class="mdi mdi-alert-circle"></i>
+                                Pengajuan Ditolak
+                            </h3>
+                            <p class="text-red-700 dark:text-red-400 text-sm mb-3">
+                                Pengajuan ini telah ditolak. Proses validasi telah dihentikan secara permanen.
+                            </p>
                         </div>
                     </div>
                 </div>
