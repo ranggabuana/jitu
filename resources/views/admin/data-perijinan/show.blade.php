@@ -457,6 +457,16 @@
                 </div>
             @endif
 
+            @if ($application->catatan_pemohon)
+                <div class="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-400 p-4 rounded-r-xl mb-4">
+                    <h4 class="font-bold text-blue-800 dark:text-blue-300 mb-2 flex items-center gap-2">
+                        <i class="mdi mdi-message-text-outline"></i>
+                        Catatan dari Pemohon
+                    </h4>
+                    <p class="text-blue-700 dark:text-blue-200 text-sm">{{ $application->catatan_pemohon }}</p>
+                </div>
+            @endif
+
             <!-- Timeline -->
             <div
                 class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">

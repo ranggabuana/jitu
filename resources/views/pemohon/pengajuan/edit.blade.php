@@ -190,6 +190,18 @@
                         @enderror
                     </div>
                 @endforeach
+
+                <hr class="my-6 border-gray-200">
+
+                <div class="mb-6">
+                    <label for="catatan_pemohon" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-comment-dots text-orange-500 mr-1"></i> Catatan Perbaikan dari Anda (Opsional)
+                    </label>
+                    <p class="text-xs text-gray-500 mb-2">Tinggalkan pesan untuk validator terkait perbaikan yang telah Anda lakukan.</p>
+                    <textarea name="catatan_pemohon" id="catatan_pemohon" rows="3"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        placeholder="Contoh: Berkas KTP sudah saya ganti dengan pindaian yang lebih jelas..."></textarea>
+                </div>
             </div>
 
             <!-- Submit Button -->

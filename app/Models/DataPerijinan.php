@@ -23,6 +23,7 @@ class DataPerijinan extends Model
         'data_pemohon',
         'catatan_perbaikan',
         'catatan_reject',
+        'catatan_pemohon',
         'current_step',
         'submitted_at',
         'approved_at',

@@ -599,6 +599,7 @@ class DashboardController extends Controller
             'form_files' => $mergedFiles,
             'status' => 'submitted', // Back to submitted status
             'catatan_perbaikan' => null, // Clear catatan perbaikan
+            'catatan_pemohon' => $request->catatan_pemohon, // Save applicant note
             'current_step' => 1, // Reset to first validation step
         ]);
 
