@@ -59,8 +59,8 @@ class PerijinanValidationFlow extends Model
     {
         $query = User::where('role', $role);
         
-        // For OPD roles, filter by active users only
-        if (in_array($role, ['operator_opd', 'kepala_opd'])) {
+        // Filter by active users only
+        if (in_array($role, ['operator_opd', 'kepala_opd', 'fo', 'bo'])) {
             $query->where('status', 'aktif');
         }
         
@@ -72,7 +72,7 @@ class PerijinanValidationFlow extends Model
      */
     public static function requiresUserAssignment(string $role): bool
     {
-        return in_array($role, ['operator_opd', 'kepala_opd']);
+        return in_array($role, ['fo', 'bo', 'operator_opd', 'kepala_opd']);
     }
 
     /**

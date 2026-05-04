@@ -133,59 +133,73 @@
                                 @endif
 
                                 @php
-                                    // Dapatkan validator dari assigned_user_id di validation_flow
-                                    $validatorUser = null;
                                     $validatorRole = $validasi->validationFlow->role ?? '';
                                     $validatorName = null;
-                                    
-                                    // Untuk operator_opd dan kepala_opd, ambil dari assigned_user_id
-                                    if (in_array($validatorRole, ['operator_opd', 'kepala_opd'])) {
-                                        // Coba ambil dari assigned_user_id di validation_flow
+                                    $validatorRoleLabel = null;
+
+                                    // Untuk fo, bo, operator_opd, kepala_opd:
+                                    // Prioritas 1 - assigned_user di validation_flow (petugas yang ditugaskan admin)
+                                    if (in_array($validatorRole, ['fo', 'bo', 'operator_opd', 'kepala_opd'])) {
                                         if ($validasi->validationFlow->assignedUser) {
                                             $validatorName = $validasi->validationFlow->assignedUser->name;
-                                            $validatorRoleLabel = $validasi->validationFlow->assignedUser->role_label ?? $validasi->validationFlow->role_label;
+                                            $validatorRoleLabel = $validasi->validationFlow->assignedUser->role_label
+                                                ?? $validasi->validationFlow->role_label;
                                         }
-                                        // Atau fallback ke user_id di data_perijinan_validasi
+                                        // Prioritas 2 - validator aktual (sudah memvalidasi)
                                         elseif ($validasi->validator) {
                                             $validatorName = $validasi->validator->name;
                                             $validatorRoleLabel = $validasi->validator->role_label ?? 'Validator';
                                         }
                                     }
-                                    
-                                    $showValidatorName = !empty($validatorName);
+
+                                    $showAssignedUser = !empty($validatorName);
                                 @endphp
 
-                                @if ($showValidatorName)
-                                    <div class="mt-3 flex items-center gap-2 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-lg p-3 border border-amber-200 dark:border-amber-800">
-                                        <div class="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+                                @if ($showAssignedUser)
+                                    @php
+                                        // Tentukan warna berdasarkan role
+                                        $isOpdRole = in_array($validatorRole, ['operator_opd', 'kepala_opd']);
+                                        $isFoBo = in_array($validatorRole, ['fo', 'bo']);
+                                        $bgFrom = $isFoBo ? 'from-blue-50' : 'from-amber-50';
+                                        $bgTo = $isFoBo ? 'to-indigo-50' : 'to-orange-50';
+                                        $borderColor = $isFoBo ? 'border-blue-200' : 'border-amber-200';
+                                        $avatarFrom = $isFoBo ? 'from-blue-400' : 'from-amber-400';
+                                        $avatarTo = $isFoBo ? 'to-indigo-500' : 'to-orange-500';
+                                        $textColor = $isFoBo ? 'text-blue-700' : 'text-amber-700';
+                                        $labelKey = $isFoBo
+                                            ? ($validatorRole === 'fo' ? 'Front Office' : 'Back Office')
+                                            : ($validatorRole === 'operator_opd' ? 'Operator OPD' : 'Kepala OPD');
+                                    @endphp
+                                    <div class="mt-3 flex items-center gap-2 bg-gradient-to-r {{ $bgFrom }} {{ $bgTo }} rounded-lg p-3 border {{ $borderColor }}">
+                                        <div class="w-8 h-8 bg-gradient-to-br {{ $avatarFrom }} {{ $avatarTo }} rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
                                             <i class="fas fa-user-check text-white text-sm"></i>
                                         </div>
                                         <div class="flex-1">
-                                            <p class="text-xs text-amber-700 dark:text-amber-400 font-semibold mb-0.5">
+                                            <p class="text-xs {{ $textColor }} font-semibold mb-0.5">
                                                 <i class="fas fa-user-tie mr-1"></i>
-                                                Divalidasi oleh:
+                                                Petugas yang Ditugaskan:
                                             </p>
-                                            <p class="text-sm font-bold text-gray-800 dark:text-gray-200">
+                                            <p class="text-sm font-bold text-gray-800">
                                                 {{ $validatorName }}
                                             </p>
-                                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                            <p class="text-xs text-gray-500">
                                                 <i class="fas fa-id-badge mr-1"></i>
-                                                {{ $validatorRoleLabel ?? 'Validator' }}
+                                                {{ $validatorRoleLabel ?? $labelKey }}
                                             </p>
                                         </div>
                                     </div>
-                                @elseif($validasi->validator && in_array($validatorRole, ['fo', 'bo', 'verifikator', 'kadin']))
-                                    <!-- Untuk role kolektif, tampilkan role saja -->
-                                    <div class="mt-3 flex items-center gap-2 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
-                                        <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+                                @elseif ($validasi->validator && in_array($validatorRole, ['verifikator', 'kadin']))
+                                    <!-- Untuk role kolektif yang belum di-assign, tampilkan role saja -->
+                                    <div class="mt-3 flex items-center gap-2 bg-gradient-to-r from-purple-50 to-violet-50 rounded-lg p-3 border border-purple-200">
+                                        <div class="w-8 h-8 bg-gradient-to-br from-purple-400 to-violet-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
                                             <i class="fas fa-users text-white text-sm"></i>
                                         </div>
                                         <div class="flex-1">
-                                            <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                            <p class="text-sm font-semibold text-gray-800">
                                                 <i class="fas fa-user-check mr-2"></i>
                                                 Divalidasi oleh {{ $validasi->validationFlow->role_label ?? 'Validator' }}
                                             </p>
-                                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                            <p class="text-xs text-gray-500">
                                                 <i class="fas fa-clock mr-1"></i>
                                                 {{ $validasi->validated_at ? 'Telah menyelesaikan validasi' : 'Menunggu validasi' }}
                                             </p>

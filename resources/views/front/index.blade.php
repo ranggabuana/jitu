@@ -698,7 +698,7 @@
                                         </p>
                                     ` : ''}
                                 ${validasi.validator ? `
-                                    ${['operator_opd', 'kepala_opd'].includes(validasi.validator.role) ? `
+                                    ${['fo', 'bo', 'operator_opd', 'kepala_opd'].includes(validasi.validator.role) ? `
                                         <div class="mt-2 flex items-center gap-2 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-2 border border-amber-200">
                                             <div class="w-6 h-6 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
                                                 <i class="fas fa-user-check text-white text-xs"></i>
@@ -812,7 +812,8 @@
                             </div>
                         ` : ''}
 
-                    <!-- Info Download untuk Semua Status -->
+                    ${data.status !== 'rejected' ? `
+                    <!-- Info Download untuk Semua Status (Kecuali Ditolak) -->
                     <div class="p-5 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl">
                         <div class="flex items-start gap-3">
                             <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
@@ -843,6 +844,7 @@
                             </div>
                         </div>
                     </div>
+                    ` : ''}
                 </div>
 
                 <!-- Modal Footer -->

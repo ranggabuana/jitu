@@ -81,10 +81,10 @@
                         </select>
                     </div>
 
-                    <!-- User Assignment (for operator_opd and kepala_opd) -->
+                    <!-- User Assignment (for fo, bo, operator_opd, kepala_opd) -->
                     <div id="user_assignment_container" class="hidden">
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                            Petugas OPD <span class="text-red-500 ml-1">*</span>
+                            Petugas yang Ditugaskan <span class="text-red-500 ml-1">*</span>
                         </label>
                         <select name="assigned_user_id" id="assigned_user_id"
                             class="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all">
@@ -308,10 +308,10 @@
                     </select>
                 </div>
 
-                <!-- User Assignment (for operator_opd and kepala_opd) -->
+                <!-- User Assignment (for fo, bo, operator_opd, kepala_opd) -->
                 <div id="edit_user_assignment_container" class="hidden">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                        Petugas OPD <span class="text-red-500 ml-1">*</span>
+                        Petugas yang Ditugaskan <span class="text-red-500 ml-1">*</span>
                     </label>
                     <select name="assigned_user_id" id="edit_assigned_user_id"
                         class="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all">
@@ -361,6 +361,8 @@
     </div>
 
     <script>
+        const foUsers = @json($foUsers);
+        const boUsers = @json($boUsers);
         const operatorOpdUsers = @json($operatorOpdUsers);
         const kepalaOpdUsers = @json($kepalaOpdUsers);
 
@@ -368,6 +370,8 @@
             const select = document.getElementById(selectId);
             let users = {};
 
+            if (role === 'fo') users = foUsers;
+            if (role === 'bo') users = boUsers;
             if (role === 'operator_opd') users = operatorOpdUsers;
             if (role === 'kepala_opd') users = kepalaOpdUsers;
 
@@ -383,7 +387,7 @@
             const container = document.getElementById(containerId);
             const select = document.getElementById(selectId);
 
-            if (['operator_opd', 'kepala_opd'].includes(role)) {
+            if (['fo', 'bo', 'operator_opd', 'kepala_opd'].includes(role)) {
                 container.classList.remove('hidden');
                 select.required = true;
                 populateUsers(role, selectId);

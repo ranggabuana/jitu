@@ -468,7 +468,7 @@ class DataPerijinanController extends Controller
             $userRole = $user->role;
 
             // Role yang tidak memerlukan assigned_user_id (semua user dengan role ini bisa validasi)
-            $rolesWithoutAssignment = ['fo', 'bo', 'verifikator', 'kadin'];
+            $rolesWithoutAssignment = ['verifikator', 'kadin'];
 
             if (in_array($userRole, $rolesWithoutAssignment)) {
                 // Cek apakah role user match dengan role di validation flow
@@ -499,8 +499,10 @@ class DataPerijinanController extends Controller
                     return redirect()->back()->with('error', 'Tahap validasi ini sudah diselesaikan oleh user lain.');
                 }
             } else {
-                // Role yang memerlukan assigned_user_id (Operator OPD, Kepala OPD, Admin)
-                if ($currentValidasi->user_id !== $user->id) {
+                // Role yang memerlukan assigned_user_id (FO, BO, Operator OPD, Kepala OPD)
+                $assignedUserId = $currentValidasi->user_id ?? $validationFlow->assigned_user_id;
+
+                if ($assignedUserId !== $user->id) {
                     return redirect()->back()->with('error', 'Anda tidak ditugaskan untuk melakukan validasi pada tahap ini.');
                 }
                 
@@ -522,8 +524,8 @@ class DataPerijinanController extends Controller
                 'validated_at' => now(),
             ];
             
-            // Untuk role kolektif (FO, BO, Verifikator, Kadin), simpan user_id validator
-            if (in_array($userRole, $rolesWithoutAssignment)) {
+            // Pastikan user_id tersimpan (baik untuk role kolektif maupun data assigned lama yang kosong)
+            if (in_array($userRole, $rolesWithoutAssignment) || !$currentValidasi->user_id) {
                 $updateData['user_id'] = $user->id;
             }
             
