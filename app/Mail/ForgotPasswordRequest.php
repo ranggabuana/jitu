@@ -56,7 +56,7 @@ class ForgotPasswordRequest extends Mailable
                 'userName' => $this->user->name,
                 'resetUrl' => $this->resetUrl,
                 'expiryMinutes' => $this->expiryMinutes,
-                'appName' => config('app.name'),
+                'appName' => config('mail.from.name'), // Menggunakan Nama Pengirim dari pengaturan email
             ],
         );
     }

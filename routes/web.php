@@ -70,6 +70,9 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['admin.role'])->prefix('settings')->name('settings.')->group(function () {
         Route::get('/application', [ApplicationSettingsController::class, 'index'])->name('application');
         Route::put('/application', [ApplicationSettingsController::class, 'update'])->name('application.update');
+        Route::get('/email', [\App\Http\Controllers\Admin\EmailSettingsController::class, 'index'])->name('email');
+        Route::put('/email', [\App\Http\Controllers\Admin\EmailSettingsController::class, 'update'])->name('email.update');
+        Route::post('/email/test', [\App\Http\Controllers\Admin\EmailSettingsController::class, 'testConnection'])->name('email.test');
         Route::get('/pengaduan-handlers', [PengaduanHandlerController::class, 'index'])->name('pengaduan-handlers');
         Route::post('/pengaduan-handlers/assign', [PengaduanHandlerController::class, 'assign'])->name('pengaduan-handlers.assign');
         Route::delete('/pengaduan-handlers/remove/{userId}', [PengaduanHandlerController::class, 'remove'])->name('pengaduan-handlers.remove');

@@ -275,6 +275,11 @@
                         <i class="mdi mdi-circle text-[8px] mr-2 text-gray-500 dark:text-gray-400"></i>
                         <span>Pengaturan Aplikasi</span>
                     </a>
+                    <a href="{{ route('settings.email') }}"
+                        class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-lg mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('settings.email') ? 'active-menu' : '' }}">
+                        <i class="mdi mdi-circle text-[8px] mr-2 text-gray-500 dark:text-gray-400"></i>
+                        <span>Pengaturan Email</span>
+                    </a>
                     <a href="{{ route('settings.database') }}"
                         class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-lg mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('settings.database') ? 'active-menu' : '' }}">
                         <i class="mdi mdi-circle text-[8px] mr-2 text-gray-500 dark:text-gray-400"></i>
