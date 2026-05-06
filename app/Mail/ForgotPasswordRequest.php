@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\Setting;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -36,8 +37,10 @@ class ForgotPasswordRequest extends Mailable
      */
     public function envelope(): Envelope
     {
+        $subject = Setting::get('forgot_password_subject', 'Permintaan Reset Password');
+
         return new Envelope(
-            subject: 'Permintaan Reset Password - ' . config('app.name'),
+            subject: $subject . ' - ' . config('app.name'),
             from: new Address(
                 config('mail.from.address'),
                 config('mail.from.name')
@@ -50,13 +53,23 @@ class ForgotPasswordRequest extends Mailable
      */
     public function content(): Content
     {
+        $body = Setting::get('forgot_password_content', 'Kami menerima permintaan untuk melakukan pengaturan ulang kata sandi (reset password) pada akun Anda. Klik tombol di bawah ini untuk melanjutkan proses:');
+        
+        // Replace placeholders
+        $body = str_replace(
+            ['{{userName}}', '{{appName}}'], 
+            [$this->user->name, config('mail.from.name')], 
+            $body
+        );
+
         return new Content(
             view: 'emails.forgot-password',
             with: [
                 'userName' => $this->user->name,
                 'resetUrl' => $this->resetUrl,
                 'expiryMinutes' => $this->expiryMinutes,
-                'appName' => config('mail.from.name'), // Menggunakan Nama Pengirim dari pengaturan email
+                'appName' => config('mail.from.name'),
+                'bodyContent' => $body,
             ],
         );
     }

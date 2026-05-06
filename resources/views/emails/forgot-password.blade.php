@@ -164,7 +164,7 @@
                     <div class="content">
                         <div class="greeting">Halo, {{ $userName }}</div>
                         <div class="text">
-                            Kami menerima permintaan untuk melakukan pengaturan ulang kata sandi (reset password) pada akun Anda. Klik tombol di bawah ini untuk melanjutkan proses:
+                            {!! nl2br(e($bodyContent)) !!}
                         </div>
 
                         <!-- CTA Button -->

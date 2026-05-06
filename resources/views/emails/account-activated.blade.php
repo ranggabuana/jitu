@@ -130,7 +130,7 @@
                     <div class="content">
                         <div class="greeting">Halo, {{ $userName }}</div>
                         <div class="text">
-                            Selamat! Akun Anda telah berhasil diverifikasi dan diaktifkan oleh admin. Sekarang Anda sudah dapat mengakses dashboard pemohon untuk mengajukan perizinan secara online.
+                            {!! nl2br(e($bodyContent)) !!}
                         </div>
 
                         <!-- CTA Button -->
