@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\Setting;
+use App\Models\Holiday;
+use Carbon\Carbon;
 
 if (!function_exists('setting')) {
     /**
@@ -46,5 +48,60 @@ if (!function_exists('formatWhatsAppNumber')) {
         }
 
         return $number;
+    }
+}
+
+if (!function_exists('isWorkDay')) {
+    /**
+     * Check if a given date is a working day and not a holiday.
+     *
+     * @param mixed $date
+     * @return bool
+     */
+    function isWorkDay($date): bool
+    {
+        $carbonDate = Carbon::parse($date);
+        
+        // 1. Check if it's a holiday in the database
+        $isHoliday = Holiday::whereDate('date', $carbonDate->format('Y-m-d'))->exists();
+        if ($isHoliday) {
+            return false;
+        }
+
+        // 2. Check if the day is in the configured work days
+        $workDaysJson = Setting::get('work_days');
+        if ($workDaysJson) {
+            $workDays = json_decode($workDaysJson, true);
+            if (is_array($workDays) && !empty($workDays)) {
+                return in_array($carbonDate->format('l'), $workDays);
+            }
+        }
+
+        // Fallback to default (Monday to Friday)
+        return !in_array($carbonDate->format('l'), ['Saturday', 'Sunday']);
+    }
+}
+
+if (!function_exists('getNextWorkDay')) {
+    /**
+     * Get the next available working day from a given date.
+     *
+     * @param mixed $date
+     * @param int $daysToAdd
+     * @return Carbon
+     */
+    function getNextWorkDay($date, int $daysToAdd = 1): Carbon
+    {
+        $currentDate = Carbon::parse($date);
+        $addedDays = 0;
+
+        while ($addedDays < $daysToAdd) {
+            $currentDate->addDay();
+            if (isWorkDay($currentDate)) {
+                $addedDays++;
+            }
+        }
+
+        return $currentDate;
     }
 }

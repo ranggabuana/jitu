@@ -70,6 +70,9 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['admin.role'])->prefix('settings')->name('settings.')->group(function () {
         Route::get('/application', [ApplicationSettingsController::class, 'index'])->name('application');
         Route::put('/application', [ApplicationSettingsController::class, 'update'])->name('application.update');
+        Route::post('/application/holiday', [ApplicationSettingsController::class, 'addHoliday'])->name('application.holiday.store');
+        Route::delete('/application/holiday/{id}', [ApplicationSettingsController::class, 'deleteHoliday'])->name('application.holiday.delete');
+
         Route::get('/email', [\App\Http\Controllers\Admin\EmailSettingsController::class, 'index'])->name('email');
         Route::put('/email', [\App\Http\Controllers\Admin\EmailSettingsController::class, 'update'])->name('email.update');
         Route::post('/email/test', [\App\Http\Controllers\Admin\EmailSettingsController::class, 'testConnection'])->name('email.test');
