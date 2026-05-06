@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\ActivityLog;
+use App\Services\EmailService;
+use App\Mail\AccountActivatedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -199,6 +201,15 @@ class PemohonController extends Controller
         $pemohon->update([
             'status' => $request->status,
         ]);
+
+        // Send notification email if account is activated
+        if ($oldStatus !== 'aktif' && $request->status === 'aktif') {
+            EmailService::send(
+                to: $pemohon->email,
+                name: $pemohon->name,
+                mailable: new AccountActivatedNotification($pemohon)
+            );
+        }
 
         // Log activity
         ActivityLog::log(

@@ -255,15 +255,15 @@
 
                     <!-- Actions -->
                     <div class="space-y-3">
-                        <form method="POST" action="{{ route('pemohon.update-status', $pemohon->id) }}">
+                        <form method="POST" action="{{ route('pemohon.update-status', $pemohon->id) }}" id="status-form">
                             @csrf
                             @method('PATCH')
-                            <button type="submit" name="status"
-                                value="{{ $pemohon->status === 'aktif' ? 'tidak_aktif' : 'aktif' }}"
+                            <input type="hidden" name="status" id="status-input" value="{{ $pemohon->status === 'aktif' ? 'tidak_aktif' : 'aktif' }}">
+                            <button type="button" onclick="confirmStatusChange()"
                                 class="w-full {{ $pemohon->status === 'aktif' ? 'bg-amber-500 hover:bg-amber-600' : 'bg-emerald-500 hover:bg-emerald-600' }} text-white px-4 py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 text-sm">
                                 <i
-                                    class="mdi mdi-{{ $pemohon->status === 'aktif' ? 'clock-outline' : 'check-circle' }} text-base"></i>
-                                {{ $pemohon->status === 'aktif' ? 'Nonaktifkan' : 'Aktifkan' }}
+                                    class="mdi mdi-{{ $pemohon->status === 'aktif' ? 'account-off' : 'account-check' }} text-base"></i>
+                                {{ $pemohon->status === 'aktif' ? 'Nonaktifkan Akun' : 'Aktifkan Akun' }}
                             </button>
                         </form>
 
@@ -304,4 +304,33 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+        function confirmStatusChange() {
+            const isActivating = document.getElementById('status-input').value === 'aktif';
+            const title = isActivating ? 'Aktifkan Akun?' : 'Nonaktifkan Akun?';
+            const text = isActivating 
+                ? 'Pemohon akan menerima email pemberitahuan bahwa akun telah aktif.' 
+                : 'Pemohon tidak akan bisa login ke dalam sistem untuk sementara.';
+            const confirmBtnText = isActivating ? 'Ya, Aktifkan!' : 'Ya, Nonaktifkan!';
+            const confirmBtnColor = isActivating ? '#059669' : '#d97706';
+
+            Swal.fire({
+                title: title,
+                text: text,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: confirmBtnColor,
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: confirmBtnText,
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('status-form').submit();
+                }
+            });
+        }
+    </script>
+    @endpush
 </x-layout>

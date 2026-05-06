@@ -120,15 +120,15 @@ class AuthController extends Controller
             $extension = $file->getClientOriginalExtension();
             $filename = 'ktp_' . time() . '_' . $request->nik . '.' . $extension;
             $uploadPath = public_path('uploads/register');
-            
+
             // Create directory if not exists
             if (!file_exists($uploadPath)) {
                 mkdir($uploadPath, 0755, true);
             }
-            
+
             // Move file to public/uploads/register
             $file->move($uploadPath, $filename);
-            
+
             // Store relative path in database
             $userData['foto_ktp'] = 'uploads/register/' . $filename;
         }
@@ -160,7 +160,7 @@ class AuthController extends Controller
             $user->id  // Pass user ID explicitly
         );
 
-        return redirect()->route('login')->with('success', 'Registrasi berhasil! Akun Anda menunggu aktivasi dari admin.');
+        return redirect()->route('login')->with('success', 'Registrasi berhasil! Akun Anda menunggu aktivasi dari admin. Jika berhasil, akan ada pemberitahuan melalui email anda');
     }
 
     /**

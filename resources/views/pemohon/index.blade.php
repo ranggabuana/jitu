@@ -133,10 +133,6 @@
                         </th>
                         <th
                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                            Status
-                        </th>
-                        <th
-                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                             Terdaftar
                         </th>
                         <th
@@ -183,25 +179,6 @@
                                     <div class="text-xs text-gray-500 dark:text-gray-400">{{ $item->no_hp }}</div>
                                 @endif
                             </td>
-                            <td class="px-6 py-4">
-                                <form method="POST" action="{{ route('pemohon.update-status', $item->id) }}"
-                                    class="status-toggle-form">
-                                    @csrf
-                                    @method('PATCH')
-                                    <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" name="status" value="1"
-                                            class="sr-only peer status-toggle" data-id="{{ $item->id }}"
-                                            {{ $item->status === 'aktif' ? 'checked' : '' }}>
-                                        <div
-                                            class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer dark:bg-gray-600 peer-checked:bg-green-500 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600">
-                                        </div>
-                                        <span
-                                            class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300 status-label">
-                                            {{ $item->status === 'aktif' ? 'Aktif' : 'Tidak Aktif' }}
-                                        </span>
-                                    </label>
-                                </form>
-                            </td>
                             <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                                 {{ $item->created_at->format('d M Y') }}
                             </td>
@@ -234,7 +211,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center">
+                            <td colspan="5" class="px-6 py-12 text-center">
                                 <div
                                     class="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <i class="mdi mdi-account-off text-gray-400 dark:text-gray-500 text-3xl"></i>
@@ -252,87 +229,4 @@
             {{ $pemohon->links() }}
         </div>
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Handle status toggle with AJAX
-            const statusToggles = document.querySelectorAll('.status-toggle');
-
-            statusToggles.forEach(toggle => {
-                toggle.addEventListener('change', function() {
-                    const form = this.closest('.status-toggle-form');
-                    const statusLabel = form.querySelector('.status-label');
-                    const newStatus = this.checked ? 'aktif' : 'tidak_aktif';
-                    const originalChecked = this.checked;
-
-                    // Disable toggle during request
-                    toggle.disabled = true;
-
-                    // Update label text temporarily
-                    statusLabel.textContent = 'Mengubah...';
-
-                    // Submit form via AJAX
-                    fetch(form.action, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': form.querySelector('input[name="_token"]')
-                                    .value,
-                                'X-HTTP-Method-Override': 'PATCH',
-                                'Accept': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                status: newStatus
-                            })
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                // Update label text on success
-                                statusLabel.textContent = newStatus === 'aktif' ? 'Aktif' :
-                                    'Tidak Aktif';
-
-                                // Show success message using SweetAlert2
-                                Swal.fire({
-                                    title: 'Berhasil!',
-                                    text: data.message,
-                                    icon: 'success',
-                                    confirmButtonText: 'OK',
-                                    timer: 2000,
-                                    timerProgressBar: true
-                                });
-                            } else {
-                                // Revert toggle on error
-                                toggle.checked = !originalChecked;
-                                statusLabel.textContent = originalChecked ? 'Aktif' :
-                                    'Tidak Aktif';
-                                toggle.disabled = false;
-
-                                Swal.fire({
-                                    title: 'Error!',
-                                    text: data.message ||
-                                        'Gagal mengubah status pemohon.',
-                                    icon: 'error',
-                                    confirmButtonText: 'OK'
-                                });
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            // Revert toggle on error
-                            toggle.checked = !originalChecked;
-                            statusLabel.textContent = originalChecked ? 'Aktif' : 'Tidak Aktif';
-                            toggle.disabled = false;
-
-                            Swal.fire({
-                                title: 'Error!',
-                                text: 'Terjadi kesalahan saat mengubah status.',
-                                icon: 'error',
-                                confirmButtonText: 'OK'
-                            });
-                        });
-                });
-            });
-        });
-    </script>
 </x-layout>
