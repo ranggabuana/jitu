@@ -61,6 +61,7 @@ if (!function_exists('isWorkDay')) {
     function isWorkDay($date): bool
     {
         $carbonDate = Carbon::parse($date);
+        $dayName = $carbonDate->format('l'); // e.g., Monday
         
         // 1. Check if it's a holiday in the database
         $isHoliday = Holiday::whereDate('date', $carbonDate->format('Y-m-d'))->exists();
@@ -68,17 +69,26 @@ if (!function_exists('isWorkDay')) {
             return false;
         }
 
-        // 2. Check if the day is in the configured work days
+        // 2. Check if the day is in the configured work hours (New JSON structure)
+        $workHoursJson = Setting::get('work_hours');
+        if ($workHoursJson) {
+            $workHours = json_decode($workHoursJson, true);
+            if (is_array($workHours) && isset($workHours[$dayName])) {
+                return isset($workHours[$dayName]['active']) && $workHours[$dayName]['active'] == '1';
+            }
+        }
+
+        // 3. Fallback to old structure if exists (work_days)
         $workDaysJson = Setting::get('work_days');
         if ($workDaysJson) {
             $workDays = json_decode($workDaysJson, true);
             if (is_array($workDays) && !empty($workDays)) {
-                return in_array($carbonDate->format('l'), $workDays);
+                return in_array($dayName, $workDays);
             }
         }
 
         // Fallback to default (Monday to Friday)
-        return !in_array($carbonDate->format('l'), ['Saturday', 'Sunday']);
+        return !in_array($dayName, ['Saturday', 'Sunday']);
     }
 }
 

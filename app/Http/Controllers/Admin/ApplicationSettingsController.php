@@ -54,9 +54,7 @@ class ApplicationSettingsController extends Controller
             'twitter' => 'nullable|url|max:255',
 
             // Working Hours
-            'work_days' => 'nullable|array',
-            'work_start_time' => 'nullable|string',
-            'work_end_time' => 'nullable|string',
+            'work_hours' => 'nullable|array',
         ], [
             'app_name.required' => 'Nama aplikasi wajib diisi.',
             'email.email' => 'Format email tidak valid.',
@@ -75,6 +73,7 @@ class ApplicationSettingsController extends Controller
             'working_hours' => Setting::where('group', 'working_hours')->get()->pluck('value', 'key')->toArray(),
         ];
 
+        // ... (logo, tte, panduan uploads remain the same) ...
         // Handle logo upload
         if ($request->hasFile('app_logo')) {
             $logo = $request->file('app_logo');
@@ -151,10 +150,9 @@ class ApplicationSettingsController extends Controller
         Setting::set('tiktok', $request->tiktok, 'text', 'social_media', 'TikTok');
         Setting::set('twitter', $request->twitter, 'text', 'social_media', 'Twitter');
 
-        // Working Hours Settings
-        Setting::set('work_days', json_encode($request->work_days ?? []), 'text', 'working_hours', 'Hari Kerja');
-        Setting::set('work_start_time', $request->work_start_time, 'text', 'working_hours', 'Jam Mulai Kerja');
-        Setting::set('work_end_time', $request->work_end_time, 'text', 'working_hours', 'Jam Selesai Kerja');
+        // Working Hours Settings (New JSON structure)
+        $workHoursData = $request->input('work_hours', []);
+        Setting::set('work_hours', json_encode($workHoursData), 'text', 'working_hours', 'Detail Jam Kerja Harian');
 
         // Capture new data after updating
         $newData = [
@@ -177,9 +175,7 @@ class ApplicationSettingsController extends Controller
                 'twitter' => $request->twitter,
             ],
             'working_hours' => [
-                'work_days' => $request->work_days ?? [],
-                'work_start_time' => $request->work_start_time,
-                'work_end_time' => $request->work_end_time,
+                'work_hours' => $workHoursData,
             ],
         ];
 

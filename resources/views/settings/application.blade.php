@@ -43,15 +43,15 @@
     <!-- Top Navigation Tabs -->
     <div class="mb-6 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
         <nav class="flex space-x-8 min-w-max px-2" aria-label="Tabs">
-            <button onclick="switchTab('tab-general')" id="btn-tab-general" class="tab-btn active-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2">
+            <button onclick="switchTab('tab-general')" id="btn-tab-general" class="tab-btn active-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all">
                 <i class="mdi mdi-application-outline text-lg"></i>
                 Pengaturan Umum
             </button>
-            <button onclick="switchTab('tab-contact')" id="btn-tab-contact" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2">
+            <button onclick="switchTab('tab-contact')" id="btn-tab-contact" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all">
                 <i class="mdi mdi-contact-mail-outline text-lg"></i>
                 Kontak & Sosial Media
             </button>
-            <button onclick="switchTab('tab-operational')" id="btn-tab-operational" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2">
+            <button onclick="switchTab('tab-operational')" id="btn-tab-operational" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all">
                 <i class="mdi mdi-clock-check-outline text-lg"></i>
                 Hari & Jam Kerja
             </button>
@@ -131,6 +131,12 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Save Button for this tab -->
+                    <div class="px-6 py-4 bg-gray-50/50 dark:bg-gray-700/30 border-t border-gray-100 dark:border-gray-700 flex justify-end">
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold transition-all flex items-center gap-2">
+                            <i class="mdi mdi-content-save"></i> Simpan Perubahan
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -193,6 +199,12 @@
                             <input type="url" name="tiktok" id="tiktok" value="{{ old('tiktok', $socialMediaSettings['tiktok'] ?? '') }}" class="form-input">
                         </div>
                     </div>
+                    <!-- Save Button for this tab -->
+                    <div class="px-6 py-4 bg-gray-50/50 dark:bg-gray-700/30 border-t border-gray-100 dark:border-gray-700 flex justify-end">
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold transition-all flex items-center gap-2">
+                            <i class="mdi mdi-content-save"></i> Simpan Perubahan
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -202,34 +214,60 @@
                     <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-700/30">
                         <h2 class="text-base font-bold text-gray-800 dark:text-white flex items-center gap-2">
                             <i class="mdi mdi-clock-check text-orange-500"></i>
-                            Pengaturan Jam Kerja
+                            Pengaturan Jam Kerja Harian
                         </h2>
                     </div>
-                    <div class="p-6 space-y-6">
-                        @php
-                            $selectedDays = json_decode($workingHours['work_days'] ?? '["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]', true);
-                            $days = ['Monday' => 'Senin', 'Tuesday' => 'Selasa', 'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu', 'Sunday' => 'Minggu'];
-                        @endphp
+                    <div class="p-6">
+                        <p class="text-xs text-gray-500 mb-6 italic">Atur jam operasional berbeda untuk setiap hari. Kosongkan checkbox jika hari tersebut adalah hari libur rutin.</p>
                         
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div class="space-y-4">
+                            @php
+                                $workHours = json_decode($workingHours['work_hours'] ?? '[]', true);
+                                $days = [
+                                    'Monday' => 'Senin',
+                                    'Tuesday' => 'Selasa',
+                                    'Wednesday' => 'Rabu',
+                                    'Thursday' => 'Kamis',
+                                    'Friday' => 'Jumat',
+                                    'Saturday' => 'Sabtu',
+                                    'Sunday' => 'Minggu'
+                                ];
+                            @endphp
+                            
+                            <div class="grid grid-cols-12 gap-4 pb-2 border-b border-gray-100 dark:border-gray-700 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                <div class="col-span-4">Hari</div>
+                                <div class="col-span-4">Jam Mulai</div>
+                                <div class="col-span-4">Jam Selesai</div>
+                            </div>
+
                             @foreach($days as $key => $label)
-                                <label class="flex items-center gap-2 p-3 border border-gray-100 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
-                                    <input type="checkbox" name="work_days[]" value="{{ $key }}" {{ in_array($key, $selectedDays) ? 'checked' : '' }} class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ $label }}</span>
-                                </label>
+                                @php
+                                    $isActive = isset($workHours[$key]['active']) && $workHours[$key]['active'] == '1';
+                                    $startTime = $workHours[$key]['start'] ?? '08:00';
+                                    $endTime = $workHours[$key]['end'] ?? '16:00';
+                                @endphp
+                                <div class="grid grid-cols-12 gap-4 items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                    <div class="col-span-4">
+                                        <label class="flex items-center gap-3 cursor-pointer">
+                                            <input type="checkbox" name="work_hours[{{ $key }}][active]" value="1" {{ $isActive ? 'checked' : '' }} class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                            <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">{{ $label }}</span>
+                                        </label>
+                                    </div>
+                                    <div class="col-span-4">
+                                        <input type="time" name="work_hours[{{ $key }}][start]" value="{{ $startTime }}" class="form-input py-1 px-3 text-xs">
+                                    </div>
+                                    <div class="col-span-4">
+                                        <input type="time" name="work_hours[{{ $key }}][end]" value="{{ $endTime }}" class="form-input py-1 px-3 text-xs">
+                                    </div>
+                                </div>
                             @endforeach
                         </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100 dark:border-gray-700">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Jam Mulai Kerja</label>
-                                <input type="time" name="work_start_time" value="{{ old('work_start_time', $workingHours['work_start_time'] ?? '08:00') }}" class="form-input">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Jam Selesai Kerja</label>
-                                <input type="time" name="work_end_time" value="{{ old('work_end_time', $workingHours['work_end_time'] ?? '16:00') }}" class="form-input">
-                            </div>
-                        </div>
+                    </div>
+                    <!-- Save Button for this tab -->
+                    <div class="px-6 py-4 bg-gray-50/50 dark:bg-gray-700/30 border-t border-gray-100 dark:border-gray-700 flex justify-end">
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold transition-all flex items-center gap-2">
+                            <i class="mdi mdi-content-save"></i> Simpan Perubahan
+                        </button>
                     </div>
                 </div>
 
@@ -237,7 +275,7 @@
                     <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-700/30 flex items-center justify-between">
                         <h2 class="text-base font-bold text-gray-800 dark:text-white flex items-center gap-2">
                             <i class="mdi mdi-calendar-remove text-red-500"></i>
-                            Hari Libur
+                            Hari Libur Nasional / Tanggal Merah
                         </h2>
                     </div>
                     <div class="p-6">
@@ -279,14 +317,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Global Submit Button -->
-            <div class="mt-8 flex justify-end">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-xl font-bold shadow-lg shadow-blue-500/20 transition-all flex items-center gap-3">
-                    <i class="mdi mdi-content-save-all text-xl"></i>
-                    Simpan Semua Perubahan
-                </button>
             </div>
         </form>
     </div>
