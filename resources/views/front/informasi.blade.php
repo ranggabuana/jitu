@@ -202,8 +202,8 @@
                 <div class="mt-12 flex justify-center">
                     {{ $beritaGrid->links('pagination::tailwind') }}
                 </div>
-            @else
-                <!-- Empty State -->
+            @elseif($sliderBerita->count() == 0 && $secondaryBerita->count() == 0)
+                <!-- Empty State - Only show if slider and secondary are also empty -->
                 <div class="text-center py-16">
                     <div class="inline-flex items-center justify-center w-24 h-24 bg-gray-100 rounded-full mb-6">
                         <i class="fas fa-newspaper text-5xl text-gray-400"></i>
