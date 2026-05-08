@@ -50,11 +50,12 @@
 
                 <div>
                     <label for="nip" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        NIP <span class="text-gray-400 text-xs">(Opsional)</span>
+                        NIK <span class="text-red-500">*</span>
                     </label>
-                    <input type="text" id="nip" name="nip" value="{{ old('nip') }}"
+                    <input minlength="16" maxlength="16" type="text" id="nip" name="nip"
+                        value="{{ old('nip') }}"
                         class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('nip') border-red-500 @enderror"
-                        placeholder="Nomor Induk Pegawai">
+                        placeholder="NIK Pegawai">
                     @error('nip')
                         <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                     @enderror
@@ -68,8 +69,9 @@
                 <select id="opd_id" name="opd_id" required
                     class="opd-select w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 @error('opd_id') border-red-500 @enderror">
                     <option value="">Pilih OPD</option>
-                    @foreach($opds as $opd)
-                        <option value="{{ $opd->id }}" {{ old('opd_id') == $opd->id ? 'selected' : '' }}>{{ $opd->nama_opd }}</option>
+                    @foreach ($opds as $opd)
+                        <option value="{{ $opd->id }}" {{ old('opd_id') == $opd->id ? 'selected' : '' }}>
+                            {{ $opd->nama_opd }}</option>
                     @endforeach
                 </select>
                 @error('opd_id')
@@ -97,7 +99,8 @@
                     <select id="status" name="status"
                         class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('status') border-red-500 @enderror">
                         <option value="aktif" {{ old('status') === 'aktif' ? 'selected' : '' }}>Aktif</option>
-                        <option value="tidak_aktif" {{ old('status') === 'tidak_aktif' ? 'selected' : '' }}>Tidak Aktif</option>
+                        <option value="tidak_aktif" {{ old('status') === 'tidak_aktif' ? 'selected' : '' }}>Tidak Aktif
+                        </option>
                     </select>
                     @error('status')
                         <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -127,14 +130,16 @@
                 </div>
 
                 <div>
-                    <label for="password_confirmation" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label for="password_confirmation"
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Konfirmasi Password <span class="text-red-500">*</span>
                     </label>
                     <div class="relative">
                         <input type="password" id="password_confirmation" name="password_confirmation"
                             class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             placeholder="Ulangi password">
-                        <button type="button" onclick="togglePassword('password_confirmation', 'password-confirm-eye-icon')"
+                        <button type="button"
+                            onclick="togglePassword('password_confirmation', 'password-confirm-eye-icon')"
                             class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                             <i id="password-confirm-eye-icon" class="mdi mdi-eye"></i>
                         </button>
@@ -157,7 +162,7 @@
 
     <!-- Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    
+
     <style>
         /* Select2 Dark/Light Theme Overrides */
         .select2-container--default .select2-selection--single {
@@ -168,33 +173,41 @@
             align-items: center !important;
             background-color: #ffffff !important;
         }
+
         .dark .select2-container--default .select2-selection--single {
             background-color: #374151 !important;
             border-color: #4b5563 !important;
         }
+
         .select2-container--default .select2-selection--single .select2-selection__rendered {
             color: #111827 !important;
             padding-left: 1rem !important;
         }
+
         .dark .select2-container--default .select2-selection--single .select2-selection__rendered {
             color: #e5e7eb !important;
         }
+
         .select2-dropdown {
             border-color: #d1d5db !important;
             border-radius: 0.5rem !important;
         }
+
         .dark .select2-dropdown {
             background-color: #374151 !important;
             border-color: #4b5563 !important;
             color: #e5e7eb !important;
         }
+
         .dark .select2-results__option {
             color: #e5e7eb !important;
         }
+
         .dark .select2-results__option--highlighted {
             background-color: #4b5563 !important;
             color: #ffffff !important;
         }
+
         .select2-container--default .select2-selection--single .select2-selection__arrow {
             height: 40px !important;
         }

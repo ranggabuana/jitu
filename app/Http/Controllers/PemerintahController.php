@@ -83,7 +83,7 @@ class PemerintahController extends Controller
             'username' => 'required|string|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'opd_id' => 'required|exists:opd,id',
-            'nip' => 'nullable|string|max:50',
+            'nip' => 'required|string|max:16',
             'no_hp' => 'nullable|string|max:20',
             'status' => 'required|in:aktif,tidak_aktif',
         ]);
@@ -151,7 +151,7 @@ class PemerintahController extends Controller
             'username' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
             'password' => 'nullable|string|min:8|confirmed',
             'opd_id' => 'nullable|exists:opd,id',
-            'nip' => 'nullable|string|max:50',
+            'nip' => 'required|string|max:16',
             'no_hp' => 'nullable|string|max:20',
             'status' => 'required|in:aktif,tidak_aktif',
         ]);
