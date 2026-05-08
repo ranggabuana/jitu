@@ -149,6 +149,7 @@
                     <div>
                         <label for="kabupaten" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Kabupaten/Kota
+                            <i class="fas fa-spinner fa-spin ml-2 text-blue-500" id="loader-kabupaten" style="display: none;"></i>
                         </label>
                         <select id="kabupaten" name="kabupaten_id"
                             class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent select2-wilayah" disabled>
@@ -159,6 +160,7 @@
                     <div>
                         <label for="kecamatan" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Kecamatan
+                            <i class="fas fa-spinner fa-spin ml-2 text-blue-500" id="loader-kecamatan" style="display: none;"></i>
                         </label>
                         <select id="kecamatan" name="kecamatan_id"
                             class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent select2-wilayah" disabled>
@@ -169,6 +171,7 @@
                     <div>
                         <label for="kelurahan" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Kelurahan/Desa
+                            <i class="fas fa-spinner fa-spin ml-2 text-blue-500" id="loader-kelurahan" style="display: none;"></i>
                         </label>
                         <select id="kelurahan" name="kelurahan_id"
                             class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent select2-wilayah" disabled>
@@ -423,8 +426,12 @@
                 return;
             }
 
-            $('#kabupaten').prop('disabled', false);
+            $('#loader-kabupaten').show();
+            $('#kabupaten').prop('disabled', true).empty().append('<option value="">Memuat data...</option>');
+
             $.get(`{{ url('api/wilayah/provinsi') }}/${provinsiId}/kabupaten`, function(data) {
+                $('#loader-kabupaten').hide();
+                $('#kabupaten').prop('disabled', false);
                 let options = '<option value="">-- Pilih Kabupaten/Kota --</option>';
                 data.data.forEach(item => {
                     options += `<option value="${item.id}" ${item.id == selectedId ? 'selected' : ''}>${item.name}</option>`;
@@ -434,6 +441,9 @@
                 if (selectedId) {
                     loadKecamatan(selectedId, '{{ old("kecamatan_id", $pemohon->kecamatan_id) }}');
                 }
+            }).fail(function() {
+                $('#loader-kabupaten').hide();
+                $('#kabupaten').empty().append('<option value="">-- Gagal memuat data --</option>');
             });
         }
 
@@ -443,8 +453,12 @@
                 return;
             }
 
-            $('#kecamatan').prop('disabled', false);
+            $('#loader-kecamatan').show();
+            $('#kecamatan').prop('disabled', true).empty().append('<option value="">Memuat data...</option>');
+
             $.get(`{{ url('api/wilayah/kabupaten') }}/${kabupatenId}/kecamatan`, function(data) {
+                $('#loader-kecamatan').hide();
+                $('#kecamatan').prop('disabled', false);
                 let options = '<option value="">-- Pilih Kecamatan --</option>';
                 data.data.forEach(item => {
                     options += `<option value="${item.id}" ${item.id == selectedId ? 'selected' : ''}>${item.name}</option>`;
@@ -454,6 +468,9 @@
                 if (selectedId) {
                     loadKelurahan(selectedId, '{{ old("kelurahan_id", $pemohon->kelurahan_id) }}');
                 }
+            }).fail(function() {
+                $('#loader-kecamatan').hide();
+                $('#kecamatan').empty().append('<option value="">-- Gagal memuat data --</option>');
             });
         }
 
@@ -463,13 +480,20 @@
                 return;
             }
 
-            $('#kelurahan').prop('disabled', false);
+            $('#loader-kelurahan').show();
+            $('#kelurahan').prop('disabled', true).empty().append('<option value="">Memuat data...</option>');
+
             $.get(`{{ url('api/wilayah/kecamatan') }}/${kecamatanId}/kelurahan`, function(data) {
+                $('#loader-kelurahan').hide();
+                $('#kelurahan').prop('disabled', false);
                 let options = '<option value="">-- Pilih Kelurahan/Desa --</option>';
                 data.data.forEach(item => {
                     options += `<option value="${item.id}" ${item.id == selectedId ? 'selected' : ''}>${item.name}</option>`;
                 });
                 $('#kelurahan').html(options).trigger('change');
+            }).fail(function() {
+                $('#loader-kelurahan').hide();
+                $('#kelurahan').empty().append('<option value="">-- Gagal memuat data --</option>');
             });
         }
     </script>

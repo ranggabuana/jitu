@@ -397,6 +397,7 @@
                         <div>
                             <label for="kabupaten" class="block text-sm font-semibold text-gray-700 mb-2">
                                 <i class="fas fa-map text-green-600 mr-2"></i>Kabupaten/Kota
+                                <i class="fas fa-spinner fa-spin ml-2 text-blue-500" id="loader-kabupaten" style="display: none;"></i>
                             </label>
                             <select id="kabupaten" name="kabupaten_id"
                                 class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all select2-wilayah" disabled>
@@ -408,6 +409,7 @@
                         <div>
                             <label for="kecamatan" class="block text-sm font-semibold text-gray-700 mb-2">
                                 <i class="fas fa-map text-green-600 mr-2"></i>Kecamatan
+                                <i class="fas fa-spinner fa-spin ml-2 text-blue-500" id="loader-kecamatan" style="display: none;"></i>
                             </label>
                             <select id="kecamatan" name="kecamatan_id"
                                 class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all select2-wilayah" disabled>
@@ -419,6 +421,7 @@
                         <div>
                             <label for="kelurahan" class="block text-sm font-semibold text-gray-700 mb-2">
                                 <i class="fas fa-map text-green-600 mr-2"></i>Kelurahan/Desa
+                                <i class="fas fa-spinner fa-spin ml-2 text-blue-500" id="loader-kelurahan" style="display: none;"></i>
                             </label>
                             <select id="kelurahan" name="kelurahan_id"
                                 class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all select2-wilayah" disabled>
@@ -798,6 +801,7 @@
             const kabupatenSelect = $('#kabupaten');
             const kecamatanSelect = $('#kecamatan');
             const kelurahanSelect = $('#kelurahan');
+            const loader = $('#loader-kabupaten');
 
             // Reset dependent dropdowns
             kabupatenSelect.empty().append('<option value="">-- Pilih Kabupaten/Kota --</option>');
@@ -812,11 +816,15 @@
                 return;
             }
 
-            kabupatenSelect.prop('disabled', false).trigger('change');
+            // Show loader and temporary option
+            loader.show();
+            kabupatenSelect.empty().append('<option value="">Memuat data...</option>');
 
             fetch('{{ url("api/wilayah/provinsi") }}/' + provinsiId + '/kabupaten')
                 .then(response => response.json())
                 .then(data => {
+                    loader.hide();
+                    kabupatenSelect.prop('disabled', false);
                     kabupatenSelect.empty().append('<option value="">-- Pilih Kabupaten/Kota --</option>');
                     
                     data.data.forEach(item => {
@@ -824,19 +832,25 @@
                         kabupatenSelect.append(option);
                     });
                     
+                    kabupatenSelect.trigger('change');
+
                     // Restore old value if exists
                     @if(old('kabupaten_id'))
                         kabupatenSelect.val('{{ old('kabupaten_id') }}').trigger('change');
-                        loadKecamatan();
                     @endif
                 })
-                .catch(error => console.error('Error loading kabupaten:', error));
+                .catch(error => {
+                    console.error('Error loading kabupaten:', error);
+                    loader.hide();
+                    kabupatenSelect.empty().append('<option value="">-- Gagal memuat data --</option>');
+                });
         }
 
         function loadKecamatan() {
             const kabupatenId = $('#kabupaten').val();
             const kecamatanSelect = $('#kecamatan');
             const kelurahanSelect = $('#kelurahan');
+            const loader = $('#loader-kecamatan');
 
             // Reset dependent dropdowns
             kecamatanSelect.empty().append('<option value="">-- Pilih Kecamatan --</option>');
@@ -848,11 +862,15 @@
                 return;
             }
 
-            kecamatanSelect.prop('disabled', false).trigger('change');
+            // Show loader and temporary option
+            loader.show();
+            kecamatanSelect.empty().append('<option value="">Memuat data...</option>');
 
             fetch('{{ url("api/wilayah/kabupaten") }}/' + kabupatenId + '/kecamatan')
                 .then(response => response.json())
                 .then(data => {
+                    loader.hide();
+                    kecamatanSelect.prop('disabled', false);
                     kecamatanSelect.empty().append('<option value="">-- Pilih Kecamatan --</option>');
                     
                     data.data.forEach(item => {
@@ -860,18 +878,24 @@
                         kecamatanSelect.append(option);
                     });
                     
+                    kecamatanSelect.trigger('change');
+
                     // Restore old value if exists
                     @if(old('kecamatan_id'))
                         kecamatanSelect.val('{{ old('kecamatan_id') }}').trigger('change');
-                        loadKelurahan();
                     @endif
                 })
-                .catch(error => console.error('Error loading kecamatan:', error));
+                .catch(error => {
+                    console.error('Error loading kecamatan:', error);
+                    loader.hide();
+                    kecamatanSelect.empty().append('<option value="">-- Gagal memuat data --</option>');
+                });
         }
 
         function loadKelurahan() {
             const kecamatanId = $('#kecamatan').val();
             const kelurahanSelect = $('#kelurahan');
+            const loader = $('#loader-kelurahan');
 
             // Reset
             kelurahanSelect.empty().append('<option value="">-- Pilih Kelurahan/Desa --</option>');
@@ -881,11 +905,15 @@
                 return;
             }
 
-            kelurahanSelect.prop('disabled', false).trigger('change');
+            // Show loader and temporary option
+            loader.show();
+            kelurahanSelect.empty().append('<option value="">Memuat data...</option>');
 
             fetch('{{ url("api/wilayah/kecamatan") }}/' + kecamatanId + '/kelurahan')
                 .then(response => response.json())
                 .then(data => {
+                    loader.hide();
+                    kelurahanSelect.prop('disabled', false);
                     kelurahanSelect.empty().append('<option value="">-- Pilih Kelurahan/Desa --</option>');
                     
                     data.data.forEach(item => {
@@ -893,12 +921,18 @@
                         kelurahanSelect.append(option);
                     });
                     
+                    kelurahanSelect.trigger('change');
+
                     // Restore old value if exists
                     @if(old('kelurahan_id'))
                         kelurahanSelect.val('{{ old('kelurahan_id') }}').trigger('change');
                     @endif
                 })
-                .catch(error => console.error('Error loading kelurahan:', error));
+                .catch(error => {
+                    console.error('Error loading kelurahan:', error);
+                    loader.hide();
+                    kelurahanSelect.empty().append('<option value="">-- Gagal memuat data --</option>');
+                });
         }
 
         // Preview KTP upload
