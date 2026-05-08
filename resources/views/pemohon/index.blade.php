@@ -129,6 +129,10 @@
                         </th>
                         <th
                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Status Akun
+                        </th>
+                        <th
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                             Kontak
                         </th>
                         <th
@@ -174,6 +178,21 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4">
+                                @if ($item->status === 'aktif')
+                                    <span
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border border-green-200 dark:border-green-700">
+                                        <i class="fas fa-check-circle"></i>
+                                        Aktif
+                                    </span>
+                                @else
+                                    <span
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 border border-red-200 dark:border-red-700">
+                                        <i class="fas fa-times-circle"></i>
+                                        Tidak Aktif
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4">
                                 <div class="text-sm text-gray-900 dark:text-white">{{ $item->email }}</div>
                                 @if ($item->no_hp)
                                     <div class="text-xs text-gray-500 dark:text-gray-400">{{ $item->no_hp }}</div>
@@ -211,7 +230,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-12 text-center">
+                            <td colspan="6" class="px-6 py-12 text-center">
                                 <div
                                     class="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <i class="mdi mdi-account-off text-gray-400 dark:text-gray-500 text-3xl"></i>

@@ -40,7 +40,10 @@ class PemohonController extends Controller
             $query->where('status_pemohon', $request->status_pemohon);
         }
 
-        $pemohon = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+        $pemohon = $query->orderBy('status', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10)
+            ->withQueryString();
 
         // Statistics
         $totalPemohon = User::where('role', 'pemohon')->count();
