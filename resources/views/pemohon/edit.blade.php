@@ -10,7 +10,7 @@
     </div>
 
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 max-w-4xl">
-        <form action="{{ route('pemohon.update', $pemohon->id) }}" method="POST">
+        <form action="{{ route('pemohon.update', $pemohon->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
 
@@ -55,11 +55,11 @@
 
                 <div>
                     <label for="nip" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        NIK / NIP <span class="text-gray-400 text-xs">(Opsional)</span>
+                        NIK (Nomor Induk Kependudukan) <span class="text-red-500">*</span>
                     </label>
                     <input type="text" id="nip" name="nip" value="{{ old('nip', $pemohon->nip) }}"
                         class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('nip') border-red-500 @enderror"
-                        placeholder="Nomor Induk Kependudukan / Pegawai">
+                        placeholder="16 digit NIK" minlength="16" maxlength="16" pattern="[0-9]{16}">
                     @error('nip')
                         <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                     @enderror
@@ -69,7 +69,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
                     <label for="no_hp" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        No. HP <span class="text-gray-400 text-xs">(Opsional)</span>
+                        No. WhatsApp <span class="text-gray-400 text-xs">(Opsional)</span>
                     </label>
                     <input type="text" id="no_hp" name="no_hp" value="{{ old('no_hp', $pemohon->no_hp) }}"
                         class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('no_hp') border-red-500 @enderror"
@@ -129,9 +129,94 @@
                 </div>
             </div>
 
+            <!-- Wilayah Selection -->
+            <div class="border-t border-gray-200 dark:border-gray-700 pt-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-map-marker-alt text-green-600"></i>
+                    Data Wilayah & Alamat
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label for="provinsi" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Provinsi
+                        </label>
+                        <select id="provinsi" name="provinsi_id"
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent select2-wilayah">
+                            <option value="">-- Pilih Provinsi --</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="kabupaten" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Kabupaten/Kota
+                        </label>
+                        <select id="kabupaten" name="kabupaten_id"
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent select2-wilayah" disabled>
+                            <option value="">-- Pilih Kabupaten/Kota --</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="kecamatan" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Kecamatan
+                        </label>
+                        <select id="kecamatan" name="kecamatan_id"
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent select2-wilayah" disabled>
+                            <option value="">-- Pilih Kecamatan --</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="kelurahan" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Kelurahan/Desa
+                        </label>
+                        <select id="kelurahan" name="kelurahan_id"
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent select2-wilayah" disabled>
+                            <option value="">-- Pilih Kelurahan/Desa --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label for="alamat_lengkap" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Alamat Lengkap
+                    </label>
+                    <textarea id="alamat_lengkap" name="alamat_lengkap" rows="3"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                        placeholder="Jalan, nomor rumah, RT/RW, dan keterangan lainnya">{{ old('alamat_lengkap', $pemohon->alamat_lengkap) }}</textarea>
+                    @error('alamat_lengkap')
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label for="foto_ktp" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Foto KTP <span class="text-gray-400 text-xs">(Kosongkan jika tidak diubah)</span>
+                    </label>
+                    <div class="flex flex-col md:flex-row gap-4 items-start">
+                        @if($pemohon->foto_ktp)
+                            <div class="shrink-0">
+                                <p class="text-xs text-gray-500 mb-1">KTP Saat Ini:</p>
+                                <a href="{{ asset($pemohon->foto_ktp) }}" target="_blank" class="block">
+                                    <img src="{{ asset($pemohon->foto_ktp) }}" alt="KTP" class="w-32 h-20 object-cover rounded-lg border border-gray-300 dark:border-gray-600">
+                                </a>
+                            </div>
+                        @endif
+                        <div class="flex-1 w-full">
+                            <input type="file" id="foto_ktp" name="foto_ktp" accept="image/jpeg,image/png,image/jpg,application/pdf"
+                                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('foto_ktp') border-red-500 @enderror">
+                            <p class="mt-1 text-xs text-gray-500">Format: JPG, PNG, PDF (Maks. 2MB)</p>
+                            @error('foto_ktp')
+                                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="mb-6">
                 <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Status <span class="text-red-500">*</span>
+                    Status Akun <span class="text-red-500">*</span>
                 </label>
                 <select id="status" name="status"
                     class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('status') border-red-500 @enderror">
@@ -183,7 +268,7 @@
             <div class="flex gap-3">
                 <button type="submit"
                     class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
-                    Update
+                    Update Pemohon
                 </button>
                 <a href="{{ route('pemohon.index') }}"
                     class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-6 py-2 rounded-lg transition-colors">
@@ -193,6 +278,37 @@
         </form>
     </div>
 
+    @push('scripts')
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <style>
+        .select2-container--bootstrap-5 .select2-selection {
+            min-height: 42px;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+            background-color: #fff;
+        }
+        .dark .select2-container--bootstrap-5 .select2-selection {
+            background-color: #374151;
+            border-color: #4b5563;
+            color: #e5e7eb;
+        }
+        .dark .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+            color: #e5e7eb;
+        }
+        .dark .select2-dropdown {
+            background-color: #374151;
+            border-color: #4b5563;
+            color: #e5e7eb;
+        }
+        .dark .select2-results__option--highlighted[aria-selected] {
+            background-color: #2563eb;
+        }
+    </style>
     <script>
         function togglePassword(inputId, iconId) {
             const input = document.getElementById(inputId);
@@ -226,6 +342,136 @@
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             toggleBadanUsahaFields(document.getElementById('status_pemohon').value);
+
+            // Real-time NIK validation
+            const nikInput = document.getElementById('nip');
+            let nikTimeout;
+
+            nikInput.addEventListener('input', function() {
+                clearTimeout(nikTimeout);
+                const nik = this.value;
+                const statusPemohon = document.getElementById('status_pemohon').value;
+
+                if (nik.length === 16 && /^[0-9]{16}$/.test(nik)) {
+                    nikTimeout = setTimeout(() => {
+                        $.post('{{ route("api.nik.check") }}', {
+                            nik: nik,
+                            status_pemohon: statusPemohon,
+                            _token: '{{ csrf_token() }}'
+                        }, function(data) {
+                            // On edit, we need to ignore the current user
+                            // The API doesn't know the current user ID, but we can check if it's the same as current
+                            if (data.exists && nik !== '{{ $pemohon->nip }}') {
+                                nikInput.classList.add('border-red-500');
+                                nikInput.classList.remove('border-green-500');
+                                if (!document.getElementById('nik-error-ajax')) {
+                                    $(nikInput).after(`<p id="nik-error-ajax" class="mt-1 text-sm text-red-600">NIK ini sudah terdaftar.</p>`);
+                                }
+                            } else {
+                                nikInput.classList.remove('border-red-500');
+                                nikInput.classList.add('border-green-500');
+                                $('#nik-error-ajax').remove();
+                            }
+                        });
+                    }, 500);
+                } else {
+                    nikInput.classList.remove('border-red-500', 'border-green-500');
+                    $('#nik-error-ajax').remove();
+                }
+            });
+
+            // Initialize Select2
+            $('.select2-wilayah').select2({
+                theme: 'bootstrap-5',
+                width: '100%'
+            });
+
+            // Wilayah cascading logic
+            $('#provinsi').on('change', function() {
+                loadKabupaten($(this).val());
+            });
+
+            $('#kabupaten').on('change', function() {
+                loadKecamatan($(this).val());
+            });
+
+            $('#kecamatan').on('change', function() {
+                loadKelurahan($(this).val());
+            });
+
+            // Initial load
+            loadProvinsi('{{ old("provinsi_id", $pemohon->provinsi_id) }}');
         });
+
+        function loadProvinsi(selectedId = null) {
+            $.get('{{ route("api.wilayah.provinsi") }}', function(data) {
+                let options = '<option value="">-- Pilih Provinsi --</option>';
+                data.data.forEach(item => {
+                    options += `<option value="${item.id}" ${item.id == selectedId ? 'selected' : ''}>${item.name}</option>`;
+                });
+                $('#provinsi').html(options).trigger('change');
+                
+                if (selectedId) {
+                    loadKabupaten(selectedId, '{{ old("kabupaten_id", $pemohon->kabupaten_id) }}');
+                }
+            });
+        }
+
+        function loadKabupaten(provinsiId, selectedId = null) {
+            if (!provinsiId) {
+                $('#kabupaten, #kecamatan, #kelurahan').html('<option value="">-- Pilih --</option>').prop('disabled', true).trigger('change');
+                return;
+            }
+
+            $('#kabupaten').prop('disabled', false);
+            $.get(`{{ url('api/wilayah/provinsi') }}/${provinsiId}/kabupaten`, function(data) {
+                let options = '<option value="">-- Pilih Kabupaten/Kota --</option>';
+                data.data.forEach(item => {
+                    options += `<option value="${item.id}" ${item.id == selectedId ? 'selected' : ''}>${item.name}</option>`;
+                });
+                $('#kabupaten').html(options).trigger('change');
+
+                if (selectedId) {
+                    loadKecamatan(selectedId, '{{ old("kecamatan_id", $pemohon->kecamatan_id) }}');
+                }
+            });
+        }
+
+        function loadKecamatan(kabupatenId, selectedId = null) {
+            if (!kabupatenId) {
+                $('#kecamatan, #kelurahan').html('<option value="">-- Pilih --</option>').prop('disabled', true).trigger('change');
+                return;
+            }
+
+            $('#kecamatan').prop('disabled', false);
+            $.get(`{{ url('api/wilayah/kabupaten') }}/${kabupatenId}/kecamatan`, function(data) {
+                let options = '<option value="">-- Pilih Kecamatan --</option>';
+                data.data.forEach(item => {
+                    options += `<option value="${item.id}" ${item.id == selectedId ? 'selected' : ''}>${item.name}</option>`;
+                });
+                $('#kecamatan').html(options).trigger('change');
+
+                if (selectedId) {
+                    loadKelurahan(selectedId, '{{ old("kelurahan_id", $pemohon->kelurahan_id) }}');
+                }
+            });
+        }
+
+        function loadKelurahan(kecamatanId, selectedId = null) {
+            if (!kecamatanId) {
+                $('#kelurahan').html('<option value="">-- Pilih --</option>').prop('disabled', true).trigger('change');
+                return;
+            }
+
+            $('#kelurahan').prop('disabled', false);
+            $.get(`{{ url('api/wilayah/kecamatan') }}/${kecamatanId}/kelurahan`, function(data) {
+                let options = '<option value="">-- Pilih Kelurahan/Desa --</option>';
+                data.data.forEach(item => {
+                    options += `<option value="${item.id}" ${item.id == selectedId ? 'selected' : ''}>${item.name}</option>`;
+                });
+                $('#kelurahan').html(options).trigger('change');
+            });
+        }
     </script>
+    @endpush
 </x-layout>

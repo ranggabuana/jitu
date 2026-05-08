@@ -157,19 +157,56 @@ class PemohonController extends Controller
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', \Illuminate\Validation\Rule::unique('users')->ignore($pemohon->id)],
             'username' => ['required', 'string', 'max:255', \Illuminate\Validation\Rule::unique('users')->ignore($pemohon->id)],
+            'nip' => [
+                'required',
+                'string',
+                'size:16',
+                'regex:/^[0-9]{16}$/',
+                \Illuminate\Validation\Rule::unique('users')->ignore($pemohon->id),
+            ],
             'password' => 'nullable|string|min:8|confirmed',
             'status_pemohon' => 'required|in:perorangan,badan_usaha',
             'nama_perusahaan' => 'nullable|string|max:255',
             'npwp' => 'nullable|string|max:50',
-            'nip' => 'nullable|string|max:50',
             'no_hp' => 'nullable|string|max:20',
             'status' => 'required|in:aktif,tidak_aktif',
+            'provinsi_id' => 'nullable|exists:provinsis,id',
+            'kabupaten_id' => 'nullable|exists:kabupatens,id',
+            'kecamatan_id' => 'nullable|exists:kecamatans,id',
+            'kelurahan_id' => 'nullable|exists:kelurahans,id',
+            'alamat_lengkap' => 'nullable|string|max:500',
+            'foto_ktp' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:2048',
+        ], [
+            'nip.required' => 'NIK harus diisi.',
+            'nip.size' => 'NIK harus terdiri dari 16 digit.',
+            'nip.regex' => 'NIK hanya boleh berisi angka.',
+            'nip.unique' => 'NIK sudah terdaftar.',
         ]);
 
-        $data = $request->except('password', 'password_confirmation');
+        $data = $request->except('password', 'password_confirmation', 'foto_ktp');
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
+        }
+
+        // Handle KTP file upload
+        if ($request->hasFile('foto_ktp')) {
+            // Delete old file if exists
+            if ($pemohon->foto_ktp && file_exists(public_path($pemohon->foto_ktp))) {
+                @unlink(public_path($pemohon->foto_ktp));
+            }
+
+            $file = $request->file('foto_ktp');
+            $extension = $file->getClientOriginalExtension();
+            $filename = 'ktp_' . time() . '_' . $request->nip . '.' . $extension;
+            $uploadPath = public_path('uploads/register');
+
+            if (!file_exists($uploadPath)) {
+                mkdir($uploadPath, 0755, true);
+            }
+
+            $file->move($uploadPath, $filename);
+            $data['foto_ktp'] = 'uploads/register/' . $filename;
         }
 
         $oldData = $pemohon->toArray();

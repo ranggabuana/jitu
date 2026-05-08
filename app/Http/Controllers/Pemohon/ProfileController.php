@@ -35,15 +35,57 @@ class ProfileController extends Controller
     {
         $user = Auth::user();
 
-        $validated = $request->validate([
+        $request->validate([
             'name' => 'required|string|max:255',
-            'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'username' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'nip' => 'nullable|string|max:50',
+            'nip' => [
+                'required',
+                'string',
+                'size:16',
+                'regex:/^[0-9]{16}$/',
+                Rule::unique('users')->ignore($user->id),
+            ],
+            'status_pemohon' => 'required|in:perorangan,badan_usaha',
+            'nama_perusahaan' => 'nullable|string|max:255',
+            'npwp' => 'nullable|string|max:50',
             'no_hp' => 'nullable|string|max:20',
+            'provinsi_id' => 'nullable|exists:provinsis,id',
+            'kabupaten_id' => 'nullable|exists:kabupatens,id',
+            'kecamatan_id' => 'nullable|exists:kecamatans,id',
+            'kelurahan_id' => 'nullable|exists:kelurahans,id',
+            'alamat_lengkap' => 'nullable|string|max:500',
+            'foto_ktp' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:2048',
+        ], [
+            'nip.required' => 'NIK harus diisi.',
+            'nip.size' => 'NIK harus terdiri dari 16 digit.',
+            'nip.regex' => 'NIK hanya boleh berisi angka.',
+            'nip.unique' => 'NIK sudah terdaftar.',
         ]);
 
-        $user->update($validated);
+        $data = $request->except('foto_ktp');
+
+        // Handle KTP file upload
+        if ($request->hasFile('foto_ktp')) {
+            // Delete old file if exists
+            if ($user->foto_ktp && file_exists(public_path($user->foto_ktp))) {
+                @unlink(public_path($user->foto_ktp));
+            }
+
+            $file = $request->file('foto_ktp');
+            $extension = $file->getClientOriginalExtension();
+            $filename = 'ktp_' . time() . '_' . $request->nip . '.' . $extension;
+            $uploadPath = public_path('uploads/register');
+
+            if (!file_exists($uploadPath)) {
+                mkdir($uploadPath, 0755, true);
+            }
+
+            $file->move($uploadPath, $filename);
+            $data['foto_ktp'] = 'uploads/register/' . $filename;
+        }
+
+        $user->update($data);
 
         return redirect()->route('pemohon.profile.show')
             ->with('success', 'Profil berhasil diperbarui.');
