@@ -125,6 +125,14 @@
                             @endif
                         </p>
                     </div>
+                    <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 md:col-span-2">
+                        <p class="text-xs text-gray-400 uppercase font-semibold mb-1">Alamat KTP</p>
+                        <p class="font-medium text-gray-800">{{ $user->alamat_ktp ?? '-' }}</p>
+                    </div>
+                    <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 md:col-span-2">
+                        <p class="text-xs text-gray-400 uppercase font-semibold mb-1">Alamat Domisili</p>
+                        <p class="font-medium text-gray-800">{{ $user->alamat_domisili ?? '-' }}</p>
+                    </div>
                     <div class="bg-gray-50 border border-gray-200 rounded-xl p-4">
                         <p class="text-xs text-gray-400 uppercase font-semibold mb-1">Terdaftar Sejak</p>
                         <p class="font-medium text-gray-800">{{ $user->created_at->format('d M Y') }}</p>

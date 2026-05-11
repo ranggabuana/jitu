@@ -88,15 +88,22 @@
                     <h2 class="text-base font-semibold text-gray-900 dark:text-white">Alamat & Wilayah</h2>
                 </div>
                 <div class="p-6">
-                    <div class="mb-6">
-                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Alamat Lengkap</dt>
-                        <dd
-                            class="text-base text-gray-900 dark:text-white leading-relaxed bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                            {{ $pemohon->alamat_lengkap ?? '-' }}
-                        </dd>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Alamat KTP</dt>
+                            <dd class="text-base text-gray-900 dark:text-white leading-relaxed bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                                {{ $pemohon->alamat_ktp ?? '-' }}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Alamat Domisili</dt>
+                            <dd class="text-base text-gray-900 dark:text-white leading-relaxed bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                                {{ $pemohon->alamat_domisili ?? '-' }}
+                            </dd>
+                        </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Provinsi</dt>
                             <dd class="text-base text-gray-900 dark:text-white font-medium">

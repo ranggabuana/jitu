@@ -73,13 +73,16 @@ class AuthController extends Controller
             'kabupaten_id' => 'nullable|exists:kabupatens,id',
             'kecamatan_id' => 'nullable|exists:kecamatans,id',
             'kelurahan_id' => 'nullable|exists:kelurahans,id',
-            'alamat_lengkap' => 'nullable|string|max:500',
+            'alamat_ktp' => 'nullable|string|max:500',
+            'is_alamat_sama' => 'boolean',
+            'alamat_domisili' => 'nullable|required_if:is_alamat_sama,0|string|max:500',
             'foto_ktp' => 'required|file|mimes:jpeg,png,jpg,pdf|max:2048',
         ], [
             'nik.required' => 'NIK harus diisi.',
             'nik.size' => 'NIK harus terdiri dari 16 digit.',
             'nik.regex' => 'NIK hanya boleh berisi angka.',
             'status_pemohon.required' => 'Status pemohon harus dipilih.',
+            'alamat_domisili.required_if' => 'Alamat domisili harus diisi jika tidak sama dengan alamat KTP.',
             'foto_ktp.required' => 'Foto KTP wajib diunggah.',
             'foto_ktp.file' => 'File KTP tidak valid.',
             'foto_ktp.mimes' => 'Format KTP harus jpeg, png, jpg, atau pdf.',
@@ -111,7 +114,9 @@ class AuthController extends Controller
             'kabupaten_id' => $request->kabupaten_id,
             'kecamatan_id' => $request->kecamatan_id,
             'kelurahan_id' => $request->kelurahan_id,
-            'alamat_lengkap' => $request->alamat_lengkap,
+            'alamat_ktp' => $request->alamat_ktp,
+            'is_alamat_sama' => $request->has('is_alamat_sama') ? $request->is_alamat_sama : true,
+            'alamat_domisili' => $request->is_alamat_sama ? $request->alamat_ktp : $request->alamat_domisili,
         ];
 
         // Handle KTP file upload - store in public/uploads/register

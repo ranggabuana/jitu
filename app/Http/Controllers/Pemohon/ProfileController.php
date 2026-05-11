@@ -54,7 +54,8 @@ class ProfileController extends Controller
             'kabupaten_id' => 'nullable|exists:kabupatens,id',
             'kecamatan_id' => 'nullable|exists:kecamatans,id',
             'kelurahan_id' => 'nullable|exists:kelurahans,id',
-            'alamat_lengkap' => 'nullable|string|max:500',
+            'alamat_ktp' => 'nullable|string|max:500',
+            'alamat_domisili' => 'nullable|string|max:500',
             'foto_ktp' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:2048',
         ], [
             'nip.required' => 'NIK harus diisi.',

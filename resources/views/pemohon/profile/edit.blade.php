@@ -190,13 +190,25 @@
                     </div>
 
                     <div class="mb-6">
-                        <label for="alamat_lengkap" class="block text-sm font-medium text-gray-700 mb-2">
-                            Alamat Lengkap
+                        <label for="alamat_ktp" class="block text-sm font-medium text-gray-700 mb-2">
+                            Alamat KTP
                         </label>
-                        <textarea id="alamat_lengkap" name="alamat_lengkap" rows="3"
+                        <textarea id="alamat_ktp" name="alamat_ktp" rows="3"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                            placeholder="Jalan, nomor rumah, RT/RW, dan keterangan lainnya">{{ old('alamat_lengkap', $user->alamat_lengkap) }}</textarea>
-                        @error('alamat_lengkap')
+                            placeholder="Jalan, nomor rumah, RT/RW, dan keterangan lainnya sesuai KTP">{{ old('alamat_ktp', $user->alamat_ktp) }}</textarea>
+                        @error('alamat_ktp')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="mb-6">
+                        <label for="alamat_domisili" class="block text-sm font-medium text-gray-700 mb-2">
+                            Alamat Domisili
+                        </label>
+                        <textarea id="alamat_domisili" name="alamat_domisili" rows="3"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                            placeholder="Jalan, nomor rumah, RT/RW, dan keterangan lainnya tempat tinggal saat ini">{{ old('alamat_domisili', $user->alamat_domisili) }}</textarea>
+                        @error('alamat_domisili')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>

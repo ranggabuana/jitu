@@ -32,7 +32,9 @@ class User extends Authenticatable
         'kabupaten_id',
         'kecamatan_id',
         'kelurahan_id',
-        'alamat_lengkap',
+        'alamat_ktp',
+        'alamat_domisili',
+        'is_alamat_sama',
         'foto_ktp',
     ];
 

@@ -429,15 +429,45 @@
                             </select>
                         </div>
 
-                        <!-- Alamat Lengkap -->
+                        <!-- Alamat KTP -->
                         <div>
-                            <label for="alamat_lengkap" class="block text-sm font-semibold text-gray-700 mb-2">
-                                <i class="fas fa-home text-green-600 mr-2"></i>Alamat Lengkap
+                            <label for="alamat_ktp" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-home text-green-600 mr-2"></i>Alamat KTP
                             </label>
-                            <textarea id="alamat_lengkap" name="alamat_lengkap" rows="3"
+                            <textarea id="alamat_ktp" name="alamat_ktp" rows="3"
                                 class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all resize-none"
-                                placeholder="Jalan, nomor rumah, RT/RW, dan keterangan lainnya">{{ old('alamat_lengkap') }}</textarea>
-                            @error('alamat_lengkap')
+                                placeholder="Jalan, nomor rumah, RT/RW, dan keterangan lainnya sesuai KTP">{{ old('alamat_ktp') }}</textarea>
+                            @error('alamat_ktp')
+                                <p class="mt-1 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Pertanyaan Alamat Sama -->
+                        <div class="bg-green-50 p-4 rounded-xl border border-green-100">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                Apakah alamat KTP sama dengan alamat domisili?
+                            </label>
+                            <div class="flex items-center space-x-6">
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="radio" name="is_alamat_sama" value="1" class="w-4 h-4 text-green-600 focus:ring-green-500" {{ old('is_alamat_sama', '1') == '1' ? 'checked' : '' }} onchange="toggleAlamatDomisili(this.value)">
+                                    <span class="ml-2 text-sm text-gray-700">Ya, sama</span>
+                                </label>
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="radio" name="is_alamat_sama" value="0" class="w-4 h-4 text-green-600 focus:ring-green-500" {{ old('is_alamat_sama') == '0' ? 'checked' : '' }} onchange="toggleAlamatDomisili(this.value)">
+                                    <span class="ml-2 text-sm text-gray-700">Tidak, berbeda</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Alamat Domisili -->
+                        <div id="domisili_container" class="{{ old('is_alamat_sama', '1') == '1' ? 'hidden' : '' }}">
+                            <label for="alamat_domisili" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-map-marker-alt text-green-600 mr-2"></i>Alamat Domisili
+                            </label>
+                            <textarea id="alamat_domisili" name="alamat_domisili" rows="3"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all resize-none"
+                                placeholder="Jalan, nomor rumah, RT/RW, dan keterangan lainnya tempat tinggal saat ini">{{ old('alamat_domisili') }}</textarea>
+                            @error('alamat_domisili')
                                 <p class="mt-1 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}</p>
                             @enderror
                         </div>
@@ -1025,6 +1055,15 @@
                 confirmButtonText: 'OK'
             });
         @endif
+
+        function toggleAlamatDomisili(value) {
+            const container = document.getElementById('domisili_container');
+            if (value == '1') {
+                container.classList.add('hidden');
+            } else {
+                container.classList.remove('hidden');
+            }
+        }
     </script>
 </body>
 
