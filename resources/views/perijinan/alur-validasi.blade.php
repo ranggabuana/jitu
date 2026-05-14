@@ -410,7 +410,8 @@
 
             const form = document.getElementById('editForm');
 
-            form.action = `{{ url('perijinan') }}/${btn.dataset.perijinanId}/validation-flow/${btn.dataset.flowId}`;
+            const currentPath = window.location.pathname;
+            form.action = currentPath.replace('/alur-validasi', `/validation-flow/${btn.dataset.flowId}`);
 
             document.getElementById('edit_role').value = btn.dataset.role;
             document.getElementById('edit_description').value = btn.dataset.description || '';
@@ -497,7 +498,10 @@
                 const ids = [...parent.querySelectorAll('.flow-item')]
                     .map(i => i.dataset.flowId);
 
-                await fetch(`/perijinan/{{ $perijinan->id }}/validation-flow/reorder`, {
+                const currentPath = window.location.pathname; // Gets path e.g. /public/perijinan/6/alur-validasi
+                const fetchUrl = currentPath.replace('/alur-validasi', '/validation-flow/reorder');
+
+                await fetch(fetchUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

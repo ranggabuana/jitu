@@ -625,7 +625,8 @@
 
         // Edit field
         function editField(id, field) {
-            document.getElementById('editForm').action = `{{ url('perijinan') }}/${field.perijinan_id}/form-field/${id}`;
+            const currentPath = window.location.pathname;
+            document.getElementById('editForm').action = currentPath.replace('/form-builder', `/form-field/${id}`);
             document.getElementById('edit_label').value = field.label;
             document.getElementById('edit_name').value = field.name;
             document.getElementById('edit_type').value = field.type;
@@ -703,7 +704,10 @@
                     const fieldIds = Array.from(fieldsList.querySelectorAll('.field-item'))
                         .map(item => item.dataset.fieldId);
 
-                    await fetch(`/perijinan/{{ $perijinan->id }}/form-field/reorder`, {
+                    const currentPath = window.location.pathname;
+                    const fetchUrl = currentPath.replace('/form-builder', '/form-field/reorder');
+
+                    await fetch(fetchUrl, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
