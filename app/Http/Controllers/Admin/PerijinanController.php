@@ -550,6 +550,7 @@ class PerijinanController extends Controller
     public function update(Request $request, string $id)
     {
         $request->validate([
+            'kode_perijinan' => 'nullable|string|max:50|unique:perijinan,kode_perijinan,' . $id,
             'nama_perijinan' => 'required|string|max:255',
             'dasar_hukum' => 'required|string',
             'persyaratan' => 'required|string',

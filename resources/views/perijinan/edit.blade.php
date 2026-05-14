@@ -57,13 +57,26 @@
             @method('PUT')
 
             <div class="mb-6">
+                <label for="kode_perijinan" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Kode Perijinan
+                </label>
+                <input type="text" id="kode_perijinan" name="kode_perijinan"
+                    value="{{ old('kode_perijinan', $perijinan->kode_perijinan) }}"
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('kode_perijinan') border-red-500 @enderror"
+                    placeholder="Masukkan kode perijinan (opsional)" autofocus>
+                @error('kode_perijinan')
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div class="mb-6">
                 <label for="nama_perijinan" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Nama Perijinan <span class="text-red-500">*</span>
                 </label>
                 <input type="text" id="nama_perijinan" name="nama_perijinan"
                     value="{{ old('nama_perijinan', $perijinan->nama_perijinan) }}"
                     class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('nama_perijinan') border-red-500 @enderror"
-                    placeholder="Masukkan nama perijinan" autofocus>
+                    placeholder="Masukkan nama perijinan">
                 @error('nama_perijinan')
                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
