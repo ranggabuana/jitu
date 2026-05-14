@@ -625,7 +625,7 @@
 
         // Edit field
         function editField(id, field) {
-            document.getElementById('editForm').action = `/perijinan/${field.perijinan_id}/form-field/${id}`;
+            document.getElementById('editForm').action = `{{ url('perijinan') }}/${field.perijinan_id}/form-field/${id}`;
             document.getElementById('edit_label').value = field.label;
             document.getElementById('edit_name').value = field.name;
             document.getElementById('edit_type').value = field.type;

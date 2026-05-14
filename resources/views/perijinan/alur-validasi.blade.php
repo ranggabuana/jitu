@@ -410,7 +410,7 @@
 
             const form = document.getElementById('editForm');
 
-            form.action = `/perijinan/${btn.dataset.perijinanId}/validation-flow/${btn.dataset.flowId}`;
+            form.action = `{{ url('perijinan') }}/${btn.dataset.perijinanId}/validation-flow/${btn.dataset.flowId}`;
 
             document.getElementById('edit_role').value = btn.dataset.role;
             document.getElementById('edit_description').value = btn.dataset.description || '';
