@@ -132,10 +132,18 @@
                                 <input type="hidden" name="existing_files[{{ $field->id }}]" id="existing_file_{{ $field->id }}">
                                 <div id="preview_{{ $field->id }}" class="mt-2 empty:hidden"></div>
                                 
-                                <p class="text-[10px] text-gray-500 mt-1 italic">
-                                    <i class="fas fa-info-circle"></i> 
-                                    File baru akan <strong>menambah</strong> daftar file di bawah. Hapus file lama jika ingin menggantinya.
-                                </p>
+                                <div class="mt-2 space-y-1">
+                                    @if ($field->help_text)
+                                        <p class="text-[10px] text-gray-500 italic">{{ $field->help_text }}</p>
+                                    @endif
+                                    <p class="text-[10px] text-gray-500 flex items-center gap-1">
+                                        <i class="fas fa-info-circle text-orange-500"></i>
+                                        Format: {{ $field->file_types ?? 'Semua format' }} (Maks. {{ $field->max_file_size ?? '2MB' }})
+                                    </p>
+                                    <p class="text-[10px] text-gray-400 italic">
+                                        * File baru akan <strong>menambah</strong> daftar file di bawah. Hapus file lama jika ingin menggantinya.
+                                    </p>
+                                </div>
                                 
                                 @if(count($fieldFiles) > 0)
                                     <div class="mt-2">

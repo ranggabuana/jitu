@@ -274,11 +274,17 @@
                                         @error('form_files.' . $field->id)
                                             <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                                         @enderror
-                                        @if ($field->help_text && !$errors->has('form_files.' . $field->id))
-                                            <p class="mt-2 text-[10px] text-gray-500 flex items-center gap-1">
-                                                <i class="fas fa-info-circle text-amber-500"></i>
-                                                Format: {{ $field->file_types ?? 'Semua format' }} (Maks. {{ $field->file_size ?? '2MB' }})
-                                            </p>
+
+                                        @if (!$errors->has('form_files.' . $field->id))
+                                            <div class="mt-2 space-y-1">
+                                                @if ($field->help_text)
+                                                    <p class="text-[10px] text-gray-500 italic">{{ $field->help_text }}</p>
+                                                @endif
+                                                <p class="text-[10px] text-gray-500 flex items-center gap-1">
+                                                    <i class="fas fa-info-circle text-amber-500"></i>
+                                                    Format: {{ $field->file_types ?? 'Semua format' }} (Maks. {{ $field->max_file_size ?? '2MB' }})
+                                                </p>
+                                            </div>
                                         @endif
                                     </div>
                                 @endif
