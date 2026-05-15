@@ -55,6 +55,10 @@
                 <i class="mdi mdi-clock-check-outline text-lg"></i>
                 Hari & Jam Kerja
             </button>
+            <button onclick="switchTab('tab-dokumen')" id="btn-tab-dokumen" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all">
+                <i class="mdi mdi-file-document-multiple-outline text-lg"></i>
+                Dokumen Pemohon
+            </button>
         </nav>
     </div>
 
@@ -318,7 +322,111 @@
                     </div>
                 </div>
             </div>
+            <!-- Tab: Dokumen Pemohon -->
+            <div id="tab-dokumen" class="tab-content hidden space-y-6">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-700/30 flex justify-between items-center">
+                        <h2 class="text-base font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                            <i class="mdi mdi-file-document-multiple text-purple-500"></i>
+                            Master Dokumen Pemohon
+                        </h2>
+                        <button type="button" onclick="openModalDokumen()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1">
+                            <i class="mdi mdi-plus"></i> Tambah Dokumen
+                        </button>
+                    </div>
+                    <div class="p-6">
+                        <div class="overflow-x-auto rounded-lg border border-gray-100 dark:border-gray-700">
+                            <table class="w-full text-left text-sm whitespace-nowrap">
+                                <thead class="bg-gray-50 dark:bg-gray-700/50 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Nama Dokumen</th>
+                                        <th class="px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Tipe File</th>
+                                        <th class="px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Ukuran Maks (KB)</th>
+                                        <th class="px-4 py-3 font-bold text-gray-600 dark:text-gray-400">Jenis</th>
+                                        <th class="px-4 py-3 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                                    @forelse($masterDokumens ?? [] as $dokumen)
+                                        <tr>
+                                            <td class="px-4 py-3">{{ $dokumen->nama_dokumen }}</td>
+                                            <td class="px-4 py-3"><span class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-xs">{{ $dokumen->tipe_data_file }}</span></td>
+                                            <td class="px-4 py-3">{{ number_format($dokumen->max_size ?? 2048, 0, ',', '.') }} KB</td>
+                                            <td class="px-4 py-3">
+                                                @if($dokumen->jenis === 'umum')
+                                                    <span class="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 px-2 py-1 rounded text-xs font-medium">Umum</span>
+                                                @else
+                                                    <span class="bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 px-2 py-1 rounded text-xs font-medium">Spesifik</span>
+                                                @endif
+                                            </td>
+                                            <td class="px-4 py-3 text-center flex justify-center gap-2">
+                                                <button type="button" onclick="editDokumen({{ $dokumen->id }}, '{{ addslashes($dokumen->nama_dokumen) }}', '{{ addslashes($dokumen->tipe_data_file) }}', '{{ $dokumen->max_size ?? 2048 }}', '{{ $dokumen->jenis }}')" class="text-blue-500 hover:text-blue-700">
+                                                    <i class="mdi mdi-pencil-outline text-lg"></i>
+                                                </button>
+                                                <button type="button" onclick="deleteDokumen({{ $dokumen->id }})" class="text-red-500 hover:text-red-700">
+                                                    <i class="mdi mdi-trash-can-outline text-lg"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="4" class="px-4 py-8 text-center text-gray-400 italic">Belum ada master dokumen</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </form>
+    </div>
+
+    <!-- Hidden Form for Deleting Dokumen -->
+    <form id="form-delete-dokumen" method="POST" class="hidden">
+        @csrf @method('DELETE')
+    </form>
+
+    <!-- Modal Form Dokumen Pemohon -->
+    <div id="modal-dokumen" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden transform scale-95 transition-transform" id="modal-dokumen-content">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/30 dark:bg-gray-700/30">
+                <h3 class="text-lg font-bold text-gray-800 dark:text-white" id="modal-dokumen-title">Tambah Dokumen</h3>
+                <button type="button" onclick="closeModalDokumen()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                    <i class="mdi mdi-close text-xl"></i>
+                </button>
+            </div>
+            <form id="form-dokumen" method="POST" action="{{ route('settings.application.dokumen.store') }}">
+                @csrf
+                <input type="hidden" name="_method" id="form-dokumen-method" value="POST">
+                <div class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Nama Dokumen</label>
+                        <input type="text" name="nama_dokumen" id="dokumen_nama" required class="form-input" placeholder="Cth: KTP, NPWP, Akta Notaris">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Tipe File</label>
+                        <input type="text" name="tipe_data_file" id="dokumen_tipe" required class="form-input" placeholder="Cth: pdf, jpg, png">
+                        <p class="text-xs text-gray-500 mt-1">Pisahkan dengan koma (tanpa spasi jika bisa)</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Ukuran Maksimal (KB)</label>
+                        <input type="number" name="max_size" id="dokumen_max_size" required class="form-input" placeholder="Cth: 2048" value="2048">
+                        <p class="text-xs text-gray-500 mt-1">1024 KB = 1 MB. Standar 2MB (2048).</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Jenis Dokumen</label>
+                        <select name="jenis" id="dokumen_jenis" required class="form-input">
+                            <option value="umum">Umum (Sering digunakan)</option>
+                            <option value="spesifik">Spesifik (Khusus perizinan tertentu)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-700/30 flex justify-end gap-2">
+                    <button type="button" onclick="closeModalDokumen()" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">Batal</button>
+                    <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Simpan</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <style>
@@ -424,6 +532,70 @@
                         method: 'DELETE',
                         headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
                     }).then(r => r.json()).then(d => d.success ? location.reload() : null);
+                }
+            });
+        }
+
+        // --- Master Dokumen Pemohon Scripts ---
+        const modalDokumen = document.getElementById('modal-dokumen');
+        const modalDokumenContent = document.getElementById('modal-dokumen-content');
+        
+        function openModalDokumen() {
+            document.getElementById('form-dokumen-method').value = 'POST';
+            document.getElementById('form-dokumen').action = '{{ route("settings.application.dokumen.store") }}';
+            document.getElementById('modal-dokumen-title').innerText = 'Tambah Dokumen';
+            document.getElementById('dokumen_nama').value = '';
+            document.getElementById('dokumen_tipe').value = '';
+            document.getElementById('dokumen_max_size').value = '2048';
+            document.getElementById('dokumen_jenis').value = 'umum';
+            
+            modalDokumen.classList.remove('hidden');
+            modalDokumen.classList.add('flex');
+            setTimeout(() => {
+                modalDokumenContent.classList.remove('scale-95');
+                modalDokumenContent.classList.add('scale-100');
+            }, 10);
+        }
+        
+        function closeModalDokumen() {
+            modalDokumenContent.classList.remove('scale-100');
+            modalDokumenContent.classList.add('scale-95');
+            setTimeout(() => {
+                modalDokumen.classList.remove('flex');
+                modalDokumen.classList.add('hidden');
+            }, 200);
+        }
+        
+        function editDokumen(id, nama, tipe, maxSize, jenis) {
+            document.getElementById('form-dokumen-method').value = 'PUT';
+            document.getElementById('form-dokumen').action = '{{ route("settings.application.dokumen.update", ["id" => ":id"]) }}'.replace(':id', id);
+            document.getElementById('modal-dokumen-title').innerText = 'Edit Dokumen';
+            document.getElementById('dokumen_nama').value = nama;
+            document.getElementById('dokumen_tipe').value = tipe;
+            document.getElementById('dokumen_max_size').value = maxSize;
+            document.getElementById('dokumen_jenis').value = jenis;
+            
+            modalDokumen.classList.remove('hidden');
+            modalDokumen.classList.add('flex');
+            setTimeout(() => {
+                modalDokumenContent.classList.remove('scale-95');
+                modalDokumenContent.classList.add('scale-100');
+            }, 10);
+        }
+        
+        function deleteDokumen(id) {
+            Swal.fire({
+                title: 'Hapus Master Dokumen?',
+                text: "Dokumen yang terhubung mungkin akan terdampak.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                confirmButtonText: 'Ya, Hapus!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const form = document.getElementById('form-delete-dokumen');
+                    form.action = '{{ route("settings.application.dokumen.delete", ["id" => ":id"]) }}'.replace(':id', id);
+                    form.submit();
                 }
             });
         }

@@ -23,8 +23,9 @@ class ApplicationSettingsController extends Controller
         $workingHours = Setting::where('group', 'working_hours')->get()->pluck('value', 'key');
         
         $holidays = Holiday::orderBy('date', 'asc')->get();
+        $masterDokumens = \App\Models\MasterDokumenPemohon::orderBy('nama_dokumen', 'asc')->get();
 
-        return view('settings.application', compact('generalSettings', 'contactSettings', 'socialMediaSettings', 'workingHours', 'holidays'));
+        return view('settings.application', compact('generalSettings', 'contactSettings', 'socialMediaSettings', 'workingHours', 'holidays', 'masterDokumens'));
     }
 
     /**

@@ -72,6 +72,10 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/application', [ApplicationSettingsController::class, 'update'])->name('application.update');
         Route::post('/application/holiday', [ApplicationSettingsController::class, 'addHoliday'])->name('application.holiday.store');
         Route::delete('/application/holiday/{id}', [ApplicationSettingsController::class, 'deleteHoliday'])->name('application.holiday.delete');
+        
+        Route::post('/application/dokumen', [\App\Http\Controllers\Admin\MasterDokumenController::class, 'store'])->name('application.dokumen.store');
+        Route::put('/application/dokumen/{id}', [\App\Http\Controllers\Admin\MasterDokumenController::class, 'update'])->name('application.dokumen.update');
+        Route::delete('/application/dokumen/{id}', [\App\Http\Controllers\Admin\MasterDokumenController::class, 'destroy'])->name('application.dokumen.delete');
 
         Route::get('/email', [\App\Http\Controllers\Admin\EmailSettingsController::class, 'index'])->name('email');
         Route::put('/email', [\App\Http\Controllers\Admin\EmailSettingsController::class, 'update'])->name('email.update');
@@ -190,6 +194,10 @@ Route::middleware(['auth'])->group(function () {
         // Tracking Routes for Pemohon
         Route::get('/tracking', [PemohonDashboardController::class, 'tracking'])->name('tracking');
         Route::get('/tracking/{id}', [PemohonDashboardController::class, 'trackingDetail'])->name('tracking.detail');
+        
+        // Dokumen Saya Routes for Pemohon
+        Route::get('/dokumen', [\App\Http\Controllers\Pemohon\DokumenController::class, 'index'])->name('dokumen.index');
+        Route::post('/dokumen/{masterId}', [\App\Http\Controllers\Pemohon\DokumenController::class, 'upload'])->name('dokumen.upload');
         // Profile Routes for Pemohon
         Route::prefix('profile')->name('profile.')->group(function () {
             Route::get('/', [PemohonProfileController::class, 'show'])->name('show');

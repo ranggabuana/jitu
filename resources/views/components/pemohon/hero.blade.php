@@ -5,14 +5,17 @@
         <div>
             <p class="text-amber-200 text-sm font-semibold tracking-wider uppercase">Dashboard Pemohon</p>
             <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight mt-1">Kelola Pengajuan Perizinan Anda</h1>
-            <p class="text-amber-100 text-sm mt-2 max-w-2xl">Buat permohonan, pantau status, dan unduh dokumen izin saat sudah terbit.</p>
+            <p class="text-amber-100 text-sm mt-2 max-w-2xl">Buat permohonan, pantau status, dan unduh dokumen izin saat
+                sudah terbit.</p>
         </div>
         <div class="flex flex-wrap gap-3">
-            <a href="{{ route('pemohon.perijinan') }}" class="bg-white text-amber-800 hover:bg-amber-50 px-5 py-3 rounded-xl font-bold shadow-lg transition-all flex items-center gap-2">
+            <a href="{{ route('pemohon.perijinan') }}"
+                class="bg-white text-amber-800 hover:bg-amber-50 px-5 py-3 rounded-xl font-bold shadow-lg transition-all flex items-center gap-2">
                 <i class="fas fa-plus"></i> Ajukan Izin
             </a>
-            <a href="{{ route('pemohon.perijinan') }}" class="bg-amber-800/40 hover:bg-amber-800/60 border border-white/20 px-5 py-3 rounded-xl font-bold shadow-lg transition-all flex items-center gap-2">
-                <i class="fas fa-search"></i> Tracking Cepat
+            <a href="{{ route('pemohon.dokumen.index') }}"
+                class="bg-amber-800/40 hover:bg-amber-800/60 border border-white/20 px-5 py-3 rounded-xl font-bold shadow-lg transition-all flex items-center gap-2">
+                <i class="fas fa-file-alt"></i> Kelola Dokumen Anda
             </a>
         </div>
     </div>

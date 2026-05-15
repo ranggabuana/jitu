@@ -170,7 +170,11 @@ class DashboardController extends Controller
             'activeValidationFlows'
         ])->findOrFail($perijinanId);
 
-        return view('pemohon.pengajuan.create', compact('perijinan', 'user'));
+        $userDokumens = \App\Models\UserDokumen::with('masterDokumen')
+            ->where('user_id', $user->id)
+            ->get();
+
+        return view('pemohon.pengajuan.create', compact('perijinan', 'user', 'userDokumens'));
     }
 
     /**
@@ -221,26 +225,29 @@ class DashboardController extends Controller
         }
 
         // ===============================
-        // 🔹 VALIDASI FILE DINAMIS
+        // 🔹 VALIDASI FILE DINAMIS & CEK EXISTING FILE
         // ===============================
         $formFiles = $request->file('form_files');
+        $existingFiles = $request->input('existing_files', []);
+
+        foreach ($perijinan->activeFormFields as $field) {
+            if ($field->type === 'file' && $field->is_required) {
+                // If it's required but NOT in uploaded files and NOT in existing files, throw error
+                if (empty($formFiles[$field->id]) && empty($existingFiles[$field->id])) {
+                    $validationRules["form_files.{$field->id}"] = 'required';
+                    $validationMessages["form_files.{$field->id}.required"] = "Field {$field->label} wajib diisi.";
+                }
+            }
+        }
 
         if ($formFiles) {
             foreach ($formFiles as $fieldId => $files) {
-
                 $field = $perijinan->activeFormFields->firstWhere('id', $fieldId);
 
                 if ($field) {
                     foreach ((array) $files as $index => $file) {
-
                         $ruleKey = "form_files.$fieldId.$index";
-
                         $rules = ['file', 'max:10240']; // max 10MB
-
-                        if ($field->is_required) {
-                            $rules[] = 'required';
-                        }
-
                         $validationRules[$ruleKey] = $rules;
                     }
                 }
@@ -257,30 +264,50 @@ class DashboardController extends Controller
 
             $uploadedFiles = [];
 
+            // Proses Existing Files (Dokumen Saya)
+            if (!empty($existingFiles)) {
+                foreach ($existingFiles as $fieldId => $userDokumenId) {
+                    if ($userDokumenId) {
+                        $userDoc = \App\Models\UserDokumen::find($userDokumenId);
+                        if ($userDoc && file_exists(public_path($userDoc->file_path))) {
+                            // Cukup simpan path nya atau copy file.
+                            // Kita simpan path referensinya saja untuk menghemat space,
+                            // tapi disarankan untuk copy file agar independen per pengajuan.
+                            $originalPath = public_path($userDoc->file_path);
+                            
+                            $extension = pathinfo($originalPath, PATHINFO_EXTENSION);
+                            $filename = 'doc_saya_' . $fieldId . '_' . time() . '.' . $extension;
+                            $uploadPath = public_path('uploads/perijinan/' . $perijinan->id);
+                            
+                            if (!file_exists($uploadPath)) {
+                                mkdir($uploadPath, 0755, true);
+                            }
+                            
+                            copy($originalPath, $uploadPath . '/' . $filename);
+                            
+                            $uploadedFiles[$fieldId][] = 'uploads/perijinan/' . $perijinan->id . '/' . $filename;
+                        }
+                    }
+                }
+            }
+
+            // Proses Uploaded Files
             if ($formFiles) {
                 foreach ($formFiles as $fieldId => $files) {
-
                     $field = $perijinan->activeFormFields->firstWhere('id', $fieldId);
-
                     if ($field) {
-
                         foreach ((array) $files as $file) {
-
                             if ($file && $file->isValid()) {
-
-                                // Generate nama file unik dengan tetap mempertahankan nama asli
                                 $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
                                 $extension = $file->getClientOriginalExtension();
                                 $filename = $originalName . '_' . time() . '.' . $extension;
 
-                                // Path upload
                                 $uploadPath = public_path('uploads/perijinan/' . $perijinan->id);
 
                                 if (!file_exists($uploadPath)) {
                                     mkdir($uploadPath, 0755, true);
                                 }
 
-                                // Simpan file
                                 $file->move($uploadPath, $filename);
 
                                 $uploadedFiles[$fieldId][] = 'uploads/perijinan/' . $perijinan->id . '/' . $filename;
@@ -411,7 +438,11 @@ class DashboardController extends Controller
             ->where('status', 'perbaikan') // Only allow edit if status is 'perbaikan'
             ->firstOrFail();
 
-        return view('pemohon.pengajuan.edit', compact('data'));
+        $userDokumens = \App\Models\UserDokumen::with('masterDokumen')
+            ->where('user_id', $user->id)
+            ->get();
+
+        return view('pemohon.pengajuan.edit', compact('data', 'userDokumens'));
     }
 
     /**
@@ -501,10 +532,34 @@ class DashboardController extends Controller
         \Log::info('Validation passed', $validatedData);
 
         // ===============================
-        // 🔹 UPLOAD FILES
+        // 🔹 UPLOAD FILES & EXISTING FILES
         // ===============================
         $formFiles = $request->file('form_fields');
+        $existingFiles = $request->input('existing_files', []);
         $uploadedFiles = [];
+
+        // Proses Existing Files (Dokumen Saya)
+        if (!empty($existingFiles)) {
+            foreach ($existingFiles as $fieldId => $userDokumenId) {
+                if ($userDokumenId) {
+                    $userDoc = \App\Models\UserDokumen::find($userDokumenId);
+                    if ($userDoc && file_exists(public_path($userDoc->file_path))) {
+                        $originalPath = public_path($userDoc->file_path);
+                        $extension = pathinfo($originalPath, PATHINFO_EXTENSION);
+                        $filename = 'doc_saya_' . $fieldId . '_' . time() . '.' . $extension;
+                        $uploadPath = public_path('uploads/perijinan/' . $perijinan->id);
+                        
+                        if (!file_exists($uploadPath)) {
+                            mkdir($uploadPath, 0755, true);
+                        }
+                        
+                        copy($originalPath, $uploadPath . '/' . $filename);
+                        
+                        $uploadedFiles[$fieldId][] = 'uploads/perijinan/' . $perijinan->id . '/' . $filename;
+                    }
+                }
+            }
+        }
 
         if ($formFiles) {
             foreach ($formFiles as $fieldId => $files) {

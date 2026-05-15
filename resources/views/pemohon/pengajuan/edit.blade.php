@@ -82,10 +82,17 @@
                     @endphp
 
                     <div class="mb-6">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            {{ $field->label }}
-                            @if($field->is_required)
-                                <span class="text-red-500">*</span>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2 flex justify-between items-center">
+                            <span>
+                                {{ $field->label }}
+                                @if($field->is_required)
+                                    <span class="text-red-500">*</span>
+                                @endif
+                            </span>
+                            @if($field->type === 'file')
+                                <button type="button" onclick="openDokumenModal({{ $field->id }})" class="text-xs bg-purple-100 text-purple-700 hover:bg-purple-200 px-3 py-1 rounded-full transition-colors flex items-center gap-1 font-semibold">
+                                    <i class="mdi mdi-folder-account"></i> Dokumen Saya
+                                </button>
                             @endif
                         </label>
 
@@ -96,7 +103,9 @@
 
                         @elseif($field->type === 'file')
                             <div class="space-y-2">
-                                <input type="file" name="form_fields[{{ $field->id }}][]" multiple
+                                <input type="hidden" name="existing_files[{{ $field->id }}]" id="existing_file_{{ $field->id }}">
+                                <div id="preview_{{ $field->id }}" class="mt-2 empty:hidden"></div>
+                                <input type="file" name="form_fields[{{ $field->id }}][]" id="file_{{ $field->id }}" multiple
                                     class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 @error('form_fields.'.$field->id) 'border-red-500' @enderror"
                                     accept="{{ $field->accepted_formats ?? '*' }}">
                                 <p class="text-xs text-gray-500 mt-1">
@@ -221,10 +230,112 @@
     <!-- Footer -->
     <x-pemohon.footer></x-pemohon.footer>
 
+    <!-- Modal Dokumen Saya -->
+    <div id="modal-dokumen-saya" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden transform scale-95 transition-transform" id="modal-dokumen-saya-content">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    <i class="mdi mdi-folder-account text-purple-600"></i> Pilih dari Dokumen Saya
+                </h3>
+                <button type="button" onclick="closeDokumenModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6 max-h-[60vh] overflow-y-auto">
+                <input type="hidden" id="current_field_id_for_modal">
+                @if(isset($userDokumens) && $userDokumens->count() > 0)
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        @foreach($userDokumens as $doc)
+                            <div class="border border-gray-200 rounded-xl p-4 hover:border-purple-500 hover:bg-purple-50 cursor-pointer transition-colors group" onclick="selectDokumen({{ $doc->id }}, '{{ addslashes($doc->masterDokumen->nama_dokumen) }}', '{{ asset($doc->file_path) }}', '{{ basename($doc->file_path) }}')">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0 group-hover:bg-purple-200">
+                                        <i class="mdi mdi-file-document text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-gray-800 text-sm">{{ $doc->masterDokumen->nama_dokumen }}</h4>
+                                        <p class="text-xs text-gray-500 mt-1 truncate max-w-[150px]">{{ basename($doc->file_path) }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="text-center py-8">
+                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="mdi mdi-folder-open text-2xl text-gray-400"></i>
+                        </div>
+                        <h4 class="font-bold text-gray-800">Belum Ada Dokumen</h4>
+                        <p class="text-sm text-gray-500 mt-1">Anda belum mengunggah dokumen apapun ke repositori "Dokumen Saya".</p>
+                        <a href="{{ route('pemohon.dokumen.index') }}" target="_blank" class="inline-block mt-4 text-purple-600 hover:underline text-sm font-medium">Unggah Dokumen Sekarang</a>
+                    </div>
+                @endif
+            </div>
+            <div class="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex justify-end">
+                <button type="button" onclick="closeDokumenModal()" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Tutup</button>
+            </div>
+        </div>
+    </div>
+
     <!-- SweetAlert2 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
+        // Modal Dokumen Saya Logic
+        const modalDokumenSaya = document.getElementById('modal-dokumen-saya');
+        const modalDokumenSayaContent = document.getElementById('modal-dokumen-saya-content');
+        
+        function openDokumenModal(fieldId) {
+            document.getElementById('current_field_id_for_modal').value = fieldId;
+            modalDokumenSaya.classList.remove('hidden');
+            modalDokumenSaya.classList.add('flex');
+            setTimeout(() => {
+                modalDokumenSayaContent.classList.remove('scale-95');
+                modalDokumenSayaContent.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeDokumenModal() {
+            modalDokumenSayaContent.classList.remove('scale-100');
+            modalDokumenSayaContent.classList.add('scale-95');
+            setTimeout(() => {
+                modalDokumenSaya.classList.remove('flex');
+                modalDokumenSaya.classList.add('hidden');
+            }, 200);
+        }
+
+        function selectDokumen(docId, docName, fileUrl, fileName) {
+            const fieldId = document.getElementById('current_field_id_for_modal').value;
+            
+            document.getElementById('existing_file_' + fieldId).value = docId;
+            
+            const fileInput = document.getElementById('file_' + fieldId);
+            if(fileInput) fileInput.value = '';
+            
+            const preview = document.getElementById('preview_' + fieldId);
+            if(preview) {
+                preview.innerHTML = `
+                    <div class="bg-purple-50 border border-purple-200 rounded-lg p-3 flex items-center gap-3 relative mb-2">
+                        <i class="mdi mdi-folder-account text-purple-600 text-xl"></i>
+                        <div class="flex-1 min-w-0 text-left">
+                            <p class="text-sm font-bold text-purple-800 truncate">${docName}</p>
+                            <p class="text-xs text-purple-600 truncate">${fileName}</p>
+                        </div>
+                        <button type="button" onclick="removeSelectedDokumen(${fieldId})" class="text-red-500 hover:text-red-700 p-1">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+            }
+            
+            closeDokumenModal();
+        }
+
+        function removeSelectedDokumen(fieldId) {
+            document.getElementById('existing_file_' + fieldId).value = '';
+            const preview = document.getElementById('preview_' + fieldId);
+            if(preview) preview.innerHTML = '';
+        }
+
         // Remove file function
         function removeFile(button, fieldId, filePath) {
             Swal.fire({
