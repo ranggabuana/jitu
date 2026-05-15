@@ -136,8 +136,8 @@
                                     {{ $item->jenisRegulasi->nama_jenis ?? '-' }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $item->nama_regulasi }}</div>
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-medium text-gray-900 dark:text-white whitespace-normal break-words max-w-sm sm:max-w-md">{{ $item->nama_regulasi }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <a href="{{ route('regulasi.download', $item->id) }}"

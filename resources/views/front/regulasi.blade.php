@@ -134,7 +134,7 @@
                                                         @else fa-file @endif"></i>
                                                 </div>
                                                 <div>
-                                                    <div class="font-semibold text-gray-800 mb-1">
+                                                    <div class="font-semibold text-gray-800 mb-1 whitespace-normal break-words max-w-xs sm:max-w-sm md:max-w-md">
                                                         {{ $item->nama_regulasi }}
                                                     </div>
                                                     <span
