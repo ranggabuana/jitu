@@ -9,6 +9,19 @@
         <p class="text-gray-600 dark:text-gray-400">Kelola dokumen umum dan spesifik Anda untuk mempermudah proses perizinan.</p>
     </div>
 
+    <!-- Informasi Alert -->
+    <div class="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-5 flex items-start gap-3 text-blue-800 dark:text-blue-300">
+        <div class="bg-blue-100 dark:bg-blue-800/50 rounded-lg p-2 flex-shrink-0 mt-0.5">
+            <i class="mdi mdi-information-outline text-xl text-blue-600 dark:text-blue-400"></i>
+        </div>
+        <div>
+            <h4 class="font-bold text-base mb-1">Informasi Kelengkapan Dokumen</h4>
+            <p class="text-sm leading-relaxed text-blue-700 dark:text-blue-400">
+                Melengkapi dokumen persyaratan (baik Umum maupun Spesifik) di repositori ini akan sangat <strong>mempercepat</strong> proses pengisian formulir pengajuan izin Anda ke depannya, karena Anda tidak perlu mengunggah ulang file yang sama. Namun, pengisian dokumen di halaman ini sifatnya <strong>opsional (tidak wajib)</strong>. Jika Anda belum memiliki dokumennya saat ini, Anda dapat mengabaikannya dan membiarkannya kosong.
+            </p>
+        </div>
+    </div>
+
     @if (session('success'))
         <div class="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 flex items-center gap-2 text-green-700 dark:text-green-400">
             <i class="mdi mdi-check-circle text-xl"></i>
