@@ -59,6 +59,10 @@
                 <i class="mdi mdi-file-document-multiple-outline text-lg"></i>
                 Dokumen Pemohon
             </button>
+            <button onclick="switchTab('tab-surat')" id="btn-tab-surat" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all">
+                <i class="mdi mdi-email-open-outline text-lg"></i>
+                Pengaturan Surat
+            </button>
         </nav>
     </div>
 
@@ -86,7 +90,7 @@
                             <textarea name="app_description" id="app_description" rows="3" class="form-input resize-none">{{ old('app_description', $generalSettings['app_description'] ?? '') }}</textarea>
                         </div>
                         
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100 dark:border-gray-700">
+                        <div class="grid grid-cols-1 pt-4 border-t border-gray-100 dark:border-gray-700">
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Logo Aplikasi</label>
                                 <div class="flex items-center gap-4">
@@ -98,19 +102,6 @@
                                         @endif
                                     </div>
                                     <input type="file" name="app_logo" class="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700">
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Gambar TTE</label>
-                                <div class="flex items-center gap-4">
-                                    <div class="w-20 h-20 rounded-lg border-2 border-gray-100 dark:border-gray-700 overflow-hidden bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-                                        @if(isset($generalSettings['gambar_tte']) && file_exists(public_path($generalSettings['gambar_tte'])))
-                                            <img src="{{ asset($generalSettings['gambar_tte']) }}" class="max-w-full max-h-full object-contain">
-                                        @else
-                                            <i class="mdi mdi-signature-freehand text-3xl text-gray-300"></i>
-                                        @endif
-                                    </div>
-                                    <input type="file" name="gambar_tte" class="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700">
                                 </div>
                             </div>
                         </div>
@@ -322,6 +313,94 @@
                     </div>
                 </div>
             </div>
+            <!-- Tab: Pengaturan Surat -->
+            <div id="tab-surat" class="tab-content hidden space-y-6">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-700/30">
+                        <h2 class="text-base font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                            <i class="mdi mdi-email-open text-orange-500"></i>
+                            Pengaturan Kop & Footer Surat
+                        </h2>
+                    </div>
+                    <div class="p-6 space-y-6">
+                        <div class="grid grid-cols-1 gap-8">
+                            <!-- Kop Surat -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Kop Surat (Header)</label>
+                                <div class="flex flex-col md:flex-row items-start gap-6">
+                                    <div class="w-full md:w-2/3 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-900/50 flex items-center justify-center min-h-[150px]">
+                                        @if(isset($suratSettings['kop_surat']) && file_exists(public_path($suratSettings['kop_surat'])))
+                                            <img src="{{ asset($suratSettings['kop_surat']) }}" class="max-w-full h-auto object-contain shadow-sm rounded">
+                                        @else
+                                            <div class="text-center text-gray-400">
+                                                <i class="mdi mdi-image-plus text-4xl mb-2"></i>
+                                                <p class="text-xs">Belum ada Kop Surat diunggah</p>
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <div class="w-full md:w-1/3">
+                                        <input type="file" name="kop_surat" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 mb-2">
+                                        <p class="text-[10px] text-gray-500 leading-relaxed italic">Direkomendasikan ukuran lebar minimal 1000px dengan format PNG atau JPG transparan.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="border-gray-100 dark:border-gray-700">
+
+                            <!-- Footer Surat -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Footer Surat</label>
+                                <div class="flex flex-col md:flex-row items-start gap-6">
+                                    <div class="w-full md:w-2/3 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-900/50 flex items-center justify-center min-h-[100px]">
+                                        @if(isset($suratSettings['footer_surat']) && file_exists(public_path($suratSettings['footer_surat'])))
+                                            <img src="{{ asset($suratSettings['footer_surat']) }}" class="max-w-full h-auto object-contain shadow-sm rounded">
+                                        @else
+                                            <div class="text-center text-gray-400">
+                                                <i class="mdi mdi-image-plus text-4xl mb-2"></i>
+                                                <p class="text-xs">Belum ada Footer Surat diunggah</p>
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <div class="w-full md:w-1/3">
+                                        <input type="file" name="footer_surat" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 mb-2">
+                                        <p class="text-[10px] text-gray-500 leading-relaxed italic">Digunakan pada bagian bawah dokumen/cetakan surat.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="border-gray-100 dark:border-gray-700">
+
+                            <!-- Gambar TTE -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Gambar TTE (Tanda Tangan Elektronik)</label>
+                                <div class="flex flex-col md:flex-row items-start gap-6">
+                                    <div class="w-full md:w-2/3 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-900/50 flex items-center justify-center min-h-[100px]">
+                                        @if(isset($generalSettings['gambar_tte']) && file_exists(public_path($generalSettings['gambar_tte'])))
+                                            <img src="{{ asset($generalSettings['gambar_tte']) }}" class="max-w-full h-auto object-contain shadow-sm rounded max-h-[120px]">
+                                        @else
+                                            <div class="text-center text-gray-400">
+                                                <i class="mdi mdi-signature-freehand text-4xl mb-2"></i>
+                                                <p class="text-xs">Belum ada Gambar TTE diunggah</p>
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <div class="w-full md:w-1/3">
+                                        <input type="file" name="gambar_tte" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 mb-2">
+                                        <p class="text-[10px] text-gray-500 leading-relaxed italic">Gambar tanda tangan atau stempel TTE untuk validasi surat.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Save Button for this tab -->
+                    <div class="px-6 py-4 bg-gray-50/50 dark:bg-gray-700/30 border-t border-gray-100 dark:border-gray-700 flex justify-end">
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold transition-all flex items-center gap-2">
+                            <i class="mdi mdi-content-save"></i> Simpan Perubahan
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Tab: Dokumen Pemohon -->
             <div id="tab-dokumen" class="tab-content hidden space-y-6">
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
