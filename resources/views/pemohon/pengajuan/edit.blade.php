@@ -102,15 +102,39 @@
                                 placeholder="Masukkan {{ strtolower($field->label) }}">{{ old('form_fields.'.$field->id, $fieldValue) }}</textarea>
 
                         @elseif($field->type === 'file')
-                            <div class="space-y-2">
+                            <div class="p-5 border-2 border-orange-100 rounded-2xl bg-orange-50/30 space-y-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <!-- Option 1: Upload from Device -->
+                                    <div class="relative border-2 border-dashed border-gray-300 rounded-xl p-4 text-center hover:border-orange-500 hover:bg-white transition-all cursor-pointer group"
+                                        onclick="document.getElementById('file_{{ $field->id }}').click()">
+                                        <input type="file" name="form_fields[{{ $field->id }}][]" id="file_{{ $field->id }}" multiple
+                                            style="position: absolute; left: -9999px; opacity: 0;"
+                                            accept="{{ $field->accepted_formats ?? '*' }}">
+                                        <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-orange-100 group-hover:text-orange-600 transition-colors text-gray-400">
+                                            <i class="fas fa-cloud-upload-alt text-lg"></i>
+                                        </div>
+                                        <p class="text-xs font-bold text-gray-700">Tambah File Baru</p>
+                                        <p class="text-[10px] text-gray-500 mt-1">Klik untuk upload file tambahan</p>
+                                    </div>
+
+                                    <!-- Option 2: Select from My Documents -->
+                                    <div onclick="openDokumenModal({{ $field->id }})"
+                                        class="relative border-2 border-dashed border-purple-300 rounded-xl p-4 text-center hover:border-purple-500 hover:bg-white transition-all cursor-pointer group bg-purple-50/50">
+                                        <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-purple-200 text-purple-600 transition-colors">
+                                            <i class="fas fa-folder-open text-lg"></i>
+                                        </div>
+                                        <p class="text-xs font-bold text-purple-800">Ambil dari Dokumen Saya</p>
+                                        <p class="text-[10px] text-purple-600 mt-1">Gunakan file yang sudah tersimpan</p>
+                                        <span class="absolute -top-2 -right-2 bg-purple-600 text-white text-[8px] font-bold px-2 py-0.5 rounded-full shadow-sm">CEPAT</span>
+                                    </div>
+                                </div>
+
                                 <input type="hidden" name="existing_files[{{ $field->id }}]" id="existing_file_{{ $field->id }}">
                                 <div id="preview_{{ $field->id }}" class="mt-2 empty:hidden"></div>
-                                <input type="file" name="form_fields[{{ $field->id }}][]" id="file_{{ $field->id }}" multiple
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 @error('form_fields.'.$field->id) 'border-red-500' @enderror"
-                                    accept="{{ $field->accepted_formats ?? '*' }}">
-                                <p class="text-xs text-gray-500 mt-1">
+                                
+                                <p class="text-[10px] text-gray-500 mt-1 italic">
                                     <i class="fas fa-info-circle"></i> 
-                                    File baru akan <strong>menambah</strong> file yang sudah ada. Hapus file lama jika perlu.
+                                    File baru akan <strong>menambah</strong> daftar file di bawah. Hapus file lama jika ingin menggantinya.
                                 </p>
                                 
                                 @if(count($fieldFiles) > 0)

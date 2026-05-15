@@ -228,44 +228,57 @@
                                         @endif
                                     </div>
                                 @elseif ($field->type === 'file')
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2 flex justify-between items-center">
-                                            <span>
-                                                {{ $field->label }}
-                                                @if ($field->is_required)
-                                                    <span class="text-red-500">*</span>
-                                                @endif
-                                            </span>
-                                            <button type="button" onclick="openDokumenModal({{ $field->id }})" class="text-xs bg-purple-100 text-purple-700 hover:bg-purple-200 px-3 py-1 rounded-full transition-colors flex items-center gap-1 font-semibold">
-                                                <i class="mdi mdi-folder-account"></i> Dokumen Saya
-                                            </button>
+                                    <div class="p-5 border-2 border-amber-100 rounded-2xl bg-amber-50/30">
+                                        <label class="block text-sm font-bold text-gray-800 mb-3">
+                                            {{ $field->label }}
+                                            @if ($field->is_required)
+                                                <span class="text-red-500">*</span>
+                                            @endif
                                         </label>
-                                        <input type="hidden" name="existing_files[{{ $field->id }}]" id="existing_file_{{ $field->id }}">
-                                        <div id="file_container_{{ $field->id }}"
-                                            class="border-2 @error('form_files.' . $field->id) border-red-500 @else border-gray-300 @endif border-dashed rounded-xl p-6 text-center hover:border-amber-500 transition-colors cursor-pointer"
-                                            onclick="document.getElementById('file_{{ $field->id }}').click()">
-                                            <input type="file" name="form_files[{{ $field->id }}][]"
-                                                id="file_{{ $field->id }}"
-                                                accept="{{ $field->file_types ?? '*' }}"
-                                                style="position: absolute; left: -9999px; opacity: 0;"
-                                                multiple
-                                                onchange="previewFiles(this, {{ $field->id }})">
-                                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3"></i>
-                                            <p class="text-sm text-gray-600">
-                                                <span class="font-semibold text-amber-600">Klik untuk upload</span>
-                                                atau drag & drop
-                                            </p>
-                                            <p class="text-xs text-gray-500 mt-1">
-                                                {{ $field->file_types ?? 'Semua format' }} (Max
-                                                {{ $field->file_size ?? '2MB' }}) - Multiple files
-                                            </p>
+
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                            <!-- Option 1: Upload from Device -->
+                                            <div id="file_container_{{ $field->id }}"
+                                                class="relative border-2 border-dashed border-gray-300 rounded-xl p-4 text-center hover:border-amber-500 hover:bg-white transition-all cursor-pointer group"
+                                                onclick="document.getElementById('file_{{ $field->id }}').click()">
+                                                <input type="file" name="form_files[{{ $field->id }}][]"
+                                                    id="file_{{ $field->id }}"
+                                                    accept="{{ $field->file_types ?? '*' }}"
+                                                    style="position: absolute; left: -9999px; opacity: 0;"
+                                                    multiple
+                                                    onchange="previewFiles(this, {{ $field->id }})">
+                                                <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-amber-100 group-hover:text-amber-600 transition-colors text-gray-400">
+                                                    <i class="fas fa-cloud-upload-alt text-lg"></i>
+                                                </div>
+                                                <p class="text-xs font-bold text-gray-700">Upload dari Perangkat</p>
+                                                <p class="text-[10px] text-gray-500 mt-1">Klik atau seret file ke sini</p>
+                                            </div>
+
+                                            <!-- Option 2: Select from My Documents -->
+                                            <div onclick="openDokumenModal({{ $field->id }})"
+                                                class="relative border-2 border-dashed border-purple-300 rounded-xl p-4 text-center hover:border-purple-500 hover:bg-white transition-all cursor-pointer group bg-purple-50/50">
+                                                <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-purple-200 text-purple-600 transition-colors">
+                                                    <i class="fas fa-folder-open text-lg"></i>
+                                                </div>
+                                                <p class="text-xs font-bold text-purple-800">Gunakan Dokumen Saya</p>
+                                                <p class="text-[10px] text-purple-600 mt-1">Ambil dari file yang sudah tersimpan</p>
+                                                
+                                                <!-- Badge for guidance -->
+                                                <span class="absolute -top-2 -right-2 bg-purple-600 text-white text-[8px] font-bold px-2 py-0.5 rounded-full shadow-sm">CEPAT</span>
+                                            </div>
                                         </div>
-                                        <div id="preview_{{ $field->id }}" class="mt-3"></div>
+
+                                        <input type="hidden" name="existing_files[{{ $field->id }}]" id="existing_file_{{ $field->id }}">
+                                        <div id="preview_{{ $field->id }}" class="mt-2 empty:hidden"></div>
+                                        
                                         @error('form_files.' . $field->id)
                                             <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                                         @enderror
                                         @if ($field->help_text && !$errors->has('form_files.' . $field->id))
-                                            <p class="mt-1 text-xs text-gray-500">{{ $field->help_text }}</p>
+                                            <p class="mt-2 text-[10px] text-gray-500 flex items-center gap-1">
+                                                <i class="fas fa-info-circle text-amber-500"></i>
+                                                Format: {{ $field->file_types ?? 'Semua format' }} (Maks. {{ $field->file_size ?? '2MB' }})
+                                            </p>
                                         @endif
                                     </div>
                                 @endif
