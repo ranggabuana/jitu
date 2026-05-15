@@ -17,7 +17,7 @@
         <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Left Column - Applications (2/3 width) -->
             <div class="lg:col-span-2">
-                <x-pemohon.applications :applications="$recentApplications"></x-pemohon.applications>
+                <x-pemohon.applications :applications="$applications"></x-pemohon.applications>
             </div>
 
             <!-- Right Column - Profile (1/3 width) -->

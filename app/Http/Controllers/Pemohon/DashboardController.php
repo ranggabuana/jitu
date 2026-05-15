@@ -17,7 +17,7 @@ class DashboardController extends Controller
     /**
      * Display the pemohon dashboard.
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
 
@@ -32,17 +32,40 @@ class DashboardController extends Controller
                 ->where('status', 'approved')->count(),
         ];
 
-        // Get recent applications
-        $recentApplications = DataPerijinan::with(['perijinan'])
-            ->where('user_id', $user->id)
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get();
+        // Build query for applications
+        $query = DataPerijinan::with(['perijinan'])
+            ->where('user_id', $user->id);
+
+        // Searching
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('no_registrasi', 'like', "%{$search}%")
+                    ->orWhereHas('perijinan', function ($q2) use ($search) {
+                        $q2->where('nama_perijinan', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        // Sorting
+        $sort = $request->input('sort', 'created_at');
+        $direction = $request->input('direction', 'desc');
+        $allowedSorts = ['created_at', 'no_registrasi', 'status'];
+        
+        if (in_array($sort, $allowedSorts)) {
+            $query->orderBy($sort, $direction);
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        // Pagination & Per Page
+        $perPage = $request->input('per_page', 5);
+        $applications = $query->paginate($perPage)->withQueryString();
 
         return view('pemohon.dashboard.index', compact(
             'user',
             'stats',
-            'recentApplications'
+            'applications'
         ));
     }
 
