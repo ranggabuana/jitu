@@ -57,8 +57,10 @@
     @stack('styles')
 </head>
 
-<body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex flex-col">
+<body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex flex-col pb-16 md:pb-0">
     {{ $slot }}
+
+    <x-pemohon.bottom-nav />
 
     @stack('scripts')
 </body>
