@@ -165,6 +165,15 @@
                     </a>
                 </div>
             </div>
+
+            <!-- Panduan -->
+            <a href="{{ route('panduan.index') }}"
+                class="flex items-center px-6 py-3 text-gray-700 dark:text-gray-300 transition-colors group menu-item {{ request()->routeIs('panduan.*') ? 'active-menu' : '' }}">
+                <i
+                    class="mdi mdi-book-open-page-variant mr-3 text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors text-lg"></i>
+                <span
+                    class="font-medium {{ request()->routeIs('panduan.*') ? 'text-blue-500 dark:text-blue-400' : '' }}">Panduan</span>
+            </a>
         @endif
 
         <!-- Pengaduan (Only for authorized users - Admin & Assigned Handlers) -->

@@ -105,26 +105,6 @@
                                 </div>
                             </div>
                         </div>
-
-                        <div class="pt-4 border-t border-gray-100 dark:border-gray-700">
-                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Panduan Pendaftaran (PDF/Gambar)</label>
-                            <div class="flex items-center gap-4">
-                                <div class="w-20 h-20 rounded-lg border-2 border-gray-100 dark:border-gray-700 overflow-hidden bg-gray-50 dark:bg-gray-900 flex items-center justify-center text-center">
-                                    @if(isset($generalSettings['panduan_pendaftaran']) && file_exists(public_path($generalSettings['panduan_pendaftaran'])))
-                                        <i class="mdi mdi-file-check text-3xl text-green-500"></i>
-                                        <p class="text-[8px] mt-1 text-gray-400">Tersedia</p>
-                                    @else
-                                        <i class="mdi mdi-file-outline text-3xl text-gray-300"></i>
-                                    @endif
-                                </div>
-                                <div class="flex-1">
-                                    <input type="file" name="panduan_pendaftaran" class="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700">
-                                    @if(isset($generalSettings['panduan_pendaftaran']))
-                                        <a href="{{ asset($generalSettings['panduan_pendaftaran']) }}" target="_blank" class="text-xs text-blue-600 hover:underline mt-2 inline-block">Lihat file saat ini</a>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
                     </div>
                     <!-- Save Button for this tab -->
                     <div class="px-6 py-4 bg-gray-50/50 dark:bg-gray-700/30 border-t border-gray-100 dark:border-gray-700 flex justify-end">
