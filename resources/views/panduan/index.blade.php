@@ -4,7 +4,7 @@
     <div class="flex justify-between items-center mb-6">
         <div>
             <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Data Panduan</h1>
-            <p class="text-gray-600 dark:text-gray-400 mt-1">Kelola panduan pendaftaran dan penggunaan aplikasi</p>
+            <p class="text-gray-600 dark:text-gray-400 mt-1">Kelola panduan perizinan dan penggunaan aplikasi</p>
         </div>
         <a href="{{ route('panduan.create') }}"
             class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">

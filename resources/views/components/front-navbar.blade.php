@@ -25,6 +25,8 @@
                         class="{{ request()->routeIs('regulasi.public*') ? 'text-blue-600 font-medium border-b-2 border-blue-600 pb-1' : 'text-gray-500 hover:text-blue-600 font-medium transition-colors' }}">Regulasi</a>
                     <a href="{{ route('skm') }}"
                         class="{{ request()->routeIs('skm*') ? 'text-blue-600 font-medium border-b-2 border-blue-600 pb-1' : 'text-gray-500 hover:text-blue-600 font-medium transition-colors' }}">SKM</a>
+                    <a href="{{ route('panduan.public') }}"
+                        class="{{ request()->routeIs('panduan.public*') ? 'text-blue-600 font-medium border-b-2 border-blue-600 pb-1' : 'text-gray-500 hover:text-blue-600 font-medium transition-colors' }}">Panduan</a>
                 </div>
                 <div class="flex items-center gap-3">
                     @auth

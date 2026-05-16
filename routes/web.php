@@ -25,6 +25,7 @@ use App\Http\Controllers\Front\LandingPageController;
 use App\Http\Controllers\Front\InformasiController;
 use App\Http\Controllers\Front\LayananController;
 use App\Http\Controllers\Front\SkmController;
+use App\Http\Controllers\Front\PanduanController as FrontPanduanController;
 use App\Http\Controllers\Front\AuthController;
 use App\Http\Controllers\Front\PengaduanController as FrontPengaduanController;
 use App\Http\Controllers\Front\RegulasiController as FrontRegulasiController;
@@ -253,6 +254,10 @@ Route::get('/skm', [SkmController::class, 'index'])->name('skm');
 Route::post('/skm', [SkmController::class, 'store'])->name('skm.store');
 Route::get('/skm/success', [SkmController::class, 'success'])->name('skm.success');
 Route::get('/skm/refresh-captcha', [SkmController::class, 'refreshCaptcha'])->name('skm.refresh-captcha');
+
+// Panduan page (Front-end - Public)
+Route::get('/panduan-public', [FrontPanduanController::class, 'index'])->name('panduan.public');
+Route::get('/panduan-public/{slug}/preview', [FrontPanduanController::class, 'preview'])->name('panduan.public.preview');
 
 // Pengaduan page (Front-end)
 Route::get('/pengaduan', [FrontPengaduanController::class, 'create'])->name('pengaduan.create');
