@@ -60,8 +60,8 @@
                 Dokumen Pemohon
             </button>
             <button onclick="switchTab('tab-surat')" id="btn-tab-surat" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all">
-                <i class="mdi mdi-email-open-outline text-lg"></i>
-                Pengaturan Surat
+                <i class="mdi mdi-signature text-lg"></i>
+                Pengaturan TTE
             </button>
         </nav>
     </div>
@@ -293,63 +293,17 @@
                     </div>
                 </div>
             </div>
-            <!-- Tab: Pengaturan Surat -->
+            <!-- Tab: Pengaturan TTE -->
             <div id="tab-surat" class="tab-content hidden space-y-6">
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-700/30">
                         <h2 class="text-base font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                            <i class="mdi mdi-email-open text-orange-500"></i>
-                            Pengaturan Kop & Footer Surat
+                            <i class="mdi mdi-signature text-orange-500"></i>
+                            Pengaturan Tanda Tangan Elektronik (TTE)
                         </h2>
                     </div>
                     <div class="p-6 space-y-6">
                         <div class="grid grid-cols-1 gap-8">
-                            <!-- Kop Surat -->
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Kop Surat (Header)</label>
-                                <div class="flex flex-col md:flex-row items-start gap-6">
-                                    <div class="w-full md:w-2/3 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-900/50 flex items-center justify-center min-h-[150px]">
-                                        @if(isset($suratSettings['kop_surat']) && file_exists(public_path($suratSettings['kop_surat'])))
-                                            <img src="{{ asset($suratSettings['kop_surat']) }}" class="max-w-full h-auto object-contain shadow-sm rounded">
-                                        @else
-                                            <div class="text-center text-gray-400">
-                                                <i class="mdi mdi-image-plus text-4xl mb-2"></i>
-                                                <p class="text-xs">Belum ada Kop Surat diunggah</p>
-                                            </div>
-                                        @endif
-                                    </div>
-                                    <div class="w-full md:w-1/3">
-                                        <input type="file" name="kop_surat" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 mb-2">
-                                        <p class="text-[10px] text-gray-500 leading-relaxed italic">Direkomendasikan ukuran lebar minimal 1000px dengan format PNG atau JPG transparan.</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <hr class="border-gray-100 dark:border-gray-700">
-
-                            <!-- Footer Surat -->
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Footer Surat</label>
-                                <div class="flex flex-col md:flex-row items-start gap-6">
-                                    <div class="w-full md:w-2/3 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-900/50 flex items-center justify-center min-h-[100px]">
-                                        @if(isset($suratSettings['footer_surat']) && file_exists(public_path($suratSettings['footer_surat'])))
-                                            <img src="{{ asset($suratSettings['footer_surat']) }}" class="max-w-full h-auto object-contain shadow-sm rounded">
-                                        @else
-                                            <div class="text-center text-gray-400">
-                                                <i class="mdi mdi-image-plus text-4xl mb-2"></i>
-                                                <p class="text-xs">Belum ada Footer Surat diunggah</p>
-                                            </div>
-                                        @endif
-                                    </div>
-                                    <div class="w-full md:w-1/3">
-                                        <input type="file" name="footer_surat" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 mb-2">
-                                        <p class="text-[10px] text-gray-500 leading-relaxed italic">Digunakan pada bagian bawah dokumen/cetakan surat.</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <hr class="border-gray-100 dark:border-gray-700">
-
                             <!-- Gambar TTE -->
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Gambar TTE (Tanda Tangan Elektronik)</label>

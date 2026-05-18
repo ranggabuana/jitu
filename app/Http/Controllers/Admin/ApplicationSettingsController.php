@@ -21,12 +21,11 @@ class ApplicationSettingsController extends Controller
         $contactSettings = Setting::where('group', 'contact')->get()->pluck('value', 'key');
         $socialMediaSettings = Setting::where('group', 'social_media')->get()->pluck('value', 'key');
         $workingHours = Setting::where('group', 'working_hours')->get()->pluck('value', 'key');
-        $suratSettings = Setting::where('group', 'surat')->get()->pluck('value', 'key');
         
         $holidays = Holiday::orderBy('date', 'asc')->get();
         $masterDokumens = \App\Models\MasterDokumenPemohon::orderBy('nama_dokumen', 'asc')->get();
 
-        return view('settings.application', compact('generalSettings', 'contactSettings', 'socialMediaSettings', 'workingHours', 'suratSettings', 'holidays', 'masterDokumens'));
+        return view('settings.application', compact('generalSettings', 'contactSettings', 'socialMediaSettings', 'workingHours', 'holidays', 'masterDokumens'));
     }
 
     /**
@@ -46,8 +45,6 @@ class ApplicationSettingsController extends Controller
             'email' => 'nullable|email|max:255',
             'address' => 'nullable|string',
             'phone' => 'nullable|string',
-            'kop_surat' => 'nullable|image|max:2048',
-            'footer_surat' => 'nullable|image|max:2048',
 
             // Social Media Settings
             'facebook' => 'nullable|url|max:255',
@@ -112,46 +109,6 @@ class ApplicationSettingsController extends Controller
             }
 
             Setting::set('gambar_tte', 'uploads/tte/' . $tteName, 'file', 'general', 'Gambar TTE');
-        }
-
-        // Handle Kop Surat upload
-        if ($request->hasFile('kop_surat')) {
-            $kopFile = $request->file('kop_surat');
-            $kopName = time() . '_kop_surat.' . $kopFile->getClientOriginalExtension();
-            
-            $kopPath = public_path('uploads/surat');
-            if (!file_exists($kopPath)) {
-                mkdir($kopPath, 0755, true);
-            }
-            
-            $kopFile->move($kopPath, $kopName);
-
-            $oldKop = Setting::where('key', 'kop_surat')->first();
-            if ($oldKop && $oldKop->value && file_exists(public_path($oldKop->value))) {
-                unlink(public_path($oldKop->value));
-            }
-
-            Setting::set('kop_surat', 'uploads/surat/' . $kopName, 'file', 'surat', 'Gambar Kop Surat');
-        }
-
-        // Handle Footer Surat upload
-        if ($request->hasFile('footer_surat')) {
-            $footerFile = $request->file('footer_surat');
-            $footerName = time() . '_footer_surat.' . $footerFile->getClientOriginalExtension();
-            
-            $footerPath = public_path('uploads/surat');
-            if (!file_exists($footerPath)) {
-                mkdir($footerPath, 0755, true);
-            }
-            
-            $footerFile->move($footerPath, $footerName);
-
-            $oldFooter = Setting::where('key', 'footer_surat')->first();
-            if ($oldFooter && $oldFooter->value && file_exists(public_path($oldFooter->value))) {
-                unlink(public_path($oldFooter->value));
-            }
-
-            Setting::set('footer_surat', 'uploads/surat/' . $footerName, 'file', 'surat', 'Gambar Footer Surat');
         }
 
         // General Settings
