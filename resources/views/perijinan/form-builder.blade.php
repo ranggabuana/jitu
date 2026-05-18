@@ -206,7 +206,7 @@
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" name="is_required" id="is_required" value="1"
                                 class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
-                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Required</span>
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Wajib diisi</span>
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" name="is_active" id="is_active" value="1" checked
@@ -270,7 +270,7 @@
                                             @if ($field->is_required)
                                                 <span
                                                     class="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs px-2 py-1 rounded-md font-medium">
-                                                    <i class="mdi mdi-asterisk"></i> Required
+                                                    <i class="mdi mdi-asterisk"></i> Wajib diisi
                                                 </span>
                                             @endif
                                             @if ($field->is_active)
@@ -498,7 +498,7 @@
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" name="is_required" id="edit_is_required" value="1"
                             class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
-                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Required</span>
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Wajib diisi</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" name="is_active" id="edit_is_active" value="1"
