@@ -83,6 +83,22 @@
             </div>
 
             <div class="mb-6">
+                <label for="opsi_perpanjangan" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Opsi Perpanjangan
+                </label>
+                <select id="opsi_perpanjangan" name="opsi_perpanjangan"
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('opsi_perpanjangan') border-red-500 @enderror">
+                    <option value="">-- Tidak ada perpanjangan --</option>
+                    <option value="setelah_habis" {{ old('opsi_perpanjangan', $perijinan->opsi_perpanjangan) == 'setelah_habis' ? 'selected' : '' }}>Setelah masa berlaku habis</option>
+                    <option value="sebelum_habis" {{ old('opsi_perpanjangan', $perijinan->opsi_perpanjangan) == 'sebelum_habis' ? 'selected' : '' }}>Sebelum masa berlaku habis</option>
+                    <option value="keduanya" {{ old('opsi_perpanjangan', $perijinan->opsi_perpanjangan) == 'keduanya' ? 'selected' : '' }}>Keduanya</option>
+                </select>
+                @error('opsi_perpanjangan')
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div class="mb-6">
                 <label for="dasar_hukum" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Dasar Hukum <span class="text-red-500">*</span>
                 </label>

@@ -12,6 +12,7 @@ class Perijinan extends Model
     protected $fillable = [
         'kode_perijinan',
         'nama_perijinan',
+        'opsi_perpanjangan',
         'dasar_hukum',
         'persyaratan',
         'prosedur',

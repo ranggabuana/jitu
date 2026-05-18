@@ -70,6 +70,7 @@ class PerijinanController extends Controller
     {
         $request->validate([
             'nama_perijinan' => 'required|string|max:255',
+            'opsi_perpanjangan' => 'nullable|in:setelah_habis,sebelum_habis,keduanya',
             'dasar_hukum' => 'required|string',
             'persyaratan' => 'required|string',
             'prosedur' => 'required|string',
@@ -552,6 +553,7 @@ class PerijinanController extends Controller
         $request->validate([
             'kode_perijinan' => 'nullable|string|max:50|unique:perijinan,kode_perijinan,' . $id,
             'nama_perijinan' => 'required|string|max:255',
+            'opsi_perpanjangan' => 'nullable|in:setelah_habis,sebelum_habis,keduanya',
             'dasar_hukum' => 'required|string',
             'persyaratan' => 'required|string',
             'prosedur' => 'required|string',
