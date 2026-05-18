@@ -309,14 +309,33 @@
                 </div>
             @endif
 
+            <!-- Pernyataan Tanggung Jawab -->
+            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-6">
+                <label class="flex items-start gap-4 cursor-pointer group">
+                    <div class="flex items-center h-5">
+                        <input type="checkbox" name="pernyataan" id="check-pernyataan" value="1" required
+                            class="w-5 h-5 text-amber-600 focus:ring-amber-500 rounded border-amber-300">
+                    </div>
+                    <div class="text-sm">
+                        <span class="font-bold text-gray-800 block mb-1">Pernyataan Pertanggungjawaban</span>
+                        <p class="text-gray-700 leading-relaxed">
+                            Saya menyatakan bahwa data yang saya berikan dalam formulir pengajuan ini adalah benar dan valid. Saya bersedia bertanggung jawab penuh secara hukum apabila di kemudian hari ditemukan ketidaksesuaian atau pemalsuan data pada berkas yang saya lampirkan.
+                        </p>
+                    </div>
+                </label>
+                @error('pernyataan')
+                    <p class="mt-2 text-xs text-red-500">{{ $message }}</p>
+                @enderror
+            </div>
+
             <!-- Submit Button -->
             <div class="flex items-center justify-between gap-4 pt-4">
                 <a href="{{ route('pemohon.perijinan') }}"
                     class="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-semibold transition-colors">
                     <i class="fas fa-arrow-left mr-2"></i> Batal
                 </a>
-                <button type="submit"
-                    class="px-8 py-3 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-xl flex items-center gap-2">
+                <button type="submit" id="btn-submit" disabled
+                    class="px-8 py-3 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-xl flex items-center gap-2 opacity-50 cursor-not-allowed">
                     <i class="fas fa-paper-plane"></i>
                     <span>Kirim Pengajuan</span>
                 </button>
@@ -379,6 +398,29 @@
         const modalDokumenSaya = document.getElementById('modal-dokumen-saya');
         const modalDokumenSayaContent = document.getElementById('modal-dokumen-saya-content');
         
+        // Responsibility statement checkbox logic
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkPernyataan = document.getElementById('check-pernyataan');
+            const btnSubmit = document.getElementById('btn-submit');
+
+            if (checkPernyataan && btnSubmit) {
+                const toggleSubmit = () => {
+                    if (checkPernyataan.checked) {
+                        btnSubmit.disabled = false;
+                        btnSubmit.classList.remove('opacity-50', 'cursor-not-allowed');
+                    } else {
+                        btnSubmit.disabled = true;
+                        btnSubmit.classList.add('opacity-50', 'cursor-not-allowed');
+                    }
+                };
+
+                checkPernyataan.addEventListener('change', toggleSubmit);
+                
+                // Initial check in case of validation errors and old input
+                toggleSubmit();
+            }
+        });
+
         function openDokumenModal(fieldId) {
             document.getElementById('current_field_id_for_modal').value = fieldId;
             modalDokumenSaya.classList.remove('hidden');

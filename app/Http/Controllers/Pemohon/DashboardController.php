@@ -210,6 +210,10 @@ class DashboardController extends Controller
         $request->validate([
             'perijinan_id' => 'required|exists:perijinan,id',
             'form_fields' => 'nullable|array',
+            'pernyataan' => 'required|accepted',
+        ], [
+            'pernyataan.required' => 'Anda harus menyetujui pernyataan pertanggungjawaban data.',
+            'pernyataan.accepted' => 'Anda harus menyetujui pernyataan pertanggungjawaban data.',
         ]);
 
         $perijinan = Perijinan::with('activeFormFields')->findOrFail($request->perijinan_id);
@@ -497,6 +501,10 @@ class DashboardController extends Controller
 
         $request->validate([
             'form_fields' => 'nullable|array',
+            'pernyataan' => 'required|accepted',
+        ], [
+            'pernyataan.required' => 'Anda harus menyetujui pernyataan pertanggungjawaban data.',
+            'pernyataan.accepted' => 'Anda harus menyetujui pernyataan pertanggungjawaban data.',
         ]);
 
         $perijinan = $data->perijinan;
