@@ -40,6 +40,95 @@
             </div>
         </div>
 
+        <!-- Generated Documents -->
+        @if ($data->file_pernyataan || $data->file_permohonan || $data->file_keabsahan)
+            <div class="bg-white rounded-2xl shadow-sm border border-amber-200 p-6">
+                <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2 font-sans">
+                    <i class="fas fa-file-pdf text-amber-600"></i>
+                    Dokumen Pengajuan Ter-generate
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <!-- Surat Pernyataan -->
+                    @if ($data->file_pernyataan)
+                        @php
+                            $routePath = str_replace('uploads/perijinan/', '', $data->file_pernyataan);
+                        @endphp
+                        <div class="p-4 rounded-xl border border-amber-100 bg-amber-50/20 flex flex-col justify-between h-36">
+                            <div class="flex items-start gap-3">
+                                <div class="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0 text-amber-600">
+                                    <i class="far fa-file-pdf text-xl"></i>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <h4 class="text-xs font-bold text-gray-800 uppercase truncate">Surat Pernyataan</h4>
+                                    <p class="text-[10px] text-gray-500 truncate mt-0.5" title="{{ basename($data->file_pernyataan) }}">{{ basename($data->file_pernyataan) }}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 mt-4">
+                                <a href="{{ route('data-perijinan.download-file', rawurlencode($routePath)) }}" class="flex-1 py-1.5 bg-white hover:bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-xs font-semibold text-center flex items-center justify-center gap-1 transition-all">
+                                    <i class="fas fa-download"></i> Unduh
+                                </a>
+                                <a href="{{ asset($data->file_pernyataan) }}" target="_blank" class="px-2.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold text-center transition-all flex items-center justify-center" title="Buka">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Surat Permohonan -->
+                    @if ($data->file_permohonan)
+                        @php
+                            $routePath = str_replace('uploads/perijinan/', '', $data->file_permohonan);
+                        @endphp
+                        <div class="p-4 rounded-xl border border-amber-100 bg-amber-50/20 flex flex-col justify-between h-36">
+                            <div class="flex items-start gap-3">
+                                <div class="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0 text-amber-600">
+                                    <i class="far fa-file-pdf text-xl"></i>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <h4 class="text-xs font-bold text-gray-800 uppercase truncate">Surat Permohonan</h4>
+                                    <p class="text-[10px] text-gray-500 truncate mt-0.5" title="{{ basename($data->file_permohonan) }}">{{ basename($data->file_permohonan) }}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 mt-4">
+                                <a href="{{ route('data-perijinan.download-file', rawurlencode($routePath)) }}" class="flex-1 py-1.5 bg-white hover:bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-xs font-semibold text-center flex items-center justify-center gap-1 transition-all">
+                                    <i class="fas fa-download"></i> Unduh
+                                </a>
+                                <a href="{{ asset($data->file_permohonan) }}" target="_blank" class="px-2.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold text-center transition-all flex items-center justify-center" title="Buka">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Surat Keabsahan -->
+                    @if ($data->file_keabsahan)
+                        @php
+                            $routePath = str_replace('uploads/perijinan/', '', $data->file_keabsahan);
+                        @endphp
+                        <div class="p-4 rounded-xl border border-amber-100 bg-amber-50/20 flex flex-col justify-between h-36">
+                            <div class="flex items-start gap-3">
+                                <div class="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0 text-amber-600">
+                                    <i class="far fa-file-pdf text-xl"></i>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <h4 class="text-xs font-bold text-gray-800 uppercase truncate">Surat Keabsahan</h4>
+                                    <p class="text-[10px] text-gray-500 truncate mt-0.5" title="{{ basename($data->file_keabsahan) }}">{{ basename($data->file_keabsahan) }}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 mt-4">
+                                <a href="{{ route('data-perijinan.download-file', rawurlencode($routePath)) }}" class="flex-1 py-1.5 bg-white hover:bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-xs font-semibold text-center flex items-center justify-center gap-1 transition-all">
+                                    <i class="fas fa-download"></i> Unduh
+                                </a>
+                                <a href="{{ asset($data->file_keabsahan) }}" target="_blank" class="px-2.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold text-center transition-all flex items-center justify-center" title="Buka">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        @endif
+
         <!-- Progress Overview -->
         <div class="bg-white rounded-2xl shadow-sm border border-amber-200 p-6">
             <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">

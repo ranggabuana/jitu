@@ -640,6 +640,29 @@ class DataPerijinanController extends Controller
             'validasiRecords.validator'
         ])->findOrFail($id);
 
+        // Ensure documents are generated if missing
+        if (!$application->file_pernyataan || !$application->file_permohonan || !$application->file_keabsahan) {
+            try {
+                $generatedDocs = \App\Services\DocumentGenerator::generateDocuments($application);
+                $updateData = [];
+                if (!$application->file_pernyataan && isset($generatedDocs['file_pernyataan'])) {
+                    $updateData['file_pernyataan'] = $generatedDocs['file_pernyataan'];
+                }
+                if (!$application->file_permohonan && isset($generatedDocs['file_permohonan'])) {
+                    $updateData['file_permohonan'] = $generatedDocs['file_permohonan'];
+                }
+                if (!$application->file_keabsahan && isset($generatedDocs['file_keabsahan'])) {
+                    $updateData['file_keabsahan'] = $generatedDocs['file_keabsahan'];
+                }
+                
+                if (!empty($updateData)) {
+                    $application->update($updateData);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Auto-generation of documents failed in show: ' . $e->getMessage());
+            }
+        }
+
         // Check if user has access to this application
         if (!$user->isAdmin()) {
             $accessibleIds = $user->getAccessiblePerijinanIds();
@@ -1075,9 +1098,9 @@ class DataPerijinanController extends Controller
     }
 
     /**
-     * Download uploaded file from application.
+     * Download or preview uploaded file from application.
      */
-    public function downloadFile($filepath)
+    public function downloadFile(Request $request, $filepath)
     {
         // Decode URL-encoded path
         $filepath = urldecode($filepath);
@@ -1090,12 +1113,11 @@ class DataPerijinanController extends Controller
         $path = public_path($relativePath);
 
         // Debug logging
-        \Log::info('Download file attempt', [
+        \Log::info('File access attempt', [
             'filepath' => $filepath,
             'relativePath' => $relativePath,
             'fullPath' => $path,
-            'fileExists' => file_exists($path),
-            'realPath' => realpath($path)
+            'preview' => $request->has('preview')
         ]);
 
         // Verify the file exists and is within the expected directory
@@ -1103,6 +1125,9 @@ class DataPerijinanController extends Controller
         $publicPath = realpath(public_path('uploads/perijinan'));
         
         if ($realPath && $publicPath && strpos($realPath, $publicPath) === 0 && file_exists($path)) {
+            if ($request->has('preview')) {
+                return response()->file($path);
+            }
             return response()->download($path);
         }
 
@@ -1115,5 +1140,41 @@ class DataPerijinanController extends Controller
 
         return redirect()->back()
             ->with('error', 'File tidak ditemukan.');
+    }
+
+    /**
+     * Regenerate permit documents manually.
+     */
+    public function regenerateDocuments($id)
+    {
+        $application = DataPerijinan::findOrFail($id);
+
+        try {
+            $generatedDocs = \App\Services\DocumentGenerator::generateDocuments($application);
+
+            $application->update([
+                'file_pernyataan' => $generatedDocs['file_pernyataan'] ?? null,
+                'file_permohonan' => $generatedDocs['file_permohonan'] ?? null,
+                'file_keabsahan' => $generatedDocs['file_keabsahan'] ?? null,
+            ]);
+
+            // Log activity
+            ActivityLog::log(
+                'Mengenerasi ulang dokumen perijinan',
+                $application,
+                'updated',
+                [
+                    'no_registrasi' => $application->no_registrasi,
+                ],
+                'data_perijinan'
+            );
+
+            return redirect()->back()
+                ->with('success', 'Dokumen perijinan berhasil digenerasi ulang.');
+        } catch (\Exception $e) {
+            \Log::error('Error regenerating documents manually: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Gagal mengenerasi dokumen perijinan: ' . $e->getMessage());
+        }
     }
 }

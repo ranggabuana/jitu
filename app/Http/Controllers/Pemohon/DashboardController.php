@@ -385,6 +385,20 @@ class DashboardController extends Controller
                 ]);
             }
 
+            // ===============================
+            // 🔹 GENERATE DOKUMEN SURAT
+            // ===============================
+            try {
+                $generatedDocs = \App\Services\DocumentGenerator::generateDocuments($data);
+                $data->update([
+                    'file_pernyataan' => $generatedDocs['file_pernyataan'] ?? null,
+                    'file_permohonan' => $generatedDocs['file_permohonan'] ?? null,
+                    'file_keabsahan' => $generatedDocs['file_keabsahan'] ?? null,
+                ]);
+            } catch (\Exception $docEx) {
+                \Log::error('Error generating permit letters in storePengajuan: ' . $docEx->getMessage());
+            }
+
             DB::commit();
 
             return redirect()->route('pemohon.pengajuan.success', $data->id)
@@ -688,6 +702,20 @@ class DashboardController extends Controller
             'catatan_pemohon' => $request->catatan_pemohon, // Save applicant note
             'current_step' => 1, // Reset to first validation step
         ]);
+
+        // ===============================
+        // 🔹 RE-GENERATE DOKUMEN SURAT
+        // ===============================
+        try {
+            $generatedDocs = \App\Services\DocumentGenerator::generateDocuments($data);
+            $data->update([
+                'file_pernyataan' => $generatedDocs['file_pernyataan'] ?? null,
+                'file_permohonan' => $generatedDocs['file_permohonan'] ?? null,
+                'file_keabsahan' => $generatedDocs['file_keabsahan'] ?? null,
+            ]);
+        } catch (\Exception $docEx) {
+            \Log::error('Error re-generating permit letters in updatePengajuan: ' . $docEx->getMessage());
+        }
 
         \Log::info('Application updated', [
             'application_id' => $id,

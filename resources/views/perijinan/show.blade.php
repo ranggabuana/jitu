@@ -32,6 +32,7 @@
                 <i class="mdi mdi-sitemap text-lg"></i>
                 Alur Validasi
             </button>
+
         </nav>
     </div>
 
@@ -304,21 +305,9 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <style>
-        .active-tab-btn {
-            border-color: #3b82f6 !important;
-            color: #1d4ed8 !important;
-        }
 
-        .dark .active-tab-btn {
-            border-color: #3b82f6 !important;
-            color: #60a5fa !important;
-        }
-    </style>
 
-    <script>
         function switchTab(tabId) {
             // Hide all contents
             document.querySelectorAll('.tab-content').forEach(content => {
@@ -345,9 +334,12 @@
 
         // Handle initial tab
         document.addEventListener('DOMContentLoaded', () => {
-            const lastTab = localStorage.getItem('perijinan_detail_tab');
-            if (lastTab && document.getElementById(lastTab)) {
-                switchTab(lastTab);
+            let initialTab = '{{ session("active_tab") ? "tab-" . session("active_tab") : "" }}';
+            if (!initialTab) {
+                initialTab = localStorage.getItem('perijinan_detail_tab') || 'tab-umum';
+            }
+            if (initialTab && document.getElementById(initialTab)) {
+                switchTab(initialTab);
             }
         });
     </script>

@@ -59,9 +59,13 @@
                 <i class="mdi mdi-file-document-multiple-outline text-lg"></i>
                 Dokumen Pemohon
             </button>
-            <button onclick="switchTab('tab-surat')" id="btn-tab-surat" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all">
+            <button type="button" onclick="switchTab('tab-surat')" id="btn-tab-surat" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all">
                 <i class="mdi mdi-signature text-lg"></i>
                 Pengaturan TTE
+            </button>
+            <button type="button" onclick="switchTab('tab-templates')" id="btn-tab-templates" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all">
+                <i class="mdi mdi-file-document-edit-outline text-lg"></i>
+                Template Surat
             </button>
         </nav>
     </div>
@@ -391,6 +395,165 @@
                 </div>
             </div>
 
+            <!-- Tab: Template Surat -->
+            <div id="tab-templates" class="tab-content hidden space-y-0">
+
+                <!-- Full-width document editor shell -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+
+                    <!-- Header bar -->
+                    <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-700/30 flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h2 class="text-base font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                                <i class="mdi mdi-file-document-edit text-blue-500"></i>
+                                Pengaturan Template Surat Cetak Otomatis (Global)
+                            </h2>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                Template ini berlaku untuk semua jenis perizinan. Edit langsung seperti menggunakan pengolah kata.
+                            </p>
+                        </div>
+                        <button type="button" onclick="togglePlaceholderGuide()" id="btn-toggle-guide"
+                            class="flex items-center gap-2 text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded-lg px-3 py-2 transition-all">
+                            <i class="mdi mdi-tag-text-outline text-base"></i>
+                            Lihat Variabel Dinamis
+                        </button>
+                    </div>
+
+                    <!-- Collapsible placeholder guide (hidden by default) -->
+                    <div id="placeholder-guide" class="hidden border-b border-blue-100 dark:border-blue-900/50 bg-gradient-to-r from-blue-50 to-indigo-50/50 dark:from-blue-950/30 dark:to-indigo-950/20 px-6 py-4">
+                        <p class="text-xs text-blue-700 dark:text-blue-300 mb-3 leading-relaxed font-medium">
+                            <i class="mdi mdi-information-outline mr-1"></i>
+                            Ketikkan kode berikut di dalam dokumen. Kode ini akan <strong>diganti otomatis</strong> dengan data riil pemohon saat surat dicetak:
+                        </p>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach([
+                                '[NAMA PEMOHON]' => 'Nama Lengkap',
+                                '[NIK]' => 'NIK (KTP)',
+                                '[ALAMAT LENGKAP]' => 'Alamat Pemohon',
+                                '[NO HP]' => 'No. Telepon',
+                                '[EMAIL]' => 'Email',
+                                '[PEKERJAAN]' => 'Pekerjaan',
+                                '[NAMA IZIN]' => 'Jenis Izin',
+                                '[TANGGAL]' => 'Tanggal Pengajuan',
+                                '[NO REGISTRASI]' => 'No. Registrasi',
+                            ] as $code => $label)
+                            <button type="button"
+                                onclick="insertPlaceholder('{{ $code }}')"
+                                title="{{ $label }}"
+                                class="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-700 hover:border-blue-600 rounded-lg px-3 py-1.5 text-xs font-mono font-bold transition-all shadow-sm">
+                                <i class="mdi mdi-plus text-sm"></i>{{ $code }}
+                            </button>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <!-- Surat type tabs -->
+                    <div class="flex items-center border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30 px-4 gap-1">
+                        <button type="button" onclick="switchInnerTemplate('pernyataan')" id="btn-tpl-pernyataan"
+                            class="inner-tpl-btn py-3.5 px-5 text-sm font-semibold border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 -mb-px transition-all whitespace-nowrap">
+                            <i class="mdi mdi-file-certificate-outline mr-1.5"></i>Surat Pernyataan
+                        </button>
+                        <button type="button" onclick="switchInnerTemplate('permohonan')" id="btn-tpl-permohonan"
+                            class="inner-tpl-btn py-3.5 px-5 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 -mb-px transition-all whitespace-nowrap">
+                            <i class="mdi mdi-file-send-outline mr-1.5"></i>Surat Permohonan
+                        </button>
+                        <button type="button" onclick="switchInnerTemplate('keabsahan')" id="btn-tpl-keabsahan"
+                            class="inner-tpl-btn py-3.5 px-5 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 -mb-px transition-all whitespace-nowrap">
+                            <i class="mdi mdi-file-check-outline mr-1.5"></i>Surat Keabsahan
+                        </button>
+
+                        <!-- Spacer + action buttons -->
+                        <div class="ml-auto flex items-center gap-2 py-2">
+                            <button type="button" id="btn-preview-doc" onclick="openDocPreview()"
+                                class="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 border border-emerald-200 dark:border-emerald-800 rounded-lg px-3 py-2 transition-all">
+                                <i class="mdi mdi-eye-outline text-sm"></i> Pratinjau Dokumen
+                            </button>
+                            <button type="button" id="btn-reset-current" onclick="resetCurrentTemplate()"
+                                class="flex items-center gap-1.5 text-xs font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2 transition-all">
+                                <i class="mdi mdi-refresh text-sm"></i> Reset ke Default
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Editor panels — full width, one at a time -->
+                    <div class="p-0">
+
+                        <!-- Pernyataan -->
+                        <div id="tpl-pernyataan" class="inner-tpl-content">
+                            <textarea name="template_pernyataan" id="editor_pernyataan" class="w-full focus:outline-none">{{ $templatePernyataan }}</textarea>
+                        </div>
+
+                        <!-- Permohonan -->
+                        <div id="tpl-permohonan" class="inner-tpl-content hidden">
+                            <textarea name="template_permohonan" id="editor_permohonan" class="w-full focus:outline-none">{{ $templatePermohonan }}</textarea>
+                        </div>
+
+                        <!-- Keabsahan -->
+                        <div id="tpl-keabsahan" class="inner-tpl-content hidden">
+                            <textarea name="template_keabsahan" id="editor_keabsahan" class="w-full focus:outline-none">{{ $templateKeabsahan }}</textarea>
+                        </div>
+
+                    </div>
+
+                    <!-- Footer: Save -->
+                    <div class="px-6 py-4 bg-gray-50/60 dark:bg-gray-700/30 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                        <p class="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1.5">
+                            <i class="mdi mdi-shield-check-outline text-green-500"></i>
+                            Perubahan disimpan per-klik tombol. Antar surat tidak saling mempengaruhi.
+                        </p>
+                        <button type="submit"
+                            class="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white px-8 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 shadow-md shadow-blue-200 dark:shadow-blue-900/50">
+                            <i class="mdi mdi-content-save"></i> Simpan Template Surat
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Pratinjau Dokumen Modal -->
+            <div id="modal-doc-preview" class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
+                <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-4xl mx-4 flex flex-col" style="max-height: 92vh;">
+                    <!-- Modal header -->
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-t-2xl flex-shrink-0">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
+                                <i class="mdi mdi-file-eye-outline text-emerald-600 dark:text-emerald-400 text-lg"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-base font-bold text-gray-800 dark:text-white" id="modal-preview-title">Pratinjau Dokumen</h3>
+                                <p class="text-xs text-gray-500">Simulasi tampilan surat saat dicetak. Data ditampilkan dengan warna khusus.</p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="closeDocPreview()"
+                            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
+                            <i class="mdi mdi-close text-xl"></i>
+                        </button>
+                    </div>
+
+                    <!-- A4 paper container -->
+                    <div class="flex-1 overflow-y-auto bg-gray-200 dark:bg-gray-950 p-6">
+                        <!-- A4-like paper -->
+                        <div class="mx-auto bg-white shadow-xl rounded-sm" style="width: 794px; min-height: 1123px; padding: 60px 70px;">
+                            <div id="modal-preview-body" class="prose max-w-none text-gray-900 leading-relaxed" style="font-family: 'Times New Roman', serif; font-size: 12pt;">
+                                <!-- Content rendered here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal footer -->
+                    <div class="px-6 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-b-2xl flex-shrink-0 flex justify-between items-center">
+                        <p class="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                            <i class="mdi mdi-alert-circle-outline"></i>
+                            Data di atas adalah simulasi. Warna latar pada teks biru/amber akan hilang saat dicetak asli.
+                        </p>
+                        <button type="button" onclick="closeDocPreview()"
+                            class="px-5 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 transition-all">
+                            Tutup Pratinjau
+                        </button>
+                    </div>
+                </div>
+            </div>
+
         </form>
     </div>
 
@@ -480,6 +643,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/id.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js" referrerpolicy="origin"></script>
 
     <script>
         function switchTab(tabId) {
@@ -510,26 +674,79 @@
             flatpickr("#holiday_date", { locale: "id", dateFormat: "Y-m-d", altInput: true, altFormat: "d F Y", minDate: "today" });
 
             const btnAddHoliday = document.getElementById('btn-add-holiday');
-            btnAddHoliday.addEventListener('click', function() {
-                const date = document.getElementById('holiday_date').value;
-                const description = document.getElementById('holiday_description').value;
-                if (!date) { Swal.fire('Peringatan', 'Pilih tanggal!', 'warning'); return; }
+            if (btnAddHoliday) {
+                btnAddHoliday.addEventListener('click', function() {
+                    const date = document.getElementById('holiday_date').value;
+                    const description = document.getElementById('holiday_description').value;
+                    if (!date) { Swal.fire('Peringatan', 'Pilih tanggal!', 'warning'); return; }
 
-                btnAddHoliday.disabled = true;
-                btnAddHoliday.innerHTML = '<i class="mdi mdi-loading mdi-spin"></i>';
+                    btnAddHoliday.disabled = true;
+                    btnAddHoliday.innerHTML = '<i class="mdi mdi-loading mdi-spin"></i>';
 
-                fetch('{{ route('settings.application.holiday.store') }}', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                    body: JSON.stringify({ date: date, description: description })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) { location.reload(); } 
-                    else { Swal.fire('Gagal!', data.message, 'error'); }
-                })
-                .finally(() => { btnAddHoliday.disabled = false; btnAddHoliday.innerHTML = '<i class="mdi mdi-plus"></i> Tambah'; });
-            });
+                    fetch('{{ route('settings.application.holiday.store') }}', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                        body: JSON.stringify({ date: date, description: description })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) { location.reload(); } 
+                        else { Swal.fire('Gagal!', data.message, 'error'); }
+                    })
+                    .finally(() => { btnAddHoliday.disabled = false; btnAddHoliday.innerHTML = '<i class="mdi mdi-plus"></i> Tambah'; });
+                });
+            }
+
+            // Init TinyMCE for templates
+            if (document.getElementById('editor_pernyataan')) {
+                const tinymceConfigs = {
+                    height: 680,
+                    menubar: true,
+                    plugins: 'advlist autolink lists link image table code wordcount fullscreen print preview',
+                    toolbar: [
+                        'undo redo | styles | bold italic underline strikethrough | forecolor backcolor',
+                        'alignleft aligncenter alignright alignjustify | bullist numlist | outdent indent | table | fullscreen preview'
+                    ],
+                    toolbar_mode: 'sliding',
+                    content_style: [
+                        'body {',
+                        '  font-family: "Times New Roman", Times, serif;',
+                        '  font-size: 12pt;',
+                        '  line-height: 1.8;',
+                        '  color: #1a1a1a;',
+                        '  max-width: 700px;',
+                        '  margin: 32px auto;',
+                        '  padding: 0 12px;',
+                        '}'
+                    ].join('\n'),
+                    body_class: 'document-body',
+                    branding: false,
+                    promotion: false,
+                    resize: false,
+                    statusbar: true,
+                    elementpath: false,
+                };
+
+                const initTinyMCE = (id, type) => {
+                    tinymce.init({
+                        ...tinymceConfigs,
+                        selector: '#' + id,
+                        setup: function (editor) {
+                            editor.on('change keyup NodeChange', function () {
+                                editor.save(); // sync to hidden textarea
+                            });
+                        }
+                    });
+                };
+
+                initTinyMCE('editor_pernyataan', 'pernyataan');
+                initTinyMCE('editor_permohonan', 'permohonan');
+                initTinyMCE('editor_keabsahan', 'keabsahan');
+
+                // Restore last active tab
+                const lastInnerTab = localStorage.getItem('active_inner_tpl_tab') || 'pernyataan';
+                switchInnerTemplate(lastInnerTab);
+            }
         });
 
         function deleteHoliday(id) {
@@ -609,6 +826,139 @@
                     const form = document.getElementById('form-delete-dokumen');
                     form.action = '{{ route("settings.application.dokumen.delete", ["id" => ":id"]) }}'.replace(':id', id);
                     form.submit();
+                }
+            });
+        }
+
+        // --- Template Surat Helpers ---
+        const defaultTemplates = {
+            pernyataan: @json(\App\Services\DocumentGenerator::getDefaultPernyataanTemplate()),
+            permohonan: @json(\App\Services\DocumentGenerator::getDefaultPermohonanTemplate()),
+            keabsahan: @json(\App\Services\DocumentGenerator::getDefaultKeabsahanTemplate())
+        };
+
+        // Map placeholder → sample values for preview simulation
+        const previewData = {
+            '[NAMA PEMOHON]': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">Budi Santoso</span>',
+            '[NIK]': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">3304123456789001</span>',
+            '[ALAMAT LENGKAP]': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">Jl. Pemuda No. 45, Banjarnegara</span>',
+            '[NO HP]': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">081234567890</span>',
+            '[EMAIL]': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">budi.santoso@email.com</span>',
+            '[PEKERJAAN]': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">Wiraswasta</span>',
+            '[NAMA IZIN]': '<span style="background:#ede9fe;color:#5b21b6;padding:0 4px;border-radius:3px;font-weight:bold;">Izin Apotek</span>',
+            '[TANGGAL]': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">Banjarnegara, 20 Mei 2026</span>',
+            '[NO REGISTRASI]': '<span style="background:#fef3c7;color:#92400e;padding:0 4px;border-radius:3px;font-weight:bold;">REG-2026-0520-001</span>',
+        };
+
+        let activeTemplateType = 'pernyataan';
+
+        function switchInnerTemplate(type) {
+            activeTemplateType = type;
+
+            // Panel visibility
+            document.querySelectorAll('.inner-tpl-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('tpl-' + type).classList.remove('hidden');
+
+            // Tab active state — underline style
+            document.querySelectorAll('.inner-tpl-btn').forEach(el => {
+                el.classList.remove('border-blue-600', 'text-blue-600', 'dark:text-blue-400');
+                el.classList.add('border-transparent', 'text-gray-500');
+            });
+            const btn = document.getElementById('btn-tpl-' + type);
+            if (btn) {
+                btn.classList.add('border-blue-600', 'text-blue-600', 'dark:text-blue-400');
+                btn.classList.remove('border-transparent', 'text-gray-500');
+            }
+
+            localStorage.setItem('active_inner_tpl_tab', type);
+        }
+
+        function togglePlaceholderGuide() {
+            const guide = document.getElementById('placeholder-guide');
+            const isHidden = guide.classList.contains('hidden');
+            guide.classList.toggle('hidden', !isHidden);
+            const btn = document.getElementById('btn-toggle-guide');
+            if (isHidden) {
+                btn.innerHTML = '<i class="mdi mdi-chevron-up text-base"></i> Sembunyikan Variabel';
+            } else {
+                btn.innerHTML = '<i class="mdi mdi-tag-text-outline text-base"></i> Lihat Variabel Dinamis';
+            }
+        }
+
+        function insertPlaceholder(code) {
+            const ed = typeof tinymce !== 'undefined' ? tinymce.get('editor_' + activeTemplateType) : null;
+            if (ed) {
+                ed.insertContent(code);
+                ed.save();
+            } else {
+                const ta = document.getElementById('editor_' + activeTemplateType);
+                if (ta) {
+                    const start = ta.selectionStart;
+                    ta.value = ta.value.slice(0, start) + code + ta.value.slice(ta.selectionEnd);
+                    ta.selectionStart = ta.selectionEnd = start + code.length;
+                    ta.focus();
+                }
+            }
+        }
+
+        function getHtmlForType(type) {
+            const ed = typeof tinymce !== 'undefined' ? tinymce.get('editor_' + type) : null;
+            let html = ed ? ed.getContent() : (document.getElementById('editor_' + type)?.value || '');
+            Object.entries(previewData).forEach(([key, val]) => {
+                html = html.split(key).join(val);
+            });
+            return html;
+        }
+
+        const suraNames = {
+            pernyataan: 'Surat Pernyataan',
+            permohonan: 'Surat Permohonan',
+            keabsahan: 'Surat Keabsahan'
+        };
+
+        function openDocPreview() {
+            const type = activeTemplateType;
+            document.getElementById('modal-preview-title').textContent = 'Pratinjau — ' + suraNames[type];
+            document.getElementById('modal-preview-body').innerHTML = getHtmlForType(type);
+            const modal = document.getElementById('modal-doc-preview');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeDocPreview() {
+            const modal = document.getElementById('modal-doc-preview');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+
+        // Close modal on backdrop click
+        document.getElementById('modal-doc-preview').addEventListener('click', function(e) {
+            if (e.target === this) closeDocPreview();
+        });
+
+        function resetCurrentTemplate() {
+            resetTemplateToDefault(activeTemplateType);
+        }
+
+        function resetTemplateToDefault(type) {
+            Swal.fire({
+                title: 'Reset Template?',
+                text: 'Dokumen akan dikembalikan ke format bawaan asli. Perubahan yang belum disimpan akan hilang.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                confirmButtonText: 'Ya, Reset!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const activeEditor = typeof tinymce !== 'undefined' ? tinymce.get('editor_' + type) : null;
+                    if (activeEditor) {
+                        activeEditor.setContent(defaultTemplates[type]);
+                        activeEditor.save();
+                    } else {
+                        const el = document.getElementById('editor_' + type);
+                        if (el) el.value = defaultTemplates[type];
+                    }
+                    Swal.fire('Berhasil', 'Template berhasil di-reset. Klik "Simpan Template Surat" untuk menerapkan.', 'success');
                 }
             });
         }

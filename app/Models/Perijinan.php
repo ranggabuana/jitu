@@ -19,6 +19,9 @@ class Perijinan extends Model
         'informasi_biaya',
         'lama_waktu_proses',
         'gambar_alur',
+        'template_pernyataan',
+        'template_permohonan',
+        'template_keabsahan',
     ];
 
     /**

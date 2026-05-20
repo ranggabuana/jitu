@@ -22,10 +22,26 @@ class ApplicationSettingsController extends Controller
         $socialMediaSettings = Setting::where('group', 'social_media')->get()->pluck('value', 'key');
         $workingHours = Setting::where('group', 'working_hours')->get()->pluck('value', 'key');
         
+        // Load global templates
+        $templateSettings = Setting::where('group', 'templates')->get()->pluck('value', 'key');
+        $templatePernyataan = $templateSettings['template_pernyataan'] ?? \App\Services\DocumentGenerator::getDefaultPernyataanTemplate();
+        $templatePermohonan = $templateSettings['template_permohonan'] ?? \App\Services\DocumentGenerator::getDefaultPermohonanTemplate();
+        $templateKeabsahan = $templateSettings['template_keabsahan'] ?? \App\Services\DocumentGenerator::getDefaultKeabsahanTemplate();
+
         $holidays = Holiday::orderBy('date', 'asc')->get();
         $masterDokumens = \App\Models\MasterDokumenPemohon::orderBy('nama_dokumen', 'asc')->get();
 
-        return view('settings.application', compact('generalSettings', 'contactSettings', 'socialMediaSettings', 'workingHours', 'holidays', 'masterDokumens'));
+        return view('settings.application', compact(
+            'generalSettings',
+            'contactSettings',
+            'socialMediaSettings',
+            'workingHours',
+            'holidays',
+            'masterDokumens',
+            'templatePernyataan',
+            'templatePermohonan',
+            'templateKeabsahan'
+        ));
     }
 
     /**
@@ -55,6 +71,11 @@ class ApplicationSettingsController extends Controller
 
             // Working Hours
             'work_hours' => 'nullable|array',
+
+            // Templates
+            'template_pernyataan' => 'nullable|string',
+            'template_permohonan' => 'nullable|string',
+            'template_keabsahan' => 'nullable|string',
         ], [
             'app_name.required' => 'Nama aplikasi wajib diisi.',
             'email.email' => 'Format email tidak valid.',
@@ -71,6 +92,7 @@ class ApplicationSettingsController extends Controller
             'contact' => Setting::where('group', 'contact')->get()->pluck('value', 'key')->toArray(),
             'social_media' => Setting::where('group', 'social_media')->get()->pluck('value', 'key')->toArray(),
             'working_hours' => Setting::where('group', 'working_hours')->get()->pluck('value', 'key')->toArray(),
+            'templates' => Setting::where('group', 'templates')->get()->pluck('value', 'key')->toArray(),
         ];
 
         // ... (logo, tte, panduan uploads remain the same) ...
@@ -132,6 +154,11 @@ class ApplicationSettingsController extends Controller
         $workHoursData = $request->input('work_hours', []);
         Setting::set('work_hours', json_encode($workHoursData), 'text', 'working_hours', 'Detail Jam Kerja Harian');
 
+        // Template Settings
+        Setting::set('template_pernyataan', $request->template_pernyataan, 'textarea', 'templates', 'Template Surat Pernyataan');
+        Setting::set('template_permohonan', $request->template_permohonan, 'textarea', 'templates', 'Template Surat Permohonan');
+        Setting::set('template_keabsahan', $request->template_keabsahan, 'textarea', 'templates', 'Template Surat Keabsahan');
+
         // Capture new data after updating
         $newData = [
             'general' => [
@@ -154,6 +181,11 @@ class ApplicationSettingsController extends Controller
             ],
             'working_hours' => [
                 'work_hours' => $workHoursData,
+            ],
+            'templates' => [
+                'template_pernyataan' => $request->template_pernyataan,
+                'template_permohonan' => $request->template_permohonan,
+                'template_keabsahan' => $request->template_keabsahan,
             ],
         ];
 

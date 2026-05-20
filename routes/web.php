@@ -114,6 +114,7 @@ Route::middleware(['auth'])->group(function () {
         Route::put('perijinan/{id}/validation-flow/{flowId}', [PerijinanController::class, 'updateValidationFlow'])->name('perijinan.validation-flow.update');
         Route::delete('perijinan/{id}/validation-flow/{flowId}', [PerijinanController::class, 'deleteValidationFlow'])->name('perijinan.validation-flow.delete');
         Route::post('perijinan/{id}/validation-flow/reorder', [PerijinanController::class, 'reorderValidationFlows'])->name('perijinan.validation-flow.reorder');
+
     });
 
     // Berita Routes (Admin Only)
@@ -182,6 +183,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{id}/validate', [DataPerijinanController::class, 'processValidation'])->name('validate');
         Route::patch('/{id}/status', [DataPerijinanController::class, 'updateStatus'])->name('update-status');
         Route::get('/download/{filepath}', [DataPerijinanController::class, 'downloadFile'])->name('download-file')->where('filepath', '.*');
+        Route::post('/{id}/regenerate-documents', [DataPerijinanController::class, 'regenerateDocuments'])->name('regenerate-documents');
     });
 
     // Pemohon Routes (accessible by authenticated pemohon users)

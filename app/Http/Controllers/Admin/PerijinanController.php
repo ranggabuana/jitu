@@ -626,4 +626,41 @@ class PerijinanController extends Controller
         return redirect()->route('perijinan.index')
             ->with('success', 'Jenis Perijinan berhasil dihapus.');
     }
+
+    /**
+     * Update the templates for letters.
+     */
+    public function updateTemplates(Request $request, string $id)
+    {
+        $perijinan = Perijinan::findOrFail($id);
+
+        $request->validate([
+            'template_pernyataan' => 'nullable|string',
+            'template_permohonan' => 'nullable|string',
+            'template_keabsahan' => 'nullable|string',
+        ]);
+
+        $perijinan->update([
+            'template_pernyataan' => $request->template_pernyataan,
+            'template_permohonan' => $request->template_permohonan,
+            'template_keabsahan' => $request->template_keabsahan,
+        ]);
+
+        // Log activity
+        \App\Models\ActivityLog::log(
+            'Memperbarui template surat perijinan',
+            $perijinan,
+            'updated',
+            [
+                'template_pernyataan' => !empty($request->template_pernyataan) ? 'Updated' : 'Empty',
+                'template_permohonan' => !empty($request->template_permohonan) ? 'Updated' : 'Empty',
+                'template_keabsahan' => !empty($request->template_keabsahan) ? 'Updated' : 'Empty',
+            ],
+            'perijinan'
+        );
+
+        return redirect()->route('perijinan.show', $id)
+            ->with('success', 'Template surat berhasil diperbarui.')
+            ->with('active_tab', 'templates');
+    }
 }

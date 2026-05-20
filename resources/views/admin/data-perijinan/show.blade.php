@@ -27,13 +27,147 @@
                     </p>
                 </div>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-3">
                 <span class="text-sm text-gray-500 dark:text-gray-400">
                     <i class="mdi mdi-clock"></i> {{ $application->created_at->format('d M Y') }}
                 </span>
             </div>
         </div>
     </div>
+
+    <!-- Identity Modal -->
+    <div id="modal-identity" class="fixed inset-0 z-[400] hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50 dark:bg-gray-800/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
+                        <i class="mdi mdi-account-details text-blue-600 dark:text-blue-400 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-gray-800 dark:text-white">Identitas Lengkap Pemohon</h3>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Data Profil & Perusahaan</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeIdentityModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+                    <i class="mdi mdi-close text-2xl"></i>
+                </button>
+            </div>
+            
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Personal Info -->
+                    <div class="space-y-4">
+                        <h4 class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest border-b border-blue-100 dark:border-blue-900/30 pb-2">Informasi Pribadi</h4>
+                        
+                        <div>
+                            <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Nama Lengkap</label>
+                            <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ $application->user->name }}</p>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">NIK / NIP</label>
+                            <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ $application->user->nip ?? $application->user->nik ?? '-' }}</p>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Email</label>
+                            <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ $application->user->email }}</p>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">No. Telepon</label>
+                            <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ $application->user->no_hp ?? '-' }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Address & Business -->
+                    <div class="space-y-4">
+                        <h4 class="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest border-b border-purple-100 dark:border-purple-900/30 pb-2">Domisili & Bisnis</h4>
+                        
+                        <div>
+                            <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Status Pemohon</label>
+                            <div class="mt-1">
+                                @if ($application->user->status_pemohon === 'badan_usaha')
+                                    <span class="px-2 py-1 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-[10px] font-bold">
+                                        <i class="mdi mdi-building mr-1"></i> BADAN USAHA
+                                    </span>
+                                @else
+                                    <span class="px-2 py-1 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[10px] font-bold">
+                                        <i class="mdi mdi-account mr-1"></i> PERORANGAN
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
+
+                        @if ($application->user->status_pemohon === 'badan_usaha')
+                            <div>
+                                <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Nama Perusahaan</label>
+                                <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ $application->user->nama_perusahaan ?? '-' }}</p>
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">NPWP</label>
+                                <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ $application->user->npwp ?? '-' }}</p>
+                            </div>
+                        @endif
+
+                        <div>
+                            <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Alamat Domisili</label>
+                            <p class="text-xs font-medium text-gray-600 dark:text-gray-400 leading-relaxed">
+                                {{ $application->user->alamat_domisili ?? $application->user->alamat_lengkap ?? '-' }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                @if($application->form_data && count($application->form_data) > 0)
+                    <div class="mt-8">
+                        <h4 class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest border-b border-emerald-100 dark:border-emerald-900/30 pb-2 mb-4">Data Tambahan Formulir</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                            @foreach ($application->perijinan->activeFormFields as $field)
+                                @if (isset($application->form_data[$field->id]) && !empty($application->form_data[$field->id]) && $field->type !== 'file')
+                                    <div>
+                                        <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">{{ $field->label }}</label>
+                                        <p class="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                                            @if (is_array($application->form_data[$field->id]))
+                                                {{ implode(', ', $application->form_data[$field->id]) }}
+                                            @else
+                                                {{ $application->form_data[$field->id] }}
+                                            @endif
+                                        </p>
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            </div>
+
+            <div class="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 flex justify-end">
+                <button type="button" onclick="closeIdentityModal()" class="px-6 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-xl text-sm font-bold transition-all">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @push('scripts')
+    <script>
+        function openIdentityModal() {
+            const modal = document.getElementById('modal-identity');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeIdentityModal() {
+            const modal = document.getElementById('modal-identity');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        document.getElementById('modal-identity').addEventListener('click', function(e) {
+            if (e.target === this) closeIdentityModal();
+        });
+    </script>
+    @endpush
 
     <!-- Main Grid -->
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -97,23 +231,29 @@
                                             </div>
                                             <div
                                                 class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                @php
+                                                    $routePath = str_replace('uploads/perijinan/', '', $file);
+                                                    $previewUrl = route('data-perijinan.download-file', ['filepath' => rawurlencode($routePath), 'preview' => 1]);
+                                                    $downloadUrl = route('data-perijinan.download-file', rawurlencode($routePath));
+                                                @endphp
+
                                                 @if ($isImage)
-                                                    @php
-                                                        // Extract the path after 'uploads/perijinan/' for the route
-                                                        $routePath = str_replace('uploads/perijinan/', '', $file);
-                                                    @endphp
                                                     <button
-                                                        onclick="previewImage('{{ route('data-perijinan.download-file', rawurlencode($routePath)) }}', '{{ basename($file) }}')"
+                                                        onclick="previewImage('{{ $previewUrl }}', '{{ basename($file) }}')"
                                                         class="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
-                                                        title="Preview">
+                                                        title="Pratinjau Gambar">
+                                                        <i class="mdi mdi-eye"></i>
+                                                    </button>
+                                                @elseif($isPdf)
+                                                    <button
+                                                        onclick="openPdfPreview('{{ $previewUrl }}', '{{ basename($file) }}')"
+                                                        class="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                                                        title="Pratinjau PDF">
                                                         <i class="mdi mdi-eye"></i>
                                                     </button>
                                                 @endif
-                                                @php
-                                                    // Extract the path after 'uploads/perijinan/' for the route
-                                                    $routePath = str_replace('uploads/perijinan/', '', $file);
-                                                @endphp
-                                                <a href="{{ route('data-perijinan.download-file', rawurlencode($routePath)) }}"
+
+                                                <a href="{{ $downloadUrl }}"
                                                     class="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-colors"
                                                     title="Unduh">
                                                     <i class="mdi mdi-download"></i>
@@ -128,96 +268,223 @@
                 </div>
             @endif
 
-            <!-- Form Data -->
-            @if ($application->perijinan->activeFormFields->count() > 0 && count($application->form_data) > 0)
-                <div
-                    class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700">
-                        <h2 class="font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                            <i class="mdi mdi-form-textbox text-blue-600"></i>
-                            Data Pengajuan
-                        </h2>
+            <!-- Dokumen Surat Otomatis -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <!-- Section header -->
+                <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-between flex-wrap gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                            <i class="mdi mdi-file-document-multiple text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-white text-base">Dokumen Surat Pengajuan</h2>
+                            <p class="text-blue-100 text-xs mt-0.5">Digenerate otomatis dari data pemohon · Format PDF</p>
+                        </div>
                     </div>
-                    <div class="p-5 space-y-3">
-                        @foreach ($application->perijinan->activeFormFields as $field)
-                            @if (isset($application->form_data[$field->id]) &&
-                                    !empty($application->form_data[$field->id]) &&
-                                    $field->type !== 'file')
-                                <div
-                                    class="flex items-start gap-3 pb-3 border-b border-gray-100 dark:border-gray-700 last:border-0 last:pb-0">
-                                    <div class="w-32 flex-shrink-0">
-                                        <label
-                                            class="text-xs text-gray-500 dark:text-gray-400 uppercase">{{ $field->label }}</label>
-                                    </div>
-                                    <div class="flex-1">
-                                        <p class="text-gray-800 dark:text-white">
-                                            @if (is_array($application->form_data[$field->id]))
-                                                {{ implode(', ', $application->form_data[$field->id]) }}
-                                            @else
-                                                {{ $application->form_data[$field->id] }}
-                                            @endif
-                                        </p>
-                                    </div>
-                                </div>
-                            @endif
-                        @endforeach
-                    </div>
+                    <form action="{{ route('data-perijinan.regenerate-documents', $application->id) }}" method="POST"
+                        onsubmit="return confirm('Generasi ulang akan menimpa dokumen lama. Lanjutkan?');">
+                        @csrf
+                        <button type="submit"
+                            class="flex items-center gap-1.5 px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white border border-white/30 rounded-lg text-xs font-semibold transition-all">
+                            <i class="mdi mdi-sync text-sm"></i> Generasi Ulang
+                        </button>
+                    </form>
                 </div>
-            @endif
 
-            <!-- Pemohon Info -->
-            <div
-                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700">
-                    <h2 class="font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                        <i class="mdi mdi-account text-blue-600"></i>
-                        Informasi Pemohon
-                    </h2>
-                </div>
                 <div class="p-5">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="text-xs text-gray-500 dark:text-gray-400 uppercase">Nama</label>
-                            <p class="font-medium text-gray-800 dark:text-white">{{ $application->user->name }}</p>
-                        </div>
-                        <div>
-                            <label class="text-xs text-gray-500 dark:text-gray-400 uppercase">Email</label>
-                            <p class="font-medium text-gray-800 dark:text-white">{{ $application->user->email }}</p>
-                        </div>
-                        <div>
-                            <label class="text-xs text-gray-500 dark:text-gray-400 uppercase">No. Telepon</label>
-                            <p class="font-medium text-gray-800 dark:text-white">{{ $application->user->no_hp ?? '-' }}
-                            </p>
-                        </div>
-                        <div>
-                            <label class="text-xs text-gray-500 dark:text-gray-400 uppercase">Status</label>
-                            <p class="font-medium text-gray-800 dark:text-white">
-                                @if ($application->user->status_pemohon === 'badan_usaha')
-                                    <i class="mdi mdi-building text-purple-600"></i> Badan Usaha
+                    @if($application->file_pernyataan || $application->file_permohonan || $application->file_keabsahan)
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+                            @php
+                            $docItems = [
+                                [
+                                    'label'   => 'Surat Pernyataan',
+                                    'desc'    => 'Pernyataan dari pemohon atas kebenaran data',
+                                    'icon'    => 'mdi-file-certificate-outline',
+                                    'color'   => 'amber',
+                                    'file'    => $application->file_pernyataan,
+                                    'id'      => 'pernyataan',
+                                ],
+                                [
+                                    'label'   => 'Surat Permohonan',
+                                    'desc'    => 'Permohonan resmi dari pemohon kepada instansi',
+                                    'icon'    => 'mdi-file-send-outline',
+                                    'color'   => 'blue',
+                                    'file'    => $application->file_permohonan,
+                                    'id'      => 'permohonan',
+                                ],
+                                [
+                                    'label'   => 'Surat Keabsahan',
+                                    'desc'    => 'Pernyataan keabsahan dokumen yang dilampirkan',
+                                    'icon'    => 'mdi-file-check-outline',
+                                    'color'   => 'emerald',
+                                    'file'    => $application->file_keabsahan,
+                                    'id'      => 'keabsahan',
+                                ],
+                            ];
+                            $colorMap = [
+                                'amber'   => ['bg' => 'bg-amber-50 dark:bg-amber-900/10',   'border' => 'border-amber-200 dark:border-amber-800/40',   'icon_bg' => 'bg-amber-100 dark:bg-amber-900/30',   'icon_text' => 'text-amber-600 dark:text-amber-400',   'badge' => 'bg-amber-500', 'btn_preview' => 'bg-amber-500 hover:bg-amber-600'],
+                                'blue'    => ['bg' => 'bg-blue-50 dark:bg-blue-900/10',     'border' => 'border-blue-200 dark:border-blue-800/40',     'icon_bg' => 'bg-blue-100 dark:bg-blue-900/30',     'icon_text' => 'text-blue-600 dark:text-blue-400',     'badge' => 'bg-blue-500',  'btn_preview' => 'bg-blue-600 hover:bg-blue-700'],
+                                'emerald' => ['bg' => 'bg-emerald-50 dark:bg-emerald-900/10', 'border' => 'border-emerald-200 dark:border-emerald-800/40', 'icon_bg' => 'bg-emerald-100 dark:bg-emerald-900/30', 'icon_text' => 'text-emerald-600 dark:text-emerald-400', 'badge' => 'bg-emerald-500', 'btn_preview' => 'bg-emerald-600 hover:bg-emerald-700'],
+                            ];
+                            @endphp
+
+                            @foreach($docItems as $doc)
+                                @if($doc['file'])
+                                    @php
+                                        $c = $colorMap[$doc['color']];
+                                        $routePath = str_replace('uploads/perijinan/', '', $doc['file']);
+                                        $fileUrl = asset($doc['file']);
+                                    @endphp
+                                    <div class="rounded-2xl border {{ $c['border'] }} {{ $c['bg'] }} overflow-hidden flex flex-col transition-all hover:shadow-md">
+
+                                        <!-- Card top -->
+                                        <div class="p-5 flex-1">
+                                            <div class="flex items-start gap-3 mb-3">
+                                                <div class="w-12 h-12 rounded-xl {{ $c['icon_bg'] }} flex items-center justify-center flex-shrink-0">
+                                                    <i class="mdi {{ $doc['icon'] }} text-2xl {{ $c['icon_text'] }}"></i>
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-white {{ $c['badge'] }} mb-1">
+                                                        <i class="mdi mdi-file-pdf-box text-xs"></i> PDF
+                                                    </span>
+                                                    <h4 class="text-sm font-bold text-gray-800 dark:text-white leading-tight">{{ $doc['label'] }}</h4>
+                                                    <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 leading-snug">{{ $doc['desc'] }}</p>
+                                                </div>
+                                            </div>
+                                            <p class="text-[10px] text-gray-400 dark:text-gray-500 truncate font-mono bg-white/60 dark:bg-gray-900/40 rounded-lg px-2 py-1 border border-gray-100 dark:border-gray-700"
+                                               title="{{ basename($doc['file']) }}">
+                                                {{ basename($doc['file']) }}
+                                            </p>
+                                        </div>
+
+                                        <!-- Card actions -->
+                                        <div class="px-4 pb-4 flex items-center gap-2">
+                                            <button type="button"
+                                                onclick="openPdfPreview('{{ $fileUrl }}', '{{ $doc['label'] }}')"
+                                                class="flex-1 flex items-center justify-center gap-1.5 py-2 {{ $c['btn_preview'] }} text-white rounded-xl text-xs font-bold transition-all shadow-sm">
+                                                <i class="mdi mdi-eye-outline text-sm"></i> Pratinjau
+                                            </button>
+                                            <a href="{{ route('data-perijinan.download-file', rawurlencode($routePath)) }}"
+                                                class="flex-1 flex items-center justify-center gap-1.5 py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold transition-all">
+                                                <i class="mdi mdi-download text-sm"></i> Unduh
+                                            </a>
+                                        </div>
+                                    </div>
                                 @else
-                                    <i class="mdi mdi-account text-blue-600"></i> Perorangan
+                                    {{-- Placeholder for missing doc --}}
+                                    @php $c = $colorMap[$doc['color']]; @endphp
+                                    <div class="rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/20 flex flex-col items-center justify-center p-6 min-h-[180px]">
+                                        <i class="mdi {{ $doc['icon'] }} text-3xl text-gray-300 dark:text-gray-600 mb-2"></i>
+                                        <p class="text-xs font-semibold text-gray-400 dark:text-gray-500">{{ $doc['label'] }}</p>
+                                        <p class="text-[10px] text-gray-400 mt-1">Belum digenerate</p>
+                                    </div>
                                 @endif
-                            </p>
+                            @endforeach
+
                         </div>
-                        @if ($application->user->status_pemohon === 'badan_usaha')
-                            <div>
-                                <label class="text-xs text-gray-500 dark:text-gray-400 uppercase">Perusahaan</label>
-                                <p class="font-medium text-gray-800 dark:text-white">
-                                    {{ $application->user->nama_perusahaan ?? '-' }}</p>
+                    @else
+                        <div class="flex flex-col items-center py-10">
+                            <div class="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-900/50 flex items-center justify-center mb-4">
+                                <i class="mdi mdi-file-document-remove-outline text-3xl text-gray-400"></i>
+                            </div>
+                            <p class="text-sm font-semibold text-gray-500 dark:text-gray-400">Dokumen surat belum digenerate</p>
+                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 mb-4">Klik tombol di bawah untuk membuat dokumen dari data pengajuan ini</p>
+                            <form action="{{ route('data-perijinan.regenerate-documents', $application->id) }}" method="POST">
+                                @csrf
+                                <button type="submit"
+                                    class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-all shadow-md flex items-center gap-2">
+                                    <i class="mdi mdi-file-plus-outline"></i> Generate Dokumen Sekarang
+                                </button>
+                            </form>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            <!-- PDF Preview Modal -->
+            <div id="modal-pdf-preview" class="fixed inset-0 z-[300] hidden items-center justify-center bg-black/70 backdrop-blur-sm">
+                <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+                     style="width: min(960px, 95vw); height: 90vh;">
+                    <!-- Modal header -->
+                    <div class="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex-shrink-0">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
+                                <i class="mdi mdi-file-pdf-box text-red-600 dark:text-red-400 text-lg"></i>
                             </div>
                             <div>
-                                <label class="text-xs text-gray-500 dark:text-gray-400 uppercase">NPWP</label>
-                                <p class="font-medium text-gray-800 dark:text-white">
-                                    {{ $application->user->npwp ?? '-' }}</p>
+                                <h3 id="pdf-modal-title" class="text-sm font-bold text-gray-800 dark:text-white">Pratinjau Dokumen</h3>
+                                <p class="text-[10px] text-gray-500">Pratinjau langsung · Untuk mengunduh klik tombol Unduh</p>
                             </div>
-                        @endif
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <a id="pdf-modal-download" href="#"
+                                class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-all">
+                                <i class="mdi mdi-download text-sm"></i> Unduh
+                            </a>
+                            <a id="pdf-modal-open" href="#" target="_blank"
+                                class="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-xs font-semibold transition-all">
+                                <i class="mdi mdi-open-in-new text-sm"></i> Tab Baru
+                            </a>
+                            <button type="button" onclick="closePdfPreview()"
+                                class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
+                                <i class="mdi mdi-close text-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- PDF iframe -->
+                    <div class="flex-1 bg-gray-200 dark:bg-gray-950 overflow-hidden">
+                        <iframe id="pdf-modal-iframe" src="" class="w-full h-full border-0"
+                            title="Pratinjau PDF">
+                        </iframe>
                     </div>
                 </div>
             </div>
+
+            @push('scripts')
+            <script>
+                function openPdfPreview(url, title) {
+                    document.getElementById('pdf-modal-title').textContent = title;
+                    document.getElementById('pdf-modal-iframe').src = url;
+                    document.getElementById('pdf-modal-open').href = url;
+                    document.getElementById('pdf-modal-download').href = url;
+
+                    const modal = document.getElementById('modal-pdf-preview');
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                }
+
+                function closePdfPreview() {
+                    const modal = document.getElementById('modal-pdf-preview');
+                    modal.classList.remove('flex');
+                    modal.classList.add('hidden');
+                    // Stop loading the pdf when closed
+                    document.getElementById('pdf-modal-iframe').src = '';
+                }
+
+                document.getElementById('modal-pdf-preview').addEventListener('click', function(e) {
+                    if (e.target === this) closePdfPreview();
+                });
+            </script>
+            @endpush
         </div>
 
         <!-- Right: Status & Timeline -->
         <div class="space-y-4">
+            <!-- Identity Detail Shortcut - Visible & Attractive -->
+            <button type="button" onclick="openIdentityModal()"
+                class="w-full flex items-center justify-center gap-3 p-4 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white rounded-2xl shadow-lg shadow-blue-500/20 transition-all hover:-translate-y-1 active:scale-[0.98] group">
+                <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center transition-transform group-hover:scale-110">
+                    <i class="mdi mdi-account-box-multiple text-white text-xl"></i>
+                </div>
+                <div class="text-left flex-1">
+                    <p class="text-[10px] text-blue-100 font-bold uppercase tracking-widest mb-0.5">Informasi Lengkap</p>
+                    <p class="text-sm font-bold">Detail Identitas Pemohon</p>
+                </div>
+                <i class="mdi mdi-chevron-right text-xl text-white/50 group-hover:text-white transition-colors"></i>
+            </button>
+
             <!-- Progress Card -->
             <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl shadow-lg p-5 text-white">
                 <div class="flex items-center justify-between mb-4">
