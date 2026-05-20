@@ -107,7 +107,13 @@ class DocumentGenerator
                 if (class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
                     $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($fullHtml)
                         ->setPaper('a4', 'portrait')
-                        ->setWarnings(false);
+                        ->setWarnings(false)
+                        ->setOptions([
+                            'isRemoteEnabled' => true,
+                            'isHtml5ParserEnabled' => true,
+                            'isFontSubsettingEnabled' => true,
+                            'defaultFont' => 'DejaVu Sans',
+                        ]);
                     
                     $absolutePdfPath = $absoluteFolder . '/' . $config['filename'] . '.pdf';
                     File::put($absolutePdfPath, $pdf->output());
@@ -199,68 +205,71 @@ class DocumentGenerator
     private static function wrapHtmlTemplate(string $content, string $type, string $noRegistrasi = '-'): string
     {
         return '<!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>' . Str::title($type) . '</title>
     <style>
         @page {
-            margin: 40px 60px 70px 60px;
-        }
-        footer {
-            position: fixed; 
-            bottom: -50px; 
-            left: 0px; 
-            right: 0px;
-            height: 40px; 
-            text-align: center;
+            margin: 1cm 1.5cm 2cm 1.5cm;
         }
         body {
-            font-family: "DejaVu Sans", sans-serif;
-            font-size: 12px;
-            line-height: 1.4;
-            color: #333333;
+            font-family: "DejaVu Sans", sans-serif !important;
+            font-size: 11pt;
+            line-height: 1.5;
+            color: #000;
             margin: 0;
             padding: 0;
         }
+        footer {
+            position: fixed;
+            bottom: -1cm;
+            left: 0;
+            right: 0;
+            height: 1.5cm;
+            text-align: center;
+            border-top: 0.5pt solid #ccc;
+            padding-top: 5pt;
+        }
+        .footer-text {
+            font-size: 8pt;
+            color: #666;
+            font-style: italic;
+        }
         h2 {
-            font-size: 16px;
+            font-size: 14pt;
             font-weight: bold;
             margin-top: 0;
-            margin-bottom: 15px;
+            margin-bottom: 15pt;
             text-align: center;
+            text-transform: uppercase;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
-            margin-bottom: 10px;
+            margin: 10pt 0;
         }
         table td {
-            padding: 3px 0;
+            padding: 2pt 0;
             vertical-align: top;
         }
         p {
-            margin-bottom: 10px;
+            margin-bottom: 8pt;
             text-align: justify;
         }
-        .footer-text {
-            font-size: 9px;
-            color: #666;
-            font-style: italic;
-            border-top: 1px solid #cccccc;
-            padding-top: 5px;
-        }
         .checkmark {
-            font-family: "DejaVu Sans", sans-serif;
-            color: #000;
+            font-family: "DejaVu Sans", sans-serif !important;
+        }
+        .signature-table {
+            margin-top: 20pt;
+            page-break-inside: avoid;
         }
     </style>
 </head>
 <body>
     <footer>
         <div class="footer-text">
-            Dokumen ini dibuat secara elektronik melalui Sistem Perizinan Online "Dawet Ayu" Banjarnegara. <br>
+            Dokumen ini dibuat secara elektronik melalui Sistem Perizinan Online "Dawet Ayu" Banjarnegara.<br/>
             Nomor Dokumen: ' . $noRegistrasi . '
         </div>
     </footer>
@@ -314,7 +323,7 @@ class DocumentGenerator
 </table>
 <p>Dengan ini saya menyatakan bersedia mentaati dan tidak melanggar ketentuan peraturan perundang-undangan.</p>
 <p>Demikian surat pernyataan ini saya buat dengan sebenarnya untuk dipergunakan sebagaimana mestinya.</p>
-<table style="margin-top: 15px;">
+<table class="signature-table">
     <tbody>
         <tr>
             <td style="width: 60%;">&nbsp;</td>
@@ -368,7 +377,7 @@ class DocumentGenerator
 <p>Dengan ini mengajukan permohonan untuk memperoleh :<br />Perizinan: <strong>[NAMA IZIN]</strong></p>
 <p>Sebagai bahan pertimbangan, bersama ini kami sampaikan kelengkapan persyaratan melalui Sistem Perizinan Online "Dawet Ayu" Banjarnegara.</p>
 <p>Demikian permohonan ini disampaikan, atas perhatian dan perkenannya diucapkan terima kasih.</p>
-<table style="margin-top: 15px;">
+<table class="signature-table">
     <tbody>
         <tr>
             <td style="width: 60%;">
@@ -427,7 +436,7 @@ class DocumentGenerator
 </table>
 <p>Dengan ini kami menyatakan dengan sesungguhnya bahwa semua informasi yang disampaikan dalam seluruh dokumen serta lampiran-lampirannya yang kami upload ini adalah benar dan kesatuan yang tidak dapat dipisahkan. Apabila diketemukan dan/atau dibuktikan adanya penipuan/pemalsuan atas informasi yang kami sampaikan, maka kami bersedia dikenakan dan menerima penerapan sanksi.</p>
 <p>Demikian surat pernyataan kebenaran dan keabsahan data ini kami buat untuk digunakan secara semestinya dan atas perhatiannya diucapkan terima kasih.</p>
-<table style="margin-top: 15px;">
+<table class="signature-table">
     <tbody>
         <tr>
             <td style="width: 60%;">&nbsp;</td>
