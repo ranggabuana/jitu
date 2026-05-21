@@ -29,8 +29,8 @@ class PenggunaController extends Controller
         $sortBy = in_array($sortBy, $allowedSorts) ? $sortBy : 'name';
         $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? $sortOrder : 'asc';
 
-        // Exclude pemohon role from data pengguna
-        $query = User::where('role', '!=', 'pemohon')->with('opd');
+        // Exclude pemohon and pemerintah role from data pengguna
+        $query = User::whereNotIn('role', ['pemohon', 'pemerintah'])->with('opd');
 
         if ($search) {
             $query->where(function ($q) use ($search) {
