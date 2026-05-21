@@ -147,6 +147,9 @@ class DashboardController extends Controller
                         'nama_perijinan' => $application->perijinan->nama_perijinan,
                     ],
                     'validasi_records' => $application->validasiRecords->map(function($validasi) {
+                        // Determine validator label and display info
+                        $displayRole = $validasi->validationFlow->role_label ?? 'Validator';
+                        
                         return [
                             'id' => $validasi->id,
                             'status' => $validasi->status,
@@ -156,13 +159,12 @@ class DashboardController extends Controller
                             'validated_at' => $validasi->validated_at,
                             'validation_flow' => [
                                 'role' => $validasi->validationFlow->role,
-                                'role_label' => $validasi->validationFlow->role_label,
+                                'role_label' => $displayRole,
                             ],
                             'validator' => $validasi->validator ? [
-                                'id' => $validasi->validator->id,
-                                'name' => $validasi->validator->name,
-                                'role' => $validasi->validator->role,
-                                'role_label' => $validasi->validator->role_label,
+                                'role_label' => $displayRole,
+                                // We mask the specific name for security/privacy
+                                'name' => maskName($validasi->validator->name),
                             ] : null,
                         ];
                     }),
@@ -273,13 +275,14 @@ class DashboardController extends Controller
 
                 if ($field) {
                     foreach ((array) $files as $index => $file) {
-                        $ruleKey = "form_files.$fieldId.$index";
-                        $rules = ['file', 'max:10240']; // max 10MB
+                        $ruleKey = "form_fields.$fieldId.$index";
+                        $rules = ['file', 'mimes:pdf,doc,docx,jpg,jpeg,png', 'max:10240'];
                         $validationRules[$ruleKey] = $rules;
                     }
                 }
             }
         }
+
 
         $request->validate($validationRules, $validationMessages);
 
@@ -765,16 +768,5 @@ class DashboardController extends Controller
 
         return redirect()->route('pemohon.tracking.detail', $id)
             ->with('success', 'Pengajuan berhasil diperbaiki dan dikirim kembali untuk validasi.');
-    }
-
-    /**
-     * Show application details.
-     */
-    public function showApplication($id)
-    {
-        return response()->json([
-            'success' => false,
-            'message' => 'Fitur ini akan tersedia segera. Tabel aplikasi belum dibuat.'
-        ]);
     }
 }

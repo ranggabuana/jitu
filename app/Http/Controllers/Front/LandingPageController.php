@@ -52,37 +52,32 @@ class LandingPageController extends Controller
 
         // Prepare validation records
         $validasiRecords = $perizinan->validasiRecords->map(function ($validasi) {
-            // Determine validator based on role
-            $validator = null;
+            // For public tracking, we genericize the validator info to reduce information exposure
+            $roleLabel = $validasi->validationFlow->role_label ?? 'Validator';
             
-            // For assigned roles (operator_opd, kepala_opd), use assigned_user from validation_flow
-            if (in_array($validasi->validationFlow->role ?? '', ['operator_opd', 'kepala_opd'])) {
-                if ($validasi->validationFlow->assignedUser) {
-                    $validator = [
-                        'name' => $validasi->validationFlow->assignedUser->name,
-                        'role' => $validasi->validationFlow->assignedUser->role,
-                        'role_label' => $validasi->validationFlow->assignedUser->role_label,
-                    ];
-                }
-            } 
-            // For collective roles, use validator from data_perijinan_validasi
-            elseif ($validasi->validator) {
-                $validator = [
-                    'name' => $validasi->validator->name,
-                    'role' => $validasi->validator->role,
-                    'role_label' => $validasi->validator->role_label,
-                ];
-            }
+            // Map internal roles to generic public labels if needed
+            $publicRoleLabels = [
+                'fo' => 'Front Office',
+                'bo' => 'Back Office',
+                'operator_opd' => 'Tim Teknis OPD',
+                'kepala_opd' => 'Kepala OPD',
+            ];
             
+            $internalRole = $validasi->validationFlow->role ?? '';
+            $displayRole = $publicRoleLabels[$internalRole] ?? $roleLabel;
+
             return [
                 'status' => $validasi->status,
                 'catatan' => $validasi->catatan,
                 'validated_at' => $validasi->validated_at,
                 'validation_flow' => [
-                    'role_label' => $validasi->validationFlow->role_label,
+                    'role_label' => $displayRole,
                     'description' => $validasi->validationFlow->description,
                 ],
-                'validator' => $validator,
+                'validator' => [
+                    'role_label' => $displayRole,
+                    // We hide the real name of the validator for public tracking
+                ],
             ];
         });
 
@@ -102,10 +97,9 @@ class LandingPageController extends Controller
                 'perijinan' => [
                     'nama_perijinan' => $perizinan->perijinan->nama_perijinan,
                 ],
-                'data_pemohon' => $perizinan->data_pemohon,
+                // Only return necessary pemohon info
                 'user' => $perizinan->user ? [
-                    'name' => $perizinan->user->name,
-                    'email' => $perizinan->user->email,
+                    'name' => maskName($perizinan->user->name),
                 ] : null,
                 'validasi_records' => $validasiRecords,
                 'total_steps' => $totalSteps,

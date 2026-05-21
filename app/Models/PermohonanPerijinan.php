@@ -50,6 +50,11 @@ class PermohonanPerijinan extends Model
                 $permohonan->no_registrasi = static::generateNoRegistrasi();
             }
         });
+
+        // Cascade delete related records
+        static::deleting(function ($permohonan) {
+            $permohonan->validasiRecords()->delete();
+        });
     }
 
     /**

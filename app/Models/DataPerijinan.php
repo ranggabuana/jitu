@@ -56,6 +56,38 @@ class DataPerijinan extends Model
                 $data->no_registrasi = static::generateNoRegistrasi();
             }
         });
+
+        // Cascade delete related records and files
+        static::deleting(function ($data) {
+            // Delete validation records
+            $data->validasiRecords()->delete();
+
+            // Delete uploaded files if they exist
+            $filesToDelete = [
+                $data->file_pernyataan,
+                $data->file_permohonan,
+                $data->file_keabsahan
+            ];
+
+            // Handle dynamic form files
+            if ($data->form_files && is_array($data->form_files)) {
+                foreach ($data->form_files as $files) {
+                    if (is_array($files)) {
+                        foreach ($files as $file) {
+                            $filesToDelete[] = $file;
+                        }
+                    } else {
+                        $filesToDelete[] = $files;
+                    }
+                }
+            }
+
+            foreach ($filesToDelete as $file) {
+                if ($file && file_exists(public_path($file))) {
+                    @unlink(public_path($file));
+                }
+            }
+        });
     }
 
     /**

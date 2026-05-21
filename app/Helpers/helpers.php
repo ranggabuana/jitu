@@ -115,3 +115,44 @@ if (!function_exists('getNextWorkDay')) {
         return $currentDate;
     }
 }
+
+if (!function_exists('maskName')) {
+    /**
+     * Mask name for privacy (e.g., "John Doe" -> "J**n D*e")
+     *
+     * @param string|null $name
+     * @return string
+     */
+    function maskName(?string $name): string
+    {
+        if (!$name) return '-';
+        $parts = explode(' ', $name);
+        $maskedParts = array_map(function($part) {
+            if (strlen($part) <= 2) return $part;
+            return substr($part, 0, 1) . str_repeat('*', strlen($part) - 2) . substr($part, -1);
+        }, $parts);
+        return implode(' ', $maskedParts);
+    }
+}
+
+if (!function_exists('maskEmail')) {
+    /**
+     * Mask email for privacy (e.g., "john.doe@example.com" -> "jo*******@example.com")
+     *
+     * @param string|null $email
+     * @return string
+     */
+    function maskEmail(?string $email): string
+    {
+        if (!$email) return '-';
+        $parts = explode('@', $email);
+        $name = $parts[0];
+        $domain = $parts[1] ?? '';
+        
+        if (strlen($name) <= 2) {
+            return $name . '***@' . $domain;
+        }
+        
+        return substr($name, 0, 2) . str_repeat('*', strlen($name) - 2) . '@' . $domain;
+    }
+}

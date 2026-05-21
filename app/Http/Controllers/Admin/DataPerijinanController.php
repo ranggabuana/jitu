@@ -1102,12 +1102,32 @@ class DataPerijinanController extends Controller
      */
     public function downloadFile(Request $request, $filepath)
     {
+        $user = auth()->user();
+
         // Decode URL-encoded path
         $filepath = urldecode($filepath);
         
         // Security: Prevent directory traversal attacks
         $filepath = str_replace('..', '', $filepath);
         
+        // Extract perijinan_id from path (e.g., "1/filename.pdf" -> "1")
+        $pathParts = explode('/', ltrim($filepath, '/'));
+        $perijinanIdFromPath = $pathParts[0] ?? null;
+
+        // Access Control Check
+        if (!$user->isAdmin() && $perijinanIdFromPath) {
+            $accessibleIds = $user->getAccessiblePerijinanIds();
+            if (!empty($accessibleIds) && !in_array($perijinanIdFromPath, $accessibleIds)) {
+                \Log::warning('Unauthorized file access attempt', [
+                    'user_id' => $user->id,
+                    'role' => $user->role,
+                    'perijinan_id' => $perijinanIdFromPath,
+                    'filepath' => $filepath
+                ]);
+                abort(403, 'Anda tidak memiliki akses ke berkas ini.');
+            }
+        }
+
         // Get the full path relative to public folder
         $relativePath = 'uploads/perijinan/' . $filepath;
         $path = public_path($relativePath);

@@ -304,10 +304,9 @@
                     </div>
                 </div>
             </div>
-        </div>
+    </div>
 
-
-
+    <script>
         function switchTab(tabId) {
             // Hide all contents
             document.querySelectorAll('.tab-content').forEach(content => {

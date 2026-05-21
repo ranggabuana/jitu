@@ -50,6 +50,11 @@ class AplikasiPerijinan extends Model
                 $aplikasi->no_registrasi = static::generateNoRegistrasi();
             }
         });
+
+        // Cascade delete related records
+        static::deleting(function ($aplikasi) {
+            $aplikasi->validasiRecords()->delete();
+        });
     }
 
     /**

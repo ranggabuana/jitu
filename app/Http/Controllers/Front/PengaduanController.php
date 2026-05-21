@@ -190,8 +190,8 @@ class PengaduanController extends Controller
             'success' => true,
             'data' => [
                 'no_pengaduan' => $pengaduan->no_pengaduan,
-                'nama' => $pengaduan->nama,
-                'email' => $pengaduan->email,
+                'nama' => maskName($pengaduan->nama),
+                'email' => maskEmail($pengaduan->email),
                 'kategori' => ucfirst($pengaduan->kategori),
                 'isi_pengaduan' => $pengaduan->isi_pengaduan,
                 'status' => $pengaduan->status,

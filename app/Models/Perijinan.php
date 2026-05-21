@@ -25,6 +25,31 @@ class Perijinan extends Model
     ];
 
     /**
+     * Boot the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Cascade delete related records
+        static::deleting(function ($perijinan) {
+            // 1. Delete form fields
+            $perijinan->formFields()->delete();
+
+            // 2. Delete validation flows
+            $perijinan->validationFlows()->delete();
+
+            // 3. Delete applications (triggers cascading)
+            $perijinan->applications->each->delete();
+
+            // 4. Delete image if exists
+            if ($perijinan->gambar_alur && file_exists(public_path($perijinan->gambar_alur))) {
+                @unlink(public_path($perijinan->gambar_alur));
+            }
+        });
+    }
+
+    /**
      * Get all form fields for this perijinan.
      */
     public function formFields(): HasMany
@@ -54,5 +79,13 @@ class Perijinan extends Model
     public function activeValidationFlows(): HasMany
     {
         return $this->hasMany(PerijinanValidationFlow::class)->where('is_active', true)->orderBy('order');
+    }
+
+    /**
+     * Get all applications for this perijinan (Primary).
+     */
+    public function applications(): HasMany
+    {
+        return $this->hasMany(DataPerijinan::class, 'perijinan_id');
     }
 }

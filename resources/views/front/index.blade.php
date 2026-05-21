@@ -237,6 +237,7 @@
                                     class="fas fa-qrcode absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                                 <input type="text" id="trackPerizinanInput"
                                     placeholder="Masukkan Nomor Registrasi Izin"
+                                    aria-label="Nomor Registrasi Izin"
                                     class="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                                     onkeypress="if(event.key === 'Enter') trackPerizinan()">
                             </div>
@@ -265,6 +266,7 @@
                                 <i
                                     class="fas fa-ticket-alt absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                                 <input type="text" id="trackPengaduanInput" placeholder="Masukkan Nomor Pengaduan"
+                                    aria-label="Nomor Pengaduan"
                                     class="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all"
                                     onkeypress="if(event.key === 'Enter') trackPengaduan()">
                             </div>
@@ -378,6 +380,18 @@
 
     <!-- Modal Scripts -->
     <script>
+        function escapeHtml(text) {
+            if (!text) return '';
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return String(text).replace(/[&<>"']/g, m => map[m]);
+        }
+
         function trackPengaduan() {
             const noPengaduan = document.getElementById('trackPengaduanInput').value.trim();
 
@@ -386,6 +400,19 @@
                     icon: 'warning',
                     title: 'Peringatan',
                     text: 'Silakan masukkan nomor pengaduan!',
+                    confirmButtonColor: '#ea580c',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+
+            // Input Validation - Regex for security
+            const pattern = /^[A-Z0-9\-\/]+$/;
+            if (!pattern.test(noPengaduan) || noPengaduan.length > 50) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Format Tidak Valid',
+                    text: 'Nomor pengaduan mengandung karakter yang tidak diizinkan.',
                     confirmButtonColor: '#ea580c',
                     confirmButtonText: 'OK'
                 });
@@ -418,7 +445,7 @@
                         Swal.fire({
                             icon: 'error',
                             title: 'Tidak Ditemukan',
-                            text: data.message || 'Nomor pengaduan tidak ditemukan!',
+                            text: escapeHtml(data.message) || 'Nomor pengaduan tidak ditemukan!',
                             confirmButtonColor: '#ea580c',
                             confirmButtonText: 'OK'
                         });
@@ -460,11 +487,11 @@
                     <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                         <div>
                             <p class="text-sm text-gray-500 mb-1">Nomor Pengaduan</p>
-                            <p class="text-lg font-bold text-gray-800">${data.no_pengaduan}</p>
+                            <p class="text-lg font-bold text-gray-800">${escapeHtml(data.no_pengaduan)}</p>
                         </div>
-                        <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border-2 ${statusColors[data.status_color]}">
-                            <i class="fas ${statusIcons[data.status]}"></i>
-                            ${data.status_label}
+                        <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border-2 ${statusColors[data.status_color] || ''}">
+                            <i class="fas ${statusIcons[data.status] || 'fa-info-circle'}"></i>
+                            ${escapeHtml(data.status_label)}
                         </span>
                     </div>
 
@@ -472,11 +499,11 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="p-4 bg-blue-50 rounded-xl">
                             <p class="text-xs text-blue-600 font-semibold mb-1"><i class="fas fa-user mr-1"></i> Nama Pelapor</p>
-                            <p class="text-gray-800 font-medium">${data.nama}</p>
+                            <p class="text-gray-800 font-medium">${escapeHtml(data.nama)}</p>
                         </div>
                         <div class="p-4 bg-green-50 rounded-xl">
                             <p class="text-xs text-green-600 font-semibold mb-1"><i class="fas fa-envelope mr-1"></i> Email</p>
-                            <p class="text-gray-800 font-medium">${data.email}</p>
+                            <p class="text-gray-800 font-medium">${escapeHtml(data.email)}</p>
                         </div>
                     </div>
 
@@ -484,18 +511,18 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="p-4 bg-purple-50 rounded-xl">
                             <p class="text-xs text-purple-600 font-semibold mb-1"><i class="fas fa-folder mr-1"></i> Kategori</p>
-                            <p class="text-gray-800 font-medium">${data.kategori}</p>
+                            <p class="text-gray-800 font-medium">${escapeHtml(data.kategori)}</p>
                         </div>
                         <div class="p-4 bg-orange-50 rounded-xl">
                             <p class="text-xs text-orange-600 font-semibold mb-1"><i class="fas fa-calendar mr-1"></i> Tanggal Pengaduan</p>
-                            <p class="text-gray-800 font-medium">${data.tanggal_pengaduan}</p>
+                            <p class="text-gray-800 font-medium">${escapeHtml(data.tanggal_pengaduan)}</p>
                         </div>
                     </div>
 
                     <!-- Isi Pengaduan -->
                     <div class="p-4 bg-gray-50 rounded-xl">
                         <p class="text-sm text-gray-500 font-semibold mb-2"><i class="fas fa-comment-alt mr-1"></i> Isi Pengaduan</p>
-                        <p class="text-gray-700 leading-relaxed">${data.isi_pengaduan}</p>
+                        <p class="text-gray-700 leading-relaxed">${escapeHtml(data.isi_pengaduan)}</p>
                     </div>
 
                     <!-- Respon -->
@@ -505,9 +532,9 @@
                                     <i class="fas fa-reply text-green-600"></i>
                                     <p class="text-sm text-green-600 font-semibold">Respon / Tindak Lanjut</p>
                                 </div>
-                                <p class="text-gray-700 leading-relaxed mb-2">${data.respon}</p>
+                                <p class="text-gray-700 leading-relaxed mb-2">${escapeHtml(data.respon)}</p>
                                 ${data.tanggal_respon ? `
-                                <p class="text-xs text-green-600 mt-2"><i class="fas fa-clock mr-1"></i> Ditanggapi pada: ${data.tanggal_respon}</p>
+                                <p class="text-xs text-green-600 mt-2"><i class="fas fa-clock mr-1"></i> Ditanggapi pada: ${escapeHtml(data.tanggal_respon)}</p>
                             ` : ''}
                             </div>
                         ` : `
@@ -565,6 +592,19 @@
                 return;
             }
 
+            // Input Validation - Regex for security
+            const pattern = /^[A-Z0-9\-\/]+$/;
+            if (!pattern.test(noRegistrasi) || noRegistrasi.length > 50) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Format Tidak Valid',
+                    text: 'Nomor registrasi mengandung karakter yang tidak diizinkan.',
+                    confirmButtonColor: '#2563eb',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+
             // Show loading
             document.getElementById('trackPerizinanLoading').classList.remove('hidden');
             document.getElementById('trackPerizinanLoading').classList.add('flex');
@@ -591,7 +631,7 @@
                         Swal.fire({
                             icon: 'error',
                             title: 'Tidak Ditemukan',
-                            text: data.message || 'Nomor registrasi tidak ditemukan!',
+                            text: escapeHtml(data.message) || 'Nomor registrasi tidak ditemukan!',
                             confirmButtonColor: '#2563eb',
                             confirmButtonText: 'OK'
                         });
@@ -676,18 +716,18 @@
                             <div class="flex-1 bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border-2 ${borderClass}">
                                 <div class="flex items-center justify-between mb-2">
                                     <div>
-                                        <h4 class="font-bold text-gray-800">${validasi.validation_flow?.role_label || 'Tahap ' + (index + 1)}</h4>
-                                        <p class="text-xs text-gray-500">${validasi.validation_flow?.description || 'Proses validasi'}</p>
+                                        <h4 class="font-bold text-gray-800">${escapeHtml(validasi.validation_flow?.role_label) || 'Tahap ' + (index + 1)}</h4>
+                                        <p class="text-xs text-gray-500">${escapeHtml(validasi.validation_flow?.description) || 'Proses validasi'}</p>
                                     </div>
                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${statusColors[validasi.status] || statusColors.submitted}">
-                                        ${statusLabels[validasi.status] || validasi.status}
+                                        ${escapeHtml(statusLabels[validasi.status]) || escapeHtml(validasi.status)}
                                     </span>
                                 </div>
                                 ${validasi.catatan ? `
                                         <div class="mt-3 bg-white rounded-lg p-3 border border-gray-200">
                                             <p class="text-sm text-gray-700">
                                                 <i class="fas fa-comment-alt text-blue-500 mr-2"></i>
-                                                <strong>Catatan:</strong> ${validasi.catatan}
+                                                <strong>Catatan:</strong> ${escapeHtml(validasi.catatan)}
                                             </p>
                                         </div>
                                     ` : ''}
@@ -706,9 +746,9 @@
                                             <div class="flex-1">
                                                 <p class="text-xs font-semibold text-gray-800">
                                                     <i class="fas fa-user-tie mr-1"></i>
-                                                    ${validasi.validator.name}
+                                                    ${escapeHtml(validasi.validator.name)}
                                                 </p>
-                                                <p class="text-xs text-gray-500">${validasi.validator.role_label || 'Validator'}</p>
+                                                <p class="text-xs text-gray-500">${escapeHtml(validasi.validator.role_label) || 'Validator'}</p>
                                             </div>
                                         </div>
                                     ` : `
@@ -718,7 +758,7 @@
                                             </div>
                                             <p class="text-xs font-semibold text-gray-800">
                                                 <i class="fas fa-user-check mr-1"></i>
-                                                Divalidasi oleh ${validasi.validator.role_label || validasi.validation_flow?.role_label || 'Validator'}
+                                                Divalidasi oleh ${escapeHtml(validasi.validator.role_label) || escapeHtml(validasi.validation_flow?.role_label) || 'Validator'}
                                             </p>
                                         </div>
                                     `}
@@ -737,11 +777,11 @@
                     <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                         <div>
                             <p class="text-sm text-gray-500 mb-1">Nomor Registrasi</p>
-                            <p class="text-lg font-bold text-gray-800 font-mono">${data.no_registrasi}</p>
+                            <p class="text-lg font-bold text-gray-800 font-mono">${escapeHtml(data.no_registrasi)}</p>
                         </div>
                         <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border-2 ${statusColors[data.status] || statusColors.submitted}">
                             <i class="fas ${statusIcons[data.status] || statusIcons.submitted}"></i>
-                            ${statusLabels[data.status] || data.status}
+                            ${escapeHtml(statusLabels[data.status]) || escapeHtml(data.status)}
                         </span>
                     </div>
 
@@ -749,11 +789,11 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="p-4 bg-blue-50 rounded-xl">
                             <p class="text-xs text-blue-600 font-semibold mb-1"><i class="fas fa-user mr-1"></i> Pemohon</p>
-                            <p class="text-gray-800 font-medium">${data.data_pemohon?.name || data.user?.name || '-'}</p>
+                            <p class="text-gray-800 font-medium">${escapeHtml(data.data_pemohon?.name || data.user?.name || '-')}</p>
                         </div>
                         <div class="p-4 bg-green-50 rounded-xl">
                             <p class="text-xs text-green-600 font-semibold mb-1"><i class="fas fa-envelope mr-1"></i> Email</p>
-                            <p class="text-gray-800 font-medium">${data.data_pemohon?.email || data.user?.email || '-'}</p>
+                            <p class="text-gray-800 font-medium">${escapeHtml(data.data_pemohon?.email || data.user?.email || '-')}</p>
                         </div>
                     </div>
 
@@ -761,7 +801,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="p-4 bg-purple-50 rounded-xl">
                             <p class="text-xs text-purple-600 font-semibold mb-1"><i class="fas fa-folder mr-1"></i> Jenis Perizinan</p>
-                            <p class="text-gray-800 font-medium">${data.perijinan?.nama_perijinan || '-'}</p>
+                            <p class="text-gray-800 font-medium">${escapeHtml(data.perijinan?.nama_perijinan) || '-'}</p>
                         </div>
                         <div class="p-4 bg-orange-50 rounded-xl">
                             <p class="text-xs text-orange-600 font-semibold mb-1"><i class="fas fa-calendar mr-1"></i> Tanggal Pengajuan</p>
@@ -773,14 +813,14 @@
                     <div class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200">
                         <div class="flex items-center justify-between mb-2">
                             <span class="text-sm font-bold text-blue-800">Progress Validasi</span>
-                            <span class="text-sm font-bold text-blue-600">${data.progress_percentage || 0}%</span>
+                            <span class="text-sm font-bold text-blue-600">${escapeHtml(data.progress_percentage) || 0}%</span>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-4">
                             <div class="bg-gradient-to-r from-blue-500 to-indigo-600 h-4 rounded-full transition-all duration-500" style="width: ${data.progress_percentage || 0}%"></div>
                         </div>
                         <p class="text-xs text-blue-600 mt-2">
                             <i class="fas fa-info-circle mr-1"></i>
-                            Tahap ${data.current_step || 1} dari ${data.total_steps || '?'}
+                            Tahap ${escapeHtml(data.current_step) || 1} dari ${escapeHtml(data.total_steps) || '?'}
                         </p>
                     </div>
 
@@ -794,7 +834,7 @@
                                     <i class="fas fa-exclamation-triangle text-orange-500 text-xl mt-0.5"></i>
                                     <div class="flex-1">
                                         <h4 class="font-bold text-orange-800 mb-1">Catatan Perbaikan</h4>
-                                        <p class="text-orange-700 text-sm">${data.catatan_perbaikan}</p>
+                                        <p class="text-orange-700 text-sm">${escapeHtml(data.catatan_perbaikan)}</p>
                                     </div>
                                 </div>
                             </div>
@@ -806,7 +846,7 @@
                                     <i class="fas fa-times-circle text-red-500 text-xl mt-0.5"></i>
                                     <div class="flex-1">
                                         <h4 class="font-bold text-red-800 mb-1">Penolakan</h4>
-                                        <p class="text-red-700 text-sm">${data.catatan_reject}</p>
+                                        <p class="text-red-700 text-sm">${escapeHtml(data.catatan_reject)}</p>
                                     </div>
                                 </div>
                             </div>

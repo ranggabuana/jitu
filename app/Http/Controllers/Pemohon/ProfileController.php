@@ -35,7 +35,7 @@ class ProfileController extends Controller
     {
         $user = Auth::user();
 
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'username' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
@@ -64,7 +64,8 @@ class ProfileController extends Controller
             'nip.unique' => 'NIK sudah terdaftar.',
         ]);
 
-        $data = $request->except('foto_ktp');
+        $data = $validated;
+        unset($data['foto_ktp']);
 
         // Handle KTP file upload
         if ($request->hasFile('foto_ktp')) {

@@ -70,7 +70,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                             Jumlah Regulasi
                         </th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-40">
                             Actions
                         </th>
                     </tr>
@@ -98,7 +98,7 @@
                                 {{ $item->regulasi->count() }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <div class="flex justify-end gap-2 flex-wrap">
+                                <div class="flex justify-end gap-2">
                                     <a href="{{ route('jenis-regulasi.edit', $item->id) }}"
                                         class="inline-flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors">
                                         <i class="mdi mdi-pencil"></i>

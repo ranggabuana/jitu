@@ -140,12 +140,25 @@
                                 <div class="text-sm font-medium text-gray-900 dark:text-white whitespace-normal break-words max-w-sm sm:max-w-md">{{ $item->nama_regulasi }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <a href="{{ route('regulasi.download', $item->id) }}"
-                                    class="inline-flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
-                                    <i class="mdi mdi-file-download mr-1"></i>
-                                    <span class="text-sm">{{ pathinfo($item->file_regulasi, PATHINFO_EXTENSION) }}</span>
-                                </a>
-                                <div class="text-xs text-gray-500 dark:text-gray-400">{{ $item->formatted_file_size }}</div>
+                                <div class="flex flex-col gap-1">
+                                    <div class="flex items-center gap-2">
+                                        <a href="{{ route('regulasi.download', $item->id) }}"
+                                            class="inline-flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                                            title="Download">
+                                            <i class="mdi mdi-file-download mr-1"></i>
+                                            <span class="text-sm">{{ strtoupper(pathinfo($item->file_regulasi, PATHINFO_EXTENSION)) }}</span>
+                                        </a>
+                                        @if(strtolower(pathinfo($item->file_regulasi, PATHINFO_EXTENSION)) === 'pdf')
+                                            <button type="button" 
+                                                onclick="previewPdf('{{ asset($item->file_regulasi) }}', '{{ $item->nama_regulasi }}')"
+                                                class="text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300"
+                                                title="Preview PDF">
+                                                <i class="mdi mdi-eye text-lg"></i>
+                                            </button>
+                                        @endif
+                                    </div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ $item->formatted_file_size }}</div>
+                                </div>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="text-sm text-gray-900 dark:text-white max-w-xs truncate" title="{{ $item->deskripsi }}">
@@ -169,7 +182,7 @@
                                 {{ $item->created_at->format('d M Y') }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <div class="flex items-center gap-2">
+                                <div class="flex items-center gap-3">
                                     <a href="{{ route('regulasi.show', $item->id) }}"
                                         class="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300"
                                         title="Detail">
@@ -184,8 +197,9 @@
                                         class="delete-form inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit"
-                                            class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                                        <button type="button"
+                                            class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 btn-delete"
+                                            data-action="{{ route('regulasi.destroy', $item->id) }}"
                                             title="Hapus">
                                             <i class="mdi mdi-delete"></i>
                                         </button>
@@ -256,9 +270,71 @@
         @endif
     </div>
 
+    <!-- PDF Preview Modal -->
+    <div id="pdfModal" class="hidden fixed inset-0 z-50 overflow-hidden bg-black bg-opacity-75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <div>
+                    <h3 id="pdfModalTitle" class="text-lg font-bold text-gray-900 dark:text-white truncate max-w-md">Preview PDF</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Regulasi & Peraturan</p>
+                </div>
+                <button onclick="closePdfModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <i class="mdi mdi-close text-2xl"></i>
+                </button>
+            </div>
+            <div class="flex-1 bg-gray-100 dark:bg-gray-900 relative">
+                <iframe id="pdfViewer" src="" class="w-full h-full border-none"></iframe>
+                <div id="pdfLoading" class="absolute inset-0 flex items-center justify-center bg-white dark:bg-gray-800">
+                    <div class="flex flex-col items-center">
+                        <i class="mdi mdi-loading mdi-spin text-4xl text-blue-600 mb-2"></i>
+                        <p class="text-sm text-gray-500">Memuat berkas PDF...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
+                <a id="pdfDownloadBtn" href="" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                    <i class="mdi mdi-download"></i> Unduh Berkas
+                </a>
+                <button onclick="closePdfModal()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium transition-colors">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- SortableJS -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script>
+        function previewPdf(url, title) {
+            const modal = document.getElementById('pdfModal');
+            const viewer = document.getElementById('pdfViewer');
+            const titleEl = document.getElementById('pdfModalTitle');
+            const downloadBtn = document.getElementById('pdfDownloadBtn');
+            const loading = document.getElementById('pdfLoading');
+
+            titleEl.textContent = title;
+            downloadBtn.href = url;
+            loading.classList.remove('hidden');
+            
+            // Set source and handle load event
+            viewer.src = url;
+            viewer.onload = function() {
+                loading.classList.add('hidden');
+            };
+
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePdfModal() {
+            const modal = document.getElementById('pdfModal');
+            const viewer = document.getElementById('pdfViewer');
+            
+            modal.classList.add('hidden');
+            viewer.src = '';
+            document.body.style.overflow = '';
+        }
+
         function updatePerPage(perPage) {
             const url = new URL(window.location.href);
             url.searchParams.set('per_page', perPage);
