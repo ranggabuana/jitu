@@ -352,6 +352,21 @@
                         </button>
                     </div>
                     <div class="p-6">
+                        <!-- Information Box -->
+                        <div class="mb-6 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl p-5">
+                            <div class="flex items-start gap-4">
+                                <div class="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center flex-shrink-0">
+                                    <i class="mdi mdi-information-variant text-purple-600 dark:text-purple-400 text-xl"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="text-sm font-bold text-purple-800 dark:text-purple-300 mb-1">Informasi Drive Berkas Pemohon</h4>
+                                    <p class="text-xs text-purple-700 dark:text-purple-400 leading-relaxed">
+                                        Pengaturan ini digunakan untuk menentukan jenis dokumen yang wajib dimiliki oleh setiap pemohon. Dokumen-dokumen ini nantinya akan dikelola oleh pemohon melalui menu <strong>"Dokumen Saya"</strong> sebagai <strong>drive berkas digital</strong>. Saat mengisi formulir perizinan, pemohon dapat langsung memanggil/memilih berkas dari drive ini tanpa harus mengunggah ulang dokumen yang sama berkali-kali.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="overflow-x-auto rounded-lg border border-gray-100 dark:border-gray-700">
                             <table class="w-full text-left text-sm whitespace-nowrap">
                                 <thead class="bg-gray-50 dark:bg-gray-700/50 sticky top-0">
