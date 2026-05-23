@@ -260,7 +260,7 @@
                         </div>
                         <div>
                             <h2 class="text-base font-medium text-gray-800 dark:text-white">
-                                Daftar Field
+                                Daftar Field <span id="daftar-field-tab-name">Global Form</span>
                                 <span class="text-gray-500 dark:text-gray-400 font-normal tab-count" id="count-global">({{ $perijinan->formFields->whereIn('form_type', ['global', null])->count() }})</span>
                                 <span class="text-gray-500 dark:text-gray-400 font-normal tab-count hidden" id="count-rekom">({{ $perijinan->formFields->where('form_type', 'rekom')->count() }})</span>
                                 <span class="text-gray-500 dark:text-gray-400 font-normal tab-count hidden" id="count-izin">({{ $perijinan->formFields->where('form_type', 'izin')->count() }})</span>
@@ -785,10 +785,12 @@
                 activeIcon.classList.add('text-indigo-600', 'dark:text-indigo-500');
             }
 
-            // 3. Update Subtitle
+            // 3. Update Subtitle and List Title
             const titles = { 'global': 'Global Form', 'rekom': 'Rekom Form', 'izin': 'Izin Form' };
             const subtitleEl = document.getElementById('add-field-subtitle');
             if (subtitleEl) subtitleEl.textContent = `Tambah field baru ke ${titles[tabId]}`;
+            const listTitleEl = document.getElementById('daftar-field-tab-name');
+            if (listTitleEl) listTitleEl.textContent = titles[tabId];
             
             // 4. Update hidden form_type input
             const inputEl = document.getElementById('create_form_type');
