@@ -45,27 +45,52 @@
         <meta name="error-message" content="{{ session('error') }}">
     @endif
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Form Tambah Field -->
-        <div class="lg:col-span-1">
-            <div
-                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 sticky top-6">
-                <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-                    <div class="flex items-center gap-3">
-                        <div
-                            class="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center">
-                            <i class="mdi mdi-plus-circle text-indigo-600 dark:text-indigo-400"></i>
-                        </div>
-                        <div>
-                            <h2 class="text-base font-medium text-gray-800 dark:text-white">Tambah Field</h2>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">Tambah field baru ke formulir</p>
+    <div id="form-builder-app">
+        <!-- Tabs Navigation -->
+        <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
+            <ul class="flex flex-wrap -mb-px text-sm font-medium text-center text-gray-500 dark:text-gray-400">
+                <li class="mr-2">
+                    <button onclick="switchTab('global')" id="tab-btn-global" class="tab-btn inline-flex items-center justify-center p-4 border-b-2 rounded-t-lg group text-indigo-600 border-indigo-600 dark:text-indigo-500 dark:border-indigo-500">
+                        <i id="tab-icon-global" class="mdi mdi-earth mr-2 text-lg text-indigo-600 dark:text-indigo-500"></i>
+                        Global Form
+                    </button>
+                </li>
+                <li class="mr-2">
+                    <button onclick="switchTab('rekom')" id="tab-btn-rekom" class="tab-btn inline-flex items-center justify-center p-4 border-b-2 rounded-t-lg group border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300">
+                        <i id="tab-icon-rekom" class="mdi mdi-file-document-outline mr-2 text-lg text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300"></i>
+                        Rekom Form
+                    </button>
+                </li>
+                <li class="mr-2">
+                    <button onclick="switchTab('izin')" id="tab-btn-izin" class="tab-btn inline-flex items-center justify-center p-4 border-b-2 rounded-t-lg group border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300">
+                        <i id="tab-icon-izin" class="mdi mdi-file-certificate-outline mr-2 text-lg text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300"></i>
+                        Izin Form
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Form Tambah Field -->
+            <div class="lg:col-span-1">
+                <div
+                    class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 sticky top-6">
+                    <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center">
+                                <i class="mdi mdi-plus-circle text-indigo-600 dark:text-indigo-400"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-base font-medium text-gray-800 dark:text-white">Tambah Field</h2>
+                                <p class="text-xs text-gray-500 dark:text-gray-400" id="add-field-subtitle">Tambah field baru ke Global Form</p>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <form action="{{ route('perijinan.form-field.store', $perijinan->id) }}" method="POST"
-                    class="p-6 space-y-4">
-                    @csrf
-                    <input type="hidden" name="order" value="{{ $perijinan->formFields->count() + 1 }}">
+                    <form action="{{ route('perijinan.form-field.store', $perijinan->id) }}" method="POST"
+                        class="p-6 space-y-4">
+                        @csrf
+                        <input type="hidden" name="form_type" id="create_form_type" value="global">
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
@@ -236,8 +261,9 @@
                         <div>
                             <h2 class="text-base font-medium text-gray-800 dark:text-white">
                                 Daftar Field
-                                <span
-                                    class="text-gray-500 dark:text-gray-400 font-normal">({{ $perijinan->formFields->count() }})</span>
+                                <span class="text-gray-500 dark:text-gray-400 font-normal tab-count" id="count-global">({{ $perijinan->formFields->whereIn('form_type', ['global', null])->count() }})</span>
+                                <span class="text-gray-500 dark:text-gray-400 font-normal tab-count hidden" id="count-rekom">({{ $perijinan->formFields->where('form_type', 'rekom')->count() }})</span>
+                                <span class="text-gray-500 dark:text-gray-400 font-normal tab-count hidden" id="count-izin">({{ $perijinan->formFields->where('form_type', 'izin')->count() }})</span>
                             </h2>
                             <p class="text-xs text-gray-500 dark:text-gray-400">Urutkan field dengan drag & drop</p>
                         </div>
@@ -245,11 +271,12 @@
                 </div>
 
                 @if ($perijinan->formFields->count() > 0)
-                    <div id="fields_list" class="divide-y divide-gray-100 dark:divide-gray-700">
-                        @foreach ($perijinan->formFields as $field)
-                            <div class="field-item p-5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                                data-field-id="{{ $field->id }}">
-                                <div class="flex items-center gap-4">
+                    @foreach(['global', 'rekom', 'izin'] as $type)
+                        <div id="fields_list_{{ $type }}" class="fields-container divide-y divide-gray-100 dark:divide-gray-700 {{ $type === 'global' ? '' : 'hidden' }}">
+                            @foreach ($perijinan->formFields->where('form_type', $type === 'global' ? null : $type)->union($perijinan->formFields->where('form_type', $type)) as $field)
+                                <div class="field-item p-5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                                    data-field-id="{{ $field->id }}" data-form-type="{{ $type }}">
+                                    <div class="flex items-center gap-4">
                                     <!-- Drag Handle -->
                                     <button
                                         class="cursor-move text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
@@ -339,7 +366,8 @@
                                 </div>
                             </div>
                         @endforeach
-                    </div>
+                        </div>
+                    @endforeach
                 @else
                     <div class="p-12 text-center">
                         <div
@@ -379,6 +407,7 @@
             <form id="editForm" method="POST" class="p-6 space-y-4">
                 @csrf
                 @method('PUT')
+                <input type="hidden" name="form_type" id="edit_form_type">
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
@@ -627,6 +656,7 @@
         function editField(id, field) {
             const currentPath = window.location.pathname;
             document.getElementById('editForm').action = currentPath.replace('/form-builder', `/form-field/${id}`);
+            document.getElementById('edit_form_type').value = field.form_type || 'global';
             document.getElementById('edit_label').value = field.label;
             document.getElementById('edit_name').value = field.name;
             document.getElementById('edit_type').value = field.type;
@@ -690,7 +720,7 @@
             item.addEventListener('drop', async function(e) {
                 e.preventDefault();
                 if (draggedItem && draggedItem !== this) {
-                    const fieldsList = document.getElementById('fields_list');
+                    const fieldsList = this.closest('.fields-container');
                     const oldIndex = Array.from(fieldsList.querySelectorAll('.field-item')).indexOf(draggedItem);
                     const newIndex = Array.from(fieldsList.querySelectorAll('.field-item')).indexOf(this);
 
@@ -727,5 +757,59 @@
 
         // Initialize options visibility on load
         toggleOptions();
+        
+        // --- Tabs Logic ---
+        function switchTab(tabId) {
+            // Save state
+            localStorage.setItem('formBuilderTab', tabId);
+            
+            // 1. Update Buttons Styling
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('text-indigo-600', 'border-indigo-600', 'dark:text-indigo-500', 'dark:border-indigo-500');
+                btn.classList.add('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300', 'dark:hover:text-gray-300');
+            });
+            const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300', 'dark:hover:text-gray-300');
+                activeBtn.classList.add('text-indigo-600', 'border-indigo-600', 'dark:text-indigo-500', 'dark:border-indigo-500');
+            }
+
+            // 2. Update Icons Styling
+            document.querySelectorAll('.tab-btn i').forEach(icon => {
+                icon.classList.remove('text-indigo-600', 'dark:text-indigo-500');
+                icon.classList.add('text-gray-400', 'group-hover:text-gray-500', 'dark:text-gray-500', 'dark:group-hover:text-gray-300');
+            });
+            const activeIcon = document.getElementById(`tab-icon-${tabId}`);
+            if (activeIcon) {
+                activeIcon.classList.remove('text-gray-400', 'group-hover:text-gray-500', 'dark:text-gray-500', 'dark:group-hover:text-gray-300');
+                activeIcon.classList.add('text-indigo-600', 'dark:text-indigo-500');
+            }
+
+            // 3. Update Subtitle
+            const titles = { 'global': 'Global Form', 'rekom': 'Rekom Form', 'izin': 'Izin Form' };
+            const subtitleEl = document.getElementById('add-field-subtitle');
+            if (subtitleEl) subtitleEl.textContent = `Tambah field baru ke ${titles[tabId]}`;
+            
+            // 4. Update hidden form_type input
+            const inputEl = document.getElementById('create_form_type');
+            if (inputEl) inputEl.value = tabId;
+
+            // 5. Toggle Counts
+            document.querySelectorAll('.tab-count').forEach(el => el.classList.add('hidden'));
+            const countEl = document.getElementById(`count-${tabId}`);
+            if (countEl) countEl.classList.remove('hidden');
+
+            // 6. Toggle List Containers
+            document.querySelectorAll('.fields-container').forEach(el => el.classList.add('hidden'));
+            const listEl = document.getElementById(`fields_list_${tabId}`);
+            if (listEl) listEl.classList.remove('hidden');
+        }
+
+        // Initialize tabs on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTab = localStorage.getItem('formBuilderTab') || 'global';
+            switchTab(savedTab);
+        });
     </script>
+    </div> <!-- End form-builder-app -->
 </x-layout>

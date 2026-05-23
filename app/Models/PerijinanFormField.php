@@ -11,6 +11,7 @@ class PerijinanFormField extends Model
 
     protected $fillable = [
         'perijinan_id',
+        'form_type',
         'label',
         'name',
         'type',

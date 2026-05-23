@@ -137,6 +137,7 @@ class PerijinanController extends Controller
         $perijinan = Perijinan::findOrFail($id);
 
         $validated = $request->validate([
+            'form_type' => 'nullable|in:global,rekom,izin',
             'label' => 'required|string|max:255',
             'name' => 'required|string|max:255',
             'type' => 'required|in:text,textarea,number,date,email,phone,select,radio,checkbox,file',
@@ -151,9 +152,10 @@ class PerijinanController extends Controller
         ]);
 
         $validated['perijinan_id'] = $perijinan->id;
+        $validated['form_type'] = $validated['form_type'] ?? 'global';
         $validated['is_required'] = $request->has('is_required');
         $validated['is_active'] = $request->has('is_active');
-        $validated['order'] = $request->input('order', $perijinan->formFields()->count() + 1);
+        $validated['order'] = $request->input('order', $perijinan->formFields()->where('form_type', $validated['form_type'])->count() + 1);
 
         // Encode options as JSON if it's an array
         if (isset($validated['options']) && is_array($validated['options'])) {
@@ -189,6 +191,7 @@ class PerijinanController extends Controller
         $field = PerijinanFormField::where('perijinan_id', $perijinan->id)->findOrFail($fieldId);
 
         $validated = $request->validate([
+            'form_type' => 'nullable|in:global,rekom,izin',
             'label' => 'required|string|max:255',
             'name' => 'required|string|max:255',
             'type' => 'required|in:text,textarea,number,date,email,phone,select,radio,checkbox,file',

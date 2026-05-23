@@ -91,7 +91,7 @@
                                     <a href="{{ route('perijinan.form-builder', $perijinan->id) }}"
                                         class="inline-flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors">
                                         <i class="mdi mdi-form-select"></i>
-                                        <span>Kelola Formulir</span>
+                                        <span>Formulir</span>
                                     </a>
                                     <a href="{{ route('perijinan.alur-validasi', $perijinan->id) }}"
                                         class="inline-flex items-center gap-1 bg-orange-600 hover:bg-orange-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors">
