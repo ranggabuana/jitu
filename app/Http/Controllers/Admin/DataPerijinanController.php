@@ -634,6 +634,10 @@ class DataPerijinanController extends Controller
 
         $application = DataPerijinan::with([
             'user',
+            'user.provinsi',
+            'user.kabupaten',
+            'user.kecamatan',
+            'user.kelurahan',
             'perijinan',
             'perijinan.activeFormFields',
             'validasiRecords.validationFlow.assignedUser',
@@ -641,7 +645,7 @@ class DataPerijinanController extends Controller
         ])->findOrFail($id);
 
         // Ensure documents are generated if missing
-        if (!$application->file_pernyataan || !$application->file_permohonan || !$application->file_keabsahan) {
+        if (!$application->file_pernyataan || !$application->file_permohonan || !$application->file_keabsahan || !$application->file_rekom || !$application->file_izin) {
             try {
                 $generatedDocs = \App\Services\DocumentGenerator::generateDocuments($application);
                 $updateData = [];
@@ -653,6 +657,12 @@ class DataPerijinanController extends Controller
                 }
                 if (!$application->file_keabsahan && isset($generatedDocs['file_keabsahan'])) {
                     $updateData['file_keabsahan'] = $generatedDocs['file_keabsahan'];
+                }
+                if (!$application->file_rekom && isset($generatedDocs['file_rekom'])) {
+                    $updateData['file_rekom'] = $generatedDocs['file_rekom'];
+                }
+                if (!$application->file_izin && isset($generatedDocs['file_izin'])) {
+                    $updateData['file_izin'] = $generatedDocs['file_izin'];
                 }
                 
                 if (!empty($updateData)) {
@@ -1167,17 +1177,19 @@ class DataPerijinanController extends Controller
      */
     public function regenerateDocuments($id)
     {
-        $application = DataPerijinan::findOrFail($id);
+        $application = DataPerijinan::with(['user.provinsi', 'user.kabupaten', 'user.kecamatan', 'user.kelurahan', 'perijinan'])->findOrFail($id);
 
         try {
             $generatedDocs = \App\Services\DocumentGenerator::generateDocuments($application);
-
-            $application->update([
-                'file_pernyataan' => $generatedDocs['file_pernyataan'] ?? null,
-                'file_permohonan' => $generatedDocs['file_permohonan'] ?? null,
-                'file_keabsahan' => $generatedDocs['file_keabsahan'] ?? null,
-            ]);
-
+if (!empty($generatedDocs)) {
+    $application->update([
+        'file_pernyataan' => $generatedDocs['file_pernyataan'] ?? null,
+        'file_permohonan' => $generatedDocs['file_permohonan'] ?? null,
+        'file_keabsahan' => $generatedDocs['file_keabsahan'] ?? null,
+        'file_rekom' => $generatedDocs['file_rekom'] ?? null,
+        'file_izin' => $generatedDocs['file_izin'] ?? null,
+    ]);
+}
             // Log activity
             ActivityLog::log(
                 'Mengenerasi ulang dokumen perijinan',

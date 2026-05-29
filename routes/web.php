@@ -105,6 +105,8 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['admin.role'])->group(function () {
         Route::resource('perijinan', PerijinanController::class);
         Route::get('perijinan/{id}/form-builder', [PerijinanController::class, 'formBuilder'])->name('perijinan.form-builder');
+        Route::put('perijinan/{id}/templates', [PerijinanController::class, 'updateTemplates'])->name('perijinan.templates.update');
+        Route::post('perijinan/{id}/preview-template', [PerijinanController::class, 'previewTemplate'])->name('perijinan.preview-template');
         Route::post('perijinan/{id}/form-field', [PerijinanController::class, 'storeFormField'])->name('perijinan.form-field.store');
         Route::put('perijinan/{id}/form-field/{fieldId}', [PerijinanController::class, 'updateFormField'])->name('perijinan.form-field.update');
         Route::delete('perijinan/{id}/form-field/{fieldId}', [PerijinanController::class, 'deleteFormField'])->name('perijinan.form-field.delete');

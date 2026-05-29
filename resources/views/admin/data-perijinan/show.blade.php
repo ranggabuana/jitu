@@ -292,7 +292,7 @@
                 </div>
 
                 <div class="p-5">
-                    @if($application->file_pernyataan || $application->file_permohonan || $application->file_keabsahan)
+                    @if($application->file_pernyataan || $application->file_permohonan || $application->file_keabsahan || $application->file_rekom || $application->file_izin)
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
                             @php
@@ -321,11 +321,29 @@
                                     'file'    => $application->file_keabsahan,
                                     'id'      => 'keabsahan',
                                 ],
+                                [
+                                    'label'   => 'Surat Rekomendasi',
+                                    'desc'    => 'Surat Rekomendasi dari instansi terkait',
+                                    'icon'    => 'mdi-file-document-outline',
+                                    'color'   => 'purple',
+                                    'file'    => $application->file_rekom,
+                                    'id'      => 'rekom',
+                                ],
+                                [
+                                    'label'   => 'Surat Izin / Keputusan',
+                                    'desc'    => 'Surat Keputusan Izin yang dikeluarkan',
+                                    'icon'    => 'mdi-file-star-outline',
+                                    'color'   => 'indigo',
+                                    'file'    => $application->file_izin,
+                                    'id'      => 'izin',
+                                ],
                             ];
                             $colorMap = [
                                 'amber'   => ['bg' => 'bg-amber-50 dark:bg-amber-900/10',   'border' => 'border-amber-200 dark:border-amber-800/40',   'icon_bg' => 'bg-amber-100 dark:bg-amber-900/30',   'icon_text' => 'text-amber-600 dark:text-amber-400',   'badge' => 'bg-amber-500', 'btn_preview' => 'bg-amber-500 hover:bg-amber-600'],
                                 'blue'    => ['bg' => 'bg-blue-50 dark:bg-blue-900/10',     'border' => 'border-blue-200 dark:border-blue-800/40',     'icon_bg' => 'bg-blue-100 dark:bg-blue-900/30',     'icon_text' => 'text-blue-600 dark:text-blue-400',     'badge' => 'bg-blue-500',  'btn_preview' => 'bg-blue-600 hover:bg-blue-700'],
                                 'emerald' => ['bg' => 'bg-emerald-50 dark:bg-emerald-900/10', 'border' => 'border-emerald-200 dark:border-emerald-800/40', 'icon_bg' => 'bg-emerald-100 dark:bg-emerald-900/30', 'icon_text' => 'text-emerald-600 dark:text-emerald-400', 'badge' => 'bg-emerald-500', 'btn_preview' => 'bg-emerald-600 hover:bg-emerald-700'],
+                                'purple'  => ['bg' => 'bg-purple-50 dark:bg-purple-900/10', 'border' => 'border-purple-200 dark:border-purple-800/40', 'icon_bg' => 'bg-purple-100 dark:bg-purple-900/30', 'icon_text' => 'text-purple-600 dark:text-purple-400', 'badge' => 'bg-purple-500', 'btn_preview' => 'bg-purple-600 hover:bg-purple-700'],
+                                'indigo'  => ['bg' => 'bg-indigo-50 dark:bg-indigo-900/10', 'border' => 'border-indigo-200 dark:border-indigo-800/40', 'icon_bg' => 'bg-indigo-100 dark:bg-indigo-900/30', 'icon_text' => 'text-indigo-600 dark:text-indigo-400', 'badge' => 'bg-indigo-500', 'btn_preview' => 'bg-indigo-600 hover:bg-indigo-700'],
                             ];
                             @endphp
 

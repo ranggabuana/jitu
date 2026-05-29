@@ -22,6 +22,8 @@ class Perijinan extends Model
         'template_pernyataan',
         'template_permohonan',
         'template_keabsahan',
+        'template_surat_rekom',
+        'template_surat_izin',
     ];
 
     /**

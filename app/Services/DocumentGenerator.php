@@ -34,11 +34,24 @@ class DocumentGenerator
         // 1. Identify/Extract Pekerjaan from form data
         $pekerjaan = self::extractPekerjaan($application, $perijinan);
 
+        // 1.5 Construct full address
+        $userAddress = $user->alamat_ktp ?? $user->alamat_lengkap ?? $user->alamat_domisili ?? '';
+        $addressParts = [];
+        if ($user->kelurahan) $addressParts[] = 'Kel/Desa ' . $user->kelurahan->name;
+        if ($user->kecamatan) $addressParts[] = 'Kec. ' . $user->kecamatan->name;
+        if ($user->kabupaten) $addressParts[] = 'Kab/Kota ' . $user->kabupaten->name;
+        if ($user->provinsi) $addressParts[] = 'Provinsi ' . $user->provinsi->name;
+        
+        $fullAlamat = $userAddress;
+        if (!empty($addressParts)) {
+            $fullAlamat .= ', ' . implode(', ', $addressParts);
+        }
+
         // 2. Prepare Replacements Map
         $replacements = [
             '[NAMA PEMOHON]' => $user->name ?? '-',
             '[NIK]' => $user->nip ?? '-',
-            '[ALAMAT LENGKAP]' => $user->alamat_ktp ?? $user->alamat_lengkap ?? $user->alamat_domisili ?? '-',
+            '[ALAMAT LENGKAP]' => $fullAlamat ?: '-',
             '[NO HP]' => $user->no_hp ?? '-',
             '[EMAIL]' => $user->email ?? '-',
             '[PEKERJAAN]' => $pekerjaan,
@@ -75,7 +88,48 @@ class DocumentGenerator
                 'default_method' => 'getDefaultKeabsahanTemplate',
                 'filename' => 'Surat_Keabsahan_' . $safeNoRegistrasi,
             ],
+            'rekom' => [
+                'template_field' => 'template_surat_rekom',
+                'default_method' => 'getDefaultSuratRekomTemplate',
+                'filename' => 'Surat_Rekomendasi_' . $safeNoRegistrasi,
+            ],
+            'izin' => [
+                'template_field' => 'template_surat_izin',
+                'default_method' => 'getDefaultSuratIzinTemplate',
+                'filename' => 'Surat_Izin_' . $safeNoRegistrasi,
+            ],
         ];
+
+        // 4.5. Add #qrcode_signed# and [LOGO KABUPATEN] to replacements
+        $gambarTte = \App\Models\Setting::get('gambar_tte');
+        $tteHtml = '';
+        if ($gambarTte && File::exists(public_path($gambarTte))) {
+            // Using base64 to ensure it renders correctly in DOMPDF without path issues
+            $imageData = base64_encode(File::get(public_path($gambarTte)));
+            $mime = File::mimeType(public_path($gambarTte));
+            $src = 'data:' . $mime . ';base64,' . $imageData;
+            $tteHtml = '<img src="' . $src . '" style="max-width: 150px; max-height: 150px;" alt="TTE" />';
+        }
+        $replacements['#qrcode_signed#'] = $tteHtml;
+
+        $logoKabupaten = \App\Models\Setting::get('logo_kabupaten');
+        $logoKabHtml = '';
+        if ($logoKabupaten && File::exists(public_path($logoKabupaten))) {
+            $imageData = base64_encode(File::get(public_path($logoKabupaten)));
+            $mime = File::mimeType(public_path($logoKabupaten));
+            $src = 'data:' . $mime . ';base64,' . $imageData;
+            $logoKabHtml = '<img src="' . $src . '" style="max-height: 110px; width: auto;" alt="Logo Kabupaten" />';
+        }
+        $replacements['[LOGO KABUPATEN]'] = $logoKabHtml;
+        
+        // Also add form fields data dynamically
+        if (!empty($application->form_data) && is_array($application->form_data)) {
+            foreach ($application->form_data as $key => $value) {
+                if (!is_array($value)) { // Basic safety check
+                    $replacements['[' . strtoupper($key) . ']'] = $value;
+                }
+            }
+        }
 
         foreach ($documentTypes as $type => $config) {
             // Get raw template from perijinan first, then fallback to global settings, then default
@@ -448,5 +502,134 @@ class DocumentGenerator
         </tr>
     </tbody>
 </table>';
+    }
+
+    /**
+     * Default Template for Surat Rekomendasi.
+     */
+    public static function getDefaultSuratRekomTemplate(): string
+    {
+        return '<div style="font-family: \'Bookman Old Style\', serif; line-height: 1.5; color: #000;">
+    <table style="width: 100%; border-collapse: collapse; border-bottom: 2px solid black; margin-bottom: 15px;">
+        <tbody>
+            <tr>
+                <td style="width: 18%; text-align: center; vertical-align: middle; padding-bottom: 5px;">
+                    [LOGO KABUPATEN]
+                </td>
+                <td style="width: 82%; text-align: center; vertical-align: middle; padding-bottom: 5px;">
+                    <h3 style="margin: 0; font-size: 14pt; font-weight: bold; font-family: \'Bookman Old Style\', serif;">PEMERINTAH KABUPATEN BANJARNEGARA</h3>
+                    <h2 style="margin: 2px 0; font-size: 14pt; font-weight: bold; font-family: \'Bookman Old Style\', serif;">DINAS PENANAMAN MODAL DAN PELAYANAN TERPADU SATU PINTU</h2>
+                    <p style="margin: 0; font-size: 10pt; font-family: \'Bookman Old Style\', serif;">Jl. Letjend Suprapto No. 1, Banjarnegara, Jawa Tengah 53414</p>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <div style="text-align: center; margin-bottom: 15px;">
+        <h4 style="margin: 0; font-size: 11pt; font-weight: bold; text-decoration: underline; font-family: \'Bookman Old Style\', serif;">SURAT REKOMENDASI IZIN OPERASIONAL</h4>
+        <p style="margin: 2px 0 0 0; font-size: 10pt; font-family: \'Bookman Old Style\', serif;">Nomor: [NO REGISTRASI]</p>
+    </div>
+    <p style="font-size: 10pt; text-align: justify; margin-bottom: 10px;">Berdasarkan surat permohonan dari <strong>[NAMA PEMOHON]</strong> pada tanggal [TANGGAL]. Setelah dilakukan verifikasi kelayakan terhadap persyaratan administrasi dan persyaratan teknis pada entitas yang diusulkan, dengan ini Instansi/Dinas Terkait Kabupaten Banjarnegara menyatakan <strong>LAYAK</strong> dan <strong>MEMBERIKAN REKOMENDASI IZIN OPERASIONAL</strong> kepada:</p>
+    <table style="width: 100%; font-size: 10pt; margin-bottom: 15px;" border="0">
+        <tbody>
+            <tr>
+                <td style="width: 30%; padding: 2px 0;">Nama Pemohon</td>
+                <td style="width: 2%; padding: 2px 0;">:</td>
+                <td style="padding: 2px 0;"><strong>[NAMA PEMOHON]</strong></td>
+            </tr>
+            <tr>
+                <td style="padding: 2px 0;">Alamat</td>
+                <td style="padding: 2px 0;">:</td>
+                <td style="padding: 2px 0;">[ALAMAT LENGKAP]</td>
+            </tr>
+            <tr>
+                <td style="padding: 2px 0;">Jenis Izin</td>
+                <td style="padding: 2px 0;">:</td>
+                <td style="padding: 2px 0;">[NAMA IZIN]</td>
+            </tr>
+        </tbody>
+    </table>
+    <p style="font-size: 10pt; text-align: justify; margin-bottom: 20px;">Demikian surat rekomendasi ini dibuat untuk dipergunakan sebagaimana mestinya.</p>
+    <table style="width: 100%; font-size: 10pt;">
+        <tbody>
+            <tr>
+                <td style="width: 55%;"></td>
+                <td style="width: 45%; text-align: center;">
+                    Banjarnegara, [TANGGAL]<br />
+                    Kepala Instansi Terkait,<br />
+                    <br />
+                    #qrcode_signed#<br />
+                    <br />
+                    <strong><u>Nama Kepala Instansi</u></strong><br />
+                    NIP. .........................
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>';
+    }
+
+    /**
+     * Default Template for Surat Izin.
+     */
+    public static function getDefaultSuratIzinTemplate(): string
+    {
+        return '<div style="font-family: \'Bookman Old Style\', serif; line-height: 1.5; color: #000;">
+    <table style="width: 100%; border-collapse: collapse; border-bottom: 2px solid black; margin-bottom: 15px;">
+        <tbody>
+            <tr>
+                <td style="width: 18%; text-align: center; vertical-align: middle; padding-bottom: 5px;">
+                    [LOGO KABUPATEN]
+                </td>
+                <td style="width: 82%; text-align: center; vertical-align: middle; padding-bottom: 5px;">
+                    <h3 style="margin: 0; font-size: 14pt; font-weight: bold; font-family: \'Bookman Old Style\', serif;">PEMERINTAH KABUPATEN BANJARNEGARA</h3>
+                    <h2 style="margin: 2px 0; font-size: 14pt; font-weight: bold; font-family: \'Bookman Old Style\', serif;">DINAS PENANAMAN MODAL DAN PELAYANAN TERPADU SATU PINTU</h2>
+                    <p style="margin: 0; font-size: 10pt; font-family: \'Bookman Old Style\', serif;">Jl. Letjend Suprapto No. 1, Banjarnegara, Jawa Tengah 53414</p>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <div style="text-align: center; margin-bottom: 15px;">
+        <h4 style="margin: 0; font-size: 11pt; font-weight: bold; text-decoration: underline; font-family: \'Bookman Old Style\', serif;">SURAT IZIN PENDIRIAN / OPERASIONAL</h4>
+        <p style="margin: 2px 0 0 0; font-size: 10pt; font-family: \'Bookman Old Style\', serif;">Nomor: [NO REGISTRASI]</p>
+    </div>
+    <p style="font-size: 10pt; text-align: justify; margin-bottom: 10px;">Membaca surat permohonan dari <strong>[NAMA PEMOHON]</strong> tanggal [TANGGAL] dan berdasarkan Surat Rekomendasi Nomor: [NO REGISTRASI], dengan ini Kepala Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu Kabupaten Banjarnegara <strong>MEMBERIKAN IZIN</strong> kepada:</p>
+    <table style="width: 100%; font-size: 10pt; margin-bottom: 15px;" border="0">
+        <tbody>
+            <tr>
+                <td style="width: 30%; padding: 2px 0;">Nama Pemohon</td>
+                <td style="width: 2%; padding: 2px 0;">:</td>
+                <td style="padding: 2px 0;"><strong>[NAMA PEMOHON]</strong></td>
+            </tr>
+            <tr>
+                <td style="padding: 2px 0;">Alamat</td>
+                <td style="padding: 2px 0;">:</td>
+                <td style="padding: 2px 0;">[ALAMAT LENGKAP]</td>
+            </tr>
+            <tr>
+                <td style="padding: 2px 0;">Jenis Izin</td>
+                <td style="padding: 2px 0;">:</td>
+                <td style="padding: 2px 0;">[NAMA IZIN]</td>
+            </tr>
+        </tbody>
+    </table>
+    <p style="font-size: 10pt; text-align: justify; margin-bottom: 20px;">Keputusan izin ini berlaku sejak tanggal ditetapkan dengan ketentuan wajib memenuhi semua peraturan perundang-undangan yang berlaku. Apabila di kemudian hari terdapat kekeliruan dalam keputusan ini, akan diadakan perbaikan sebagaimana mestinya.</p>
+    <table style="width: 100%; font-size: 10pt;">
+        <tbody>
+            <tr>
+                <td style="width: 55%;"></td>
+                <td style="width: 45%; text-align: center;">
+                    Ditetapkan di Banjarnegara<br />
+                    pada tanggal [TANGGAL]<br />
+                    Kepala Dinas,<br />
+                    <br />
+                    #qrcode_signed#<br />
+                    <br />
+                    <strong><u>Nama Kepala Dinas</u></strong><br />
+                    NIP. .........................
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>';
     }
 }

@@ -23,10 +23,11 @@ class DataPerijinan extends Model
         'file_pernyataan',
         'file_permohonan',
         'file_keabsahan',
-        'data_pemohon',
+        'file_rekom',
+        'file_izin',
+        'catatan_pemohon',
         'catatan_perbaikan',
         'catatan_reject',
-        'catatan_pemohon',
         'current_step',
         'submitted_at',
         'approved_at',
@@ -66,7 +67,9 @@ class DataPerijinan extends Model
             $filesToDelete = [
                 $data->file_pernyataan,
                 $data->file_permohonan,
-                $data->file_keabsahan
+                $data->file_keabsahan,
+                $data->file_rekom,
+                $data->file_izin,
             ];
 
             // Handle dynamic form files

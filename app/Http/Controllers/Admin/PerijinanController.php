@@ -130,6 +130,85 @@ class PerijinanController extends Controller
     }
 
     /**
+     * Preview the template by replacing placeholders with dummy data.
+     */
+    public function previewTemplate(Request $request, string $id)
+    {
+        $perijinan = Perijinan::findOrFail($id);
+        $templateType = $request->input('template_type', 'rekom'); // 'rekom' or 'izin'
+        $htmlContent = $request->input('template_content', '');
+
+        // Dummy Data Replacements
+        $replacements = [
+            '[NAMA PEMOHON]' => 'Joko Susilo',
+            '[NIK]' => '3304123456789012',
+            '[ALAMAT LENGKAP]' => 'Jl. Pemuda No. 45, Kel/Desa Krandegan, Kec. Banjarnegara, Kab/Kota Banjarnegara, Provinsi Jawa Tengah',
+            '[NO HP]' => '081234567890',
+            '[EMAIL]' => 'joko.susilo@example.com',
+...
+            '[PEKERJAAN]' => 'Wiraswasta',
+            '[NAMA IZIN]' => $perijinan->nama_perijinan,
+            '[TANGGAL]' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
+            '[NO REGISTRASI]' => 'REG-' . date('Ymd') . '-12345',
+        ];
+
+        // #qrcode_signed#
+        $gambarTte = \App\Models\Setting::get('gambar_tte');
+        $tteHtml = '<div style="width: 100px; height: 100px; border: 1px dashed #ccc; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; color: #999;">[QR CODE TTE]</div>';
+        if ($gambarTte && \Illuminate\Support\Facades\File::exists(public_path($gambarTte))) {
+            $imageData = base64_encode(\Illuminate\Support\Facades\File::get(public_path($gambarTte)));
+            $mime = \Illuminate\Support\Facades\File::mimeType(public_path($gambarTte));
+            $src = 'data:' . $mime . ';base64,' . $imageData;
+            $tteHtml = '<img src="' . $src . '" style="max-width: 150px; max-height: 150px;" alt="TTE" />';
+        }
+        $replacements['#qrcode_signed#'] = $tteHtml;
+
+        // [LOGO KABUPATEN]
+        $logoKabupaten = \App\Models\Setting::get('logo_kabupaten');
+        $logoKabHtml = '<div style="width: 80px; height: 80px; border: 1px dashed #ccc; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; color: #999;">[LOGO KAB]</div>';
+        if ($logoKabupaten && \Illuminate\Support\Facades\File::exists(public_path($logoKabupaten))) {
+            $imageData = base64_encode(\Illuminate\Support\Facades\File::get(public_path($logoKabupaten)));
+            $mime = \Illuminate\Support\Facades\File::mimeType(public_path($logoKabupaten));
+            $src = 'data:' . $mime . ';base64,' . $imageData;
+            $logoKabHtml = '<img src="' . $src . '" style="max-height: 90px; width: auto;" alt="Logo Kabupaten" />';
+        }
+        $replacements['[LOGO KABUPATEN]'] = $logoKabHtml;
+
+        // Dynamic Form Fields Dummy
+        foreach ($perijinan->formFields as $field) {
+            $replacements['[' . strtoupper($field->name) . ']'] = '[Contoh ' . $field->label . ']';
+        }
+
+        // Global fix for checkmarks [x] or [v] or ✓
+        $checkmarkHtml = '<span class="checkmark">&#10003;</span>';
+        $htmlContent = str_replace(['[x]', '[v]', '[V]', '✓'], $checkmarkHtml, $htmlContent);
+
+        // Replace placeholders
+        $htmlContent = str_replace(
+            array_keys($replacements),
+            array_values($replacements),
+            $htmlContent
+        );
+
+        $fullHtml = \App\Services\DocumentGenerator::wrapHtmlTemplate($htmlContent, $templateType, 'PREVIEW');
+
+        if (class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($fullHtml)
+                ->setPaper('a4', 'portrait')
+                ->setWarnings(false)
+                ->setOptions([
+                    'isRemoteEnabled' => true,
+                    'isHtml5ParserEnabled' => true,
+                    'isFontSubsettingEnabled' => true,
+                    'defaultFont' => 'DejaVu Sans',
+                ]);
+            return $pdf->stream('Pratinjau_' . ucfirst($templateType) . '.pdf');
+        }
+
+        return response($fullHtml);
+    }
+
+    /**
      * Store a new form field.
      */
     public function storeFormField(Request $request, string $id)
@@ -641,12 +720,16 @@ class PerijinanController extends Controller
             'template_pernyataan' => 'nullable|string',
             'template_permohonan' => 'nullable|string',
             'template_keabsahan' => 'nullable|string',
+            'template_surat_rekom' => 'nullable|string',
+            'template_surat_izin' => 'nullable|string',
         ]);
 
         $perijinan->update([
-            'template_pernyataan' => $request->template_pernyataan,
-            'template_permohonan' => $request->template_permohonan,
-            'template_keabsahan' => $request->template_keabsahan,
+            'template_pernyataan' => $request->template_pernyataan ?? $perijinan->template_pernyataan,
+            'template_permohonan' => $request->template_permohonan ?? $perijinan->template_permohonan,
+            'template_keabsahan' => $request->template_keabsahan ?? $perijinan->template_keabsahan,
+            'template_surat_rekom' => $request->has('template_surat_rekom') ? $request->template_surat_rekom : $perijinan->template_surat_rekom,
+            'template_surat_izin' => $request->has('template_surat_izin') ? $request->template_surat_izin : $perijinan->template_surat_izin,
         ]);
 
         // Log activity
@@ -658,11 +741,13 @@ class PerijinanController extends Controller
                 'template_pernyataan' => !empty($request->template_pernyataan) ? 'Updated' : 'Empty',
                 'template_permohonan' => !empty($request->template_permohonan) ? 'Updated' : 'Empty',
                 'template_keabsahan' => !empty($request->template_keabsahan) ? 'Updated' : 'Empty',
+                'template_surat_rekom' => !empty($request->template_surat_rekom) ? 'Updated' : 'Empty',
+                'template_surat_izin' => !empty($request->template_surat_izin) ? 'Updated' : 'Empty',
             ],
             'perijinan'
         );
 
-        return redirect()->route('perijinan.show', $id)
+        return back()
             ->with('success', 'Template surat berhasil diperbarui.')
             ->with('active_tab', 'templates');
     }

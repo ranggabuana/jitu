@@ -392,11 +392,14 @@ class DashboardController extends Controller
             // 🔹 GENERATE DOKUMEN SURAT
             // ===============================
             try {
+                $data->load(['user.provinsi', 'user.kabupaten', 'user.kecamatan', 'user.kelurahan', 'perijinan']);
                 $generatedDocs = \App\Services\DocumentGenerator::generateDocuments($data);
                 $data->update([
                     'file_pernyataan' => $generatedDocs['file_pernyataan'] ?? null,
                     'file_permohonan' => $generatedDocs['file_permohonan'] ?? null,
                     'file_keabsahan' => $generatedDocs['file_keabsahan'] ?? null,
+                    'file_rekom' => $generatedDocs['file_rekom'] ?? null,
+                    'file_izin' => $generatedDocs['file_izin'] ?? null,
                 ]);
             } catch (\Exception $docEx) {
                 \Log::error('Error generating permit letters in storePengajuan: ' . $docEx->getMessage());
@@ -710,11 +713,14 @@ class DashboardController extends Controller
         // 🔹 RE-GENERATE DOKUMEN SURAT
         // ===============================
         try {
+            $data->load(['user.provinsi', 'user.kabupaten', 'user.kecamatan', 'user.kelurahan', 'perijinan']);
             $generatedDocs = \App\Services\DocumentGenerator::generateDocuments($data);
             $data->update([
                 'file_pernyataan' => $generatedDocs['file_pernyataan'] ?? null,
                 'file_permohonan' => $generatedDocs['file_permohonan'] ?? null,
                 'file_keabsahan' => $generatedDocs['file_keabsahan'] ?? null,
+                'file_rekom' => $generatedDocs['file_rekom'] ?? null,
+                'file_izin' => $generatedDocs['file_izin'] ?? null,
             ]);
         } catch (\Exception $docEx) {
             \Log::error('Error re-generating permit letters in updatePengajuan: ' . $docEx->getMessage());

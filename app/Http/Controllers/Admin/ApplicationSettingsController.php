@@ -54,6 +54,7 @@ class ApplicationSettingsController extends Controller
             'app_name' => 'required|string|max:255',
             'app_description' => 'nullable|string',
             'app_logo' => 'nullable|image|mimes:png,jpg,jpeg,svg|max:2048',
+            'logo_kabupaten' => 'nullable|image|mimes:png,jpg,jpeg,svg|max:2048',
             'gambar_tte' => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
 
             // Contact Settings
@@ -109,6 +110,21 @@ class ApplicationSettingsController extends Controller
             }
 
             Setting::set('app_logo', 'assets/images/' . $logoName, 'file', 'general', 'Logo Aplikasi');
+        }
+
+        // Handle Logo Kabupaten upload
+        if ($request->hasFile('logo_kabupaten')) {
+            $logoKabupaten = $request->file('logo_kabupaten');
+            $logoKabupatenName = time() . '_logo_kabupaten.' . $logoKabupaten->getClientOriginalExtension();
+            $logoKabupaten->move(public_path('assets/images'), $logoKabupatenName);
+
+            // Delete old logo kabupaten if exists
+            $oldLogoKabupaten = Setting::where('key', 'logo_kabupaten')->first();
+            if ($oldLogoKabupaten && $oldLogoKabupaten->value && file_exists(public_path($oldLogoKabupaten->value))) {
+                unlink(public_path($oldLogoKabupaten->value));
+            }
+
+            Setting::set('logo_kabupaten', 'assets/images/' . $logoKabupatenName, 'file', 'general', 'Logo Kabupaten');
         }
 
         // Handle Gambar TTE upload

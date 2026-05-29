@@ -94,7 +94,7 @@
                             <textarea name="app_description" id="app_description" rows="3" class="form-input resize-none">{{ old('app_description', $generalSettings['app_description'] ?? '') }}</textarea>
                         </div>
                         
-                        <div class="grid grid-cols-1 pt-4 border-t border-gray-100 dark:border-gray-700">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100 dark:border-gray-700">
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Logo Aplikasi</label>
                                 <div class="flex items-center gap-4">
@@ -106,6 +106,19 @@
                                         @endif
                                     </div>
                                     <input type="file" name="app_logo" class="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Logo Kabupaten</label>
+                                <div class="flex items-center gap-4">
+                                    <div class="w-20 h-20 rounded-lg border-2 border-gray-100 dark:border-gray-700 overflow-hidden bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+                                        @if(isset($generalSettings['logo_kabupaten']) && file_exists(public_path($generalSettings['logo_kabupaten'])))
+                                            <img src="{{ asset($generalSettings['logo_kabupaten']) }}" class="max-w-full max-h-full object-contain">
+                                        @else
+                                            <i class="mdi mdi-image-outline text-3xl text-gray-300"></i>
+                                        @endif
+                                    </div>
+                                    <input type="file" name="logo_kabupaten" class="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700">
                                 </div>
                             </div>
                         </div>
@@ -719,9 +732,10 @@
                     menubar: true,
                     plugins: 'advlist autolink lists link image table code wordcount fullscreen print preview',
                     toolbar: [
-                        'undo redo | styles | bold italic underline strikethrough | forecolor backcolor',
+                        'undo redo | styles fontfamily fontsize lineheight | bold italic underline strikethrough | forecolor backcolor',
                         'alignleft aligncenter alignright alignjustify | bullist numlist | outdent indent | table | fullscreen preview'
                     ],
+                    font_family_formats: 'Andale Mono=andale mono,times; Arial=arial,helvetica,sans-serif; Arial Black=arial black,avant garde; Book Antiqua=book antiqua,palatino; Bookman Old Style=bookman old style,palatino; Comic Sans MS=comic sans ms,sans-serif; Courier New=courier new,courier; Georgia=georgia,palatino; Helvetica=helvetica; Impact=impact,chicago; Symbol=symbol; Tahoma=tahoma,arial,helvetica,sans-serif; Terminal=terminal,monaco; Times New Roman=times new roman,times; Trebuchet MS=trebuchet ms,geneva; Verdana=verdana,geneva; Webdings=webdings; Wingdings=wingdings,zapf dingbats',
                     toolbar_mode: 'sliding',
                     content_style: [
                         'body {',
@@ -856,8 +870,9 @@
         const previewData = {
             '[NAMA PEMOHON]': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">Budi Santoso</span>',
             '[NIK]': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">3304123456789001</span>',
-            '[ALAMAT LENGKAP]': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">Jl. Pemuda No. 45, Banjarnegara</span>',
+            '[ALAMAT LENGKAP]': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">Jl. Pemuda No. 45, Kel/Desa Krandegan, Kec. Banjarnegara, Kab/Kota Banjarnegara, Provinsi Jawa Tengah</span>',
             '[NO HP]': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">081234567890</span>',
+...
             '[EMAIL]': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">budi.santoso@email.com</span>',
             '[PEKERJAAN]': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">Wiraswasta</span>',
             '[NAMA IZIN]': '<span style="background:#ede9fe;color:#5b21b6;padding:0 4px;border-radius:3px;font-weight:bold;">Izin Apotek</span>',

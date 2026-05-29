@@ -381,7 +381,195 @@
                 @endif
             </div>
         </div>
-    </div>
+        </div>
+
+        <!-- Template Editor Container (Hidden by default, shown on rekom and izin tabs) -->
+        <div id="template-editor-container" class="mt-6 hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <form action="{{ route('perijinan.templates.update', $perijinan->id) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-700/30 flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h2 class="text-base font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                                <i class="mdi mdi-file-document-edit text-blue-500"></i>
+                                Pengaturan Template Surat <span id="template-editor-title">Rekom</span>
+                            </h2>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                Edit langsung seperti menggunakan pengolah kata.
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button type="button" onclick="togglePlaceholderGuide()" id="btn-toggle-guide"
+                                class="flex items-center gap-2 text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded-lg px-3 py-2 transition-all">
+                                <i class="mdi mdi-tag-text-outline text-base"></i>
+                                Lihat Variabel Dinamis
+                            </button>
+                            <button type="button" onclick="resetTemplateToDefault()"
+                                class="flex items-center gap-2 text-xs font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2 transition-all">
+                                <i class="mdi mdi-refresh text-base"></i>
+                                Reset ke Default
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="placeholder-guide" class="hidden border-b border-blue-100 dark:border-blue-900/50 bg-gradient-to-r from-blue-50 to-indigo-50/50 dark:from-blue-950/30 dark:to-indigo-950/20 px-6 py-4">
+                        <p class="text-xs text-blue-700 dark:text-blue-300 mb-3 leading-relaxed font-medium">
+                            <i class="mdi mdi-information-outline mr-1"></i>
+                            Ketikkan kode berikut di dalam dokumen. Kode ini akan <strong>diganti otomatis</strong> dengan data riil pemohon saat surat dicetak:
+                        </p>
+                        <div class="space-y-4">
+                            <!-- Variabel Dasar -->
+                            <div>
+                                <span class="text-[10px] uppercase tracking-wider font-bold text-blue-800 dark:text-blue-300 block mb-2">Variabel Dasar (Sistem):</span>
+                                <div class="flex flex-wrap gap-2">
+                                    @foreach([
+                                        '[NAMA PEMOHON]' => 'Nama Lengkap',
+                                        '[NIK]' => 'NIK (KTP)',
+                                        '[ALAMAT LENGKAP]' => 'Alamat Pemohon',
+                                        '[NO HP]' => 'No. Telepon',
+                                        '[EMAIL]' => 'Email',
+                                        '[PEKERJAAN]' => 'Pekerjaan',
+                                        '[NAMA IZIN]' => 'Jenis Izin',
+                                        '[TANGGAL]' => 'Tanggal Pengajuan',
+                                        '[NO REGISTRASI]' => 'No. Registrasi',
+                                        '[LOGO KABUPATEN]' => 'Logo Kabupaten (Header)',
+                                        '#qrcode_signed#' => 'Gambar TTE (Tanda Tangan Elektronik)',
+                                    ] as $code => $label)
+                                    <button type="button"
+                                        onclick="insertPlaceholder('{{ $code }}')"
+                                        title="{{ $label }}"
+                                        class="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-700 hover:border-blue-600 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold transition-all shadow-sm">
+                                        <i class="mdi mdi-plus text-xs"></i>{{ $code }}
+                                    </button>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <!-- Variabel Global -->
+                            <div class="dynamic-var-section" id="var-section-global">
+                                <span class="text-[10px] uppercase tracking-wider font-bold text-emerald-800 dark:text-emerald-300 block mb-2">Variabel dari Global Form:</span>
+                                <div class="flex flex-wrap gap-2">
+                                    @forelse($perijinan->formFields->where('form_type', 'global') as $field)
+                                        <button type="button"
+                                            onclick="insertPlaceholder('[{{ strtoupper($field->name) }}]')"
+                                            title="{{ $field->label }}"
+                                            class="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-700 hover:border-emerald-600 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold transition-all shadow-sm">
+                                            <i class="mdi mdi-plus text-xs"></i>[{{ strtoupper($field->name) }}]
+                                        </button>
+                                    @empty
+                                        <span class="text-xs text-gray-400 italic">Belum ada field di Global Form</span>
+                                    @endforelse
+                                </div>
+                            </div>
+
+                            <!-- Variabel Khusus Rekom -->
+                            <div class="dynamic-var-section hidden" id="var-section-rekom">
+                                <span class="text-[10px] uppercase tracking-wider font-bold text-purple-800 dark:text-purple-300 block mb-2">Variabel Khusus Rekom Form:</span>
+                                <div class="flex flex-wrap gap-2">
+                                    @forelse($perijinan->formFields->where('form_type', 'rekom') as $field)
+                                        <button type="button"
+                                            onclick="insertPlaceholder('[{{ strtoupper($field->name) }}]')"
+                                            title="{{ $field->label }}"
+                                            class="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300 hover:bg-purple-600 hover:text-white dark:hover:bg-purple-700 hover:border-purple-600 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold transition-all shadow-sm">
+                                            <i class="mdi mdi-plus text-xs"></i>[{{ strtoupper($field->name) }}]
+                                        </button>
+                                    @empty
+                                        <span class="text-xs text-gray-400 italic">Belum ada field di Rekom Form</span>
+                                    @endforelse
+                                </div>
+                            </div>
+
+                            <!-- Variabel Khusus Izin -->
+                            <div class="dynamic-var-section hidden" id="var-section-izin">
+                                <span class="text-[10px] uppercase tracking-wider font-bold text-indigo-800 dark:text-indigo-300 block mb-2">Variabel Khusus Izin Form:</span>
+                                <div class="flex flex-wrap gap-2">
+                                    @forelse($perijinan->formFields->where('form_type', 'izin') as $field)
+                                        <button type="button"
+                                            onclick="insertPlaceholder('[{{ strtoupper($field->name) }}]')"
+                                            title="{{ $field->label }}"
+                                            class="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-700 hover:border-indigo-600 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold transition-all shadow-sm">
+                                            <i class="mdi mdi-plus text-xs"></i>[{{ strtoupper($field->name) }}]
+                                        </button>
+                                    @empty
+                                        <span class="text-xs text-gray-400 italic">Belum ada field di Izin Form</span>
+                                    @endforelse
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-0">
+                        <div id="tpl-rekom-container" class="hidden">
+                            <textarea name="template_surat_rekom" id="editor_rekom" class="w-full focus:outline-none">{{ $perijinan->template_surat_rekom }}</textarea>
+                        </div>
+                        <div id="tpl-izin-container" class="hidden">
+                            <textarea name="template_surat_izin" id="editor_izin" class="w-full focus:outline-none">{{ $perijinan->template_surat_izin }}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="px-6 py-4 bg-gray-50/50 dark:bg-gray-700/30 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-3">
+                        <button type="button" onclick="previewCurrentTemplate()" class="bg-amber-500 hover:bg-amber-600 text-white px-6 py-2 rounded-lg font-bold transition-all flex items-center gap-2 shadow-sm">
+                            <i class="mdi mdi-eye-outline"></i> Pratinjau Dokumen
+                        </button>
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold transition-all flex items-center gap-2 shadow-sm">
+                            <i class="mdi mdi-content-save"></i> Simpan Template
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Pratinjau Dokumen Modal -->
+        <div id="modal-doc-preview" class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
+            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-4xl mx-4 flex flex-col" style="max-height: 92vh;">
+                <!-- Modal header -->
+                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-t-2xl flex-shrink-0">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
+                            <i class="mdi mdi-file-eye-outline text-emerald-600 dark:text-emerald-400 text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-gray-800 dark:text-white" id="modal-preview-title">Pratinjau Dokumen</h3>
+                            <p class="text-xs text-gray-500">Simulasi tampilan surat saat dicetak. Data ditampilkan dengan data simulasi.</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="closeDocPreview()"
+                        class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
+                        <i class="mdi mdi-close text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- A4 paper container -->
+                <div class="flex-1 overflow-y-auto bg-gray-200 dark:bg-gray-950 p-6">
+                    <!-- A4-like paper -->
+                    <div class="mx-auto bg-white shadow-xl rounded-sm" style="width: 794px; min-height: 1123px; padding: 60px 70px;">
+                        <div id="modal-preview-body" class="prose max-w-none text-gray-900 leading-relaxed" style="font-family: 'Times New Roman', serif; font-size: 12pt;">
+                            <!-- Content rendered here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal footer -->
+                <div class="px-6 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-b-2xl flex-shrink-0 flex justify-between items-center">
+                    <p class="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                        <i class="mdi mdi-alert-circle-outline"></i>
+                        Data di atas adalah simulasi pratinjau.
+                    </p>
+                    <div class="flex items-center gap-3">
+                        <button type="button" onclick="applyAndSavePreview()"
+                            class="px-5 py-2 text-sm font-bold text-white bg-indigo-600 border border-indigo-700 rounded-lg hover:bg-indigo-700 transition-all flex items-center gap-2">
+                            <i class="mdi mdi-content-save-check text-base"></i> Terapkan & Simpan
+                        </button>
+                        <button type="button" onclick="closeDocPreview()"
+                            class="px-5 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 transition-all">
+                            Tutup Pratinjau
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
     <!-- Edit Modal -->
     <div id="editModal"
@@ -805,13 +993,400 @@
             document.querySelectorAll('.fields-container').forEach(el => el.classList.add('hidden'));
             const listEl = document.getElementById(`fields_list_${tabId}`);
             if (listEl) listEl.classList.remove('hidden');
+
+            // 7. Toggle Template Editor
+            const templateContainer = document.getElementById('template-editor-container');
+            const editorRekom = document.getElementById('tpl-rekom-container');
+            const editorIzin = document.getElementById('tpl-izin-container');
+            const editorTitle = document.getElementById('template-editor-title');
+            
+            // Sections for variables
+            const varSectionGlobal = document.getElementById('var-section-global');
+            const varSectionRekom = document.getElementById('var-section-rekom');
+            const varSectionIzin = document.getElementById('var-section-izin');
+
+            if (tabId === 'rekom') {
+                templateContainer.classList.remove('hidden');
+                editorRekom.classList.remove('hidden');
+                editorIzin.classList.add('hidden');
+                if (editorTitle) editorTitle.textContent = 'Rekom';
+                
+                // Show Global + Rekom variables
+                varSectionGlobal.classList.remove('hidden');
+                varSectionRekom.classList.remove('hidden');
+                varSectionIzin.classList.add('hidden');
+            } else if (tabId === 'izin') {
+                templateContainer.classList.remove('hidden');
+                editorRekom.classList.add('hidden');
+                editorIzin.classList.remove('hidden');
+                if (editorTitle) editorTitle.textContent = 'Izin';
+                
+                // Show Global + Izin variables
+                varSectionGlobal.classList.remove('hidden');
+                varSectionRekom.classList.add('hidden');
+                varSectionIzin.classList.remove('hidden');
+            } else {
+                templateContainer.classList.add('hidden');
+            }
+        }
+
+        function togglePlaceholderGuide() {
+            const guide = document.getElementById('placeholder-guide');
+            guide.classList.toggle('hidden');
+        }
+
+        function insertPlaceholder(code) {
+            const currentTab = localStorage.getItem('formBuilderTab') || 'global';
+            let activeEditorId = currentTab === 'rekom' ? 'editor_rekom' : 'editor_izin';
+            
+            if (typeof tinymce !== 'undefined') {
+                const ed = tinymce.get(activeEditorId);
+                if (ed) {
+                    ed.insertContent(' ' + code + ' ');
+                    ed.focus();
+                } else {
+                    // Fallback to text area insertion if TinyMCE failed to load
+                    const ta = document.getElementById(activeEditorId);
+                    if (ta) {
+                        const start = ta.selectionStart;
+                        const end = ta.selectionEnd;
+                        const text = ta.value;
+                        ta.value = text.substring(0, start) + ' ' + code + ' ' + text.substring(end);
+                        ta.focus();
+                        ta.selectionStart = start + code.length + 2;
+                        ta.selectionEnd = start + code.length + 2;
+                    }
+                }
+            }
+        }
+
+        function previewCurrentTemplate() {
+            const currentTab = localStorage.getItem('formBuilderTab') || 'global';
+            if (currentTab !== 'rekom' && currentTab !== 'izin') return;
+
+            const editorId = currentTab === 'rekom' ? 'editor_rekom' : 'editor_izin';
+            let content = '';
+
+            if (typeof tinymce !== 'undefined' && tinymce.get(editorId)) {
+                content = tinymce.get(editorId).getContent();
+            } else {
+                content = document.getElementById(editorId).value;
+            }
+
+            // Dummy Data for Preview
+            const dummyData = {
+                '[NAMA PEMOHON]': '<span class="bg-blue-100 text-blue-800 px-1 rounded font-semibold text-[10pt]">Joko Susilo</span>',
+                '[NIK]': '<span class="bg-blue-100 text-blue-800 px-1 rounded font-semibold text-[10pt]">3304123456789012</span>',
+                '[ALAMAT LENGKAP]': '<span class="bg-blue-100 text-blue-800 px-1 rounded font-semibold text-[10pt]">Jl. Pemuda No. 45, Kel/Desa Krandegan, Kec. Banjarnegara, Kab/Kota Banjarnegara, Provinsi Jawa Tengah</span>',
+                '[NO HP]': '<span class="bg-blue-100 text-blue-800 px-1 rounded font-semibold text-[10pt]">081234567890</span>',
+...
+                '[EMAIL]': '<span class="bg-blue-100 text-blue-800 px-1 rounded font-semibold text-[10pt]">joko.susilo@example.com</span>',
+                '[PEKERJAAN]': '<span class="bg-blue-100 text-blue-800 px-1 rounded font-semibold text-[10pt]">Wiraswasta</span>',
+                '[NAMA IZIN]': '<span class="bg-blue-100 text-blue-800 px-1 rounded font-semibold text-[10pt]">{{ $perijinan->nama_perijinan }}</span>',
+                '[TANGGAL]': '<span class="bg-blue-100 text-blue-800 px-1 rounded font-semibold text-[10pt]">' + new Date().toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'}) + '</span>',
+                '[NO REGISTRASI]': '<span class="bg-blue-100 text-blue-800 px-1 rounded font-semibold text-[10pt]">REG-' + new Date().getFullYear() + '0101-12345</span>',
+                '#qrcode_signed#': `@if(\App\Models\Setting::get('gambar_tte')) 
+                    <img src="{{ asset(\App\Models\Setting::get('gambar_tte')) }}" style="width: 100%; height: auto; pointer-events: none;" />
+                @else 
+                    <div class="inline-block p-2 border-2 border-dashed border-gray-300 text-gray-400 text-[10px] text-center w-32">Gambar TTE Belum Diunggah</div> 
+                @endif`,
+                '[LOGO KABUPATEN]': `@if(\App\Models\Setting::get('logo_kabupaten')) 
+                    <img src="{{ asset(\App\Models\Setting::get('logo_kabupaten')) }}" style="width: 100%; height: auto; pointer-events: none;" />
+                @else 
+                    <div class="inline-block p-2 border-2 border-dashed border-gray-300 text-gray-400 text-[10px] text-center w-20">Logo Kabupaten Belum Diunggah</div> 
+                @endif`
+            };
+
+            // Process placeholders with potential wrappers
+            let previewHtml = content;
+            
+            // 1. Detect images and wrap them in manageable divs, inheriting styles from existing wrappers if any
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = content;
+
+            ['#qrcode_signed#', '[LOGO KABUPATEN]'].forEach(placeholder => {
+                const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regex = new RegExp(`(<div class="template-wrapper"[^>]*>)?${escapedPlaceholder}(<\\/div>)?`, 'g');
+                
+                previewHtml = previewHtml.replace(regex, (match, opening, closing) => {
+                    let styles = 'width: 120px; vertical-align: middle;'; // default
+                    if (placeholder === '[LOGO KABUPATEN]') styles = 'width: 110px; vertical-align: middle;';
+                    
+                    if (opening) {
+                        const styleMatch = opening.match(/style="([^"]*)"/);
+                        if (styleMatch) styles = styleMatch[1];
+                    }
+                    
+                    return `<div class="preview-manageable inline-block" data-placeholder="${placeholder}" style="${styles}">${dummyData[placeholder]}</div>`;
+                });
+            });
+
+            // 2. Replace other basic placeholders
+            for (const [key, val] of Object.entries(dummyData)) {
+                if (key !== '#qrcode_signed#' && key !== '[LOGO KABUPATEN]') {
+                    previewHtml = previewHtml.split(key).join(val);
+                }
+            }
+
+            // Replace dynamic field placeholders
+            const dynamicVarButtons = document.querySelectorAll('.dynamic-var-btn');
+            dynamicVarButtons.forEach(btn => {
+                const placeholder = btn.textContent.trim();
+                const label = btn.getAttribute('title');
+                previewHtml = previewHtml.split(placeholder).join('<span class="bg-emerald-100 text-emerald-800 px-1 rounded text-[10pt]">[' + label + ']</span>');
+            });
+
+            // Show Modal
+            document.getElementById('modal-preview-title').textContent = 'Pratinjau — Template Surat ' + (currentTab === 'rekom' ? 'Rekomendasi' : 'Izin');
+            document.getElementById('modal-preview-body').innerHTML = previewHtml;
+            const modal = document.getElementById('modal-doc-preview');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            // Initialize draggable & resizable
+            setTimeout(() => {
+                document.querySelectorAll('#modal-preview-body .preview-manageable').forEach(el => {
+                    makeElementManageable(el);
+                });
+            }, 100);
+        }
+
+        function makeElementManageable(el) {
+            let isDragging = false;
+            let startX, startY, initialLeft, initialTop;
+
+            // Apply styles for resize and basic positioning
+            el.style.position = 'relative';
+            el.style.cursor = 'move';
+            el.style.resize = 'both';
+            el.style.overflow = 'hidden'; // Required for 'resize' property to work
+            el.style.border = '1px dashed #3b82f6';
+            el.style.backgroundColor = 'rgba(59, 130, 246, 0.05)';
+            el.style.minWidth = '40px';
+            el.style.minHeight = '40px';
+            
+            // Add a small resize handle indicator at the bottom right
+            const handle = document.createElement('div');
+            handle.style.position = 'absolute';
+            handle.style.right = '0';
+            handle.style.bottom = '0';
+            handle.style.width = '10px';
+            handle.style.height = '10px';
+            handle.style.background = 'linear-gradient(135deg, transparent 50%, #3b82f6 50%)';
+            handle.style.cursor = 'nwse-resize';
+            handle.style.pointerEvents = 'none'; // click goes to parent for resize
+            el.appendChild(handle);
+            
+            el.onmousedown = function(e) {
+                // If clicking near the bottom-right corner, assume we want to resize (let browser handle it)
+                const rect = el.getBoundingClientRect();
+                const isResizeZone = (e.clientX > rect.right - 15 && e.clientY > rect.bottom - 15);
+                
+                if (isResizeZone) {
+                    // Let the default browser behavior handle resizing
+                    return;
+                }
+
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                
+                // Get current computed style for left/top
+                const style = window.getComputedStyle(el);
+                initialLeft = parseInt(style.left) || 0;
+                initialTop = parseInt(style.top) || 0;
+
+                el.style.zIndex = 1000;
+
+                function onMouseMove(e) {
+                    if (!isDragging) return;
+                    const dx = e.clientX - startX;
+                    const dy = e.clientY - startY;
+                    el.style.left = (initialLeft + dx) + 'px';
+                    el.style.top = (initialTop + dy) + 'px';
+                }
+
+                function onMouseUp() {
+                    isDragging = false;
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                }
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            };
+
+            el.ondragstart = function() { return false; };
+        }
+
+        function closeDocPreview() {
+            const modal = document.getElementById('modal-doc-preview');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+
+        async function applyAndSavePreview() {
+            const currentTab = localStorage.getItem('formBuilderTab') || 'global';
+            const editorId = currentTab === 'rekom' ? 'editor_rekom' : 'editor_izin';
+            
+            let content = '';
+            if (typeof tinymce !== 'undefined' && tinymce.get(editorId)) {
+                content = tinymce.get(editorId).getContent();
+            } else {
+                content = document.getElementById(editorId).value;
+            }
+
+            const managedElements = document.querySelectorAll('#modal-preview-body .preview-manageable');
+            
+            managedElements.forEach(managedEl => {
+                const placeholder = managedEl.dataset.placeholder;
+                const width = managedEl.style.width;
+                const left = managedEl.style.left || '0px';
+                const top = managedEl.style.top || '0px';
+
+                const styleStr = `display: inline-block; width: ${width}; position: relative; left: ${left}; top: ${top}; vertical-align: middle;`;
+                
+                const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                // Regex to find the placeholder either bare or inside an existing template-wrapper
+                const regex = new RegExp(`(<div class="template-wrapper"[^>]*>)?${escapedPlaceholder}(<\\/div>)?`, 'g');
+                
+                content = content.replace(regex, `<div class="template-wrapper" style="${styleStr}">${placeholder}</div>`);
+            });
+
+            // Update TinyMCE
+            if (typeof tinymce !== 'undefined' && tinymce.get(editorId)) {
+                tinymce.get(editorId).setContent(content);
+                tinymce.get(editorId).save();
+            } else {
+                document.getElementById(editorId).value = content;
+            }
+
+            // Show loading and submit
+            Swal.fire({
+                title: 'Menyimpan Tata Letak...',
+                text: 'Perubahan ukuran dan posisi sedang diterapkan.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                    const form = document.querySelector('form[action*="templates"]');
+                    if (form) form.submit();
+                }
+            });
+        }
+
+        // Close modal on backdrop click
+        document.addEventListener('click', function(e) {
+            const modal = document.getElementById('modal-doc-preview');
+            if (e.target === modal) closeDocPreview();
+        });
+
+        const defaultTemplates = {
+            rekom: @json(\App\Services\DocumentGenerator::getDefaultSuratRekomTemplate()),
+            izin: @json(\App\Services\DocumentGenerator::getDefaultSuratIzinTemplate())
+        };
+
+        function resetTemplateToDefault() {
+            const currentTab = localStorage.getItem('formBuilderTab') || 'global';
+            if (currentTab !== 'rekom' && currentTab !== 'izin') return;
+
+            Swal.fire({
+                title: 'Reset Template?',
+                text: 'Template ' + (currentTab === 'rekom' ? 'Rekomendasi' : 'Izin') + ' akan dikembalikan ke format bawaan asli. Perubahan yang belum disimpan akan hilang.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Ya, Reset!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const editorId = currentTab === 'rekom' ? 'editor_rekom' : 'editor_izin';
+                    const defaultHtml = defaultTemplates[currentTab];
+
+                    if (typeof tinymce !== 'undefined' && tinymce.get(editorId)) {
+                        tinymce.get(editorId).setContent(defaultHtml);
+                        tinymce.get(editorId).save();
+                    } else {
+                        document.getElementById(editorId).value = defaultHtml;
+                    }
+
+                    // Show loading and submit form
+                    Swal.fire({
+                        title: 'Menyimpan...',
+                        text: 'Template sedang dikembalikan ke bawaan.',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                            const form = document.querySelector('form[action*="templates"]');
+                            if (form) form.submit();
+                        }
+                    });
+                }
+            });
         }
 
         // Initialize tabs on page load
         document.addEventListener('DOMContentLoaded', () => {
             const savedTab = localStorage.getItem('formBuilderTab') || 'global';
             switchTab(savedTab);
+
+            // Init TinyMCE
+            if (typeof tinymce !== 'undefined') {
+                const tinymceConfigs = {
+                    height: 500,
+                    menubar: true,
+                    plugins: [
+                        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                        'insertdatetime', 'media', 'table', 'help', 'wordcount', 'pagebreak', 'nonbreaking'
+                    ],
+                    toolbar: 'undo redo | blocks fontfamily fontsize lineheight | ' +
+                    'bold italic underline strikethrough | alignleft aligncenter ' +
+                    'alignright alignjustify | bullist numlist outdent indent | ' +
+                    'removeformat | pagebreak | help',
+                    font_family_formats: 'Andale Mono=andale mono,times; Arial=arial,helvetica,sans-serif; Arial Black=arial black,avant garde; Book Antiqua=book antiqua,palatino; Bookman Old Style=bookman old style,palatino; Comic Sans MS=comic sans ms,sans-serif; Courier New=courier new,courier; Georgia=georgia,palatino; Helvetica=helvetica; Impact=impact,chicago; Symbol=symbol; Tahoma=tahoma,arial,helvetica,sans-serif; Terminal=terminal,monaco; Times New Roman=times new roman,times; Trebuchet MS=trebuchet ms,geneva; Verdana=verdana,geneva; Webdings=webdings; Wingdings=wingdings,zapf dingbats',
+                    content_style: `
+                        body { 
+                            font-family: "Times New Roman", serif; 
+                            font-size: 12pt; 
+                            line-height: 1.5; 
+                            max-width: 800px; 
+                            margin: 40px auto; 
+                            background: #fff; 
+                            padding: 60px 80px; 
+                            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+                            min-height: 1000px;
+                            color: #000;
+                        } 
+                        html { background: #f4f4f7; }
+                        .mce-content-body[data-mce-placeholder]:not(.mce-visualblocks)::before {
+                            color: #ccc;
+                        }
+                    `,
+                    branding: false,
+                    promotion: false,
+                    skin: document.documentElement.classList.contains('dark') ? 'oxide-dark' : 'oxide',
+                    content_css: document.documentElement.classList.contains('dark') ? 'dark' : 'default',
+                    pagebreak_separator: '<!-- pagebreak -->',
+                    setup: function (editor) {
+                        editor.on('change', function () {
+                            editor.save();
+                        });
+                    }
+                };
+
+                tinymce.init({
+                    ...tinymceConfigs,
+                    selector: '#editor_rekom'
+                });
+                
+                tinymce.init({
+                    ...tinymceConfigs,
+                    selector: '#editor_izin'
+                });
+            }
         });
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js" referrerpolicy="origin"></script>
     </div> <!-- End form-builder-app -->
 </x-layout>
