@@ -152,17 +152,18 @@
         $isAdmin = $userRole === 'admin';
         $isFo = $userRole === 'fo';
         $isBo = $userRole === 'bo';
-        
+        $isKadin = $userRole === 'kadin';
+
         $rekomFields = $application->perijinan->formFields->where('form_type', 'rekom')->where('is_active', true)->sortBy('order');
         $izinFields = $application->perijinan->formFields->where('form_type', 'izin')->where('is_active', true)->sortBy('order');
-        
+
         $canEditRekom = ($isOperatorOpd || $isAdmin) && $application->status !== 'approved' && $application->status !== 'rejected';
         $canEditIzin = ($isVerifikator || $isAdmin) && $application->status !== 'approved' && $application->status !== 'rejected';
-        
+
         // Tab visibility logic
-        $showRekomTab = ($isOperatorOpd || $isKepalaOpd || $isAdmin || $isVerifikator);
-        $showIzinTab = ($isVerifikator || $isAdmin);
-    @endphp
+        $showRekomTab = ($isOperatorOpd || $isKepalaOpd || $isAdmin || $isVerifikator || $isKadin);
+        $showIzinTab = ($isVerifikator || $isAdmin || $isKadin);
+        @endphp
 
     <!-- Navigation Tabs -->
     <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
@@ -464,7 +465,7 @@
                 </div>
             </div>
 
-            @php $cv = $application->currentValidasi(); $canVal = ($cv && $cv->validationFlow->role === $userRole && ($cv->validationFlow->is_collective || $cv->validationFlow->assigned_user_id === auth()->id())); @endphp
+            @php $cv = $application->currentValidasi(); $canVal = ($application->status !== 'approved' && $cv && $cv->validationFlow->role === $userRole && (in_array($cv->validationFlow->role, ['verifikator', 'kadin']) || $cv->validationFlow->assigned_user_id === auth()->id())); @endphp
             @if ($canVal)
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50"><h3 class="font-black text-gray-800 dark:text-white text-xs uppercase tracking-widest flex items-center gap-2"><i class="mdi mdi-shield-check text-blue-500"></i> Tindakan Validasi</h3></div>
@@ -477,12 +478,16 @@
                                 <button type="button" onclick="submitValidation('rejected')" class="py-2.5 bg-red-600 text-white rounded-xl text-[9px] font-black uppercase">Tolak</button>
                                 <button type="button" onclick="submitValidation('revision')" class="col-span-2 py-2.5 bg-orange-500 text-white rounded-xl text-[9px] font-black uppercase mb-1">Perbaikan ke Pemohon</button>
                                 
-                                @if($isOperatorOpd || $isVerifikator)
+                                @if($isOperatorOpd)
                                     <button type="button" onclick="submitValidation('return_to_bo')" class="col-span-2 py-2.5 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase">Kembalikan ke BO</button>
                                 @endif
 
                                 @if($isKepalaOpd)
                                     <button type="button" onclick="submitValidation('return_to_operator_opd')" class="col-span-2 py-2.5 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase">Kembalikan ke Operator OPD</button>
+                                @endif
+                                
+                                @if($isVerifikator)
+                                    <button type="button" onclick="submitValidation('return_to_kepala_opd')" class="col-span-2 py-2.5 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase">Kembalikan ke Kepala OPD</button>
                                 @endif
                             </div>
                         </form>
@@ -509,13 +514,15 @@
                 'rejected': 'MENOLAK', 
                 'revision': 'MEMINTA PERBAIKAN KE PEMOHON', 
                 'return_to_bo': 'MENGEMBALIKAN KE BACK OFFICE (BO)',
-                'return_to_operator_opd': 'MENGEMBALIKAN KE OPERATOR OPD'
+                'return_to_operator_opd': 'MENGEMBALIKAN KE OPERATOR OPD',
+                'return_to_kepala_opd': 'MENGEMBALIKAN KE KEPALA OPD'
             }; 
             const colors = {
                 'approved': '#16a34a',
                 'rejected': '#dc2626',
                 'return_to_bo': '#2563eb',
-                'return_to_operator_opd': '#2563eb'
+                'return_to_operator_opd': '#2563eb',
+                'return_to_kepala_opd': '#2563eb'
             };
             Swal.fire({ 
                 title: 'Konfirmasi', 

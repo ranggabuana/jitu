@@ -424,7 +424,7 @@ class DataPerijinanController extends Controller
         ]);
         
         $request->validate([
-            'action' => 'required|in:approved,rejected,revision,return_to_bo,return_to_operator_opd',
+            'action' => 'required|in:approved,rejected,revision,return_to_bo,return_to_operator_opd,return_to_kepala_opd',
             'catatan' => 'nullable|string|max:1000',
         ]);
 
@@ -528,7 +528,7 @@ class DataPerijinanController extends Controller
                 $updateData['user_id'] = $user->id;
             }
             
-            $isReturnAction = in_array($request->action, ['return_to_bo', 'return_to_operator_opd']);
+            $isReturnAction = in_array($request->action, ['return_to_bo', 'return_to_operator_opd', 'return_to_kepala_opd']);
             
             // Jika bukan aksi pengembalian, update status record saat ini
             if (!$isReturnAction) {
@@ -584,8 +584,18 @@ class DataPerijinanController extends Controller
                     'catatan_perbaikan' => $request->catatan,
                 ]);
             } elseif ($isReturnAction) {
-                $targetRole = ($request->action === 'return_to_bo') ? 'bo' : 'operator_opd';
-                $roleLabel = ($request->action === 'return_to_bo') ? 'Back Office (BO)' : 'Operator OPD';
+                $targetRole = '';
+                $roleLabel = '';
+                if ($request->action === 'return_to_bo') {
+                    $targetRole = 'bo';
+                    $roleLabel = 'Back Office (BO)';
+                } elseif ($request->action === 'return_to_operator_opd') {
+                    $targetRole = 'operator_opd';
+                    $roleLabel = 'Operator OPD';
+                } elseif ($request->action === 'return_to_kepala_opd') {
+                    $targetRole = 'kepala_opd';
+                    $roleLabel = 'Kepala OPD';
+                }
 
                 // Find the target record in the validation steps
                 $targetRecord = $application->validasiRecords()
@@ -611,7 +621,7 @@ class DataPerijinanController extends Controller
                         $record->catatan = null;
                         
                         // Clear user_id only if it's a collective role
-                        if ($record->validationFlow && $record->validationFlow->is_collective) {
+                        if ($record->validationFlow && in_array($record->validationFlow->role, ['verifikator', 'kadin'])) {
                             $record->user_id = null;
                         }
                         
@@ -635,7 +645,8 @@ class DataPerijinanController extends Controller
                 'rejected' => 'Menolak',
                 'revision' => 'Meminta perbaikan',
                 'return_to_bo' => 'Mengembalikan ke BO',
-                'return_to_operator_opd' => 'Mengembalikan ke Operator OPD'
+                'return_to_operator_opd' => 'Mengembalikan ke Operator OPD',
+                'return_to_kepala_opd' => 'Mengembalikan ke Kepala OPD'
             ][$request->action] ?? $request->action;
 
             ActivityLog::log(

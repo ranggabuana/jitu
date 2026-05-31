@@ -39,6 +39,24 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Dokumen Izin Download Section -->
+        @if($data->status === 'approved' && $data->file_izin)
+            <div class="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-6 shadow-sm flex items-center justify-between flex-wrap gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-2xl shadow-inner">
+                        <i class="fas fa-certificate"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-emerald-800">Dokumen Izin Telah Terbit!</h3>
+                        <p class="text-sm text-emerald-600">Pengajuan Anda telah disetujui. Anda dapat mengunduh dokumen izin sekarang.</p>
+                    </div>
+                </div>
+                <a href="{{ asset($data->file_izin) }}" target="_blank" download class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-all transform hover:-translate-y-1">
+                    <i class="fas fa-download"></i> Unduh Dokumen Izin
+                </a>
+            </div>
+        @endif
 
         <!-- Progress Overview -->
         <div class="bg-white rounded-2xl shadow-sm border border-amber-200 p-6">

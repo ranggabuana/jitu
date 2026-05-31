@@ -213,7 +213,7 @@ class DataPerijinan extends Model
             'submitted' => 'Diajukan',
             'in_progress' => 'Dalam Proses',
             'perbaikan' => 'Perlu Perbaikan',
-            'approved' => 'Disetujui',
+            'approved' => 'Disetujui & Selesai',
             'rejected' => 'Ditolak',
         ];
         

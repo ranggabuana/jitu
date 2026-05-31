@@ -99,7 +99,13 @@ class DataPerijinanValidasi extends Model
             'revision' => 'Perlu Perbaikan',
         ];
 
-        return $labels[$this->status] ?? $this->status;
+        $label = $labels[$this->status] ?? $this->status;
+
+        if ($this->status === 'approved' && $this->validationFlow && $this->validationFlow->role === 'kadin') {
+            return 'Disetujui & Selesai';
+        }
+
+        return $label;
     }
 
     /**
