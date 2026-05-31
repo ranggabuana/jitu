@@ -464,6 +464,9 @@
                                 '[NAMA IZIN]' => 'Jenis Izin',
                                 '[TANGGAL]' => 'Tanggal Pengajuan',
                                 '[NO REGISTRASI]' => 'No. Registrasi',
+                                '[LOGO KABUPATEN]' => 'Logo Kabupaten (Header)',
+                                '[GAMBAR TTE]' => 'Gambar TTE (Tanda Tangan Elektronik)',
+                                '<!-- pagebreak -->' => 'Tambah Halaman Baru (Pemisah)',
                             ] as $code => $label)
                             <button type="button"
                                 onclick="insertPlaceholder('{{ $code }}')"
@@ -540,7 +543,7 @@
 
             <!-- Pratinjau Dokumen Modal -->
             <div id="modal-doc-preview" class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
-                <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-4xl mx-4 flex flex-col" style="max-height: 92vh;">
+                <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-6xl mx-4 flex flex-col" style="height: 95vh; max-height: 95vh;">
                     <!-- Modal header -->
                     <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-t-2xl flex-shrink-0">
                         <div class="flex items-center gap-3">
@@ -558,14 +561,15 @@
                         </button>
                     </div>
 
-                    <!-- A4 paper container -->
-                    <div class="flex-1 overflow-y-auto bg-gray-200 dark:bg-gray-950 p-6">
-                        <!-- A4-like paper -->
-                        <div class="mx-auto bg-white shadow-xl rounded-sm" style="width: 794px; min-height: 1123px; padding: 60px 70px;">
-                            <div id="modal-preview-body" class="prose max-w-none text-gray-900 leading-relaxed" style="font-family: 'Times New Roman', serif; font-size: 12pt;">
-                                <!-- Content rendered here -->
+                    <!-- PDF Preview container -->
+                    <div class="flex-1 overflow-hidden bg-gray-100 dark:bg-gray-950 p-0 relative">
+                        <div id="modal-preview-loading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/80 dark:bg-gray-900/80 hidden">
+                            <div class="flex flex-col items-center">
+                                <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                <p class="mt-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Menyiapkan PDF...</p>
                             </div>
                         </div>
+                        <iframe id="modal-preview-iframe" class="w-full h-full border-0" src="about:blank"></iframe>
                     </div>
 
                     <!-- Modal footer -->
@@ -872,7 +876,6 @@
             '[NIK]': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">3304123456789001</span>',
             '[ALAMAT LENGKAP]': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">Jl. Pemuda No. 45, Kel/Desa Krandegan, Kec. Banjarnegara, Kab/Kota Banjarnegara, Provinsi Jawa Tengah</span>',
             '[NO HP]': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">081234567890</span>',
-...
             '[EMAIL]': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">budi.santoso@email.com</span>',
             '[PEKERJAAN]': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">Wiraswasta</span>',
             '[NAMA IZIN]': '<span style="background:#ede9fe;color:#5b21b6;padding:0 4px;border-radius:3px;font-weight:bold;">Izin Apotek</span>',
@@ -946,13 +949,50 @@
             keabsahan: 'Surat Keabsahan'
         };
 
-        function openDocPreview() {
+        async function openDocPreview() {
             const type = activeTemplateType;
-            document.getElementById('modal-preview-title').textContent = 'Pratinjau — ' + suraNames[type];
-            document.getElementById('modal-preview-body').innerHTML = getHtmlForType(type);
+            const ed = typeof tinymce !== 'undefined' ? tinymce.get('editor_' + type) : null;
+            const content = ed ? ed.getContent() : (document.getElementById('editor_' + type)?.value || '');
+
+            // Show Modal and Loading
+            document.getElementById('modal-preview-title').textContent = 'Pratinjau PDF — ' + suraNames[type];
             const modal = document.getElementById('modal-doc-preview');
+            const iframe = document.getElementById('modal-preview-iframe');
+            const loading = document.getElementById('modal-preview-loading');
+            
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+            loading.classList.remove('hidden');
+            iframe.src = 'about:blank';
+
+            try {
+                const response = await fetch("{{ route('settings.application.preview-template') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({
+                        template_type: type,
+                        template_content: content
+                    })
+                });
+
+                if (!response.ok) throw new Error('Gagal mengenerate pratinjau');
+
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                
+                iframe.src = url;
+                iframe.onload = () => {
+                    loading.classList.add('hidden');
+                };
+            } catch (error) {
+                console.error(error);
+                loading.classList.add('hidden');
+                Swal.fire('Gagal', 'Terjadi kesalahan saat menyiapkan pratinjau PDF.', 'error');
+                closeDocPreview();
+            }
         }
 
         function closeDocPreview() {

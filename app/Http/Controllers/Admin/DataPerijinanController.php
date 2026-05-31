@@ -424,7 +424,7 @@ class DataPerijinanController extends Controller
         ]);
         
         $request->validate([
-            'action' => 'required|in:approved,rejected,revision',
+            'action' => 'required|in:approved,rejected,revision,return_to_bo,return_to_operator_opd',
             'catatan' => 'nullable|string|max:1000',
         ]);
 
@@ -519,17 +519,22 @@ class DataPerijinanController extends Controller
 
             // Update validation status - simpan juga user_id untuk tracking
             $updateData = [
-                'status' => $request->action,
                 'catatan' => $request->catatan,
                 'validated_at' => now(),
             ];
             
-            // Pastikan user_id tersimpan (baik untuk role kolektif maupun data assigned lama yang kosong)
+            // Pastikan user_id tersimpan
             if (in_array($userRole, $rolesWithoutAssignment) || !$currentValidasi->user_id) {
                 $updateData['user_id'] = $user->id;
             }
             
-            $currentValidasi->update($updateData);
+            $isReturnAction = in_array($request->action, ['return_to_bo', 'return_to_operator_opd']);
+            
+            // Jika bukan aksi pengembalian, update status record saat ini
+            if (!$isReturnAction) {
+                $updateData['status'] = $request->action;
+                $currentValidasi->update($updateData);
+            }
 
             // Handle based on action
             if ($request->action === 'approved') {
@@ -545,14 +550,15 @@ class DataPerijinanController extends Controller
                     ]);
                 } else {
                     // Move to next step
+                    $newStep = $application->current_step + 1;
                     $application->update([
-                        'current_step' => $application->current_step + 1,
+                        'current_step' => $newStep,
                         'status' => 'in_progress',
                     ]);
 
                     // Activate next validation step
                     $nextValidasi = $application->validasiRecords()
-                        ->where('order', $application->current_step + 1)
+                        ->where('order', $newStep)
                         ->first();
                     
                     if ($nextValidasi) {
@@ -577,44 +583,82 @@ class DataPerijinanController extends Controller
                     'status' => 'perbaikan',
                     'catatan_perbaikan' => $request->catatan,
                 ]);
+            } elseif ($isReturnAction) {
+                $targetRole = ($request->action === 'return_to_bo') ? 'bo' : 'operator_opd';
+                $roleLabel = ($request->action === 'return_to_bo') ? 'Back Office (BO)' : 'Operator OPD';
+
+                // Find the target record in the validation steps
+                $targetRecord = $application->validasiRecords()
+                    ->whereHas('validationFlow', function($q) use ($targetRole) {
+                        $q->where('role', $targetRole);
+                    })
+                    ->orderBy('order', 'asc')
+                    ->first();
+                
+                if ($targetRecord) {
+                    $targetOrder = $targetRecord->order;
+                    
+                    \Log::info("Returning application {$application->no_registrasi} to {$roleLabel} (Order: {$targetOrder})");
+
+                    // Reset all records from targetOrder onwards using Eloquent to trigger any possible events
+                    $recordsToReset = $application->validasiRecords()
+                        ->where('order', '>=', $targetOrder)
+                        ->get();
+
+                    foreach ($recordsToReset as $record) {
+                        $record->status = 'pending';
+                        $record->validated_at = null;
+                        $record->catatan = null;
+                        
+                        // Clear user_id only if it's a collective role
+                        if ($record->validationFlow && $record->validationFlow->is_collective) {
+                            $record->user_id = null;
+                        }
+                        
+                        $record->save();
+                    }
+
+                    // Update application state
+                    $application->current_step = $targetOrder;
+                    $application->status = 'in_progress';
+                    $application->save();
+                    
+                } else {
+                    DB::rollBack();
+                    return redirect()->back()->with('error', "Tahap {$roleLabel} tidak ditemukan dalam alur validasi.");
+                }
             }
 
-            // Log activity (sebelum commit untuk menghindari masalah session)
-            $actionLabel = $request->action === 'approved' ? 'Menyetujui' : ($request->action === 'rejected' ? 'Menolak' : 'Meminta perbaikan');
+            // Log activity
+            $actionLabel = [
+                'approved' => 'Menyetujui',
+                'rejected' => 'Menolak',
+                'revision' => 'Meminta perbaikan',
+                'return_to_bo' => 'Mengembalikan ke BO',
+                'return_to_operator_opd' => 'Mengembalikan ke Operator OPD'
+            ][$request->action] ?? $request->action;
 
-            try {
-                ActivityLog::log(
-                    "{$actionLabel} validasi perijinan",
-                    $application,
-                    'updated',
-                    [
-                        'action' => $request->action,
-                        'catatan' => $request->catatan,
-                        'current_step' => $application->current_step,
-                        'no_registrasi' => $application->no_registrasi,
-                    ],
-                    'data_perijinan',
-                    auth()->id() // Explicitly pass user_id
-                );
-            } catch (\Exception $logException) {
-                // Log error tapi jangan gagalkan validasi
-                \Log::error('Failed to log activity: ' . $logException->getMessage());
-            }
+            ActivityLog::log(
+                "{$actionLabel} validasi perijinan",
+                $application,
+                'updated',
+                [
+                    'action' => $request->action,
+                    'catatan' => $request->catatan,
+                    'current_step' => $application->current_step,
+                    'no_registrasi' => $application->no_registrasi,
+                ],
+                'data_perijinan',
+                $user->id
+            );
 
             DB::commit();
+
+            $msg = ($request->action === 'approved') ? 'Validasi berhasil disetujui.' : 
+                  (($request->action === 'rejected') ? 'Pengajuan ditolak.' : 
+                  'Pengajuan berhasil dikembalikan ke tahap sebelumnya.');
             
-            \Log::info('Validation committed successfully', [
-                'application_id' => $id,
-                'user_id' => auth()->id(),
-                'action' => $request->action,
-                'session_status' => auth()->check() ? 'active' : 'lost'
-            ]);
-
-            $successMessage = $request->action === 'approved' ? 'Validasi berhasil disetujui.' : ($request->action === 'rejected' ? 'Pengajuan ditolak.' : 'Pengajuan dikembalikan untuk perbaikan.');
-
-            // Redirect dengan session flash
-            return redirect()->route('data-perijinan.show', $id)
-                ->with('success', $successMessage);
+            return redirect()->route('data-perijinan.show', $id)->with('success', $msg);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -696,7 +740,101 @@ class DataPerijinanController extends Controller
     }
 
     /**
-     * Update the status of an application.
+     * Save recommendation form data filled by Operator OPD.
+     */
+    public function saveRekomData(Request $request, $id)
+    {
+        $user = auth()->user();
+        if ($user->role !== 'operator_opd' && $user->role !== 'admin') {
+            abort(403, 'Hanya Operator OPD atau Admin yang dapat mengisi data rekomendasi.');
+        }
+
+        $application = DataPerijinan::with('perijinan.formFields')->findOrFail($id);
+        
+        // 1. Get field definitions for this perijinan's rekom form
+        $rekomFields = $application->perijinan->formFields
+            ->where('form_type', 'rekom')
+            ->where('is_active', true);
+            
+        // 2. Build validation rules dynamically
+        $rules = [];
+        foreach ($rekomFields as $field) {
+            $fieldRules = [];
+            if ($field->is_required) $fieldRules[] = 'required';
+            else $fieldRules[] = 'nullable';
+            
+            // Add specific type rules if needed
+            if ($field->type === 'email') $fieldRules[] = 'email';
+            if ($field->type === 'number') $fieldRules[] = 'numeric';
+            
+            $rules[$field->name] = $fieldRules;
+        }
+
+        // 3. Run validation
+        $validated = $request->validate($rules);
+
+        $application->update([
+            'rekom_data' => $validated,
+        ]);
+
+        // Re-generate documents to include the new rekom data
+        try {
+            \App\Services\DocumentGenerator::generateDocuments($application);
+        } catch (\Exception $e) {
+            \Log::error('Failed to regenerate documents after saving rekom data: ' . $e->getMessage());
+        }
+
+        return redirect()->back()->with('success', 'Data rekomendasi berhasil disimpan.');
+    }
+
+    /**
+     * Save permit form data filled by officials.
+     */
+    public function saveIzinData(Request $request, $id)
+    {
+        $user = auth()->user();
+        if ($user->role !== 'verifikator' && $user->role !== 'admin') {
+            abort(403, 'Hanya Verifikator atau Admin yang dapat mengisi data izin.');
+        }
+
+        $application = DataPerijinan::with('perijinan.formFields')->findOrFail($id);
+        
+        // 1. Get field definitions for this perijinan's izin form
+        $izinFields = $application->perijinan->formFields
+            ->where('form_type', 'izin')
+            ->where('is_active', true);
+            
+        // 2. Build validation rules dynamically
+        $rules = [];
+        foreach ($izinFields as $field) {
+            $fieldRules = [];
+            if ($field->is_required) $fieldRules[] = 'required';
+            else $fieldRules[] = 'nullable';
+            
+            if ($field->type === 'email') $fieldRules[] = 'email';
+            if ($field->type === 'number') $fieldRules[] = 'numeric';
+            
+            $rules[$field->name] = $fieldRules;
+        }
+
+        // 3. Run validation
+        $validated = $request->validate($rules);
+
+        $application->update([
+            'izin_data' => $validated,
+        ]);
+
+        try {
+            \App\Services\DocumentGenerator::generateDocuments($application);
+        } catch (\Exception $e) {
+            \Log::error('Failed to regenerate documents after saving izin data: ' . $e->getMessage());
+        }
+
+        return redirect()->back()->with('success', 'Data izin berhasil disimpan.');
+    }
+
+    /**
+     * Update status of an application.
      */
     public function updateStatus(Request $request, $id)
     {

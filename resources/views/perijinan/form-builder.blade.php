@@ -435,7 +435,8 @@
                                         '[TANGGAL]' => 'Tanggal Pengajuan',
                                         '[NO REGISTRASI]' => 'No. Registrasi',
                                         '[LOGO KABUPATEN]' => 'Logo Kabupaten (Header)',
-                                        '#qrcode_signed#' => 'Gambar TTE (Tanda Tangan Elektronik)',
+                                        '[GAMBAR TTE]' => 'Gambar TTE (Tanda Tangan Elektronik)',
+                                        '<!-- pagebreak -->' => 'Tambah Halaman Baru (Pemisah)',
                                     ] as $code => $label)
                                     <button type="button"
                                         onclick="insertPlaceholder('{{ $code }}')"
@@ -523,7 +524,7 @@
 
         <!-- Pratinjau Dokumen Modal -->
         <div id="modal-doc-preview" class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
-            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-4xl mx-4 flex flex-col" style="max-height: 92vh;">
+            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-6xl mx-4 flex flex-col" style="height: 95vh; max-height: 95vh;">
                 <!-- Modal header -->
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-t-2xl flex-shrink-0">
                     <div class="flex items-center gap-3">
@@ -541,14 +542,15 @@
                     </button>
                 </div>
 
-                <!-- A4 paper container -->
-                <div class="flex-1 overflow-y-auto bg-gray-200 dark:bg-gray-950 p-6">
-                    <!-- A4-like paper -->
-                    <div class="mx-auto bg-white shadow-xl rounded-sm" style="width: 794px; min-height: 1123px; padding: 60px 70px;">
-                        <div id="modal-preview-body" class="prose max-w-none text-gray-900 leading-relaxed" style="font-family: 'Times New Roman', serif; font-size: 12pt;">
-                            <!-- Content rendered here -->
+                <!-- PDF Preview container -->
+                <div class="flex-1 overflow-hidden bg-gray-100 dark:bg-gray-950 p-0 relative">
+                    <div id="modal-preview-loading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/80 dark:bg-gray-900/80 hidden">
+                        <div class="flex flex-col items-center">
+                            <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                            <p class="mt-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Menyiapkan PDF...</p>
                         </div>
                     </div>
+                    <iframe id="modal-preview-iframe" class="w-full h-full border-0" src="about:blank"></iframe>
                 </div>
 
                 <!-- Modal footer -->
@@ -558,10 +560,6 @@
                         Data di atas adalah simulasi pratinjau.
                     </p>
                     <div class="flex items-center gap-3">
-                        <button type="button" onclick="applyAndSavePreview()"
-                            class="px-5 py-2 text-sm font-bold text-white bg-indigo-600 border border-indigo-700 rounded-lg hover:bg-indigo-700 transition-all flex items-center gap-2">
-                            <i class="mdi mdi-content-save-check text-base"></i> Terapkan & Simpan
-                        </button>
                         <button type="button" onclick="closeDocPreview()"
                             class="px-5 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 transition-all">
                             Tutup Pratinjau
@@ -1060,7 +1058,7 @@
             }
         }
 
-        function previewCurrentTemplate() {
+        async function previewCurrentTemplate() {
             const currentTab = localStorage.getItem('formBuilderTab') || 'global';
             if (currentTab !== 'rekom' && currentTab !== 'izin') return;
 
@@ -1073,82 +1071,45 @@
                 content = document.getElementById(editorId).value;
             }
 
-            // Dummy Data for Preview
-            const dummyData = {
-                '[NAMA PEMOHON]': '<span class="bg-blue-100 text-blue-800 px-1 rounded font-semibold text-[10pt]">Joko Susilo</span>',
-                '[NIK]': '<span class="bg-blue-100 text-blue-800 px-1 rounded font-semibold text-[10pt]">3304123456789012</span>',
-                '[ALAMAT LENGKAP]': '<span class="bg-blue-100 text-blue-800 px-1 rounded font-semibold text-[10pt]">Jl. Pemuda No. 45, Kel/Desa Krandegan, Kec. Banjarnegara, Kab/Kota Banjarnegara, Provinsi Jawa Tengah</span>',
-                '[NO HP]': '<span class="bg-blue-100 text-blue-800 px-1 rounded font-semibold text-[10pt]">081234567890</span>',
-...
-                '[EMAIL]': '<span class="bg-blue-100 text-blue-800 px-1 rounded font-semibold text-[10pt]">joko.susilo@example.com</span>',
-                '[PEKERJAAN]': '<span class="bg-blue-100 text-blue-800 px-1 rounded font-semibold text-[10pt]">Wiraswasta</span>',
-                '[NAMA IZIN]': '<span class="bg-blue-100 text-blue-800 px-1 rounded font-semibold text-[10pt]">{{ $perijinan->nama_perijinan }}</span>',
-                '[TANGGAL]': '<span class="bg-blue-100 text-blue-800 px-1 rounded font-semibold text-[10pt]">' + new Date().toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'}) + '</span>',
-                '[NO REGISTRASI]': '<span class="bg-blue-100 text-blue-800 px-1 rounded font-semibold text-[10pt]">REG-' + new Date().getFullYear() + '0101-12345</span>',
-                '#qrcode_signed#': `@if(\App\Models\Setting::get('gambar_tte')) 
-                    <img src="{{ asset(\App\Models\Setting::get('gambar_tte')) }}" style="width: 100%; height: auto; pointer-events: none;" />
-                @else 
-                    <div class="inline-block p-2 border-2 border-dashed border-gray-300 text-gray-400 text-[10px] text-center w-32">Gambar TTE Belum Diunggah</div> 
-                @endif`,
-                '[LOGO KABUPATEN]': `@if(\App\Models\Setting::get('logo_kabupaten')) 
-                    <img src="{{ asset(\App\Models\Setting::get('logo_kabupaten')) }}" style="width: 100%; height: auto; pointer-events: none;" />
-                @else 
-                    <div class="inline-block p-2 border-2 border-dashed border-gray-300 text-gray-400 text-[10px] text-center w-20">Logo Kabupaten Belum Diunggah</div> 
-                @endif`
-            };
-
-            // Process placeholders with potential wrappers
-            let previewHtml = content;
-            
-            // 1. Detect images and wrap them in manageable divs, inheriting styles from existing wrappers if any
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = content;
-
-            ['#qrcode_signed#', '[LOGO KABUPATEN]'].forEach(placeholder => {
-                const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                const regex = new RegExp(`(<div class="template-wrapper"[^>]*>)?${escapedPlaceholder}(<\\/div>)?`, 'g');
-                
-                previewHtml = previewHtml.replace(regex, (match, opening, closing) => {
-                    let styles = 'width: 120px; vertical-align: middle;'; // default
-                    if (placeholder === '[LOGO KABUPATEN]') styles = 'width: 110px; vertical-align: middle;';
-                    
-                    if (opening) {
-                        const styleMatch = opening.match(/style="([^"]*)"/);
-                        if (styleMatch) styles = styleMatch[1];
-                    }
-                    
-                    return `<div class="preview-manageable inline-block" data-placeholder="${placeholder}" style="${styles}">${dummyData[placeholder]}</div>`;
-                });
-            });
-
-            // 2. Replace other basic placeholders
-            for (const [key, val] of Object.entries(dummyData)) {
-                if (key !== '#qrcode_signed#' && key !== '[LOGO KABUPATEN]') {
-                    previewHtml = previewHtml.split(key).join(val);
-                }
-            }
-
-            // Replace dynamic field placeholders
-            const dynamicVarButtons = document.querySelectorAll('.dynamic-var-btn');
-            dynamicVarButtons.forEach(btn => {
-                const placeholder = btn.textContent.trim();
-                const label = btn.getAttribute('title');
-                previewHtml = previewHtml.split(placeholder).join('<span class="bg-emerald-100 text-emerald-800 px-1 rounded text-[10pt]">[' + label + ']</span>');
-            });
-
-            // Show Modal
-            document.getElementById('modal-preview-title').textContent = 'Pratinjau — Template Surat ' + (currentTab === 'rekom' ? 'Rekomendasi' : 'Izin');
-            document.getElementById('modal-preview-body').innerHTML = previewHtml;
+            // Show Modal and Loading
+            document.getElementById('modal-preview-title').textContent = 'Pratinjau PDF — ' + (currentTab === 'rekom' ? 'Surat Rekomendasi' : 'Surat Izin');
             const modal = document.getElementById('modal-doc-preview');
+            const iframe = document.getElementById('modal-preview-iframe');
+            const loading = document.getElementById('modal-preview-loading');
+            
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+            loading.classList.remove('hidden');
+            iframe.src = 'about:blank';
 
-            // Initialize draggable & resizable
-            setTimeout(() => {
-                document.querySelectorAll('#modal-preview-body .preview-manageable').forEach(el => {
-                    makeElementManageable(el);
+            try {
+                const response = await fetch("{{ route('perijinan.preview-template', $perijinan->id) }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({
+                        template_type: currentTab,
+                        template_content: content
+                    })
                 });
-            }, 100);
+
+                if (!response.ok) throw new Error('Gagal mengenerate pratinjau');
+
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                
+                iframe.src = url;
+                iframe.onload = () => {
+                    loading.classList.add('hidden');
+                };
+            } catch (error) {
+                console.error(error);
+                loading.classList.add('hidden');
+                Swal.fire('Gagal', 'Terjadi kesalahan saat menyiapkan pratinjau PDF.', 'error');
+                closeDocPreview();
+            }
         }
 
         function makeElementManageable(el) {

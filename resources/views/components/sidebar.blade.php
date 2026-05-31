@@ -15,7 +15,7 @@
             <div class="ml-3">
                 <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ Auth::user()->name ?? 'Admin User' }}
                 </p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">{{ Auth::user()->email ?? 'admin@example.com' }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ Auth::user()->username ?? Auth::user()->email }}</p>
             </div>
         </div>
     </div>

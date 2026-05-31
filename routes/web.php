@@ -69,9 +69,10 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Settings Routes (Admin Only)
-    Route::middleware(['admin.role'])->prefix('settings')->name('settings.')->group(function () {
+    Route::middleware(['auth', 'admin.role'])->prefix('settings')->name('settings.')->group(function () {
         Route::get('/application', [ApplicationSettingsController::class, 'index'])->name('application');
         Route::put('/application', [ApplicationSettingsController::class, 'update'])->name('application.update');
+        Route::post('/application/preview-template', [ApplicationSettingsController::class, 'previewTemplate'])->name('application.preview-template');
         Route::post('/application/holiday', [ApplicationSettingsController::class, 'addHoliday'])->name('application.holiday.store');
         Route::delete('/application/holiday/{id}', [ApplicationSettingsController::class, 'deleteHoliday'])->name('application.holiday.delete');
         
@@ -182,6 +183,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/ditolak', [DataPerijinanController::class, 'ditolak'])->name('ditolak');
         Route::get('/ditolak/export', [DataPerijinanController::class, 'exportDitolak'])->name('ditolak.export');
         Route::get('/{id}', [DataPerijinanController::class, 'show'])->name('show');
+        Route::put('/{id}/rekom-data', [DataPerijinanController::class, 'saveRekomData'])->name('rekom-data.save');
+        Route::put('/{id}/izin-data', [DataPerijinanController::class, 'saveIzinData'])->name('izin-data.save');
         Route::post('/{id}/validate', [DataPerijinanController::class, 'processValidation'])->name('validate');
         Route::patch('/{id}/status', [DataPerijinanController::class, 'updateStatus'])->name('update-status');
         Route::get('/download/{filepath}', [DataPerijinanController::class, 'downloadFile'])->name('download-file')->where('filepath', '.*');

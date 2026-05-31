@@ -145,14 +145,13 @@ class PerijinanController extends Controller
             '[ALAMAT LENGKAP]' => 'Jl. Pemuda No. 45, Kel/Desa Krandegan, Kec. Banjarnegara, Kab/Kota Banjarnegara, Provinsi Jawa Tengah',
             '[NO HP]' => '081234567890',
             '[EMAIL]' => 'joko.susilo@example.com',
-...
             '[PEKERJAAN]' => 'Wiraswasta',
             '[NAMA IZIN]' => $perijinan->nama_perijinan,
             '[TANGGAL]' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
             '[NO REGISTRASI]' => 'REG-' . date('Ymd') . '-12345',
         ];
 
-        // #qrcode_signed#
+        // [GAMBAR TTE]
         $gambarTte = \App\Models\Setting::get('gambar_tte');
         $tteHtml = '<div style="width: 100px; height: 100px; border: 1px dashed #ccc; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; color: #999;">[QR CODE TTE]</div>';
         if ($gambarTte && \Illuminate\Support\Facades\File::exists(public_path($gambarTte))) {
@@ -161,7 +160,7 @@ class PerijinanController extends Controller
             $src = 'data:' . $mime . ';base64,' . $imageData;
             $tteHtml = '<img src="' . $src . '" style="max-width: 150px; max-height: 150px;" alt="TTE" />';
         }
-        $replacements['#qrcode_signed#'] = $tteHtml;
+        $replacements['[GAMBAR TTE]'] = $tteHtml;
 
         // [LOGO KABUPATEN]
         $logoKabupaten = \App\Models\Setting::get('logo_kabupaten');
@@ -182,6 +181,9 @@ class PerijinanController extends Controller
         // Global fix for checkmarks [x] or [v] or ✓
         $checkmarkHtml = '<span class="checkmark">&#10003;</span>';
         $htmlContent = str_replace(['[x]', '[v]', '[V]', '✓'], $checkmarkHtml, $htmlContent);
+
+        // Handle Page Breaks
+        $htmlContent = str_replace('<!-- pagebreak -->', '<div class="page-break"></div>', $htmlContent);
 
         // Replace placeholders
         $htmlContent = str_replace(

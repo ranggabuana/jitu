@@ -19,6 +19,8 @@ class DataPerijinan extends Model
         'perijinan_id',
         'status',
         'form_data',
+        'rekom_data',
+        'izin_data',
         'form_files',
         'file_pernyataan',
         'file_permohonan',
@@ -37,6 +39,8 @@ class DataPerijinan extends Model
 
     protected $casts = [
         'form_data' => 'array',
+        'rekom_data' => 'array',
+        'izin_data' => 'array',
         'form_files' => 'array',
         'data_pemohon' => 'array',
         'submitted_at' => 'datetime',

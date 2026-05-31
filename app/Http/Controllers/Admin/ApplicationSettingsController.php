@@ -282,10 +282,78 @@ class ApplicationSettingsController extends Controller
             'settings'
         );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Hari libur berhasil dihapus.'
-        ]);
+        return response()->json(['success' => true, 'message' => 'Hari libur berhasil dihapus.']);
+    }
+
+    /**
+     * Preview the template as PDF.
+     */
+    public function previewTemplate(Request $request)
+    {
+        $type = $request->input('template_type', 'pernyataan');
+        $htmlContent = $request->input('template_content', '');
+
+        // Dummy Data Replacements
+        $replacements = [
+            '[NAMA PEMOHON]' => 'Budi Santoso',
+            '[NIK]' => '3304123456789001',
+            '[ALAMAT LENGKAP]' => 'Jl. Pemuda No. 45, Kel/Desa Krandegan, Kec. Banjarnegara, Kab/Kota Banjarnegara, Provinsi Jawa Tengah',
+            '[NO HP]' => '081234567890',
+            '[EMAIL]' => 'budi.santoso@email.com',
+            '[PEKERJAAN]' => 'Wiraswasta',
+            '[NAMA IZIN]' => 'Izin Apotek',
+            '[TANGGAL]' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
+            '[NO REGISTRASI]' => 'REG-' . date('Ymd') . '-001',
+        ];
+
+        // [GAMBAR TTE]
+        $gambarTte = \App\Models\Setting::get('gambar_tte');
+        $tteHtml = '<div style="width: 100px; height: 100px; border: 1px dashed #ccc; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; color: #999;">[QR CODE TTE]</div>';
+        if ($gambarTte && \Illuminate\Support\Facades\File::exists(public_path($gambarTte))) {
+            $imageData = base64_encode(\Illuminate\Support\Facades\File::get(public_path($gambarTte)));
+            $mime = \Illuminate\Support\Facades\File::mimeType(public_path($gambarTte));
+            $src = 'data:' . $mime . ';base64,' . $imageData;
+            $tteHtml = '<img src="' . $src . '" style="max-width: 150px; max-height: 150px;" alt="TTE" />';
+        }
+        $replacements['[GAMBAR TTE]'] = $tteHtml;
+
+        // [LOGO KABUPATEN]
+        $logoKabupaten = \App\Models\Setting::get('logo_kabupaten');
+        $logoKabHtml = '<div style="width: 80px; height: 80px; border: 1px dashed #ccc; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; color: #999;">[LOGO KAB]</div>';
+        if ($logoKabupaten && \Illuminate\Support\Facades\File::exists(public_path($logoKabupaten))) {
+            $imageData = base64_encode(\Illuminate\Support\Facades\File::get(public_path($logoKabupaten)));
+            $mime = \Illuminate\Support\Facades\File::mimeType(public_path($logoKabupaten));
+            $src = 'data:' . $mime . ';base64,' . $imageData;
+            $logoKabHtml = '<img src="' . $src . '" style="max-height: 110px; width: auto;" alt="Logo Kabupaten" />';
+        }
+        $replacements['[LOGO KABUPATEN]'] = $logoKabHtml;
+
+        // Handle Page Breaks
+        $htmlContent = str_replace('<!-- pagebreak -->', '<div class="page-break"></div>', $htmlContent);
+
+        // Replace placeholders
+        $htmlContent = str_replace(
+            array_keys($replacements),
+            array_values($replacements),
+            $htmlContent
+        );
+
+        $fullHtml = \App\Services\DocumentGenerator::wrapHtmlTemplate($htmlContent, $type, 'PREVIEW');
+
+        if (class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($fullHtml)
+                ->setPaper('a4', 'portrait')
+                ->setWarnings(false)
+                ->setOptions([
+                    'isRemoteEnabled' => true,
+                    'isHtml5ParserEnabled' => true,
+                    'isFontSubsettingEnabled' => true,
+                    'defaultFont' => 'DejaVu Sans',
+                ]);
+            return $pdf->stream('Pratinjau_' . ucfirst($type) . '.pdf');
+        }
+
+        return response($fullHtml);
     }
 
     /**
