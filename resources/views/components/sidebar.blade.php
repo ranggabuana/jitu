@@ -1,6 +1,7 @@
 <div id="sidebar"
     class="sidebar w-64 bg-white dark:bg-gray-800 shadow-lg h-screen fixed z-10 transform transition-all duration-300 ease-in-out lg:translate-x-0 -translate-x-full lg:translate-x-0">
-    <div class="p-5 border-b border-gray-200 dark:border-gray-700 flex items-center sidebar-header transition-all duration-300">
+    <div
+        class="p-5 border-b border-gray-200 dark:border-gray-700 flex items-center sidebar-header transition-all duration-300">
         <i class="mdi mdi-chart-line text-blue-500 mr-2 text-xl"></i>
         <h1 class="text-xl font-bold text-gray-800 dark:text-white font-sans">JITU Dashboard</h1>
     </div>
@@ -15,7 +16,8 @@
             <div class="ml-3">
                 <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ Auth::user()->name ?? 'Admin User' }}
                 </p>
-                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ Auth::user()->username ?? Auth::user()->email }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                    {{ Auth::user()->username ?? Auth::user()->email }}</p>
             </div>
         </div>
     </div>
@@ -146,10 +148,13 @@
                 <button onclick="toggleSubmenu('regulasi-submenu', 'regulasi-icon')"
                     class="w-full flex items-center justify-between px-6 py-3 text-gray-700 dark:text-gray-300 transition-colors group menu-item {{ request()->routeIs('regulasi.*') || request()->routeIs('jenis-regulasi.*') ? 'active-menu' : '' }}">
                     <div class="flex items-center">
-                        <i class="mdi mdi-scale-balance mr-3 text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors text-lg"></i>
-                        <span class="font-medium {{ request()->routeIs('regulasi.*') || request()->routeIs('jenis-regulasi.*') ? 'text-blue-500 dark:text-blue-400' : '' }}">Regulasi</span>
+                        <i
+                            class="mdi mdi-scale-balance mr-3 text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors text-lg"></i>
+                        <span
+                            class="font-medium {{ request()->routeIs('regulasi.*') || request()->routeIs('jenis-regulasi.*') ? 'text-blue-500 dark:text-blue-400' : '' }}">Regulasi</span>
                     </div>
-                    <i id="regulasi-icon" class="mdi mdi-chevron-down ml-2 transition-transform duration-300 text-gray-500 dark:text-gray-400 text-lg"></i>
+                    <i id="regulasi-icon"
+                        class="mdi mdi-chevron-down ml-2 transition-transform duration-300 text-gray-500 dark:text-gray-400 text-lg"></i>
                 </button>
 
                 <div id="regulasi-submenu" class="submenu pl-10 mt-1" style="max-height: 0;">
@@ -366,19 +371,19 @@
             });
 
             @auth
-            @if(in_array(Auth::user()->role, ['fo', 'bo', 'operator opd', 'kepala opd', 'verifikator', 'kadin']))
-            // Open Data Perijinan submenu by default for specific roles
-            setTimeout(function() {
-                const perijinanSubmenu = document.getElementById('perijinan-submenu');
-                const perijinanIcon = document.getElementById('perijinan-icon');
-                if (perijinanSubmenu && !perijinanSubmenu.classList.contains('open')) {
-                    perijinanSubmenu.classList.add('open');
-                    perijinanSubmenu.style.maxHeight = perijinanSubmenu.scrollHeight + 'px';
-                    if (perijinanIcon) perijinanIcon.classList.add('rotate-180');
-                }
-            }, 100);
+            @if (in_array(Auth::user()->role, ['fo', 'bo', 'operator_opd', 'kepala_opd', 'verifikator', 'kadin']))
+                // Open Data Perijinan submenu by default for specific roles
+                setTimeout(function() {
+                    const perijinanSubmenu = document.getElementById('perijinan-submenu');
+                    const perijinanIcon = document.getElementById('perijinan-icon');
+                    if (perijinanSubmenu && !perijinanSubmenu.classList.contains('open')) {
+                        perijinanSubmenu.classList.add('open');
+                        perijinanSubmenu.style.maxHeight = perijinanSubmenu.scrollHeight + 'px';
+                        if (perijinanIcon) perijinanIcon.classList.add('rotate-180');
+                    }
+                }, 100);
             @endif
-            @endauth
+        @endauth
         });
 
         // Handle window resize to adjust submenu height
