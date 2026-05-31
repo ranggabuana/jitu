@@ -364,6 +364,21 @@
                     }
                 }
             });
+
+            @auth
+            @if(in_array(Auth::user()->role, ['fo', 'bo', 'operator opd', 'kepala opd', 'verifikator', 'kadin']))
+            // Open Data Perijinan submenu by default for specific roles
+            setTimeout(function() {
+                const perijinanSubmenu = document.getElementById('perijinan-submenu');
+                const perijinanIcon = document.getElementById('perijinan-icon');
+                if (perijinanSubmenu && !perijinanSubmenu.classList.contains('open')) {
+                    perijinanSubmenu.classList.add('open');
+                    perijinanSubmenu.style.maxHeight = perijinanSubmenu.scrollHeight + 'px';
+                    if (perijinanIcon) perijinanIcon.classList.add('rotate-180');
+                }
+            }, 100);
+            @endif
+            @endauth
         });
 
         // Handle window resize to adjust submenu height
