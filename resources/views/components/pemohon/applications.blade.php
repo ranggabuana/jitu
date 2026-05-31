@@ -15,6 +15,13 @@
     <!-- Table Filters -->
     <div class="p-6 bg-gray-50/50 border-b border-amber-100 flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
         <form action="{{ route('pemohon.dashboard') }}" method="GET" class="flex flex-col md:flex-row gap-4 w-full" id="filterForm">
+            @if(request('sort'))
+                <input type="hidden" name="sort" value="{{ request('sort') }}">
+            @endif
+            @if(request('direction'))
+                <input type="hidden" name="direction" value="{{ request('direction') }}">
+            @endif
+            
             <div class="flex-1 relative">
                 <input type="text" name="search" id="searchInput" value="{{ request('search') }}"
                        placeholder="Cari No. Registrasi atau Layanan..."

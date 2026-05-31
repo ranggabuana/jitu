@@ -52,7 +52,7 @@ class DataPerijinanController extends Controller
                 }
             } else {
                 // User has no assigned perijinan yet, show empty result with pagination
-                $applications = DataPerijinan::where('id', 0)->paginate(15);
+                $applications = DataPerijinan::where('id', 0)->paginate(10);
                 
                 return view('admin.data-perijinan.dalam-proses', [
                     'applications' => $applications,
@@ -100,7 +100,7 @@ class DataPerijinanController extends Controller
         // Get only in-progress applications (not approved/completed, and not rejected)
         $query->whereNotIn('status', ['approved', 'completed', 'rejected', 'perbaikan']);
 
-        $applications = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
+        $applications = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
 
         // Statistics - only count for accessible perijinan
         if ($user->isAdmin()) {
@@ -179,7 +179,7 @@ class DataPerijinanController extends Controller
                 }
             } else {
                 // User has no assigned perijinan yet, show empty result with pagination
-                $applications = DataPerijinan::where('id', 0)->paginate(15);
+                $applications = DataPerijinan::where('id', 0)->paginate(10);
 
                 return view('admin.data-perijinan.selesai', [
                     'applications' => $applications,
@@ -215,7 +215,7 @@ class DataPerijinanController extends Controller
         // Get only completed/approved applications
         $query->where('status', 'approved');
 
-        $applications = $query->orderBy('approved_at', 'desc')->paginate(15)->withQueryString();
+        $applications = $query->orderBy('approved_at', 'desc')->paginate(10)->withQueryString();
 
         // Statistics - only count for accessible perijinan
         if ($user->isAdmin()) {
@@ -267,7 +267,7 @@ class DataPerijinanController extends Controller
             if (!empty($accessiblePerijinanIds)) {
                 $query->whereIn('perijinan_id', $accessiblePerijinanIds);
             } else {
-                $applications = DataPerijinan::where('id', 0)->paginate(15);
+                $applications = DataPerijinan::where('id', 0)->paginate(10);
 
                 return view('admin.data-perijinan.ditolak', [
                     'applications' => $applications,
@@ -299,7 +299,7 @@ class DataPerijinanController extends Controller
         // Get only rejected applications
         $query->where('status', 'rejected');
 
-        $applications = $query->orderBy('rejected_at', 'desc')->paginate(15)->withQueryString();
+        $applications = $query->orderBy('rejected_at', 'desc')->paginate(10)->withQueryString();
 
         // Statistics
         if ($user->isAdmin()) {
@@ -347,7 +347,7 @@ class DataPerijinanController extends Controller
             if (!empty($accessiblePerijinanIds)) {
                 $query->whereIn('perijinan_id', $accessiblePerijinanIds);
             } else {
-                $applications = DataPerijinan::where('id', 0)->paginate(15);
+                $applications = DataPerijinan::where('id', 0)->paginate(10);
 
                 return view('admin.data-perijinan.perlu-perbaikan', [
                     'applications' => $applications,
@@ -379,7 +379,7 @@ class DataPerijinanController extends Controller
         // Get only applications that need revision
         $query->where('status', 'perbaikan');
 
-        $applications = $query->orderBy('updated_at', 'desc')->paginate(15)->withQueryString();
+        $applications = $query->orderBy('updated_at', 'desc')->paginate(10)->withQueryString();
 
         // Statistics
         if ($user->isAdmin()) {
