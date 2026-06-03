@@ -10,5 +10,7 @@ class Opd extends Model
 
     protected $fillable = [
         'nama_opd',
+        'kode_opd',
+        'gambar_tte',
     ];
 }

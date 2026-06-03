@@ -66,6 +66,20 @@
                                 @endif
                             </div>
                         </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                            onclick="updateSort('kode_opd')">
+                            <div class="flex items-center gap-2">
+                                <span>Kode OPD</span>
+                                @if ($sortBy === 'kode_opd')
+                                    <i class="mdi mdi-sort-{{ $sortOrder === 'asc' ? 'ascending' : 'descending' }}"></i>
+                                @else
+                                    <i class="mdi mdi-sort text-gray-300 dark:text-gray-500"></i>
+                                @endif
+                            </div>
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Gambar TTE
+                        </th>
                         <th
                             class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                             Aksi
@@ -80,6 +94,19 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
                                 {{ $opd->nama_opd }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
+                                {{ $opd->kode_opd ?? '-' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
+                                @if($opd->gambar_tte)
+                                    <img src="{{ asset('storage/' . $opd->gambar_tte) }}" alt="TTE {{ $opd->nama_opd }}" 
+                                         data-title="TTE {{ $opd->nama_opd }}"
+                                         class="h-10 w-auto object-contain cursor-pointer rounded border border-gray-200 dark:border-gray-600 hover:opacity-75 transition-opacity"
+                                         onclick="showImageModal(this.src, this.dataset.title)">
+                                @else
+                                    <span class="text-gray-400 italic">Tidak ada</span>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex justify-end gap-2">
@@ -104,7 +131,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="3" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                            <td colspan="5" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                                 <i class="mdi mdi-folder-open-outline text-4xl mb-2"></i>
                                 <p>Belum ada data OPD</p>
                             </td>
@@ -126,37 +153,78 @@
             </div>
         @endif
     </div>
-</x-layout>
 
-<script>
-    function updatePerPage(perPage) {
-        const url = new URL(window.location.href);
-        url.searchParams.set('per_page', perPage);
-        url.searchParams.set('page', '1');
-        window.location.href = url.toString();
-    }
+    <!-- Image Modal -->
+    <div id="imageModal" class="fixed inset-0 hidden items-center justify-center" style="z-index: 9999;" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <!-- Background overlay -->
+        <div class="absolute inset-0 bg-transparent transition-opacity" aria-hidden="true" onclick="closeImageModal()"></div>
 
-    function updateSort(sortBy) {
-        const url = new URL(window.location.href);
-        const currentSortBy = url.searchParams.get('sort_by') || 'created_at';
-        const currentSortOrder = url.searchParams.get('sort_order') || 'desc';
+        <!-- Modal panel -->
+        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 max-w-2xl w-full mx-4 overflow-hidden flex flex-col">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white" id="modal-title">
+                    Preview Gambar TTE
+                </h3>
+                <button type="button" onclick="closeImageModal()" class="text-gray-400 hover:text-gray-500 focus:outline-none transition-colors">
+                    <i class="mdi mdi-close text-2xl"></i>
+                </button>
+            </div>
+            <div class="p-6 flex justify-center bg-gray-100 dark:bg-gray-900">
+                <img id="modalImage" src="" alt="Preview" class="max-h-[60vh] max-w-full object-contain rounded">
+            </div>
+            <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end">
+                <button type="button" class="px-4 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" onclick="closeImageModal()">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
 
-        if (sortBy === currentSortBy) {
-            url.searchParams.set('sort_order', currentSortOrder === 'asc' ? 'desc' : 'asc');
-        } else {
-            url.searchParams.set('sort_by', sortBy);
-            url.searchParams.set('sort_order', 'asc');
+    <script>
+        function showImageModal(src, title) {
+            document.getElementById('modalImage').src = src;
+            document.getElementById('modal-title').textContent = 'Preview ' + title;
+            const modal = document.getElementById('imageModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
         }
-        url.searchParams.set('page', '1');
-        window.location.href = url.toString();
-    }
 
-    // Auto-submit search on input change with debounce
-    let searchTimeout;
-    document.getElementById('search')?.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            document.getElementById('search_form').submit();
-        }, 500);
-    });
-</script>
+        function closeImageModal() {
+            const modal = document.getElementById('imageModal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+            document.getElementById('modalImage').src = '';
+        }
+
+        function updatePerPage(perPage) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('per_page', perPage);
+            url.searchParams.set('page', '1');
+            window.location.href = url.toString();
+        }
+
+        function updateSort(sortBy) {
+            const url = new URL(window.location.href);
+            const currentSortBy = url.searchParams.get('sort_by') || 'created_at';
+            const currentSortOrder = url.searchParams.get('sort_order') || 'desc';
+
+            if (sortBy === currentSortBy) {
+                url.searchParams.set('sort_order', currentSortOrder === 'asc' ? 'desc' : 'asc');
+            } else {
+                url.searchParams.set('sort_by', sortBy);
+                url.searchParams.set('sort_order', 'asc');
+            }
+            url.searchParams.set('page', '1');
+            window.location.href = url.toString();
+        }
+
+        // Auto-submit search on input change with debounce
+        let searchTimeout;
+        document.getElementById('search')?.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                document.getElementById('search_form').submit();
+            }, 500);
+        });
+    </script>
+</x-layout>

@@ -6,6 +6,7 @@ use App\Models\Opd;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Storage;
 
 class OpdController extends Controller
 {
@@ -106,12 +107,22 @@ class OpdController extends Controller
     {
         $request->validate([
             'nama_opd' => 'required|string|max:255',
+            'kode_opd' => 'nullable|string|max:100',
+            'gambar_tte' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
         $opd = Opd::findOrFail($id);
         $oldData = $opd->toArray();
-        
-        $opd->update($request->all());
+        $data = $request->all();
+
+        if ($request->hasFile('gambar_tte')) {
+            if ($opd->gambar_tte) {
+                Storage::disk('public')->delete($opd->gambar_tte);
+            }
+            $data['gambar_tte'] = $request->file('gambar_tte')->store('opd/tte', 'public');
+        }
+
+        $opd->update($data);
 
         // Log activity
         ActivityLog::log(
@@ -120,7 +131,7 @@ class OpdController extends Controller
             'updated',
             [
                 'old' => $oldData,
-                'new' => $request->all()
+                'new' => $data
             ],
             'opd'
         );
@@ -135,6 +146,10 @@ class OpdController extends Controller
     public function destroy(string $id)
     {
         $opd = Opd::findOrFail($id);
+
+        if ($opd->gambar_tte) {
+            Storage::disk('public')->delete($opd->gambar_tte);
+        }
 
         // Log activity
         ActivityLog::log(
