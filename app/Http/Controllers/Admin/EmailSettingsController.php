@@ -115,4 +115,44 @@ class EmailSettingsController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Preview email template.
+     */
+    public function preview(Request $request)
+    {
+        $request->validate([
+            'type' => 'required|string|in:forgot_password,account_activated',
+            'content' => 'required|string',
+        ]);
+
+        $type = $request->type;
+        $content = $request->content;
+        $userName = auth()->user()->name ?? 'Budi Santoso';
+        $appName = Setting::get('mail_from_name', config('mail.from.name'));
+
+        // Replace placeholders
+        $bodyContent = str_replace(
+            ['{{userName}}', '{{appName}}'],
+            [$userName, $appName],
+            $content
+        );
+
+        if ($type === 'forgot_password') {
+            return view('emails.forgot-password', [
+                'userName' => $userName,
+                'resetUrl' => 'javascript:void(0)',
+                'expiryMinutes' => 60,
+                'appName' => $appName,
+                'bodyContent' => $bodyContent,
+            ]);
+        } else {
+            return view('emails.account-activated', [
+                'userName' => $userName,
+                'loginUrl' => 'javascript:void(0)',
+                'appName' => $appName,
+                'bodyContent' => $bodyContent,
+            ]);
+        }
+    }
 }

@@ -204,19 +204,22 @@
                             <div
                                 class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                                 <div
-                                    class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-700/30">
+                                    class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-700/30 flex justify-between items-center">
                                     <h2
                                         class="text-base font-bold text-gray-800 dark:text-white flex items-center gap-2">
                                         <i class="mdi mdi-lock-reset text-orange-500"></i>
                                         Email Lupa Password
                                     </h2>
+                                    <button type="button" onclick="previewEmail('forgot_password')" class="text-xs bg-orange-100 hover:bg-orange-200 text-orange-700 px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 border border-orange-200">
+                                        <i class="mdi mdi-eye"></i> Preview
+                                    </button>
                                 </div>
                                 <div class="p-6 space-y-4">
                                     <div>
                                         <label
                                             class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Subjek
                                             Email</label>
-                                        <input type="text" name="forgot_password_subject"
+                                        <input type="text" name="forgot_password_subject" id="forgot_password_subject"
                                             value="{{ old('forgot_password_subject', $templateSettings['forgot_password_subject'] ?? 'Permintaan Reset Password') }}"
                                             class="form-input">
                                     </div>
@@ -224,7 +227,7 @@
                                         <label
                                             class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Isi
                                             Pesan (Body)</label>
-                                        <textarea name="forgot_password_content" rows="6" class="form-input resize-none">{{ old('forgot_password_content', $templateSettings['forgot_password_content'] ?? 'Kami menerima permintaan untuk melakukan pengaturan ulang kata sandi (reset password) pada akun Anda. Klik tombol di bawah ini untuk melanjutkan proses:') }}</textarea>
+                                        <textarea name="forgot_password_content" id="forgot_password_content" rows="6" class="form-input resize-none">{{ old('forgot_password_content', $templateSettings['forgot_password_content'] ?? 'Kami menerima permintaan untuk melakukan pengaturan ulang kata sandi (reset password) pada akun Anda. Klik tombol di bawah ini untuk melanjutkan proses:') }}</textarea>
                                         <!-- Quick Variables -->
                                         <div class="mt-3 flex flex-wrap gap-2">
                                             <span
@@ -240,19 +243,22 @@
                             <div
                                 class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                                 <div
-                                    class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-700/30">
+                                    class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-700/30 flex justify-between items-center">
                                     <h2
                                         class="text-base font-bold text-gray-800 dark:text-white flex items-center gap-2">
                                         <i class="mdi mdi-account-check text-green-500"></i>
                                         Email Aktivasi Akun
                                     </h2>
+                                    <button type="button" onclick="previewEmail('account_activated')" class="text-xs bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 border border-green-200">
+                                        <i class="mdi mdi-eye"></i> Preview
+                                    </button>
                                 </div>
                                 <div class="p-6 space-y-4">
                                     <div>
                                         <label
                                             class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Subjek
                                             Email</label>
-                                        <input type="text" name="account_activated_subject"
+                                        <input type="text" name="account_activated_subject" id="account_activated_subject"
                                             value="{{ old('account_activated_subject', $templateSettings['account_activated_subject'] ?? 'Akivasi Akun Berhasil') }}"
                                             class="form-input">
                                     </div>
@@ -260,7 +266,7 @@
                                         <label
                                             class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Isi
                                             Pesan (Body)</label>
-                                        <textarea name="account_activated_content" rows="6" class="form-input resize-none">{{ old('account_activated_content', $templateSettings['account_activated_content'] ?? 'Selamat! Akun Anda telah berhasil diverifikasi dan diaktifkan oleh admin. Sekarang Anda sudah dapat mengakses dashboard pemohon untuk mengajukan perizinan secara online.') }}</textarea>
+                                        <textarea name="account_activated_content" id="account_activated_content" rows="6" class="form-input resize-none">{{ old('account_activated_content', $templateSettings['account_activated_content'] ?? 'Selamat! Akun Anda telah berhasil diverifikasi dan diaktifkan oleh admin. Sekarang Anda sudah dapat mengakses dashboard pemohon untuk mengajukan perizinan secara online.') }}</textarea>
                                         <!-- Quick Variables -->
                                         <div class="mt-3 flex flex-wrap gap-2">
                                             <span
@@ -422,6 +428,55 @@
                     icon.classList.remove('mdi-eye-off');
                     icon.classList.add('mdi-eye');
                 }
+            }
+
+            function previewEmail(type) {
+                const content = document.getElementById(type + '_content').value;
+                const subject = document.getElementById(type + '_subject').value;
+
+                Swal.fire({
+                    title: 'Memuat Preview...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                fetch('{{ route('settings.email.preview') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            type: type,
+                            content: content
+                        })
+                    })
+                    .then(response => response.text())
+                    .then(html => {
+                        Swal.fire({
+                            title: 'Preview Template Email',
+                            html: `
+                        <div class="text-left mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Subjek Email:</p>
+                            <p class="text-sm font-semibold text-gray-700 dark:text-gray-200">${subject}</p>
+                        </div>
+                        <div class="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-inner bg-white">
+                            <iframe srcdoc="${html.replace(/"/g, '&quot;')}" sandbox="allow-same-origin" class="w-full border-none" style="height: 500px;"></iframe>
+                        </div>
+                    `,
+                            width: '800px',
+                            showCloseButton: true,
+                            showConfirmButton: false,
+                            customClass: {
+                                container: 'email-preview-modal'
+                            }
+                        });
+                    })
+                    .catch(error => {
+                        Swal.fire('Error', 'Gagal memuat preview email.', 'error');
+                    });
             }
 
             document.addEventListener('DOMContentLoaded', function() {
