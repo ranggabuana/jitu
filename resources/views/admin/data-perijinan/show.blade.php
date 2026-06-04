@@ -808,13 +808,33 @@
                         <div class="space-y-1">
                             <label class="text-[10px] text-gray-400 uppercase font-black tracking-widest">{{ $field->label }}</label>
                             <div class="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700">
-                                <p class="text-sm font-bold text-gray-800 dark:text-gray-200">
+                                @if($field->type === 'file')
                                     @php 
-                                        $val = $application->form_data[$field->id] ?? '-';
-                                        if (is_array($val)) $val = implode(', ', $val);
+                                        $files = $application->form_files[$field->id] ?? [];
+                                        $filesArray = is_array($files) ? $files : [$files];
+                                        $filesArray = array_filter($filesArray);
                                     @endphp
-                                    {{ $val ?: '-' }}
-                                </p>
+                                    @if(count($filesArray) > 0)
+                                        <div class="flex flex-col gap-2">
+                                            @foreach($filesArray as $file)
+                                                <a href="{{ asset($file) }}" target="_blank" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-bold text-xs truncate">
+                                                    <i class="mdi mdi-file-download-outline text-base"></i>
+                                                    Buka Berkas
+                                                </a>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <p class="text-xs text-gray-400 italic">Tidak ada file diunggah</p>
+                                    @endif
+                                @else
+                                    <p class="text-sm font-bold text-gray-800 dark:text-gray-200">
+                                        @php 
+                                            $val = $application->form_data[$field->id] ?? '-';
+                                            if (is_array($val)) $val = implode(', ', $val);
+                                        @endphp
+                                        {{ $val ?: '-' }}
+                                    </p>
+                                @endif
                             </div>
                         </div>
                     @empty
