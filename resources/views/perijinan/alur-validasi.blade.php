@@ -81,7 +81,7 @@
                         </select>
                     </div>
 
-                    <!-- User Assignment (for fo, bo, operator_opd, kepala_opd) -->
+                    <!-- User Assignment (for all validation roles) -->
                     <div id="user_assignment_container" class="hidden">
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                             Petugas yang Ditugaskan <span class="text-red-500 ml-1">*</span>
@@ -308,7 +308,7 @@
                     </select>
                 </div>
 
-                <!-- User Assignment (for fo, bo, operator_opd, kepala_opd) -->
+                <!-- User Assignment (for all validation roles) -->
                 <div id="edit_user_assignment_container" class="hidden">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                         Petugas yang Ditugaskan <span class="text-red-500 ml-1">*</span>
@@ -365,6 +365,8 @@
         const boUsers = @json($boUsers);
         const operatorOpdUsers = @json($operatorOpdUsers);
         const kepalaOpdUsers = @json($kepalaOpdUsers);
+        const verifikatorUsers = @json($verifikatorUsers);
+        const kadinUsers = @json($kadinUsers);
 
         function populateUsers(role, selectId) {
             const select = document.getElementById(selectId);
@@ -374,6 +376,8 @@
             if (role === 'bo') users = boUsers;
             if (role === 'operator_opd') users = operatorOpdUsers;
             if (role === 'kepala_opd') users = kepalaOpdUsers;
+            if (role === 'verifikator') users = verifikatorUsers;
+            if (role === 'kadin') users = kadinUsers;
 
             select.innerHTML = '<option value="">-- Pilih Petugas --</option>';
 
@@ -387,7 +391,7 @@
             const container = document.getElementById(containerId);
             const select = document.getElementById(selectId);
 
-            if (['fo', 'bo', 'operator_opd', 'kepala_opd'].includes(role)) {
+            if (['fo', 'bo', 'operator_opd', 'kepala_opd', 'verifikator', 'kadin'].includes(role)) {
                 container.classList.remove('hidden');
                 select.required = true;
                 populateUsers(role, selectId);

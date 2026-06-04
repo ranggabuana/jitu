@@ -157,13 +157,31 @@
         $rekomFields = $application->perijinan->formFields->where('form_type', 'rekom')->where('is_active', true)->sortBy('order');
         $izinFields = $application->perijinan->formFields->where('form_type', 'izin')->where('is_active', true)->sortBy('order');
 
-        $canEditRekom = ($isOperatorOpd || $isAdmin) && $application->status !== 'approved' && $application->status !== 'rejected';
-        $canEditIzin = ($isVerifikator || $isAdmin) && $application->status !== 'approved' && $application->status !== 'rejected';
+        // Validation flow variables
+        $cv = $application->currentValidasi(); 
+        $userAssignedStep = $application->validasiRecords->where('assigned_user_id', auth()->id())->first();
+        $isFutureValidator = ($userAssignedStep && $userAssignedStep->order > $application->current_step);
+        $canVal = ($application->status !== 'approved' && $application->status !== 'perbaikan' && $cv && $cv->validationFlow->role === $userRole && (in_array($cv->validationFlow->role, ['verifikator', 'kadin']) || $cv->validationFlow->assigned_user_id === auth()->id())); 
+
+        // Strict sequential editing logic
+        $userRekomStep = $application->validasiRecords->where('assigned_user_id', auth()->id())->where('validationFlow.role', 'operator_opd')->first();
+        $isRekomTurn = $userRekomStep && $userRekomStep->order == $application->current_step;
+        $canEditRekom = ($isOperatorOpd || $isAdmin) && $isRekomTurn && !in_array($application->status, ['approved', 'rejected', 'perbaikan']);
+
+        $userIzinStep = $application->validasiRecords->where('assigned_user_id', auth()->id())->where('validationFlow.role', 'verifikator')->first();
+        $isIzinTurn = $userIzinStep && $userIzinStep->order == $application->current_step;
+        $canEditIzin = ($isVerifikator || $isAdmin) && $isIzinTurn && !in_array($application->status, ['approved', 'rejected', 'perbaikan']);
+
+        // Admin can always edit if not finished
+        if ($isAdmin && !in_array($application->status, ['approved', 'rejected'])) {
+            $canEditRekom = true;
+            $canEditIzin = true;
+        }
 
         // Tab visibility logic
         $showRekomTab = ($isOperatorOpd || $isKepalaOpd || $isAdmin || $isVerifikator || $isKadin);
         $showIzinTab = ($isVerifikator || $isAdmin || $isKadin);
-        @endphp
+    @endphp
 
     <!-- Navigation Tabs -->
     <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
@@ -199,6 +217,15 @@
 
             <!-- TAB 1: DATA DAN BERKAS PEMOHON -->
             <div id="tab-panel-data-pemohon" class="tab-content-panel space-y-6">
+                @if($isFutureValidator && $application->status !== 'approved' && $application->status !== 'rejected')
+                    <div class="p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded-r-xl flex gap-3 shadow-sm mb-6">
+                        <i class="mdi mdi-clock-outline text-blue-600 text-xl mt-0.5"></i>
+                        <div class="flex-1">
+                            <h4 class="text-sm font-bold text-blue-800 dark:text-blue-300 uppercase tracking-tight">Menunggu Giliran Validasi</h4>
+                            <p class="text-xs text-blue-700 dark:text-blue-400 leading-relaxed mt-1">Anda (sebagai <strong>{{ auth()->user()->role_label }}</strong>) belum dapat melakukan tindakan apa pun karena permohonan masih dalam <strong>tahapan {{ $application->currentValidasi()->validationFlow->role_label ?? 'Lainnya' }}</strong>.</p>
+                        </div>
+                    </div>
+                @endif
                 <!-- Card: Tombol Lihat Data Formulir -->
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
@@ -349,6 +376,16 @@
                         @if(!$canEditRekom) <span class="px-3 py-1 bg-gray-100 text-gray-500 text-[10px] font-bold rounded-full uppercase border">Hanya Baca</span> @endif
                     </div>
                     <div class="p-6">
+                        @if($isFutureValidator && !in_array($application->status, ['approved', 'rejected', 'perbaikan']))
+                            <div class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded-r-xl flex gap-3 shadow-sm">
+                                <i class="mdi mdi-clock-outline text-blue-600 text-xl mt-0.5"></i>
+                                <div class="flex-1">
+                                    <h4 class="text-sm font-bold text-blue-800 dark:text-blue-300 uppercase tracking-tight">Belum Waktu Verifikasi Teknis</h4>
+                                    <p class="text-xs text-blue-700 dark:text-blue-400 leading-relaxed mt-1">Anda (sebagai <strong>{{ auth()->user()->role_label }}</strong>) belum dapat melakukan tindakan pada tab ini karena permohonan masih dalam <strong>tahapan {{ $application->currentValidasi()->validationFlow->role_label ?? 'Lainnya' }}</strong>.</p>
+                                </div>
+                            </div>
+                        @endif
+
                         @if($isOperatorOpd && $canEditRekom)
                             <div class="mb-6 p-4 bg-purple-50 dark:bg-purple-900/20 border-l-4 border-purple-500 rounded-r-xl flex flex-col gap-1">
                                 <div class="flex gap-3">
@@ -485,6 +522,16 @@
                         @if(!$canEditIzin) <span class="px-3 py-1 bg-gray-100 text-gray-500 text-[10px] font-bold rounded-full uppercase border">Hanya Baca</span> @endif
                     </div>
                     <div class="p-6">
+                        @if($isFutureValidator && !in_array($application->status, ['approved', 'rejected', 'perbaikan']))
+                            <div class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded-r-xl flex gap-3 shadow-sm">
+                                <i class="mdi mdi-clock-outline text-blue-600 text-xl mt-0.5"></i>
+                                <div class="flex-1">
+                                    <h4 class="text-sm font-bold text-blue-800 dark:text-blue-300 uppercase tracking-tight">Belum Waktu Izin / SK</h4>
+                                    <p class="text-xs text-blue-700 dark:text-blue-400 leading-relaxed mt-1">Anda (sebagai <strong>{{ auth()->user()->role_label }}</strong>) belum dapat melakukan tindakan pada tab ini karena permohonan masih dalam <strong>tahapan {{ $application->currentValidasi()->validationFlow->role_label ?? 'Lainnya' }}</strong>.</p>
+                                </div>
+                            </div>
+                        @endif
+
                         @if($isVerifikator && $canEditIzin)
                             <div class="mb-6 p-4 bg-indigo-50 dark:bg-indigo-900/20 border-l-4 border-indigo-500 rounded-r-xl flex flex-col gap-1">
                                 <div class="flex gap-3">
@@ -585,7 +632,7 @@
                             </div>
                             @if($canEditIzin)
                                 <div class="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700 flex justify-end">
-                                    <button type="submit" class="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-[10px] font-black uppercase active:scale-95 transition-all shadow-lg"><i class="mdi mdi-content-save-check text-lg"></i> Simpan & Generate Izin</button>
+                                    <button type="submit" class="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-[10px] font-black uppercase active:scale-95 transition-all shadow-lg flex items-center gap-3"><i class="mdi mdi-content-save-check text-lg"></i> SIMPAN & GENERATE IZIN</button>
                                 </div>
                             @endif
                         </form>
@@ -665,8 +712,6 @@
                 </div>
             </div>
 
-            @php $cv = $application->currentValidasi(); $canVal = ($application->status !== 'approved' && $application->status !== 'perbaikan' && $cv && $cv->validationFlow->role === $userRole && (in_array($cv->validationFlow->role, ['verifikator', 'kadin']) || $cv->validationFlow->assigned_user_id === auth()->id())); @endphp
-            
             @if ($application->status === 'perbaikan')
                 <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-5 shadow-sm">
                     <div class="flex items-start gap-3">
@@ -676,6 +721,18 @@
                         <div class="flex-1">
                             <h4 class="text-sm font-bold text-amber-800 dark:text-amber-300 uppercase tracking-tight mb-1">Sedang Dalam Perbaikan</h4>
                             <p class="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">Permohonan ini telah dikembalikan ke pemohon untuk perbaikan berkas/data. Tindakan validasi akan tersedia kembali setelah pemohon mengirimkan ulang perbaikan.</p>
+                        </div>
+                    </div>
+                </div>
+            @elseif ($isFutureValidator && $application->status !== 'approved' && $application->status !== 'rejected')
+                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-5 shadow-sm">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-800/40 flex items-center justify-center flex-shrink-0">
+                            <i class="mdi mdi-clock-outline text-blue-600 dark:text-blue-400 text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="text-sm font-bold text-blue-800 dark:text-blue-300 uppercase tracking-tight mb-1">Belum Waktu Validasi</h4>
+                            <p class="text-xs text-blue-700 dark:text-blue-400 leading-relaxed">Anda belum dapat melakukan tindakan validasi karena saat ini permohonan masih dalam tahapan <strong>{{ $cv->validationFlow->role_label ?? 'Lainnya' }}</strong>. Silakan tunggu hingga berkas sampai pada tahapan Anda.</p>
                         </div>
                     </div>
                 </div>

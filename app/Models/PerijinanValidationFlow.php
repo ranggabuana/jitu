@@ -57,14 +57,12 @@ class PerijinanValidationFlow extends Model
      */
     public static function getUsersByRole(string $role): array
     {
-        $query = User::where('role', $role);
-        
-        // Filter by active users only
-        if (in_array($role, ['operator_opd', 'kepala_opd', 'fo', 'bo'])) {
-            $query->where('status', 'aktif');
-        }
-        
-        return $query->orderBy('name')->get()->pluck('name', 'id')->toArray();
+        return User::where('role', $role)
+            ->where('status', 'aktif')
+            ->orderBy('name')
+            ->get()
+            ->pluck('name', 'id')
+            ->toArray();
     }
 
     /**
@@ -72,7 +70,7 @@ class PerijinanValidationFlow extends Model
      */
     public static function requiresUserAssignment(string $role): bool
     {
-        return in_array($role, ['fo', 'bo', 'operator_opd', 'kepala_opd']);
+        return in_array($role, ['fo', 'bo', 'operator_opd', 'kepala_opd', 'verifikator', 'kadin']);
     }
 
     /**

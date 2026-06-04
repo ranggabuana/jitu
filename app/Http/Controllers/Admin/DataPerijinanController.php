@@ -467,66 +467,22 @@ class DataPerijinanController extends Controller
             $validationFlow = $currentValidasi->validationFlow;
             $userRole = $user->role;
 
-            // Role yang tidak memerlukan assigned_user_id (semua user dengan role ini bisa validasi)
-            $rolesWithoutAssignment = ['verifikator', 'kadin'];
-
-            if (in_array($userRole, $rolesWithoutAssignment)) {
-                // Cek apakah role user match dengan role di validation flow
-                if ($userRole !== $validationFlow->role) {
-                    return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk melakukan validasi pada tahap ini.');
-                }
-                
-                // Cek apakah user sudah pernah validasi di tahap ini
-                // Untuk role kolektif, kita track berdasarkan user_id yang validasi
-                $existingValidasi = $application->validasiRecords()
-                    ->where('order', $application->current_step)
-                    ->whereNotNull('user_id')
-                    ->where('user_id', $user->id)
-                    ->where('status', '!=', 'pending')
-                    ->first();
-                
-                if ($existingValidasi) {
-                    return redirect()->back()->with('error', 'Anda telah memvalidasi pengajuan ini sebelumnya. Satu user hanya bisa validasi sekali per tahap.');
-                }
-                
-                // Cek apakah tahap ini sudah ada yang validasi (satu tahap hanya butuh 1 validasi dari role yang sesuai)
-                $tahapSudahDivalidasi = $application->validasiRecords()
-                    ->where('order', $application->current_step)
-                    ->where('status', '!=', 'pending')
-                    ->exists();
-                
-                if ($tahapSudahDivalidasi) {
-                    return redirect()->back()->with('error', 'Tahap validasi ini sudah diselesaikan oleh user lain.');
-                }
-            } else {
-                // Role yang memerlukan assigned_user_id (FO, BO, Operator OPD, Kepala OPD)
-                $assignedUserId = $currentValidasi->user_id ?? $validationFlow->assigned_user_id;
-
-                if ($assignedUserId !== $user->id) {
-                    return redirect()->back()->with('error', 'Anda tidak ditugaskan untuk melakukan validasi pada tahap ini.');
-                }
-                
-                // Cek apakah sudah validasi (untuk assigned user)
-                if ($currentValidasi->status !== 'pending') {
-                    return redirect()->back()->with('error', 'Anda telah memvalidasi pengajuan ini sebelumnya.');
-                }
+            // Strict check: current user must be explicitly assigned to this step in validation flow
+            if ($validationFlow->assigned_user_id !== $user->id) {
+                return redirect()->back()->with('error', 'Anda tidak ditugaskan untuk melakukan validasi pada tahap saat ini (sedang dalam tahapan ' . ($validationFlow->role_label ?? 'Lainnya') . ').');
             }
 
-            // Check if already validated by anyone
+            // Check if already validated
             if ($currentValidasi->status !== 'pending') {
                 return redirect()->back()->with('error', 'Tahap validasi ini sudah diselesaikan.');
             }
 
-            // Update validation status - simpan juga user_id untuk tracking
+            // Update validation status
             $updateData = [
+                'user_id' => $user->id,
                 'catatan' => $request->catatan,
                 'validated_at' => now(),
             ];
-            
-            // Pastikan user_id tersimpan
-            if (in_array($userRole, $rolesWithoutAssignment) || !$currentValidasi->user_id) {
-                $updateData['user_id'] = $user->id;
-            }
             
             $isReturnAction = in_array($request->action, ['return_to_bo', 'return_to_operator_opd', 'return_to_kepala_opd']);
             
@@ -760,7 +716,15 @@ class DataPerijinanController extends Controller
             abort(403, 'Hanya Operator OPD atau Admin yang dapat mengisi data rekomendasi.');
         }
 
-        $application = DataPerijinan::with('perijinan.formFields')->findOrFail($id);
+        $application = DataPerijinan::with(['perijinan.formFields', 'validasiRecords.validationFlow'])->findOrFail($id);
+        
+        // Strict check: current step must belong to this user if not admin
+        if (!$user->isAdmin()) {
+            $cv = $application->validasiRecords->where('order', $application->current_step)->first();
+            if (!$cv || $cv->assigned_user_id !== $user->id) {
+                return redirect()->back()->with('error', 'Gagal menyimpan. Anda belum dapat mengisi data pada tahap ini (sedang tahapan ' . ($cv->validationFlow->role_label ?? 'Lainnya') . ').');
+            }
+        }
         
         $rekomFields = $application->perijinan->formFields
             ->where('form_type', 'rekom')
@@ -822,7 +786,15 @@ class DataPerijinanController extends Controller
             abort(403, 'Hanya Verifikator atau Admin yang dapat mengisi data izin.');
         }
 
-        $application = DataPerijinan::with('perijinan.formFields')->findOrFail($id);
+        $application = DataPerijinan::with(['perijinan.formFields', 'validasiRecords.validationFlow'])->findOrFail($id);
+        
+        // Strict check: current step must belong to this user if not admin
+        if (!$user->isAdmin()) {
+            $cv = $application->validasiRecords->where('order', $application->current_step)->first();
+            if (!$cv || $cv->assigned_user_id !== $user->id) {
+                return redirect()->back()->with('error', 'Gagal menyimpan. Anda belum dapat mengisi data pada tahap ini (sedang tahapan ' . ($cv->validationFlow->role_label ?? 'Lainnya') . ').');
+            }
+        }
         
         $izinFields = $application->perijinan->formFields
             ->where('form_type', 'izin')

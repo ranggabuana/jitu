@@ -123,16 +123,22 @@
                             </td>
                             <td class="px-6 py-4">
                                 @if ($app->status === 'submitted')
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                        <i class="mdi mdi-file-upload"></i> Diajukan
+                                    <span class="inline-flex flex-col gap-1">
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 uppercase tracking-wider">
+                                            <i class="mdi mdi-file-upload"></i> Diajukan
+                                        </span>
+                                        <span class="text-[9px] text-gray-500 font-bold uppercase ml-1">Tahap: {{ $app->currentValidasi()->validationFlow->role_label ?? 'FO' }}</span>
                                     </span>
                                 @elseif ($app->status === 'in_progress')
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                                        <i class="mdi mdi-progress-download"></i> Dalam Validasi
+                                    <span class="inline-flex flex-col gap-1">
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 uppercase tracking-wider">
+                                            <i class="mdi mdi-progress-download"></i> Dalam Validasi
+                                        </span>
+                                        <span class="text-[9px] text-blue-600 dark:text-blue-400 font-bold uppercase ml-1">Tahap: {{ $app->currentValidasi()->validationFlow->role_label ?? 'Proses' }}</span>
                                     </span>
                                 @elseif ($app->status === 'perbaikan')
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
-                                        <i class="mdi mdi-alert-circle"></i> Perlu Perbaikan
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 uppercase tracking-wider">
+                                        <i class="mdi mdi-alert-circle"></i> Perlu Perbaikan Pemohon
                                     </span>
                                 @endif
                             </td>

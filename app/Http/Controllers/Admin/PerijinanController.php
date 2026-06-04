@@ -395,7 +395,9 @@ class PerijinanController extends Controller
         $boUsers = PerijinanValidationFlow::getUsersByRole('bo');
         $operatorOpdUsers = PerijinanValidationFlow::getUsersByRole('operator_opd');
         $kepalaOpdUsers = PerijinanValidationFlow::getUsersByRole('kepala_opd');
-        return view('perijinan.alur-validasi', compact('perijinan', 'availableRoles', 'foUsers', 'boUsers', 'operatorOpdUsers', 'kepalaOpdUsers'));
+        $verifikatorUsers = PerijinanValidationFlow::getUsersByRole('verifikator');
+        $kadinUsers = PerijinanValidationFlow::getUsersByRole('kadin');
+        return view('perijinan.alur-validasi', compact('perijinan', 'availableRoles', 'foUsers', 'boUsers', 'operatorOpdUsers', 'kepalaOpdUsers', 'verifikatorUsers', 'kadinUsers'));
     }
 
     /**
