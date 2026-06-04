@@ -424,7 +424,7 @@ class DataPerijinanController extends Controller
         ]);
         
         $request->validate([
-            'action' => 'required|in:approved,rejected,revision,return_to_bo,return_to_operator_opd,return_to_kepala_opd',
+            'action' => 'required|in:approved,rejected,revision,return_to_bo,return_to_operator_opd,return_to_kepala_opd,return_to_verifikator',
             'catatan' => 'nullable|string|max:1000',
         ]);
 
@@ -484,7 +484,7 @@ class DataPerijinanController extends Controller
                 'validated_at' => now(),
             ];
             
-            $isReturnAction = in_array($request->action, ['return_to_bo', 'return_to_operator_opd', 'return_to_kepala_opd']);
+            $isReturnAction = in_array($request->action, ['return_to_bo', 'return_to_operator_opd', 'return_to_kepala_opd', 'return_to_verifikator']);
             
             // Jika bukan aksi pengembalian, update status record saat ini
             if (!$isReturnAction) {
@@ -551,6 +551,9 @@ class DataPerijinanController extends Controller
                 } elseif ($request->action === 'return_to_kepala_opd') {
                     $targetRole = 'kepala_opd';
                     $roleLabel = 'Kepala OPD';
+                } elseif ($request->action === 'return_to_verifikator') {
+                    $targetRole = 'verifikator';
+                    $roleLabel = 'Verifikator';
                 }
 
                 // Find the target record in the validation steps
@@ -602,7 +605,8 @@ class DataPerijinanController extends Controller
                 'revision' => 'Meminta perbaikan',
                 'return_to_bo' => 'Mengembalikan ke BO',
                 'return_to_operator_opd' => 'Mengembalikan ke Operator OPD',
-                'return_to_kepala_opd' => 'Mengembalikan ke Kepala OPD'
+                'return_to_kepala_opd' => 'Mengembalikan ke Kepala OPD',
+                'return_to_verifikator' => 'Mengembalikan ke Verifikator'
             ][$request->action] ?? $request->action;
 
             ActivityLog::log(
@@ -716,19 +720,18 @@ class DataPerijinanController extends Controller
             abort(403, 'Hanya Operator OPD atau Admin yang dapat mengisi data rekomendasi.');
         }
 
-        $application = DataPerijinan::with(['perijinan.formFields', 'validasiRecords.validationFlow'])->findOrFail($id);
+        $application = DataPerijinan::with(['perijinan.activeFormFields', 'validasiRecords.validationFlow'])->findOrFail($id);
         
         // Strict check: current step must belong to this user if not admin
         if (!$user->isAdmin()) {
             $cv = $application->validasiRecords->where('order', $application->current_step)->first();
-            if (!$cv || $cv->assigned_user_id !== $user->id) {
+            if (!$cv || !$cv->validationFlow || $cv->validationFlow->assigned_user_id !== $user->id) {
                 return redirect()->back()->with('error', 'Gagal menyimpan. Anda belum dapat mengisi data pada tahap ini (sedang tahapan ' . ($cv->validationFlow->role_label ?? 'Lainnya') . ').');
             }
         }
         
-        $rekomFields = $application->perijinan->formFields
-            ->where('form_type', 'rekom')
-            ->where('is_active', true);
+        $rekomFields = $application->perijinan->activeFormFields
+            ->where('form_type', 'rekom');
             
         $rules = [];
         foreach ($rekomFields as $field) {
@@ -757,18 +760,26 @@ class DataPerijinanController extends Controller
                     $rekomData[$field->name] = $path . '/' . $filename;
                 }
             } else {
-                if (isset($validated[$field->name])) {
+                if (array_key_exists($field->name, $validated)) {
                     $rekomData[$field->name] = $validated[$field->name];
                 }
             }
         }
 
-        $application->update([
+        $application = DataPerijinan::with(['perijinan.activeFormFields', 'validasiRecords.validationFlow'])->findOrFail($id);
+        
+        $application->forceFill([
             'rekom_data' => $rekomData,
-        ]);
+        ])->save();
+
+        // Reload to ensure everything is fresh for document generation
+        $application->load(['perijinan.activeFormFields', 'user']);
 
         try {
-            \App\Services\DocumentGenerator::generateDocuments($application);
+            $generatedDocs = \App\Services\DocumentGenerator::generateDocuments($application);
+            if (!empty($generatedDocs)) {
+                $application->update($generatedDocs);
+            }
         } catch (\Exception $e) {
             \Log::error('Failed to regenerate documents after saving rekom data: ' . $e->getMessage());
         }
@@ -786,19 +797,18 @@ class DataPerijinanController extends Controller
             abort(403, 'Hanya Verifikator atau Admin yang dapat mengisi data izin.');
         }
 
-        $application = DataPerijinan::with(['perijinan.formFields', 'validasiRecords.validationFlow'])->findOrFail($id);
+        $application = DataPerijinan::with(['perijinan.activeFormFields', 'validasiRecords.validationFlow'])->findOrFail($id);
         
         // Strict check: current step must belong to this user if not admin
         if (!$user->isAdmin()) {
             $cv = $application->validasiRecords->where('order', $application->current_step)->first();
-            if (!$cv || $cv->assigned_user_id !== $user->id) {
+            if (!$cv || !$cv->validationFlow || $cv->validationFlow->assigned_user_id !== $user->id) {
                 return redirect()->back()->with('error', 'Gagal menyimpan. Anda belum dapat mengisi data pada tahap ini (sedang tahapan ' . ($cv->validationFlow->role_label ?? 'Lainnya') . ').');
             }
         }
         
-        $izinFields = $application->perijinan->formFields
-            ->where('form_type', 'izin')
-            ->where('is_active', true);
+        $izinFields = $application->perijinan->activeFormFields
+            ->where('form_type', 'izin');
             
         $rules = [];
         foreach ($izinFields as $field) {
@@ -826,18 +836,26 @@ class DataPerijinanController extends Controller
                     $izinData[$field->name] = $path . '/' . $filename;
                 }
             } else {
-                if (isset($validated[$field->name])) {
+                if (array_key_exists($field->name, $validated)) {
                     $izinData[$field->name] = $validated[$field->name];
                 }
             }
         }
 
-        $application->update([
+        $application = DataPerijinan::with(['perijinan.activeFormFields', 'validasiRecords.validationFlow'])->findOrFail($id);
+        
+        $application->forceFill([
             'izin_data' => $izinData,
-        ]);
+        ])->save();
+
+        // Reload to ensure everything is fresh for document generation
+        $application->load(['perijinan.activeFormFields', 'user']);
 
         try {
-            \App\Services\DocumentGenerator::generateDocuments($application);
+            $generatedDocs = \App\Services\DocumentGenerator::generateDocuments($application);
+            if (!empty($generatedDocs)) {
+                $application->update($generatedDocs);
+            }
         } catch (\Exception $e) {
             \Log::error('Failed to regenerate documents after saving izin data: ' . $e->getMessage());
         }

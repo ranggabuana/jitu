@@ -367,8 +367,8 @@
                                 <div><h3 class="text-sm font-bold text-gray-800 dark:text-white">Draft Surat Rekomendasi</h3><p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Hasil Generate Otomatis</p></div>
                             </div>
                             <div class="flex gap-2">
-                                <button onclick="openPdfPreview('{{ asset($application->file_rekom) }}', 'Surat Rekomendasi')" class="px-4 py-2 bg-purple-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm">Pratinjau PDF</button>
-                                <a href="{{ route('data-perijinan.download-file', rawurlencode(str_replace('uploads/perijinan/', '', $application->file_rekom))) }}" class="p-2 bg-purple-50 dark:bg-purple-900/30 text-purple-700 border border-purple-200 rounded-xl"><i class="mdi mdi-download"></i></a>
+                                <button onclick="openPdfPreview('{{ asset($application->file_rekom) }}?t={{ time() }}', 'Surat Rekomendasi')" class="px-4 py-2 bg-purple-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm">Pratinjau PDF</button>
+                                <a href="{{ route('data-perijinan.download-file', rawurlencode(str_replace('uploads/perijinan/', '', $application->file_rekom))) }}?t={{ time() }}" class="p-2 bg-purple-50 dark:bg-purple-900/30 text-purple-700 border border-purple-200 rounded-xl"><i class="mdi mdi-download"></i></a>
                             </div>
                         </div>
                     </div>
@@ -411,22 +411,19 @@
                                     <div class="space-y-2">
                                         <label class="block text-[11px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-tighter">{{ $field->label }} @if($field->is_required)<span class="text-red-500">*</span>@endif</label>
                                         @php 
-                                            $val = $application->rekom_data[$field->name] ?? ''; 
-                                            
-                                            // Auto-fill from global form if empty and not a file field
-                                            if (empty($val) && $field->type !== 'file') {
+                                            $val = $application->rekom_data[$field->name] ?? null; 
+                                            $isAlreadySaved = array_key_exists($field->name, $application->rekom_data ?? []);
+
+                                            // Auto-fill from global form ONLY if never saved before
+                                            if (!$isAlreadySaved && $field->type !== 'file') {
                                                 $matchingGlobalField = $application->perijinan->activeFormFields
                                                     ->where('form_type', 'global')
                                                     ->where('name', $field->name)
-                                                    ->first();
-                                                
-                                                if (!$matchingGlobalField) {
-                                                    $matchingGlobalField = $application->perijinan->activeFormFields
-                                                        ->where('form_type', 'global')
-                                                        ->filter(function($f) use ($field) {
-                                                            return strtolower($f->label) === strtolower($field->label);
-                                                        })->first();
-                                                }
+                                                    ->first() ?? $application->perijinan->activeFormFields
+                                                    ->where('form_type', 'global')
+                                                    ->filter(function($f) use ($field) {
+                                                        return strtolower($f->label) === strtolower($field->label);
+                                                    })->first();
 
                                                 if ($matchingGlobalField) {
                                                     $val = $application->form_data[$matchingGlobalField->id] ?? '';
@@ -434,6 +431,7 @@
                                                 }
                                             }
 
+                                            $val = $val ?? '';
                                             $ro = !$canEditRekom ? 'readonly disabled' : ''; 
                                             $cls = "w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-purple-500 outline-none transition-all"; 
                                         @endphp
@@ -505,16 +503,26 @@
             <!-- TAB 3: DOKUMEN IZIN / SK -->
             @if($showIzinTab)
             <div id="tab-panel-dokumen-izin" class="tab-content-panel hidden space-y-6">
+                @if($isKadin)
+                    <div class="p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded-r-xl flex gap-3 shadow-sm">
+                        <i class="mdi mdi-information-variant text-blue-600 text-xl mt-0.5"></i>
+                        <div class="flex-1">
+                            <h4 class="text-sm font-bold text-blue-800 dark:text-blue-300">Informasi Verifikasi</h4>
+                            <p class="text-xs text-blue-700 dark:text-blue-400 leading-relaxed mt-1">Berikut adalah <strong>Draft Surat Izin / SK</strong> dari Verifikator. Silahkan berikan TTE pada Draft agar menjadi Surat Izin / SK Resmi.</p>
+                        </div>
+                    </div>
+                @endif
+
                  @if($application->file_izin && !empty($application->izin_data))
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-indigo-200 dark:border-indigo-900/30 overflow-hidden">
                         <div class="px-5 py-4 border-b border-indigo-100 dark:border-indigo-900/50 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center border border-indigo-200 dark:border-indigo-800"><i class="mdi mdi-certificate text-indigo-600 dark:text-indigo-400 text-xl"></i></div>
-                                <div><h3 class="text-sm font-bold text-gray-800 dark:text-white">Surat Izin / SK Terbit</h3><p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Dokumen Izin Final</p></div>
+                                <div><h3 class="text-sm font-bold text-gray-800 dark:text-white">Draft Surat Izin / SK</h3><p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Hasil Generate Otomatis</p></div>
                             </div>
                             <div class="flex gap-2">
-                                <button onclick="openPdfPreview('{{ asset($application->file_izin) }}', 'Surat Izin')" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm">Pratinjau PDF</button>
-                                <a href="{{ route('data-perijinan.download-file', rawurlencode(str_replace('uploads/perijinan/', '', $application->file_izin))) }}" class="p-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 border border-indigo-200 rounded-xl"><i class="mdi mdi-download"></i></a>
+                                <button onclick="openPdfPreview('{{ asset($application->file_izin) }}?t={{ time() }}', 'Dokumen Izin / SK')" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm">Pratinjau PDF</button>
+                                <a href="{{ route('data-perijinan.download-file', rawurlencode(str_replace('uploads/perijinan/', '', $application->file_izin))) }}?t={{ time() }}" class="p-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 border border-indigo-200 rounded-xl"><i class="mdi mdi-download"></i></a>
                             </div>
                         </div>
                     </div>
@@ -557,29 +565,47 @@
                                     <div class="space-y-2">
                                         <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-tighter">{{ $field->label }} @if($field->is_required)<span class="text-red-500">*</span>@endif</label>
                                         @php 
-                                            $val = $application->izin_data[$field->name] ?? ''; 
+                                            $val = $application->izin_data[$field->name] ?? null; 
+                                            $isAlreadySaved = array_key_exists($field->name, $application->izin_data ?? []);
                                             
-                                            // Auto-fill from global form if empty and not a file field
-                                            if (empty($val) && $field->type !== 'file') {
-                                                $matchingGlobalField = $application->perijinan->activeFormFields
-                                                    ->where('form_type', 'global')
+                                            // Auto-fill logic for Permit form:
+                                            // 1. Priority: Data from Recommendation form (rekom_data)
+                                            // 2. Fallback: Data from Global form (form_data)
+                                            // ONLY auto-fill if the field has never been saved in this form before
+                                            if (!$isAlreadySaved) {
+                                                // Try finding in Recommendation data first (by name or label)
+                                                $matchingRekomField = $application->perijinan->activeFormFields
+                                                    ->where('form_type', 'rekom')
                                                     ->where('name', $field->name)
-                                                    ->first();
-                                                
-                                                if (!$matchingGlobalField) {
+                                                    ->first() ?? $application->perijinan->activeFormFields
+                                                    ->where('form_type', 'rekom')
+                                                    ->filter(function($f) use ($field) {
+                                                        return strtolower($f->label) === strtolower($field->label);
+                                                    })->first();
+
+                                                if ($matchingRekomField && !empty($application->rekom_data[$matchingRekomField->name])) {
+                                                    $val = $application->rekom_data[$matchingRekomField->name];
+                                                }
+
+                                                // If still empty and not a file field, try Global form
+                                                if (empty($val) && $field->type !== 'file') {
                                                     $matchingGlobalField = $application->perijinan->activeFormFields
+                                                        ->where('form_type', 'global')
+                                                        ->where('name', $field->name)
+                                                        ->first() ?? $application->perijinan->activeFormFields
                                                         ->where('form_type', 'global')
                                                         ->filter(function($f) use ($field) {
                                                             return strtolower($f->label) === strtolower($field->label);
                                                         })->first();
-                                                }
 
-                                                if ($matchingGlobalField) {
-                                                    $val = $application->form_data[$matchingGlobalField->id] ?? '';
-                                                    if (is_array($val)) $val = implode(', ', $val);
+                                                    if ($matchingGlobalField) {
+                                                        $val = $application->form_data[$matchingGlobalField->id] ?? '';
+                                                        if (is_array($val)) $val = implode(', ', $val);
+                                                    }
                                                 }
                                             }
 
+                                            $val = $val ?? ''; // Final fallback to empty string for display
                                             $ro = !$canEditIzin ? 'readonly disabled' : ''; 
                                             $cls = "w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"; 
                                         @endphp
@@ -603,26 +629,45 @@
                                                 @endif
 
                                                 @php
-                                                    $matchingGlobalField = $application->perijinan->activeFormFields
-                                                        ->where('form_type', 'global')
+                                                    // File reference priority: Rekom -> Global
+                                                    $globalFile = null;
+                                                    
+                                                    // 1. Try Rekom file
+                                                    $matchingRekomFileField = $application->perijinan->activeFormFields
+                                                        ->where('form_type', 'rekom')
                                                         ->where('name', $field->name)
                                                         ->first() ?? $application->perijinan->activeFormFields
-                                                        ->where('form_type', 'global')
+                                                        ->where('form_type', 'rekom')
                                                         ->filter(function($f) use ($field) {
                                                             return strtolower($f->label) === strtolower($field->label);
                                                         })->first();
                                                     
-                                                    $globalFile = null;
-                                                    if ($matchingGlobalField) {
-                                                        $globalFiles = $application->form_files[$matchingGlobalField->id] ?? [];
-                                                        $globalFile = is_array($globalFiles) ? ($globalFiles[0] ?? null) : $globalFiles;
+                                                    if ($matchingRekomFileField) {
+                                                        $globalFile = $application->rekom_data[$matchingRekomFileField->name] ?? null;
+                                                    }
+
+                                                    // 2. Fallback to Global file if no Rekom file found
+                                                    if (!$globalFile) {
+                                                        $matchingGlobalFileField = $application->perijinan->activeFormFields
+                                                            ->where('form_type', 'global')
+                                                            ->where('name', $field->name)
+                                                            ->first() ?? $application->perijinan->activeFormFields
+                                                            ->where('form_type', 'global')
+                                                            ->filter(function($f) use ($field) {
+                                                                return strtolower($f->label) === strtolower($field->label);
+                                                            })->first();
+                                                        
+                                                        if ($matchingGlobalFileField) {
+                                                            $globalFiles = $application->form_files[$matchingGlobalFileField->id] ?? [];
+                                                            $globalFile = is_array($globalFiles) ? ($globalFiles[0] ?? null) : $globalFiles;
+                                                        }
                                                     }
                                                 @endphp
                                                 @if($globalFile && $globalFile !== $val)
                                                     <div class="flex items-center gap-2 mt-1 p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800/50">
                                                         <i class="mdi mdi-information-outline text-amber-600 text-sm"></i>
-                                                        <span class="text-[10px] text-amber-700 dark:text-amber-400 font-bold">Referensi Pemohon:</span>
-                                                        <a href="{{ asset($globalFile) }}" target="_blank" class="text-[10px] font-bold text-blue-600 hover:underline truncate">Buka Berkas Pemohon</a>
+                                                        <span class="text-[10px] text-amber-700 dark:text-amber-400 font-bold">Referensi:</span>
+                                                        <a href="{{ asset($globalFile) }}" target="_blank" class="text-[10px] font-bold text-blue-600 hover:underline truncate">Buka Berkas Sebelumnya</a>
                                                     </div>
                                                 @endif
                                             </div>
@@ -752,10 +797,14 @@
                             @csrf <input type="hidden" name="action" id="validationAction" value="">
                             <textarea name="catatan" id="catatan" rows="3" class="w-full px-3 py-2 text-xs border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-xl mb-4 focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="Berikan catatan..."></textarea>
                             <div class="grid grid-cols-2 gap-2">
-                                <button type="button" onclick="submitValidation('approved')" class="py-2.5 bg-green-600 text-white rounded-xl text-[9px] font-black uppercase">Setujui</button>
+                                <button type="button" onclick="submitValidation('approved')" class="py-2.5 bg-green-600 text-white rounded-xl text-[9px] font-black uppercase">{{ $isKadin ? 'Terbitkan Surat Izin' : 'Setujui' }}</button>
                                 <button type="button" onclick="submitValidation('rejected')" class="py-2.5 bg-red-600 text-white rounded-xl text-[9px] font-black uppercase">Tolak</button>
                                 <button type="button" onclick="submitValidation('revision')" class="col-span-2 py-2.5 bg-orange-500 text-white rounded-xl text-[9px] font-black uppercase mb-1">Perbaikan ke Pemohon</button>
                                 
+                                @if($isKadin)
+                                    <button type="button" onclick="submitValidation('return_to_verifikator')" class="col-span-2 py-2.5 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase">Kembalikan ke Verifikator</button>
+                                @endif
+
                                 @if($isOperatorOpd)
                                     <button type="button" onclick="submitValidation('return_to_bo')" class="col-span-2 py-2.5 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase">Kembalikan ke BO</button>
                                 @endif
@@ -868,20 +917,23 @@
         function openPdfPreview(url, title) { document.getElementById('pdf-modal-title').textContent = title; document.getElementById('pdf-modal-iframe').src = url; const m = document.getElementById('modal-pdf-preview'); m.classList.remove('hidden'); m.classList.add('flex'); }
         function closePdfPreview() { document.getElementById('modal-pdf-preview').classList.add('hidden'); document.getElementById('pdf-modal-iframe').src = ''; }
         function submitValidation(action) { 
+            const isKadin = {{ $isKadin ? 'true' : 'false' }};
             const texts = { 
-                'approved': 'MENYETUJUI', 
+                'approved': isKadin ? 'MENERBITKAN SURAT IZIN' : 'MENYETUJUI', 
                 'rejected': 'MENOLAK', 
                 'revision': 'MEMINTA PERBAIKAN KE PEMOHON', 
                 'return_to_bo': 'MENGEMBALIKAN KE BACK OFFICE (BO)',
                 'return_to_operator_opd': 'MENGEMBALIKAN KE OPERATOR OPD',
-                'return_to_kepala_opd': 'MENGEMBALIKAN KE KEPALA OPD'
+                'return_to_kepala_opd': 'MENGEMBALIKAN KE KEPALA OPD',
+                'return_to_verifikator': 'MENGEMBALIKAN KE VERIFIKATOR'
             }; 
             const colors = {
                 'approved': '#16a34a',
                 'rejected': '#dc2626',
                 'return_to_bo': '#2563eb',
                 'return_to_operator_opd': '#2563eb',
-                'return_to_kepala_opd': '#2563eb'
+                'return_to_kepala_opd': '#2563eb',
+                'return_to_verifikator': '#2563eb'
             };
             Swal.fire({ 
                 title: 'Konfirmasi', 

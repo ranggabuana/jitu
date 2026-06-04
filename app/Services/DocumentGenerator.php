@@ -122,29 +122,46 @@ class DocumentGenerator
         }
         $replacements['[LOGO KABUPATEN]'] = $logoKabHtml;
         
-        // Also add form fields data dynamically (Applicant Data)
+        // Context-specific replacements to avoid data collision
+        $applicantReplacements = [];
+        $rekomReplacements = [];
+        $izinReplacements = [];
+
+        // 1. Build Applicant Data Map
         if (!empty($application->form_data) && is_array($application->form_data)) {
-            foreach ($application->form_data as $key => $value) {
+            foreach ($application->form_data as $fieldId => $value) {
                 if (!is_array($value)) {
-                    $replacements['[' . strtoupper($key) . ']'] = $value;
+                    $applicantReplacements['[' . strtoupper($fieldId) . ']'] = $value;
+                    $field = $perijinan->activeFormFields->firstWhere('id', $fieldId);
+                    if ($field) {
+                        $applicantReplacements['[' . strtoupper($field->label) . ']'] = $value;
+                    }
                 }
             }
         }
 
-        // Add Rekom Form data dynamically (filled by FO)
+        // 2. Build Rekom Data Map
         if (!empty($application->rekom_data) && is_array($application->rekom_data)) {
             foreach ($application->rekom_data as $key => $value) {
                 if (!is_array($value)) {
-                    $replacements['[' . strtoupper($key) . ']'] = $value;
+                    $rekomReplacements['[' . strtoupper($key) . ']'] = $value;
+                    $field = $perijinan->activeFormFields->where('form_type', 'rekom')->firstWhere('name', $key);
+                    if ($field) {
+                        $rekomReplacements['[' . strtoupper($field->label) . ']'] = $value;
+                    }
                 }
             }
         }
 
-        // Add Izin Form data dynamically (filled by official)
+        // 3. Build Izin Data Map
         if (!empty($application->izin_data) && is_array($application->izin_data)) {
             foreach ($application->izin_data as $key => $value) {
                 if (!is_array($value)) {
-                    $replacements['[' . strtoupper($key) . ']'] = $value;
+                    $izinReplacements['[' . strtoupper($key) . ']'] = $value;
+                    $field = $perijinan->activeFormFields->where('form_type', 'izin')->firstWhere('name', $key);
+                    if ($field) {
+                        $izinReplacements['[' . strtoupper($field->label) . ']'] = $value;
+                    }
                 }
             }
         }
@@ -157,6 +174,18 @@ class DocumentGenerator
                 $rawTemplate = self::{$config['default_method']}();
             }
 
+            // Assemble document-specific replacements
+            $finalReplacements = $replacements; // Start with base (NAMA, NIK, etc)
+            $finalReplacements = array_merge($finalReplacements, $applicantReplacements); // Add Global Form data
+
+            if ($type === 'rekom') {
+                // For Rekom document: merge Rekom data (overrides global if same name)
+                $finalReplacements = array_merge($finalReplacements, $rekomReplacements);
+            } elseif ($type === 'izin') {
+                // For Izin document: merge Izin data (overrides global if same name)
+                $finalReplacements = array_merge($finalReplacements, $izinReplacements);
+            }
+
             // Global fix for checkmarks [x] or [v] or ✓ to ensure they render correctly
             $checkmarkHtml = '<span class="checkmark">&#10003;</span>';
             $rawTemplate = str_replace(['[x]', '[v]', '[V]', '✓'], $checkmarkHtml, $rawTemplate);
@@ -166,8 +195,8 @@ class DocumentGenerator
 
             // Replace placeholders
             $htmlContent = str_replace(
-                array_keys($replacements),
-                array_values($replacements),
+                array_keys($finalReplacements),
+                array_values($finalReplacements),
                 $rawTemplate
             );
 
