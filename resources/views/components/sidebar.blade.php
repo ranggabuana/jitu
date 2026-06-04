@@ -94,7 +94,7 @@
                         class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-lg mx-2 my-1 flex items-center justify-between submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('data-perijinan.perlu-perbaikan') ? 'active-menu' : '' }}">
                         <div class="flex items-center">
                             <i class="mdi mdi-circle text-[8px] mr-2 text-orange-500"></i>
-                            <span class="{{ $countPerluPerbaikan > 0 ? 'text-orange-600 dark:text-orange-400' : '' }}">Perlu Perbaikan</span>
+                            <span class="{{ $countPerluPerbaikan > 0 ? 'text-orange-600 dark:text-orange-400' : '' }}">Perlu Perbaikan Pemohon</span>
                         </div>
                         <span
                             class="inline-flex items-center justify-center min-w-5 h-5 px-1.5 ml-2 text-xs font-bold text-white {{ $countPerluPerbaikan > 0 ? 'bg-orange-500' : 'bg-gray-300 dark:bg-gray-600' }} rounded-full">

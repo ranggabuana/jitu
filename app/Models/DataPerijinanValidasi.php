@@ -96,7 +96,7 @@ class DataPerijinanValidasi extends Model
             'pending' => 'Pending',
             'approved' => 'Disetujui',
             'rejected' => 'Ditolak',
-            'revision' => 'Perlu Perbaikan',
+            'revision' => 'Perlu Perbaikan Pemohon',
         ];
 
         $label = $labels[$this->status] ?? $this->status;

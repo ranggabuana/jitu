@@ -499,7 +499,22 @@
                 </div>
             </div>
 
-            @php $cv = $application->currentValidasi(); $canVal = ($application->status !== 'approved' && $cv && $cv->validationFlow->role === $userRole && (in_array($cv->validationFlow->role, ['verifikator', 'kadin']) || $cv->validationFlow->assigned_user_id === auth()->id())); @endphp
+            @php $cv = $application->currentValidasi(); $canVal = ($application->status !== 'approved' && $application->status !== 'perbaikan' && $cv && $cv->validationFlow->role === $userRole && (in_array($cv->validationFlow->role, ['verifikator', 'kadin']) || $cv->validationFlow->assigned_user_id === auth()->id())); @endphp
+            
+            @if ($application->status === 'perbaikan')
+                <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-5 shadow-sm">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-800/40 flex items-center justify-center flex-shrink-0">
+                            <i class="mdi mdi-account-edit text-amber-600 dark:text-amber-400 text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="text-sm font-bold text-amber-800 dark:text-amber-300 uppercase tracking-tight mb-1">Sedang Dalam Perbaikan</h4>
+                            <p class="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">Permohonan ini telah dikembalikan ke pemohon untuk perbaikan berkas/data. Tindakan validasi akan tersedia kembali setelah pemohon mengirimkan ulang perbaikan.</p>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             @if ($canVal)
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50"><h3 class="font-black text-gray-800 dark:text-white text-xs uppercase tracking-widest flex items-center gap-2"><i class="mdi mdi-shield-check text-blue-500"></i> Tindakan Validasi</h3></div>

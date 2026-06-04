@@ -212,7 +212,7 @@ class DataPerijinan extends Model
             'draft' => 'Draft',
             'submitted' => 'Diajukan',
             'in_progress' => 'Dalam Proses',
-            'perbaikan' => 'Perlu Perbaikan',
+            'perbaikan' => 'Perlu Perbaikan Pemohon',
             'approved' => 'Disetujui & Selesai',
             'rejected' => 'Ditolak',
         ];

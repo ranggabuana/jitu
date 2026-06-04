@@ -1177,7 +1177,7 @@ class DataPerijinanController extends Controller
         // Title row
         $statusLabels = [
             'dalam_proses' => 'DALAM PROSES',
-            'perlu_perbaikan' => 'PERLU PERBAIKAN',
+            'perlu_perbaikan' => 'PERLU PERBAIKAN PEMOHON',
             'selesai' => 'SELESAI',
             'ditolak' => 'DITOLAK'
         ];
@@ -1220,7 +1220,7 @@ class DataPerijinanController extends Controller
         $statusLabelsMap = [
             'submitted' => 'Submitted',
             'in_progress' => 'Dalam Proses',
-            'perbaikan' => 'Perlu Perbaikan',
+            'perbaikan' => 'Perlu Perbaikan Pemohon',
             'approved' => 'Disetujui',
             'rejected' => 'Ditolak',
         ];
