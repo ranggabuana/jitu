@@ -99,7 +99,11 @@ class DashboardController extends Controller
         try {
             $perijinan = Perijinan::with([
                 'activeValidationFlows.assignedUser',
-                'activeFormFields'
+                'activeFormFields' => function ($query) {
+                    $query->where('form_type', 'global')
+                        ->orderBy('order', 'asc')
+                        ->orderBy('id', 'asc');
+                }
             ])->findOrFail($id);
 
             return response()->json([
@@ -189,7 +193,8 @@ class DashboardController extends Controller
 
         $perijinan = Perijinan::with([
             'activeFormFields' => function ($query) {
-                $query->orderBy('order', 'asc')
+                $query->where('form_type', 'global')
+                    ->orderBy('order', 'asc')
                     ->orderBy('id', 'asc'); // Fallback sorting by ID if order is same
             },
             'activeValidationFlows'
@@ -218,7 +223,9 @@ class DashboardController extends Controller
             'pernyataan.accepted' => 'Anda harus menyetujui pernyataan pertanggungjawaban data.',
         ]);
 
-        $perijinan = Perijinan::with('activeFormFields')->findOrFail($request->perijinan_id);
+        $perijinan = Perijinan::with(['activeFormFields' => function ($query) {
+            $query->where('form_type', 'global');
+        }])->findOrFail($request->perijinan_id);
 
         // ===============================
         // 🔹 VALIDASI DINAMIS
@@ -477,7 +484,8 @@ class DashboardController extends Controller
 
         $data = DataPerijinan::with([
             'perijinan.activeFormFields' => function ($query) {
-                $query->orderBy('order', 'asc')->orderBy('id', 'asc');
+                $query->where('form_type', 'global')
+                    ->orderBy('order', 'asc')->orderBy('id', 'asc');
             }
         ])
             ->where('id', $id)
@@ -506,7 +514,9 @@ class DashboardController extends Controller
         ]);
 
         $data = DataPerijinan::with([
-            'perijinan.activeFormFields'
+            'perijinan.activeFormFields' => function ($query) {
+                $query->where('form_type', 'global');
+            }
         ])
             ->where('id', $id)
             ->where('user_id', $user->id)

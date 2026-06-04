@@ -30,7 +30,11 @@ class LayananController extends Controller
     {
         $layanan = Perijinan::with([
             'activeValidationFlows',
-            'activeFormFields'
+            'activeFormFields' => function ($query) {
+                $query->where('form_type', 'global')
+                    ->orderBy('order', 'asc')
+                    ->orderBy('id', 'asc');
+            }
         ])->findOrFail($id);
 
         return view('front.layanan-detail', compact('layanan'));
