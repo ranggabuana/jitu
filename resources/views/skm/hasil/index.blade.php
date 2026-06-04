@@ -121,6 +121,12 @@
                             Responden
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                            Jenis Perizinan
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                            No. Registrasi
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                             Pertanyaan
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
@@ -144,6 +150,16 @@
                                     <p class="text-xs text-gray-500 dark:text-gray-400">
                                         {{ $item->responden_email ?? ($item->nip ? 'NIP: ' . $item->nip : '-') }}</p>
                                 </div>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-200">
+                                @if($item->dataPerijinan && $item->dataPerijinan->perijinan)
+                                    <span class="font-bold text-amber-600 dark:text-amber-400">{{ $item->dataPerijinan->perijinan->nama_perijinan }}</span>
+                                @else
+                                    <span class="text-gray-400 italic">-</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-200 font-mono">
+                                {{ $item->dataPerijinan->no_registrasi ?? '-' }}
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-200">
                                 {{ Str::limit($item->dataSkm->pertanyaan, 50) }}

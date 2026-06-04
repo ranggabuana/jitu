@@ -29,7 +29,7 @@ class HasilSkmController extends Controller
         $sortBy = in_array($sortBy, $allowedSorts) ? $sortBy : 'created_at';
         $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? $sortOrder : 'desc';
 
-        $query = HasilSkm::with(['dataSkm', 'user']);
+        $query = HasilSkm::with(['dataSkm', 'user', 'dataPerijinan.perijinan']);
 
         if ($search) {
             $query->where(function($q) use ($search) {
@@ -89,7 +89,7 @@ class HasilSkmController extends Controller
      */
     public function show(string $id)
     {
-        $hasilSkm = HasilSkm::with(['dataSkm', 'user'])->findOrFail($id);
+        $hasilSkm = HasilSkm::with(['dataSkm', 'user', 'dataPerijinan.perijinan'])->findOrFail($id);
         return view('skm.hasil.show', compact('hasilSkm'));
     }
 
@@ -154,7 +154,7 @@ class HasilSkmController extends Controller
      */
     public function export(Request $request)
     {
-        $query = HasilSkm::with(['dataSkm', 'user']);
+        $query = HasilSkm::with(['dataSkm', 'user', 'dataPerijinan.perijinan']);
 
         // Apply same filters as index
         $search = $request->get('search', '');
@@ -249,7 +249,7 @@ class HasilSkmController extends Controller
         
         // Title row
         echo '<Row ss:Height="30">';
-        echo '<Cell ss:MergeAcross="8" ss:StyleID="title"><Data ss:Type="String">LAPORAN HASIL SKM</Data></Cell>';
+        echo '<Cell ss:MergeAcross="10" ss:StyleID="title"><Data ss:Type="String">LAPORAN HASIL SKM</Data></Cell>';
         echo '</Row>';
         
         // Date range row
@@ -264,7 +264,7 @@ class HasilSkmController extends Controller
         } else {
             $dateRangeText .= 'Semua tanggal';
         }
-        echo '<Cell ss:MergeAcross="8" ss:StyleID="subtitle"><Data ss:Type="String">' . $dateRangeText . '</Data></Cell>';
+        echo '<Cell ss:MergeAcross="10" ss:StyleID="subtitle"><Data ss:Type="String">' . $dateRangeText . '</Data></Cell>';
         echo '</Row>';
         
         // Empty row
@@ -273,6 +273,8 @@ class HasilSkmController extends Controller
         // Header row
         echo '<Row ss:Height="25">';
         echo '<Cell ss:StyleID="header"><Data ss:Type="String">No</Data></Cell>';
+        echo '<Cell ss:StyleID="header"><Data ss:Type="String">Jenis Perizinan</Data></Cell>';
+        echo '<Cell ss:StyleID="header"><Data ss:Type="String">No Registrasi</Data></Cell>';
         echo '<Cell ss:StyleID="header"><Data ss:Type="String">Pertanyaan</Data></Cell>';
         echo '<Cell ss:StyleID="header"><Data ss:Type="String">Nama Responden</Data></Cell>';
         echo '<Cell ss:StyleID="header"><Data ss:Type="String">Email</Data></Cell>';
@@ -286,8 +288,13 @@ class HasilSkmController extends Controller
         // Data rows
         $no = 1;
         foreach ($hasilSkm as $response) {
+            $namaPerizinan = $response->dataPerijinan->perijinan->nama_perijinan ?? '-';
+            $noRegistrasi = $response->dataPerijinan->no_registrasi ?? '-';
+
             echo '<Row>';
             echo '<Cell ss:StyleID="center"><Data ss:Type="Number">' . $no++ . '</Data></Cell>';
+            echo '<Cell><Data ss:Type="String">' . htmlspecialchars($namaPerizinan) . '</Data></Cell>';
+            echo '<Cell><Data ss:Type="String">' . htmlspecialchars($noRegistrasi) . '</Data></Cell>';
             echo '<Cell><Data ss:Type="String">' . htmlspecialchars($response->dataSkm->pertanyaan) . '</Data></Cell>';
             echo '<Cell><Data ss:Type="String">' . htmlspecialchars($response->responden_nama ?? 'Anonim') . '</Data></Cell>';
             echo '<Cell><Data ss:Type="String">' . htmlspecialchars($response->responden_email ?? '-') . '</Data></Cell>';
