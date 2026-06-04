@@ -199,6 +199,25 @@
 
             <!-- TAB 1: DATA DAN BERKAS PEMOHON -->
             <div id="tab-panel-data-pemohon" class="tab-content-panel space-y-6">
+                <!-- Card: Tombol Lihat Data Formulir -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center border border-amber-200 dark:border-amber-800">
+                                <i class="mdi mdi-form-select text-amber-600 dark:text-amber-400 text-xl"></i>
+                            </div>
+                            <div>
+                                <h2 class="font-bold text-gray-800 dark:text-white text-base">Isian Formulir Global</h2>
+                                <p class="text-gray-500 text-[10px] uppercase font-bold mt-0.5 tracking-wider">Data Isian yang diinput oleh pemohon</p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="openFormDataModal()" class="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold uppercase transition-all shadow-md active:scale-95">
+                            <i class="mdi mdi-eye text-base"></i>
+                            Lihat Isian Formulir
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Card: Lampiran File -->
                 @if ($application->form_files && count($application->form_files) > 0)
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -518,8 +537,69 @@
     </div>
     <div id="modal-pdf-preview" class="fixed inset-0 z-[300] hidden items-center justify-center bg-black/70 backdrop-blur-sm"><div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden" style="width: min(960px, 95vw); height: 90vh;"><div class="flex items-center justify-between px-5 py-3 border-b bg-gray-50 dark:bg-gray-800 flex-shrink-0"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center"><i class="mdi mdi-file-pdf-box text-red-600 text-lg"></i></div><div><h3 id="pdf-modal-title" class="text-sm font-bold">Pratinjau</h3></div></div><button onclick="closePdfPreview()" class="text-gray-400 hover:text-gray-600"><i class="mdi mdi-close text-lg"></i></button></div><div class="flex-1 bg-gray-200 overflow-hidden"><iframe id="pdf-modal-iframe" src="" class="w-full h-full border-0"></iframe></div></div></div>
 
+    <!-- Modal: Data Formulir Global -->
+    <div id="modal-form-data" class="fixed inset-0 z-[450] hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50 dark:bg-gray-800/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center border border-amber-200 dark:border-amber-800">
+                        <i class="mdi mdi-form-select text-amber-600 dark:text-amber-400 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-gray-800 dark:text-white">Data Isian Formulir</h3>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Formulir Global oleh Pemohon</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeFormDataModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+                    <i class="mdi mdi-close text-2xl"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    @php
+                        $globalFields = $application->perijinan->activeFormFields->where('form_type', 'global')->sortBy('order');
+                    @endphp
+                    @forelse($globalFields as $field)
+                        <div class="space-y-1">
+                            <label class="text-[10px] text-gray-400 uppercase font-black tracking-widest">{{ $field->label }}</label>
+                            <div class="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                                <p class="text-sm font-bold text-gray-800 dark:text-gray-200">
+                                    @php 
+                                        $val = $application->form_data[$field->id] ?? '-';
+                                        if (is_array($val)) $val = implode(', ', $val);
+                                    @endphp
+                                    {{ $val ?: '-' }}
+                                </p>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="col-span-full py-12 text-center">
+                            <i class="mdi mdi-file-document-outline text-4xl text-gray-300 mb-2"></i>
+                            <p class="text-sm text-gray-500 italic">Tidak ada data formulir global.</p>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+
+            <div class="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 flex justify-end">
+                <button type="button" onclick="closeFormDataModal()" class="px-6 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-xl text-sm font-bold transition-all shadow-sm">Tutup</button>
+            </div>
+        </div>
+    </div>
+
     @push('scripts')
     <script>
+        function openFormDataModal() {
+            const m = document.getElementById('modal-form-data');
+            m.classList.remove('hidden'); m.classList.add('flex'); document.body.style.overflow = 'hidden';
+        }
+        function closeFormDataModal() {
+            const m = document.getElementById('modal-form-data');
+            m.classList.remove('flex'); m.classList.add('hidden'); document.body.style.overflow = 'auto';
+        }
+        document.getElementById('modal-form-data').addEventListener('click', function(e) { if (e.target === this) closeFormDataModal(); });
+
         function previewImage(url, title) { fetch(url).then(r => r.blob()).then(blob => { const img = document.getElementById('previewImageElement'); img.src = URL.createObjectURL(blob); document.getElementById('previewImageName').textContent = title; const m = document.getElementById('imagePreviewModal'); m.classList.remove('hidden'); m.classList.add('flex'); }); }
         function openPdfPreview(url, title) { document.getElementById('pdf-modal-title').textContent = title; document.getElementById('pdf-modal-iframe').src = url; const m = document.getElementById('modal-pdf-preview'); m.classList.remove('hidden'); m.classList.add('flex'); }
         function closePdfPreview() { document.getElementById('modal-pdf-preview').classList.add('hidden'); document.getElementById('pdf-modal-iframe').src = ''; }
