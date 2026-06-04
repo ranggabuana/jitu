@@ -13,6 +13,7 @@ class HasilSkm extends Model
 
     protected $fillable = [
         'data_skm_id',
+        'data_perijinan_id',
         'responden_nama',
         'responden_email',
         'nip',
@@ -32,6 +33,14 @@ class HasilSkm extends Model
     public function dataSkm()
     {
         return $this->belongsTo(DataSkm::class);
+    }
+
+    /**
+     * Get the application for this response.
+     */
+    public function dataPerijinan()
+    {
+        return $this->belongsTo(DataPerijinan::class);
     }
 
     /**

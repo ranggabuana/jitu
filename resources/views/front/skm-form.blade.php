@@ -68,14 +68,24 @@
             <form action="{{ route('skm.store') }}" method="POST" class="bg-white rounded-3xl shadow-xl overflow-hidden" id="skmForm">
                 @csrf
                 
+                @if(isset($application))
+                    <input type="hidden" name="data_perijinan_id" value="{{ $application->id }}">
+                @endif
+                
                 <!-- Form Header -->
                 <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-8">
                     <h2 class="text-2xl font-bold mb-2">
                         <i class="fas fa-clipboard-list mr-3"></i>Kuesioner Survei Kepuasan Masyarakat
                     </h2>
-                    <p class="text-blue-100">
-                        Silakan berikan penilaian Anda dengan jujur dan objektif.
-                    </p>
+                    @if(isset($application))
+                        <p class="text-blue-100">
+                            Terima kasih telah menggunakan layanan <strong>{{ $application->perijinan->nama_perijinan }}</strong>. Mohon kesediaannya mengisi survei singkat ini sebagai syarat pengunduhan dokumen izin Anda.
+                        </p>
+                    @else
+                        <p class="text-blue-100">
+                            Silakan berikan penilaian Anda dengan jujur dan objektif.
+                        </p>
+                    @endif
                 </div>
 
                 <!-- Respondent Info -->
@@ -92,7 +102,7 @@
                             <input type="text"
                                    name="responden_nama"
                                    id="responden_nama"
-                                   value="{{ old('responden_nama') }}"
+                                   value="{{ old('responden_nama', $application->user->name ?? auth()->user()->name ?? '') }}"
                                    required
                                    placeholder="Masukkan nama lengkap Anda"
                                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all @error('responden_nama') border-red-500 @enderror">
@@ -107,7 +117,7 @@
                             <input type="email"
                                    name="responden_email"
                                    id="responden_email"
-                                   value="{{ old('responden_email') }}"
+                                   value="{{ old('responden_email', $application->user->email ?? auth()->user()->email ?? '') }}"
                                    required
                                    placeholder="contoh@email.com"
                                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all @error('responden_email') border-red-500 @enderror">
@@ -122,7 +132,7 @@
                             <input type="text"
                                    name="nip"
                                    id="nip"
-                                   value="{{ old('nip') }}"
+                                   value="{{ old('nip', $application->user->nip ?? auth()->user()->nip ?? '') }}"
                                    placeholder="Masukkan NIP/NIK jika ada"
                                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all @error('nip') border-red-500 @enderror">
                             @error('nip')

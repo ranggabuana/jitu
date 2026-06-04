@@ -150,6 +150,22 @@ class DataPerijinan extends Model
     }
 
     /**
+     * Get SKM results for this application.
+     */
+    public function hasilSkm(): HasMany
+    {
+        return $this->hasMany(HasilSkm::class, 'data_perijinan_id');
+    }
+
+    /**
+     * Check if SKM has been filled for this application.
+     */
+    public function isSkmFilled(): bool
+    {
+        return $this->hasilSkm()->exists();
+    }
+
+    /**
      * Get current validation step.
      */
     public function currentValidasi()

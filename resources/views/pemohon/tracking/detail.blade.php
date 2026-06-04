@@ -42,20 +42,41 @@
         
         <!-- Dokumen Izin Download Section -->
         @if($data->status === 'approved' && $data->file_izin)
-            <div class="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-6 shadow-sm flex items-center justify-between flex-wrap gap-4">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-2xl shadow-inner">
-                        <i class="fas fa-certificate"></i>
+            @if($data->isSkmFilled())
+                <div class="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-6 shadow-sm flex items-center justify-between flex-wrap gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-2xl shadow-inner">
+                            <i class="fas fa-certificate"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-emerald-800">Dokumen Izin Telah Terbit!</h3>
+                            <p class="text-sm text-emerald-600">Pengajuan Anda telah disetujui. Silakan unduh dokumen izin Anda di bawah ini.</p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 class="text-lg font-bold text-emerald-800">Dokumen Izin Telah Terbit!</h3>
-                        <p class="text-sm text-emerald-600">Pengajuan Anda telah disetujui. Anda dapat mengunduh dokumen izin sekarang.</p>
+                    <a href="{{ asset($data->file_izin) }}" target="_blank" download class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-all transform hover:-translate-y-1">
+                        <i class="fas fa-download"></i> Unduh Dokumen Izin
+                    </a>
+                </div>
+            @else
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-6 shadow-sm">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-2xl shadow-inner flex-shrink-0">
+                            <i class="fas fa-poll-h"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-bold text-blue-800">Survei Kepuasan Masyarakat (SKM)</h3>
+                            <p class="text-sm text-blue-600 leading-relaxed mb-4">
+                                Pengajuan Anda telah <strong>Disetujui</strong> dan dokumen izin telah siap. Sesuai ketentuan, mohon kesediaan Anda untuk mengisi Survei Kepuasan Masyarakat (SKM) terlebih dahulu sebelum mengunduh dokumen izin resmi.
+                            </p>
+                            <a href="#" onclick="openSkmModal(); return false;" 
+                               class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition-all transform hover:scale-105 active:scale-95">
+                                <i class="fas fa-edit"></i>
+                                Isi Survei Sekarang & Unduh Izin
+                            </a>
+                        </div>
                     </div>
                 </div>
-                <a href="{{ asset($data->file_izin) }}" target="_blank" download class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-all transform hover:-translate-y-1">
-                    <i class="fas fa-download"></i> Unduh Dokumen Izin
-                </a>
-            </div>
+            @endif
         @endif
 
         <!-- Progress Overview -->
@@ -280,24 +301,252 @@
         @endif
 
         <!-- Actions -->
-        <div class="flex justify-between gap-4 pt-4">
+        <div class="flex flex-col sm:flex-row justify-between gap-4 pt-4">
             <a href="{{ route('pemohon.tracking') }}"
-                class="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-semibold transition-colors">
-                <i class="fas fa-arrow-left mr-2"></i> Kembali
+                class="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-semibold transition-colors text-center sm:text-left">
+                <i class="fas fa-arrow-left mr-2"></i> Kembali ke Daftar Tracking
             </a>
+            
             @if ($data->status === 'perbaikan')
                 <a href="{{ route('pemohon.pengajuan.edit', $data->id) }}"
-                    class="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-semibold transition-colors">
+                    class="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-semibold transition-colors text-center sm:text-left">
                     <i class="fas fa-edit mr-2"></i> Perbaiki Pengajuan
                 </a>
-            @elseif ($data->status === 'approved')
-                <button onclick="alert('Fitur download sertifikat akan segera tersedia')"
-                    class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition-colors">
-                    <i class="fas fa-download mr-2"></i> Download Sertifikat
-                </button>
             @endif
         </div>
     </main>
+
+    <!-- SKM Modal -->
+    @if($data->status === 'approved' && !$data->isSkmFilled())
+        <div id="skmModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+            <div class="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in duration-300">
+                <!-- Modal Header -->
+                <div class="bg-gradient-to-r from-amber-600 to-amber-700 text-white p-6 flex items-center justify-between flex-shrink-0">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                            <i class="fas fa-poll-h text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold">Kuesioner SKM</h3>
+                            <p class="text-sm text-amber-100">Survei Kepuasan Masyarakat</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="closeSkmModal()" class="w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="p-8 overflow-y-auto custom-scrollbar flex-1 bg-gray-50 dark:bg-gray-800/50">
+                    <form action="{{ route('skm.store') }}" method="POST" id="skmForm">
+                        @csrf
+                        <input type="hidden" name="data_perijinan_id" value="{{ $data->id }}">
+
+                        <!-- Error Alert Area -->
+                        <div id="skmError" class="hidden mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-xl flex items-start gap-3 animate-in fade-in slide-in-from-left-4 duration-300">
+                            <i class="fas fa-exclamation-circle text-red-600 mt-0.5"></i>
+                            <p class="text-sm text-red-700" id="skmErrorMessage"></p>
+                        </div>
+
+                        <div class="mb-8 p-5 bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 rounded-r-xl">
+                            <p class="text-sm text-amber-800 dark:text-amber-200">
+                                Mohon kesediaan Anda mengisi survei singkat ini untuk membantu kami meningkatkan kualitas pelayanan. Data survei ini diperlukan sebagai syarat pengunduhan dokumen izin Anda.
+                            </p>
+                        </div>
+
+                        <!-- Respondent Info -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Nama Lengkap <span class="text-red-500">*</span></label>
+                                <input type="text" name="responden_nama" value="{{ auth()->user()->name }}" required class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Email <span class="text-red-500">*</span></label>
+                                <input type="email" name="responden_email" value="{{ auth()->user()->email }}" required class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">NIP / NIK <span class="text-red-500">*</span></label>
+                                <input type="text" name="nip" value="{{ auth()->user()->nip }}" required class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm">
+                            </div>
+                        </div>
+
+                        <!-- Questions -->
+                        <h4 class="text-lg font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-2">
+                            <i class="fas fa-list-check text-amber-600"></i>
+                            Penilaian Layanan <span class="text-red-500 text-xs font-normal">(Semua Wajib Diisi)</span>
+                        </h4>
+                        
+                        <div class="space-y-6 mb-10">
+                            @foreach($skmQuestions as $index => $question)
+                            <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                                <p class="text-gray-800 dark:text-gray-200 font-bold leading-relaxed mb-6">
+                                    {{ $index + 1 }}. {{ $question->pertanyaan }}
+                                </p>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                    @foreach(['1' => 'Kurang Baik', '2' => 'Cukup Baik', '3' => 'Baik', '4' => 'Sangat Baik'] as $value => $label)
+                                    <label class="relative cursor-pointer group">
+                                        <input type="radio" name="jawaban[{{ $question->id }}]" value="{{ $value }}" required class="peer sr-only">
+                                        <div class="px-4 py-3 rounded-xl border-2 border-gray-100 dark:border-gray-700 text-center transition-all group-hover:border-amber-300 peer-checked:border-amber-600 peer-checked:bg-amber-600 peer-checked:text-white">
+                                            <div class="font-bold text-xs">{{ $label }}</div>
+                                            <div class="text-[10px] opacity-70 mt-1">
+                                                @for($s=1; $s<=$value; $s++) <i class="fas fa-star text-yellow-400"></i> @endfor
+                                            </div>
+                                        </div>
+                                    </label>
+                                    @endforeach
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+
+                        <!-- Saran -->
+                        <div class="mb-10">
+                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Saran & Masukan <span class="text-red-500">*</span></label>
+                            <textarea name="saran" id="saranText" rows="4" required class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm resize-none" placeholder="Berikan saran Anda untuk peningkatan layanan kami..."></textarea>
+                            <p class="text-right text-[10px] text-gray-400 mt-1" id="charCount">0/1000</p>
+                        </div>
+
+                        <!-- Security -->
+                        <div class="p-6 bg-amber-50 dark:bg-amber-900/20 rounded-2xl border border-amber-100 dark:border-amber-800">
+                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">Verifikasi Keamanan</label>
+                            <div class="flex items-center gap-4">
+                                <div class="flex-1">
+                                    <span id="captcha-question" class="block text-lg font-bold text-amber-600 mb-2">{{ session('captcha_num1') }} + {{ session('captcha_num2') }} = ?</span>
+                                    <input type="number" name="captcha" id="captchaInput" required class="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 transition-all font-bold">
+                                </div>
+                                <button type="button" onclick="refreshCaptcha()" class="mt-8 bg-amber-600 hover:bg-amber-700 text-white w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-md">
+                                    <i class="fas fa-sync-alt" id="refreshIcon"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="p-6 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 flex justify-end gap-3 flex-shrink-0">
+                    <button type="button" onclick="closeSkmModal()" class="px-6 py-2.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-xl hover:bg-gray-300 transition-all text-sm">Batal</button>
+                    <button type="submit" form="skmForm" class="px-8 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl transition-all shadow-lg text-sm flex items-center gap-2">
+                        <i class="fas fa-paper-plane"></i> Kirim & Unduh
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            function openSkmModal() {
+                document.getElementById('skmModal').classList.remove('hidden');
+                document.getElementById('skmModal').classList.add('flex');
+                document.body.style.overflow = 'hidden';
+            }
+            function closeSkmModal() {
+                document.getElementById('skmModal').classList.add('hidden');
+                document.getElementById('skmModal').classList.remove('flex');
+                document.body.style.overflow = '';
+                // Clear errors on close
+                document.getElementById('skmError').classList.add('hidden');
+            }
+
+            const saranText = document.getElementById('saranText');
+            if(saranText) {
+                saranText.addEventListener('input', function() {
+                    document.getElementById('charCount').textContent = this.value.length + '/1000';
+                });
+            }
+
+            function refreshCaptcha() {
+                const icon = document.getElementById('refreshIcon');
+                if(!icon) return;
+                icon.classList.add('fa-spin');
+                fetch('{{ route("skm.refresh-captcha") }}')
+                    .then(r => r.json())
+                    .then(d => {
+                        document.getElementById('captcha-question').textContent = `${d.num1} + ${d.num2} = ?`;
+                        document.getElementById('captchaInput').value = '';
+                        icon.classList.remove('fa-spin');
+                    });
+            }
+
+            document.getElementById('skmForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const form = this;
+                const modal = document.getElementById('skmModal');
+                const btn = modal.querySelector('button[type="submit"]');
+                const errorArea = document.getElementById('skmError');
+                const errorMessage = document.getElementById('skmErrorMessage');
+                
+                errorArea.classList.add('hidden');
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+                btn.disabled = true;
+
+                const formData = new FormData(form);
+
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(async response => {
+                    let data;
+                    const contentType = response.headers.get("content-type");
+                    if (contentType && contentType.indexOf("application/json") !== -1) {
+                        data = await response.json();
+                    } else {
+                        const text = await response.text();
+                        console.error('Non-JSON response:', text);
+                        throw new Error('Server tidak memberikan respon valid (Bukan JSON). Silakan hubungi admin.');
+                    }
+                    
+                    if (response.ok && data.success) {
+                        // Success - reload page to show download button
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil',
+                                text: data.message,
+                                timer: 2000,
+                                showConfirmButton: false
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            alert(data.message);
+                            location.reload();
+                        }
+                    } else {
+                        // Handle validation errors or others
+                        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Kirim & Unduh';
+                        btn.disabled = false;
+                        
+                        errorArea.classList.remove('hidden');
+                        if (data.errors) {
+                            errorMessage.innerHTML = Object.values(data.errors).flat().join('<br>');
+                        } else {
+                            errorMessage.textContent = data.message || 'Terjadi kesalahan. Silakan periksa kembali isian Anda.';
+                        }
+                        
+                        // Scroll to top of modal
+                        modal.querySelector('.overflow-y-auto').scrollTop = 0;
+                        
+                        // Refresh captcha automatically on error
+                        refreshCaptcha();
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch Error:', error);
+                    btn.innerHTML = '<i class="fas fa-paper-plane"></i> Kirim & Unduh';
+                    btn.disabled = false;
+                    errorArea.classList.remove('hidden');
+                    // Show actual error message if possible
+                    const detailedError = error.message || 'Terjadi kesalahan sistem.';
+                    errorMessage.textContent = detailedError + ' Silakan coba lagi nanti.';
+                    modal.querySelector('.overflow-y-auto').scrollTop = 0;
+                });
+            });
+        </script>
+    @endif
 
     <!-- Footer -->
     <x-pemohon.footer></x-pemohon.footer>

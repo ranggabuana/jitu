@@ -1070,56 +1070,6 @@
         </div>
     </section>
 
-    <!-- SKM Section -->
-    <section id="skm" class="py-20 bg-gradient-to-br from-blue-600 to-blue-800 text-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-12">
-                <span
-                    class="text-blue-200 font-bold tracking-wider uppercase text-sm bg-blue-700/50 px-3 py-1 rounded-full">Survei
-                    Kepuasan Masyarakat</span>
-                <h2 class="text-3xl md:text-4xl font-bold mt-4">Bantu Kami Meningkatkan Pelayanan</h2>
-                <p class="text-blue-100 mt-4 max-w-2xl mx-auto">Berikan penilaian Anda terhadap layanan kami.
-                    Masukan
-                    Anda sangat berharga untuk peningkatan kualitas pelayanan.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                <div class="bg-white/10 backdrop-blur-md border border-white/20 p-8 rounded-2xl text-center">
-                    <div
-                        class="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center text-white text-3xl mx-auto mb-4">
-                        <i class="fas fa-star"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold mb-2">Beri Penilaian</h3>
-                    <p class="text-blue-100 text-sm">Nilai kualitas pelayanan kami dengan jujur dan objektif</p>
-                </div>
-                <div class="bg-white/10 backdrop-blur-md border border-white/20 p-8 rounded-2xl text-center">
-                    <div
-                        class="w-16 h-16 bg-green-400 rounded-full flex items-center justify-center text-white text-3xl mx-auto mb-4">
-                        <i class="fas fa-comment-alt"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold mb-2">Berikan Masukan</h3>
-                    <p class="text-blue-100 text-sm">Saran dan kritik membangun untuk perbaikan layanan</p>
-                </div>
-                <div class="bg-white/10 backdrop-blur-md border border-white/20 p-8 rounded-2xl text-center">
-                    <div
-                        class="w-16 h-16 bg-purple-400 rounded-full flex items-center justify-center text-white text-3xl mx-auto mb-4">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold mb-2">Peningkatan Layanan</h3>
-                    <p class="text-blue-100 text-sm">Hasil survei digunakan untuk meningkatkan kualitas pelayanan
-                    </p>
-                </div>
-            </div>
-
-            <div class="text-center mt-12">
-                <a href="/skm"
-                    class="inline-flex items-center gap-3 bg-white text-blue-700 hover:bg-blue-50 px-8 py-4 rounded-xl font-bold shadow-xl transition-all">
-                    <i class="fas fa-poll"></i> Isi Survei SKM
-                </a>
-            </div>
-        </div>
-    </section>
-
     <!-- Helpdesk / CTA -->
     <section class="py-16 bg-gradient-to-br from-secondary to-gray-900 text-white">
         <div class="max-w-5xl mx-auto px-4 text-center">

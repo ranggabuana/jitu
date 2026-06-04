@@ -472,7 +472,21 @@ class DashboardController extends Controller
             ->where('user_id', $user->id)
             ->firstOrFail();
 
-        return view('pemohon.tracking.detail', compact('data'));
+        // Fetch SKM questions if needed
+        $skmQuestions = [];
+        if ($data->status === 'approved' && !$data->isSkmFilled()) {
+            $skmQuestions = \App\Models\DataSkm::aktif()->orderBy('urutan')->get();
+            
+            // Generate CAPTCHA if not exists
+            if (!session()->has('captcha_num1')) {
+                session([
+                    'captcha_num1' => rand(1, 10),
+                    'captcha_num2' => rand(1, 10),
+                ]);
+            }
+        }
+
+        return view('pemohon.tracking.detail', compact('data', 'skmQuestions'));
     }
 
     /**

@@ -58,7 +58,6 @@
                         <li><a href="{{ route('informasi') }}" class="hover:text-blue-600 transition-colors">Informasi</a></li>
                         <li><a href="{{ route('pengaduan.create') }}" class="hover:text-blue-600 transition-colors">Pengaduan</a></li>
                         <li><a href="{{ route('regulasi.public') }}" class="hover:text-blue-600 transition-colors">Regulasi</a></li>
-                        <li><a href="{{ route('skm') }}" class="hover:text-blue-600 transition-colors">SKM</a></li>
                     </ul>
                 </div>
 
