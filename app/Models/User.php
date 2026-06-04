@@ -265,9 +265,8 @@ class User extends Authenticatable
     /**
      * Get list of perijinan IDs that user can access.
      * Logic:
-     * - Admin: access to ALL perijinan
-     * - FO, BO, Verifikator, Kadin: access to ALL perijinan with their role in validation flow
-     * - Operator OPD, Kepala OPD: access ONLY to perijinan where they are specifically assigned
+     * - Admin: access to ALL perijinan (returns empty array as per controller logic)
+     * - All other roles: access ONLY to perijinan where they are specifically assigned in validation flow
      */
     public function getAccessiblePerijinanIds(): array
     {
@@ -276,34 +275,15 @@ class User extends Authenticatable
             return [];
         }
 
-        // Roles that have access to ALL perijinan with their role type
-        $collectiveRoles = ['fo', 'bo', 'verifikator', 'kadin'];
-        
-        if (in_array($this->role, $collectiveRoles)) {
-            // Get all perijinan that have validation flow for this role
-            $perijinanIds = PerijinanValidationFlow::whereIn('role', $collectiveRoles)
-                ->where('is_active', true)
-                ->pluck('perijinan_id')
-                ->unique()
-                ->values()
-                ->toArray();
-            
-            \Log::info('Collective role access for user ' . $this->id . ' (role: ' . $this->role . '): ' . json_encode($perijinanIds));
-            
-            return $perijinanIds;
-        }
-        
-        // Roles that need specific assignment (Operator OPD, Kepala OPD, etc.)
-        // Get perijinan IDs where this specific user is assigned
+        // Strict access control: only permits where this user is explicitly assigned
         $perijinanIds = PerijinanValidationFlow::where('assigned_user_id', $this->id)
             ->where('is_active', true)
-            ->get()
             ->pluck('perijinan_id')
             ->unique()
             ->values()
             ->toArray();
         
-        \Log::info('Assigned role access for user ' . $this->id . ' (role: ' . $this->role . '): ' . json_encode($perijinanIds));
+        \Log::info('Strict access control for user ' . $this->id . ' (role: ' . $this->role . '): ' . json_encode($perijinanIds));
         
         return $perijinanIds;
     }

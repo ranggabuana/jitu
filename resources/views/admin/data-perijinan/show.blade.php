@@ -316,12 +316,22 @@
             <!-- TAB 2: DOKUMEN REKOMENDASI -->
             @if($showRekomTab)
             <div id="tab-panel-dokumen-rekom" class="tab-content-panel hidden space-y-6">
+                @if($isKepalaOpd)
+                    <div class="p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded-r-xl flex gap-3 shadow-sm">
+                        <i class="mdi mdi-information-variant text-blue-600 text-xl mt-0.5"></i>
+                        <div class="flex-1">
+                            <h4 class="text-sm font-bold text-blue-800 dark:text-blue-300">Informasi Verifikasi</h4>
+                            <p class="text-xs text-blue-700 dark:text-blue-400 leading-relaxed mt-1">Berikut adalah <strong>Draft Surat Rekomendasi</strong> dari Operator OPD. Silahkan berikan TTE pada Draft agar menjadi Surat Rekomendasi Resmi.</p>
+                        </div>
+                    </div>
+                @endif
+
                 @if($application->file_rekom && !empty($application->rekom_data))
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-purple-200 dark:border-purple-900/30 overflow-hidden">
                         <div class="px-5 py-4 border-b border-purple-100 dark:border-purple-900/50 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center border border-purple-200 dark:border-purple-800"><i class="mdi mdi-file-check text-purple-600 dark:text-purple-400 text-xl"></i></div>
-                                <div><h3 class="text-sm font-bold text-gray-800 dark:text-white">Surat Rekomendasi Terbit</h3><p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Hasil Generate Otomatis</p></div>
+                                <div><h3 class="text-sm font-bold text-gray-800 dark:text-white">Draft Surat Rekomendasi</h3><p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Hasil Generate Otomatis</p></div>
                             </div>
                             <div class="flex gap-2">
                                 <button onclick="openPdfPreview('{{ asset($application->file_rekom) }}', 'Surat Rekomendasi')" class="px-4 py-2 bg-purple-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm">Pratinjau PDF</button>
