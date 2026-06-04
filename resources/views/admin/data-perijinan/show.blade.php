@@ -415,17 +415,27 @@
                         @foreach ($application->validasiRecords as $index => $v)
                             @php 
                                 $sc = ['approved' => 'bg-green-500', 'pending' => 'bg-gray-300 dark:bg-gray-600', 'rejected' => 'bg-red-500', 'revision' => 'bg-orange-500']; 
-                                $isCurrent = ($v->order == $application->current_step && $application->status === 'in_progress');
+                                $isCurrent = ($v->order == $application->current_step && in_array($application->status, ['submitted', 'in_progress']));
+                                
+                                // Check if this is current user's task
+                                $isMyTurn = false;
+                                if ($isCurrent) {
+                                    $isMyTurn = ($v->validationFlow->role === $userRole && 
+                                               (in_array($v->validationFlow->role, ['verifikator', 'kadin']) || 
+                                                $v->user_id === auth()->id() || 
+                                                $v->validationFlow->assigned_user_id === auth()->id()));
+                                }
                             @endphp
                             <div class="relative flex gap-3 {{ !$loop->last ? 'pb-4' : '' }} {{ $isCurrent ? 'bg-blue-50/50 dark:bg-blue-900/10 -mx-5 px-5 py-3 first:rounded-t-none last:rounded-b-none border-y border-blue-100/50 dark:border-blue-800/30' : '' }}">
                                 @if (!$loop->last) 
-                                    <div class="absolute left-[27px] top-5 bottom-0 w-0.5 {{ $v->status === 'approved' ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700' }}"></div> 
+                                    <div class="absolute left-[24.5px] top-6 bottom-0 w-0.5 {{ $v->status === 'approved' ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700' }}"></div> 
                                 @endif
                                 
-                                <div class="relative flex-shrink-0 mt-1">
-                                    <div class="w-4 h-4 rounded-full {{ $sc[$v->status] ?? 'bg-gray-300' }} z-10 border-2 border-white dark:border-gray-800 shadow-sm"></div>
+                                <div class="relative flex-shrink-0 mt-1.5">
+                                    <div class="w-2.5 h-2.5 rounded-full {{ $sc[$v->status] ?? 'bg-gray-300' }} z-10"></div>
                                     @if($isCurrent)
-                                        <div class="absolute -inset-1 bg-blue-400 rounded-full animate-ping opacity-25"></div>
+                                        <div class="absolute -inset-1 bg-blue-500 rounded-full animate-ping opacity-30"></div>
+                                        <div class="absolute inset-0 bg-blue-400 rounded-full animate-pulse opacity-40"></div>
                                     @endif
                                 </div>
 
@@ -437,7 +447,12 @@
                                                 <span class="flex h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-blue-400"></span>
                                             @endif
                                         </h4>
-                                        <span class="px-2 py-0.5 rounded-full text-[9px] font-black {{ $v->status_color }} uppercase">{{ $v->status_label }}</span>
+                                        <div class="flex items-center gap-2">
+                                            @if($isMyTurn)
+                                                <span class="px-2 py-0.5 rounded-full text-[8px] font-black bg-blue-600 text-white uppercase tracking-wider animate-bounce">Tugas Anda</span>
+                                            @endif
+                                            <span class="px-2 py-0.5 rounded-full text-[9px] font-black {{ $v->status_color }} uppercase">{{ $v->status_label }}</span>
+                                        </div>
                                     </div>
                                     @if ($v->validated_at) 
                                         <p class="text-[9px] text-gray-500">{{ $v->validated_at->format('d/m/Y H:i') }}</p> 

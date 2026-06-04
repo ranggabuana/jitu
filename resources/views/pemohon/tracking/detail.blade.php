@@ -86,7 +86,9 @@
                     @foreach ($data->validasiRecords as $index => $validasi)
                         @php
                             $isCompleted = $validasi->status === 'approved';
-                            $isCurrent = $index + 1 == $data->current_step && !$isCompleted;
+                            $isCurrent = ($index + 1 == $data->current_step) && 
+                                         !$isCompleted && 
+                                         in_array($data->status, ['submitted', 'in_progress']);
                             $isPending = $validasi->status === 'pending';
                             $isRejected = $validasi->status === 'rejected';
                             $isRevision = $validasi->status === 'revision';
@@ -96,11 +98,15 @@
                             <!-- Timeline Dot -->
                             <div class="relative z-10 w-16 h-16 rounded-full flex items-center justify-center shadow-lg flex-shrink-0 border-4 border-white
                                 {{ $isCompleted ? 'bg-gradient-to-br from-green-500 to-green-600' : '' }}
-                                {{ $isCurrent ? 'bg-gradient-to-br from-amber-500 to-amber-600 animate-pulse' : '' }}
+                                {{ $isCurrent ? 'bg-gradient-to-br from-amber-500 to-amber-600 animate-pulse scale-110' : '' }}
                                 {{ $isPending && !$isCurrent ? 'bg-gradient-to-br from-gray-300 to-gray-400' : '' }}
                                 {{ $isRejected ? 'bg-gradient-to-br from-red-500 to-red-600' : '' }}
                                 {{ $isRevision ? 'bg-gradient-to-br from-orange-500 to-orange-600' : '' }}
                             ">
+                                @if($isCurrent)
+                                    <div class="absolute inset-0 rounded-full bg-amber-400 animate-ping opacity-30"></div>
+                                @endif
+                                
                                 @if ($isCompleted)
                                     <i class="fas fa-check text-white text-xl"></i>
                                 @elseif ($isRejected)
