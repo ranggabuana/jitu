@@ -340,21 +340,101 @@
                     </div>
                     <div class="p-6">
                         @if($isOperatorOpd && $canEditRekom)
-                            <div class="mb-6 p-4 bg-purple-50 dark:bg-purple-900/20 border-l-4 border-purple-500 rounded-r-xl flex gap-3">
-                                <i class="mdi mdi-information-outline text-purple-600 text-xl mt-0.5"></i>
-                                <p class="text-xs text-purple-700 dark:text-purple-300 leading-relaxed">Lengkapi data verifikasi teknis. Data ini akan otomatis digunakan dalam <strong>Surat Rekomendasi</strong>.</p>
+                            <div class="mb-6 p-4 bg-purple-50 dark:bg-purple-900/20 border-l-4 border-purple-500 rounded-r-xl flex flex-col gap-1">
+                                <div class="flex gap-3">
+                                    <i class="mdi mdi-information-outline text-purple-600 text-xl mt-0.5"></i>
+                                    <p class="text-xs text-purple-700 dark:text-purple-300 leading-relaxed">Lengkapi data verifikasi teknis. Data ini akan otomatis digunakan dalam <strong>Surat Rekomendasi</strong>.</p>
+                                </div>
+                                <div class="flex gap-3 mt-1">
+                                    <i class="mdi mdi-auto-fix text-purple-500 text-base"></i>
+                                    <p class="text-[11px] text-purple-600/80 italic">Beberapa isian telah terisi otomatis dari data formulir global pemohon. Silakan ubah jika terdapat data yang belum sesuai.</p>
+                                </div>
                             </div>
                         @endif
-                        <form action="{{ route('data-perijinan.rekom-data.save', $application->id) }}" method="POST">
+                        <form action="{{ route('data-perijinan.rekom-data.save', $application->id) }}" method="POST" enctype="multipart/form-data">
                             @csrf @method('PUT')
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 @foreach($rekomFields as $field)
                                     <div class="space-y-2">
                                         <label class="block text-[11px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-tighter">{{ $field->label }} @if($field->is_required)<span class="text-red-500">*</span>@endif</label>
-                                        @php $val = $application->rekom_data[$field->name] ?? ''; $ro = !$canEditRekom ? 'readonly disabled' : ''; $cls = "w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-purple-500 outline-none transition-all"; @endphp
-                                        @if($field->type === 'textarea') <textarea name="{{ $field->name }}" class="{{ $cls }} min-h-[120px]" {{ $ro }} {{ $field->is_required ? 'required' : '' }}>{{ $val }}</textarea>
-                                        @elseif($field->type === 'select') <select name="{{ $field->name }}" class="{{ $cls }}" {{ $ro }} {{ $field->is_required ? 'required' : '' }}><option value="">-- Pilih --</option> @foreach($field->options ?? [] as $opt) <option value="{{ $opt }}" {{ $val == $opt ? 'selected' : '' }}>{{ $opt }}</option> @endforeach </select>
-                                        @else <input type="text" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }} {{ $field->is_required ? 'required' : '' }}> @endif
+                                        @php 
+                                            $val = $application->rekom_data[$field->name] ?? ''; 
+                                            
+                                            // Auto-fill from global form if empty and not a file field
+                                            if (empty($val) && $field->type !== 'file') {
+                                                $matchingGlobalField = $application->perijinan->activeFormFields
+                                                    ->where('form_type', 'global')
+                                                    ->where('name', $field->name)
+                                                    ->first();
+                                                
+                                                if (!$matchingGlobalField) {
+                                                    $matchingGlobalField = $application->perijinan->activeFormFields
+                                                        ->where('form_type', 'global')
+                                                        ->filter(function($f) use ($field) {
+                                                            return strtolower($f->label) === strtolower($field->label);
+                                                        })->first();
+                                                }
+
+                                                if ($matchingGlobalField) {
+                                                    $val = $application->form_data[$matchingGlobalField->id] ?? '';
+                                                    if (is_array($val)) $val = implode(', ', $val);
+                                                }
+                                            }
+
+                                            $ro = !$canEditRekom ? 'readonly disabled' : ''; 
+                                            $cls = "w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-purple-500 outline-none transition-all"; 
+                                        @endphp
+
+                                        @if($field->type === 'textarea')
+                                            <textarea name="{{ $field->name }}" class="{{ $cls }} min-h-[120px]" {{ $ro }}>{{ $val }}</textarea>
+                                        @elseif($field->type === 'select')
+                                            <select name="{{ $field->name }}" class="{{ $cls }}" {{ $ro }}>
+                                                <option value="">-- Pilih --</option>
+                                                @foreach($field->options ?? [] as $opt)
+                                                    <option value="{{ $opt }}" {{ $val == $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                                                @endforeach
+                                            </select>
+                                        @elseif($field->type === 'file')
+                                            <div class="space-y-2">
+                                                <input type="file" name="{{ $field->name }}" class="{{ $cls }}" {{ $ro }}>
+                                                @if($val)
+                                                    <div class="flex items-center gap-2 mt-2 p-2 bg-purple-50 dark:bg-purple-900/30 rounded-lg border border-purple-100 dark:border-purple-800">
+                                                        <i class="mdi mdi-file-check text-purple-600"></i>
+                                                        <a href="{{ asset($val) }}" target="_blank" class="text-xs font-bold text-purple-700 dark:text-purple-300 hover:underline truncate">Lihat File Terupload</a>
+                                                    </div>
+                                                @endif
+
+                                                @php
+                                                    $matchingGlobalField = $application->perijinan->activeFormFields
+                                                        ->where('form_type', 'global')
+                                                        ->where('name', $field->name)
+                                                        ->first() ?? $application->perijinan->activeFormFields
+                                                        ->where('form_type', 'global')
+                                                        ->filter(function($f) use ($field) {
+                                                            return strtolower($f->label) === strtolower($field->label);
+                                                        })->first();
+                                                    
+                                                    $globalFile = null;
+                                                    if ($matchingGlobalField) {
+                                                        $globalFiles = $application->form_files[$matchingGlobalField->id] ?? [];
+                                                        $globalFile = is_array($globalFiles) ? ($globalFiles[0] ?? null) : $globalFiles;
+                                                    }
+                                                @endphp
+                                                @if($globalFile && $globalFile !== $val)
+                                                    <div class="flex items-center gap-2 mt-1 p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800/50">
+                                                        <i class="mdi mdi-information-outline text-amber-600 text-sm"></i>
+                                                        <span class="text-[10px] text-amber-700 dark:text-amber-400 font-bold">Referensi Pemohon:</span>
+                                                        <a href="{{ asset($globalFile) }}" target="_blank" class="text-[10px] font-bold text-blue-600 hover:underline truncate">Buka Berkas Pemohon</a>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        @elseif($field->type === 'date')
+                                            <input type="date" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }}>
+                                        @elseif($field->type === 'number')
+                                            <input type="number" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }}>
+                                        @else
+                                            <input type="text" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }}>
+                                        @endif
                                     </div>
                                 @endforeach
                             </div>
@@ -396,20 +476,100 @@
                     </div>
                     <div class="p-6">
                         @if($isVerifikator && $canEditIzin)
-                            <div class="mb-6 p-4 bg-indigo-50 dark:bg-indigo-900/20 border-l-4 border-indigo-500 rounded-r-xl flex gap-3">
-                                <i class="mdi mdi-information-outline text-indigo-600 text-xl mt-0.5"></i>
-                                <p class="text-xs text-indigo-700 dark:text-indigo-300 leading-relaxed">Lengkapi data izin final. Data ini akan otomatis digunakan dalam <strong>Surat Izin / Keputusan</strong>.</p>
+                            <div class="mb-6 p-4 bg-indigo-50 dark:bg-indigo-900/20 border-l-4 border-indigo-500 rounded-r-xl flex flex-col gap-1">
+                                <div class="flex gap-3">
+                                    <i class="mdi mdi-information-outline text-indigo-600 text-xl mt-0.5"></i>
+                                    <p class="text-xs text-indigo-700 dark:text-indigo-300 leading-relaxed">Lengkapi data izin final. Data ini akan otomatis digunakan dalam <strong>Surat Izin / Keputusan</strong>.</p>
+                                </div>
+                                <div class="flex gap-3 mt-1">
+                                    <i class="mdi mdi-auto-fix text-indigo-500 text-base"></i>
+                                    <p class="text-[11px] text-indigo-600/80 italic">Beberapa isian telah terisi otomatis dari data formulir global pemohon. Silakan ubah jika terdapat data yang belum sesuai.</p>
+                                </div>
                             </div>
                         @endif
-                        <form action="{{ route('data-perijinan.izin-data.save', $application->id) }}" method="POST">
+                        <form action="{{ route('data-perijinan.izin-data.save', $application->id) }}" method="POST" enctype="multipart/form-data">
                             @csrf @method('PUT')
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 @foreach($izinFields as $field)
                                     <div class="space-y-2">
                                         <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-tighter">{{ $field->label }} @if($field->is_required)<span class="text-red-500">*</span>@endif</label>
-                                        @php $val = $application->izin_data[$field->name] ?? ''; $ro = !$canEditIzin ? 'readonly disabled' : ''; $cls = "w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"; @endphp
-                                        @if($field->type === 'textarea') <textarea name="{{ $field->name }}" class="{{ $cls }} min-h-[120px]" {{ $ro }} {{ $field->is_required ? 'required' : '' }}>{{ $val }}</textarea>
-                                        @else <input type="text" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }} {{ $field->is_required ? 'required' : '' }}> @endif
+                                        @php 
+                                            $val = $application->izin_data[$field->name] ?? ''; 
+                                            
+                                            // Auto-fill from global form if empty and not a file field
+                                            if (empty($val) && $field->type !== 'file') {
+                                                $matchingGlobalField = $application->perijinan->activeFormFields
+                                                    ->where('form_type', 'global')
+                                                    ->where('name', $field->name)
+                                                    ->first();
+                                                
+                                                if (!$matchingGlobalField) {
+                                                    $matchingGlobalField = $application->perijinan->activeFormFields
+                                                        ->where('form_type', 'global')
+                                                        ->filter(function($f) use ($field) {
+                                                            return strtolower($f->label) === strtolower($field->label);
+                                                        })->first();
+                                                }
+
+                                                if ($matchingGlobalField) {
+                                                    $val = $application->form_data[$matchingGlobalField->id] ?? '';
+                                                    if (is_array($val)) $val = implode(', ', $val);
+                                                }
+                                            }
+
+                                            $ro = !$canEditIzin ? 'readonly disabled' : ''; 
+                                            $cls = "w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"; 
+                                        @endphp
+                                        @if($field->type === 'textarea')
+                                            <textarea name="{{ $field->name }}" class="{{ $cls }} min-h-[120px]" {{ $ro }}>{{ $val }}</textarea>
+                                        @elseif($field->type === 'select')
+                                            <select name="{{ $field->name }}" class="{{ $cls }}" {{ $ro }}>
+                                                <option value="">-- Pilih --</option>
+                                                @foreach($field->options ?? [] as $opt)
+                                                    <option value="{{ $opt }}" {{ $val == $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                                                @endforeach
+                                            </select>
+                                        @elseif($field->type === 'file')
+                                            <div class="space-y-2">
+                                                <input type="file" name="{{ $field->name }}" class="{{ $cls }}" {{ $ro }}>
+                                                @if($val)
+                                                    <div class="flex items-center gap-2 mt-2 p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg border border-indigo-100 dark:border-indigo-800">
+                                                        <i class="mdi mdi-file-check text-indigo-600"></i>
+                                                        <a href="{{ asset($val) }}" target="_blank" class="text-xs font-bold text-indigo-700 dark:text-indigo-300 hover:underline truncate">Lihat File Terupload</a>
+                                                    </div>
+                                                @endif
+
+                                                @php
+                                                    $matchingGlobalField = $application->perijinan->activeFormFields
+                                                        ->where('form_type', 'global')
+                                                        ->where('name', $field->name)
+                                                        ->first() ?? $application->perijinan->activeFormFields
+                                                        ->where('form_type', 'global')
+                                                        ->filter(function($f) use ($field) {
+                                                            return strtolower($f->label) === strtolower($field->label);
+                                                        })->first();
+                                                    
+                                                    $globalFile = null;
+                                                    if ($matchingGlobalField) {
+                                                        $globalFiles = $application->form_files[$matchingGlobalField->id] ?? [];
+                                                        $globalFile = is_array($globalFiles) ? ($globalFiles[0] ?? null) : $globalFiles;
+                                                    }
+                                                @endphp
+                                                @if($globalFile && $globalFile !== $val)
+                                                    <div class="flex items-center gap-2 mt-1 p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800/50">
+                                                        <i class="mdi mdi-information-outline text-amber-600 text-sm"></i>
+                                                        <span class="text-[10px] text-amber-700 dark:text-amber-400 font-bold">Referensi Pemohon:</span>
+                                                        <a href="{{ asset($globalFile) }}" target="_blank" class="text-[10px] font-bold text-blue-600 hover:underline truncate">Buka Berkas Pemohon</a>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        @elseif($field->type === 'date')
+                                            <input type="date" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }}>
+                                        @elseif($field->type === 'number')
+                                            <input type="number" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }}>
+                                        @else
+                                            <input type="text" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }}>
+                                        @endif
                                     </div>
                                 @endforeach
                             </div>

@@ -762,33 +762,47 @@ class DataPerijinanController extends Controller
 
         $application = DataPerijinan::with('perijinan.formFields')->findOrFail($id);
         
-        // 1. Get field definitions for this perijinan's rekom form
         $rekomFields = $application->perijinan->formFields
             ->where('form_type', 'rekom')
             ->where('is_active', true);
             
-        // 2. Build validation rules dynamically
         $rules = [];
         foreach ($rekomFields as $field) {
-            $fieldRules = [];
-            if ($field->is_required) $fieldRules[] = 'required';
-            else $fieldRules[] = 'nullable';
+            // Force all fields to be nullable in the official forms to prevent blockers
+            $fieldRules = ['nullable'];
             
-            // Add specific type rules if needed
             if ($field->type === 'email') $fieldRules[] = 'email';
             if ($field->type === 'number') $fieldRules[] = 'numeric';
+            if ($field->type === 'file') $fieldRules[] = 'file|max:5120'; // Max 5MB
             
             $rules[$field->name] = $fieldRules;
         }
 
-        // 3. Run validation
         $validated = $request->validate($rules);
+        
+        // Handle existing rekom_data
+        $rekomData = $application->rekom_data ?? [];
+
+        foreach ($rekomFields as $field) {
+            if ($field->type === 'file' && $request->hasFile($field->name)) {
+                $file = $request->file($field->name);
+                if ($file->isValid()) {
+                    $filename = 'rekom_' . $field->name . '_' . time() . '.' . $file->getClientOriginalExtension();
+                    $path = 'uploads/perijinan/' . $application->perijinan_id;
+                    $file->move(public_path($path), $filename);
+                    $rekomData[$field->name] = $path . '/' . $filename;
+                }
+            } else {
+                if (isset($validated[$field->name])) {
+                    $rekomData[$field->name] = $validated[$field->name];
+                }
+            }
+        }
 
         $application->update([
-            'rekom_data' => $validated,
+            'rekom_data' => $rekomData,
         ]);
 
-        // Re-generate documents to include the new rekom data
         try {
             \App\Services\DocumentGenerator::generateDocuments($application);
         } catch (\Exception $e) {
@@ -810,29 +824,44 @@ class DataPerijinanController extends Controller
 
         $application = DataPerijinan::with('perijinan.formFields')->findOrFail($id);
         
-        // 1. Get field definitions for this perijinan's izin form
         $izinFields = $application->perijinan->formFields
             ->where('form_type', 'izin')
             ->where('is_active', true);
             
-        // 2. Build validation rules dynamically
         $rules = [];
         foreach ($izinFields as $field) {
-            $fieldRules = [];
-            if ($field->is_required) $fieldRules[] = 'required';
-            else $fieldRules[] = 'nullable';
+            // Force all fields to be nullable in the official forms to prevent blockers
+            $fieldRules = ['nullable'];
             
             if ($field->type === 'email') $fieldRules[] = 'email';
             if ($field->type === 'number') $fieldRules[] = 'numeric';
+            if ($field->type === 'file') $fieldRules[] = 'file|max:5120';
             
             $rules[$field->name] = $fieldRules;
         }
 
-        // 3. Run validation
         $validated = $request->validate($rules);
+        
+        $izinData = $application->izin_data ?? [];
+
+        foreach ($izinFields as $field) {
+            if ($field->type === 'file' && $request->hasFile($field->name)) {
+                $file = $request->file($field->name);
+                if ($file->isValid()) {
+                    $filename = 'izin_' . $field->name . '_' . time() . '.' . $file->getClientOriginalExtension();
+                    $path = 'uploads/perijinan/' . $application->perijinan_id;
+                    $file->move(public_path($path), $filename);
+                    $izinData[$field->name] = $path . '/' . $filename;
+                }
+            } else {
+                if (isset($validated[$field->name])) {
+                    $izinData[$field->name] = $validated[$field->name];
+                }
+            }
+        }
 
         $application->update([
-            'izin_data' => $validated,
+            'izin_data' => $izinData,
         ]);
 
         try {
