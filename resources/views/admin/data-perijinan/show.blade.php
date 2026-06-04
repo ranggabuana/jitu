@@ -446,10 +446,6 @@
                                 }
                             @endphp
                             <div class="relative flex gap-3 {{ !$loop->last ? 'pb-4' : '' }} {{ $isCurrent ? 'bg-blue-50/50 dark:bg-blue-900/10 -mx-5 px-5 py-3 first:rounded-t-none last:rounded-b-none border-y border-blue-100/50 dark:border-blue-800/30' : '' }}">
-                                @if (!$loop->last) 
-                                    <div class="absolute left-[24.5px] top-6 bottom-0 w-0.5 {{ $v->status === 'approved' ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700' }}"></div> 
-                                @endif
-                                
                                 <div class="relative flex-shrink-0 mt-1.5">
                                     <div class="w-2.5 h-2.5 rounded-full {{ $sc[$v->status] ?? 'bg-gray-300' }} z-10"></div>
                                     @if($isCurrent)
