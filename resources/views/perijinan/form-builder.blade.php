@@ -1408,33 +1408,47 @@
 
             // Init TinyMCE
             if (typeof tinymce !== 'undefined') {
+                const updateEditorLayout = (editor, width, height, padding) => {
+                    const body = editor.getBody();
+                    if (width) body.style.width = width;
+                    if (height) body.style.minHeight = height;
+                    if (padding) body.style.padding = padding;
+                };
+
                 const tinymceConfigs = {
-                    height: 500,
-                    menubar: true,
+                    height: 800,
+                    menubar: 'file edit view insert format layout tools table help',
+                    menu: {
+                        layout: { title: 'Layout', items: 'papersize margins' }
+                    },
                     plugins: [
                         'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
                         'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                        'insertdatetime', 'media', 'table', 'help', 'wordcount', 'pagebreak', 'nonbreaking'
+                        'insertdatetime', 'media', 'table', 'help', 'wordcount', 'pagebreak', 
+                        'nonbreaking', 'emoticons', 'accordion', 'visualchars', 'directionality'
                     ],
-                    toolbar: 'undo redo | blocks fontfamily fontsize lineheight | ' +
-                    'bold italic underline strikethrough | alignleft aligncenter ' +
-                    'alignright alignjustify | bullist numlist outdent indent | ' +
-                    'removeformat | pagebreak | help',
-                    font_family_formats: 'Andale Mono=andale mono,times; Arial=arial,helvetica,sans-serif; Arial Black=arial black,avant garde; Book Antiqua=book antiqua,palatino; Bookman Old Style=bookman old style,palatino; Comic Sans MS=comic sans ms,sans-serif; Courier New=courier new,courier; Georgia=georgia,palatino; Helvetica=helvetica; Impact=impact,chicago; Symbol=symbol; Tahoma=tahoma,arial,helvetica,sans-serif; Terminal=terminal,monaco; Times New Roman=times new roman,times; Trebuchet MS=trebuchet ms,geneva; Verdana=verdana,geneva; Webdings=webdings; Wingdings=wingdings,zapf dingbats',
+                    // Multiple toolbars to mimic Word layout and prevent collapsing
+                    toolbar1: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | forecolor backcolor | superscript subscript | removeformat',
+                    toolbar2: 'alignleft aligncenter alignright alignjustify | lineheight | bullist numlist outdent indent | table image link | charmap emoticons | pagebreak | fullscreen preview code help',
+                    toolbar_mode: 'wrap', // Ensure tools wrap instead of hiding behind '...' button
+                    font_family_formats: 'Arial=arial,helvetica,sans-serif; Courier New=courier new,courier,monospace; Akurat=akurat,sans-serif; Times New Roman=times new roman,times,serif; Verdana=verdana,geneva,sans-serif; Georgia=georgia,palatino,serif; Tahoma=tahoma,arial,helvetica,sans-serif',
+                    font_size_formats: '8pt 9pt 10pt 11pt 12pt 14pt 18pt 24pt 30pt 36pt 48pt 60pt 72pt 96pt',
                     content_style: `
                         body { 
                             font-family: "Times New Roman", serif; 
                             font-size: 12pt; 
                             line-height: 1.5; 
-                            max-width: 800px; 
-                            margin: 40px auto; 
-                            background: #fff; 
-                            padding: 60px 80px; 
-                            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
-                            min-height: 1000px;
+                            width: 21cm; 
+                            min-height: 29.7cm; 
+                            margin: 1cm auto; 
+                            padding: 2cm 2.5cm; 
+                            background: white; 
+                            box-shadow: 0 0 10px rgba(0,0,0,0.1); 
                             color: #000;
+                            box-sizing: border-box;
+                            transition: all 0.3s ease;
                         } 
-                        html { background: #f4f4f7; }
+                        html { background: #f4f4f7; padding: 20px 0; }
                         .mce-content-body[data-mce-placeholder]:not(.mce-visualblocks)::before {
                             color: #ccc;
                         }
@@ -1447,6 +1461,68 @@
                     setup: function (editor) {
                         editor.on('change', function () {
                             editor.save();
+                        });
+
+                        // Register Paper Size Menu
+                        editor.ui.registry.addNestedMenuItem('papersize', {
+                            text: 'Ukuran Kertas',
+                            icon: 'resize-handle',
+                            getSubmenuItems: function () {
+                                return [
+                                    {
+                                        type: 'menuitem',
+                                        text: 'A4 (21cm x 29.7cm)',
+                                        onAction: function () {
+                                            updateEditorLayout(editor, '21cm', '29.7cm', null);
+                                        }
+                                    },
+                                    {
+                                        type: 'menuitem',
+                                        text: 'F4 / Folio (21.5cm x 33cm)',
+                                        onAction: function () {
+                                            updateEditorLayout(editor, '21.5cm', '33cm', null);
+                                        }
+                                    },
+                                    {
+                                        type: 'menuitem',
+                                        text: 'Legal (21.59cm x 35.56cm)',
+                                        onAction: function () {
+                                            updateEditorLayout(editor, '21.59cm', '35.56cm', null);
+                                        }
+                                    }
+                                ];
+                            }
+                        });
+
+                        // Register Margins Menu
+                        editor.ui.registry.addNestedMenuItem('margins', {
+                            text: 'Margin (Batas Tepi)',
+                            icon: 'line-height',
+                            getSubmenuItems: function () {
+                                return [
+                                    {
+                                        type: 'menuitem',
+                                        text: 'Normal (T:2.5, B:2.5, K:3, Kn:2.5)',
+                                        onAction: function () {
+                                            updateEditorLayout(editor, null, null, '2.5cm 2.5cm 3cm 2.5cm');
+                                        }
+                                    },
+                                    {
+                                        type: 'menuitem',
+                                        text: 'Narrow (1.27cm)',
+                                        onAction: function () {
+                                            updateEditorLayout(editor, null, null, '1.27cm');
+                                        }
+                                    },
+                                    {
+                                        type: 'menuitem',
+                                        text: 'Wide (Kiri & Kanan 5cm)',
+                                        onAction: function () {
+                                            updateEditorLayout(editor, null, null, '2.5cm 5cm');
+                                        }
+                                    }
+                                ];
+                            }
                         });
                     }
                 };
