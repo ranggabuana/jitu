@@ -11,9 +11,29 @@ use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\KswpService;
 
 class DashboardController extends Controller
 {
+    /**
+     * Check KSWP status via API.
+     */
+    public function checkKswp(Request $request, KswpService $kswpService)
+    {
+        $user = Auth::user();
+        
+        if (!$user->nip) {
+            return response()->json([
+                'status' => 'ERROR',
+                'message' => 'NIK Anda belum terdaftar di profil. Silakan lengkapi profil Anda terlebih dahulu.'
+            ]);
+        }
+
+        $result = $kswpService->checkTaxStatus($user->nip);
+
+        return response()->json($result);
+    }
+
     /**
      * Display the pemohon dashboard.
      */

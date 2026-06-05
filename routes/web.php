@@ -210,6 +210,9 @@ Route::middleware(['auth'])->group(function () {
         // Tracking Routes for Pemohon
         Route::get('/tracking', [PemohonDashboardController::class, 'tracking'])->name('tracking');
         Route::get('/tracking/{id}', [PemohonDashboardController::class, 'trackingDetail'])->name('tracking.detail');
+
+        // KSWP API Check
+        Route::post('/kswp/check', [PemohonDashboardController::class, 'checkKswp'])->name('kswp.check');
         
         // Dokumen Saya Routes for Pemohon
         Route::get('/dokumen', [\App\Http\Controllers\Pemohon\DokumenController::class, 'index'])->name('dokumen.index');

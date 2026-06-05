@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'kswp' => [
+        'email' => env('KSWP_API_EMAIL', 'perijinan_terpadu@banjarnegarakab.go.id'),
+        'password' => env('KSWP_API_PASSWORD', '@Kswp2025'),
+        'base_url' => env('KSWP_API_BASE_URL', 'https://isismiop.banjarnegarakab.go.id/api'),
+        'verify_ssl' => env('KSWP_API_VERIFY_SSL', true),
+    ],
+
 ];

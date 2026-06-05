@@ -334,11 +334,12 @@
                     class="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-semibold transition-colors">
                     <i class="fas fa-arrow-left mr-2"></i> Batal
                 </a>
-                <button type="submit" id="btn-submit" disabled
+                <button type="button" id="btn-submit-proxy" disabled
                     class="px-8 py-3 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-xl flex items-center gap-2 opacity-50 cursor-not-allowed">
                     <i class="fas fa-paper-plane"></i>
                     <span>Kirim Pengajuan</span>
                 </button>
+                <button type="submit" id="btn-submit" class="hidden"></button>
             </div>
         </form>
     </main>
@@ -401,16 +402,17 @@
         // Responsibility statement checkbox logic
         document.addEventListener('DOMContentLoaded', function() {
             const checkPernyataan = document.getElementById('check-pernyataan');
-            const btnSubmit = document.getElementById('btn-submit');
+            const btnSubmitProxy = document.getElementById('btn-submit-proxy');
+            const btnSubmitReal = document.getElementById('btn-submit');
 
-            if (checkPernyataan && btnSubmit) {
+            if (checkPernyataan && btnSubmitProxy) {
                 const toggleSubmit = () => {
                     if (checkPernyataan.checked) {
-                        btnSubmit.disabled = false;
-                        btnSubmit.classList.remove('opacity-50', 'cursor-not-allowed');
+                        btnSubmitProxy.disabled = false;
+                        btnSubmitProxy.classList.remove('opacity-50', 'cursor-not-allowed');
                     } else {
-                        btnSubmit.disabled = true;
-                        btnSubmit.classList.add('opacity-50', 'cursor-not-allowed');
+                        btnSubmitProxy.disabled = true;
+                        btnSubmitProxy.classList.add('opacity-50', 'cursor-not-allowed');
                     }
                 };
 
@@ -418,6 +420,118 @@
                 
                 // Initial check in case of validation errors and old input
                 toggleSubmit();
+
+                btnSubmitProxy.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Show loading state
+                    Swal.fire({
+                        title: 'Memproses...',
+                        text: 'Sedang memeriksa status pajak daerah (KSWP)',
+                        allowOutsideClick: false,
+                        showConfirmButton: false,
+                        willOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    // Call KSWP Check API
+                    fetch('{{ route('pemohon.kswp.check') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        Swal.close();
+
+                        if (data.status === 'ERROR') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Kesalahan Sistem',
+                                text: data.message
+                            });
+                            return;
+                        }
+
+                        const status = data.status;
+                        const message = data.message;
+                        
+                        if (status === 'LUNAS' || status === 'NIK TIDAK TERDAFTAR') {
+                            let icon = status === 'LUNAS' ? 'success' : 'info';
+                            let title = status === 'LUNAS' ? 'Konfirmasi Status Pajak' : 'NIK Tidak Terdaftar';
+                            let subTitle = status === 'LUNAS' ? 'Status Pajak: LUNAS' : 'NIK Anda tidak terdaftar dalam database pajak daerah.';
+
+                            Swal.fire({
+                                icon: icon,
+                                title: title,
+                                html: `
+                                    <div class="text-left bg-gray-50 p-4 rounded-xl border border-gray-100 mt-2">
+                                        <p class="font-bold text-gray-800">${subTitle}</p>
+                                        <p class="text-sm text-gray-600 mt-2">${message}</p>
+                                        <p class="text-xs text-amber-600 mt-4 font-semibold italic">* Anda diperbolehkan untuk melanjutkan pengajuan.</p>
+                                    </div>
+                                `,
+                                showCancelButton: true,
+                                confirmButtonText: 'Lanjutkan Pengajuan',
+                                cancelButtonText: 'Batal',
+                                confirmButtonColor: '#d97706',
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    btnSubmitReal.click();
+                                }
+                            });
+                        } else if (status === 'BELUM LUNAS') {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Status Pajak: BELUM LUNAS',
+                                html: `
+                                    <div class="text-left bg-red-50 p-4 rounded-xl border border-red-100 mt-2">
+                                        <p class="font-bold text-red-800">Terdapat Tunggakan Pajak</p>
+                                        <p class="text-sm text-red-600 mt-2">${message}</p>
+                                        <p class="text-sm text-gray-700 mt-4">Mohon selesaikan kewajiban pajak Anda terlebih dahulu untuk dapat melakukan pengajuan perizinan.</p>
+                                    </div>
+                                `,
+                                confirmButtonText: 'Mengerti',
+                                confirmButtonColor: '#d97706',
+                            });
+                        } else if (status === 'NIK INVALID') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'NIK Tidak Valid',
+                                html: `
+                                    <div class="text-left bg-red-50 p-4 rounded-xl border border-red-100 mt-2">
+                                        <p class="font-bold text-red-800">Format NIK Salah</p>
+                                        <p class="text-sm text-red-600 mt-2">${message}</p>
+                                        <p class="text-sm text-gray-700 mt-4">Mohon periksa kembali NIK pada profil Anda.</p>
+                                    </div>
+                                `,
+                                confirmButtonText: 'Perbaiki Profil',
+                                confirmButtonColor: '#d97706',
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.href = '{{ route('pemohon.profile.edit') }}';
+                                }
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Status Tidak Diketahui',
+                                text: 'Respon dari server KSWP: ' + status
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Kesalahan Koneksi',
+                            text: 'Gagal menghubungi server KSWP. Mohon coba beberapa saat lagi.'
+                        });
+                    });
+                });
             }
         });
 
