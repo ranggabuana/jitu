@@ -36,12 +36,13 @@ class PerijinanController extends Controller
 
         $query = Perijinan::query();
 
-        // Apply access control for non-admin users (e.g. operator_opd)
+        // Apply access control for non-admin users
         $user = auth()->user();
-        if (!$user->isAdmin()) {
+        if ($user->role === 'operator_opd') {
             $accessibleIds = $user->getAccessiblePerijinanIds();
             $query->whereIn('id', $accessibleIds);
         }
+        // Admin and Verifikator can access all, so no filter needed for them
 
         // Apply search filter
         if ($search) {
@@ -131,7 +132,7 @@ class PerijinanController extends Controller
     public function show(string $id)
     {
         $user = auth()->user();
-        if (!$user->isAdmin() && !in_array($id, $user->getAccessiblePerijinanIds())) {
+        if ($user->role === 'operator_opd' && !in_array($id, $user->getAccessiblePerijinanIds())) {
             return redirect()->route('perijinan.index')->with('error', 'Anda tidak memiliki akses ke data perijinan ini.');
         }
 
@@ -145,7 +146,7 @@ class PerijinanController extends Controller
     public function formBuilder(string $id)
     {
         $user = auth()->user();
-        if (!$user->isAdmin() && !in_array($id, $user->getAccessiblePerijinanIds())) {
+        if ($user->role === 'operator_opd' && !in_array($id, $user->getAccessiblePerijinanIds())) {
             return redirect()->route('perijinan.index')->with('error', 'Anda tidak memiliki akses ke form builder perijinan ini.');
         }
 
@@ -275,10 +276,14 @@ class PerijinanController extends Controller
         $perijinan = Perijinan::findOrFail($id);
         $user = auth()->user();
 
-        // Access Control: Operator OPD can only add 'rekom' fields
-        if (!$user->isAdmin()) {
+        // Access Control: Role based field restrictions
+        if ($user->role === 'operator_opd') {
             if ($request->input('form_type') !== 'rekom') {
                 return redirect()->back()->with('error', 'Anda hanya memiliki akses untuk mengelola field Formulir Rekomendasi.');
+            }
+        } elseif ($user->role === 'verifikator') {
+            if ($request->input('form_type') !== 'izin') {
+                return redirect()->back()->with('error', 'Anda hanya memiliki akses untuk mengelola field Formulir Izin.');
             }
         }
 
@@ -338,10 +343,14 @@ class PerijinanController extends Controller
         $field = PerijinanFormField::where('perijinan_id', $perijinan->id)->findOrFail($fieldId);
         $user = auth()->user();
 
-        // Access Control: Operator OPD can only update 'rekom' fields
-        if (!$user->isAdmin()) {
+        // Access Control: Role based field restrictions
+        if ($user->role === 'operator_opd') {
             if ($field->form_type !== 'rekom' || $request->input('form_type') !== 'rekom') {
                 return redirect()->back()->with('error', 'Anda hanya memiliki akses untuk mengelola field Formulir Rekomendasi.');
+            }
+        } elseif ($user->role === 'verifikator') {
+            if ($field->form_type !== 'izin' || $request->input('form_type') !== 'izin') {
+                return redirect()->back()->with('error', 'Anda hanya memiliki akses untuk mengelola field Formulir Izin.');
             }
         }
 
@@ -400,10 +409,14 @@ class PerijinanController extends Controller
         $field = PerijinanFormField::where('perijinan_id', $perijinan->id)->findOrFail($fieldId);
         $user = auth()->user();
 
-        // Access Control: Operator OPD can only delete 'rekom' fields    
-        if (!$user->isAdmin()) {
+        // Access Control: Role based field restrictions
+        if ($user->role === 'operator_opd') {
             if ($field->form_type !== 'rekom') {
                 return redirect()->back()->with('error', 'Anda hanya memiliki akses untuk menghapus field Formulir Rekomendasi.');
+            }
+        } elseif ($user->role === 'verifikator') {
+            if ($field->form_type !== 'izin') {
+                return redirect()->back()->with('error', 'Anda hanya memiliki akses untuk menghapus field Formulir Izin.');
             }
         }
 
@@ -729,6 +742,17 @@ class PerijinanController extends Controller
         $perijinan = Perijinan::findOrFail($id);
         $user = auth()->user();
 
+        // Access Control: Role based template restrictions
+        if ($user->role === 'operator_opd') {
+            if ($request->has('template_surat_izin') || $request->has('next_nomor_izin') || $request->has('template_pernyataan')) {
+                return redirect()->back()->with('error', 'Anda hanya memiliki akses untuk memperbarui Template Rekomendasi.');
+            }
+        } elseif ($user->role === 'verifikator') {
+            if ($request->has('template_surat_rekom') || $request->has('next_nomor_rekom') || $request->has('template_pernyataan')) {
+                return redirect()->back()->with('error', 'Anda hanya memiliki akses untuk memperbarui Template Izin.');
+            }
+        }
+
         $request->validate([
             'template_pernyataan' => 'nullable|string',
             'template_permohonan' => 'nullable|string',
@@ -752,17 +776,32 @@ class PerijinanController extends Controller
             if ($request->has('next_nomor_rekom')) $updateData['next_nomor_rekom'] = $request->next_nomor_rekom;
             if ($request->has('next_nomor_izin')) $updateData['next_nomor_izin'] = $request->next_nomor_izin;
         } else {
-            // Operator OPD restricted to Rekom only
-            // If they try to change other things, block it
-            $restrictedFields = ['template_surat_izin', 'next_nomor_izin', 'template_pernyataan', 'template_permohonan', 'template_keabsahan'];
+            // Role-based restrictions logic
+            $restrictedFields = [];
+            $roleLabel = '';
+            
+            if ($user->role === 'operator_opd') {
+                $restrictedFields = ['template_surat_izin', 'next_nomor_izin', 'template_pernyataan', 'template_permohonan', 'template_keabsahan'];
+                $roleLabel = 'Rekomendasi';
+            } elseif ($user->role === 'verifikator') {
+                $restrictedFields = ['template_surat_rekom', 'next_nomor_rekom', 'template_pernyataan', 'template_permohonan', 'template_keabsahan'];
+                $roleLabel = 'Izin';
+            }
+
             foreach ($restrictedFields as $field) {
                 if ($request->has($field) && $request->get($field) !== null && $request->get($field) != $perijinan->$field) {
-                    return redirect()->back()->with('error', 'Anda hanya memiliki akses untuk memperbarui Template Rekomendasi.');
+                    return redirect()->back()->with('error', "Anda hanya memiliki akses untuk memperbarui Template {$roleLabel}.");
                 }
             }
 
-            if ($request->has('template_surat_rekom')) $updateData['template_surat_rekom'] = $request->template_surat_rekom;
-            if ($request->has('next_nomor_rekom')) $updateData['next_nomor_rekom'] = $request->next_nomor_rekom;
+            // Assign allowed data
+            if ($user->role === 'operator_opd') {
+                if ($request->has('template_surat_rekom')) $updateData['template_surat_rekom'] = $request->template_surat_rekom;
+                if ($request->has('next_nomor_rekom')) $updateData['next_nomor_rekom'] = $request->next_nomor_rekom;
+            } elseif ($user->role === 'verifikator') {
+                if ($request->has('template_surat_izin')) $updateData['template_surat_izin'] = $request->template_surat_izin;
+                if ($request->has('next_nomor_izin')) $updateData['next_nomor_izin'] = $request->next_nomor_izin;
+            }
         }
 
         if (!empty($updateData)) {

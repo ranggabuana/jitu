@@ -184,17 +184,20 @@
             @endphp
 
             @foreach($formTypes as $type => $info)
-                @if(auth()->user()->isAdmin() || auth()->user()->isOperatorOpd())
+                @if(auth()->user()->isAdmin() || auth()->user()->isOperatorOpd() || auth()->user()->isVerifikator())
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                         <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 {{ $info['bg'] }} flex items-center justify-between">
                             <h2 class="text-sm font-bold text-gray-800 dark:text-white flex items-center gap-2">
                                 <i class="mdi {{ $info['icon'] }} {{ $info['color'] }} text-lg"></i>
                                 {{ $info['label'] }}
                             </h2>
-                            @if(auth()->user()->isAdmin())
-                                @php 
-                                    $targetTab = $type === 'global' ? 'global' : ($type === 'rekom' ? 'rekom' : 'izin');
-                                @endphp
+                            @php 
+                                $targetTab = $type === 'global' ? 'global' : ($type === 'rekom' ? 'rekom' : 'izin');
+                                $canManage = auth()->user()->isAdmin() || 
+                                             ($type === 'izin' && auth()->user()->isVerifikator()) ||
+                                             ($type === 'rekom' && auth()->user()->isOperatorOpd());
+                            @endphp
+                            @if($canManage)
                                 <a href="{{ route('perijinan.form-builder', ['id' => $perijinan->id, 'tab' => $targetTab]) }}" 
                                    class="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 flex items-center gap-1 bg-white dark:bg-gray-700 px-2 py-1 rounded border border-gray-100 dark:border-gray-600 shadow-sm">
                                     <i class="mdi mdi-cog"></i> Atur
@@ -341,6 +344,7 @@
                     </div>
                 </div>
             </div>
+        </div>
     </div>
 
     <script>

@@ -5,11 +5,13 @@
             <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Data Jenis Perijinan</h1>
             <p class="text-gray-600 dark:text-gray-400 mt-1">Kelola data jenis perijinan</p>
         </div>
-        <a href="{{ route('perijinan.create') }}"
-            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
-            <i class="mdi mdi-plus text-lg"></i>
-            <span>Tambah Perijinan</span>
-        </a>
+        @if(auth()->user()->isAdmin())
+            <a href="{{ route('perijinan.create') }}"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+                <i class="mdi mdi-plus text-lg"></i>
+                <span>Tambah Perijinan</span>
+            </a>
+        @endif
     </div>
 
     @if (session('success'))

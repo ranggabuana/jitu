@@ -57,19 +57,21 @@
                         </button>
                     </li>
                 @endif
+                @if(auth()->user()->isAdmin() || auth()->user()->isOperatorOpd())
                 <li class="mr-2">
                     <button onclick="switchTab('rekom')" id="tab-btn-rekom" class="tab-btn inline-flex items-center justify-center p-4 border-b-2 rounded-t-lg group {{ auth()->user()->isAdmin() ? 'border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300' : 'text-indigo-600 border-indigo-600 dark:text-indigo-500 dark:border-indigo-500' }}">
                         <i id="tab-icon-rekom" class="mdi mdi-file-document-outline mr-2 text-lg {{ auth()->user()->isAdmin() ? 'text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300' : 'text-indigo-600 dark:text-indigo-500' }}"></i>
                         Rekom Form
                     </button>
                 </li>
-                @if(auth()->user()->isAdmin())
-                    <li class="mr-2">
-                        <button onclick="switchTab('izin')" id="tab-btn-izin" class="tab-btn inline-flex items-center justify-center p-4 border-b-2 rounded-t-lg group border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300">
-                            <i id="tab-icon-izin" class="mdi mdi-file-certificate-outline mr-2 text-lg text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300"></i>
-                            Izin Form
-                        </button>
-                    </li>
+                @endif
+                @if(auth()->user()->isAdmin() || auth()->user()->isVerifikator())
+                <li class="mr-2">
+                    <button onclick="switchTab('izin')" id="tab-btn-izin" class="tab-btn inline-flex items-center justify-center p-4 border-b-2 rounded-t-lg group {{ auth()->user()->isAdmin() ? 'border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300' : 'text-indigo-600 border-indigo-600 dark:text-indigo-500 dark:border-indigo-500' }}">
+                        <i id="tab-icon-izin" class="mdi mdi-file-certificate-outline mr-2 text-lg {{ auth()->user()->isAdmin() ? 'text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300' : 'text-indigo-600 dark:text-indigo-500' }}"></i>
+                        Izin Form
+                    </button>
+                </li>
                 @endif
             </ul>
         </div>
@@ -88,29 +90,31 @@
                 </div>
                 <div class="p-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div id="rekom-number-config" class="hidden">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Nomor Urut Rekomendasi Selanjutnya
-                            </label>
-                            <div class="flex items-center">
-                                <div class="relative flex-grow">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <i class="mdi mdi-format-list-numbered text-gray-400"></i>
+                        @if(auth()->user()->isAdmin() || auth()->user()->isOperatorOpd())
+                            <div id="rekom-number-config" class="hidden">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Nomor Urut Rekomendasi Selanjutnya
+                                </label>
+                                <div class="flex items-center">
+                                    <div class="relative flex-grow">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <i class="mdi mdi-format-list-numbered text-gray-400"></i>
+                                        </div>
+                                        <input type="number" form="template-form" name="next_nomor_rekom" id="next_nomor_rekom" 
+                                            value="{{ $perijinan->next_nomor_rekom ?? 1 }}" min="1"
+                                            class="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-l-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                                            placeholder="Contoh: 1">
                                     </div>
-                                    <input type="number" form="template-form" name="next_nomor_rekom" id="next_nomor_rekom" 
-                                        value="{{ $perijinan->next_nomor_rekom ?? 1 }}" min="1"
-                                        class="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-l-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-                                        placeholder="Contoh: 1">
+                                    <button type="submit" form="template-form" title="Simpan"
+                                        class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-r-lg border border-indigo-600 flex items-center gap-2 transition-all">
+                                        <i class="mdi mdi-content-save"></i>
+                                        <span class="hidden sm:inline text-xs font-semibold">Simpan</span>
+                                    </button>
                                 </div>
-                                <button type="submit" form="template-form" title="Simpan"
-                                    class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-r-lg border border-indigo-600 flex items-center gap-2 transition-all">
-                                    <i class="mdi mdi-content-save"></i>
-                                    <span class="hidden sm:inline text-xs font-semibold">Simpan</span>
-                                </button>
+                                <p class="text-[10px] text-gray-500 mt-2">Nomor ini digunakan untuk urutan surat rekomendasi berikutnya.</p>
                             </div>
-                            <p class="text-[10px] text-gray-500 mt-2">Nomor ini digunakan untuk urutan surat rekomendasi berikutnya.</p>
-                        </div>
-                        @if(auth()->user()->isAdmin())
+                        @endif
+                        @if(auth()->user()->isAdmin() || auth()->user()->role === 'verifikator')
                             <div id="izin-number-config" class="hidden">
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     Nomor Urut Izin Selanjutnya
@@ -330,9 +334,15 @@
                         <div>
                             <h2 class="text-base font-medium text-gray-800 dark:text-white">
                                 Daftar Field <span id="daftar-field-tab-name">Global Form</span>
-                                <span class="text-gray-500 dark:text-gray-400 font-normal tab-count" id="count-global">({{ $perijinan->formFields->whereIn('form_type', ['global', null])->count() }})</span>
-                                <span class="text-gray-500 dark:text-gray-400 font-normal tab-count hidden" id="count-rekom">({{ $perijinan->formFields->where('form_type', 'rekom')->count() }})</span>
-                                <span class="text-gray-500 dark:text-gray-400 font-normal tab-count hidden" id="count-izin">({{ $perijinan->formFields->where('form_type', 'izin')->count() }})</span>
+                                @if(auth()->user()->isAdmin())
+                                    <span class="text-gray-500 dark:text-gray-400 font-normal tab-count" id="count-global">({{ $perijinan->formFields->whereIn('form_type', ['global', null])->count() }})</span>
+                                @endif
+                                @if(auth()->user()->isAdmin() || auth()->user()->isOperatorOpd())
+                                    <span class="text-gray-500 dark:text-gray-400 font-normal tab-count hidden" id="count-rekom">({{ $perijinan->formFields->where('form_type', 'rekom')->count() }})</span>
+                                @endif
+                                @if(auth()->user()->isAdmin() || auth()->user()->isVerifikator())
+                                    <span class="text-gray-500 dark:text-gray-400 font-normal tab-count hidden" id="count-izin">({{ $perijinan->formFields->where('form_type', 'izin') ->count() }})</span>
+                                @endif
                             </h2>
                             <p class="text-xs text-gray-500 dark:text-gray-400">Urutkan field dengan drag & drop</p>
                         </div>
@@ -341,7 +351,13 @@
 
                 @if ($perijinan->formFields->count() > 0)
                     @foreach(['global', 'rekom', 'izin'] as $type)
-                        <div id="fields_list_{{ $type }}" class="fields-container divide-y divide-gray-100 dark:divide-gray-700 {{ $type === 'global' ? '' : 'hidden' }}">
+                        @php
+                            $canSeeType = auth()->user()->isAdmin() || 
+                                          ($type === 'rekom' && auth()->user()->isOperatorOpd()) ||
+                                          ($type === 'izin' && auth()->user()->isVerifikator());
+                        @endphp
+                        @if($canSeeType)
+                        <div id="fields_list_{{ $type }}" class="fields-container divide-y divide-gray-100 dark:divide-gray-700 {{ $type === (auth()->user()->isOperatorOpd() ? 'rekom' : (auth()->user()->isVerifikator() ? 'izin' : 'global')) ? '' : 'hidden' }}">
                             @foreach ($perijinan->formFields->where('form_type', $type === 'global' ? null : $type)->union($perijinan->formFields->where('form_type', $type)) as $field)
                                 <div class="field-item p-5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                                     data-field-id="{{ $field->id }}" data-form-type="{{ $type }}">
@@ -433,24 +449,25 @@
                                         </form>
                                     </div>
                                 </div>
-                            </div>
-                        @endforeach
-                        </div>
-                    @endforeach
-                @else
-                    <div class="p-12 text-center">
-                        <div
-                            class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mx-auto mb-4">
-                            <i class="mdi mdi-form-select text-3xl text-gray-400 dark:text-gray-500"></i>
-                        </div>
-                        <p class="text-gray-600 dark:text-gray-400 font-medium">Belum ada field formulir</p>
-                        <p class="text-sm text-gray-500 dark:text-gray-500 mt-1">Tambahkan field pertama Anda
-                            menggunakan form di samping</p>
-                    </div>
-                @endif
-            </div>
-        </div>
-        </div>
+                                </div>
+                                @endforeach
+                                </div>
+                                @endif
+                                @endforeach
+                                @else
+                                <div class="p-12 text-center">
+                                <div
+                                class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mx-auto mb-4">
+                                <i class="mdi mdi-form-select text-3xl text-gray-400 dark:text-gray-500"></i>
+                                </div>
+                                <p class="text-gray-600 dark:text-gray-400 font-medium">Belum ada field formulir</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-500 mt-1">Tambahkan field pertama Anda
+                                menggunakan form di samping</p>
+                                </div>
+                                @endif
+                                </div>
+                                </div>
+                                </div>
 
         <!-- Template Editor Container (Hidden by default, shown on rekom and izin tabs) -->
         <div id="template-editor-container" class="mt-6 hidden">
@@ -573,10 +590,12 @@
                     </div>
 
                     <div class="p-0">
-                        <div id="tpl-rekom-container" class="hidden">
-                            <textarea name="template_surat_rekom" id="editor_rekom" class="w-full focus:outline-none">{{ $perijinan->template_surat_rekom }}</textarea>
-                        </div>
-                        @if(auth()->user()->isAdmin())
+                        @if(auth()->user()->isAdmin() || auth()->user()->isOperatorOpd())
+                            <div id="tpl-rekom-container" class="hidden">
+                                <textarea name="template_surat_rekom" id="editor_rekom" class="w-full focus:outline-none">{{ $perijinan->template_surat_rekom }}</textarea>
+                            </div>
+                        @endif
+                        @if(auth()->user()->isAdmin() || auth()->user()->role === 'verifikator')
                             <div id="tpl-izin-container" class="hidden">
                                 <textarea name="template_surat_izin" id="editor_izin" class="w-full focus:outline-none">{{ $perijinan->template_surat_izin }}</textarea>
                             </div>
@@ -1376,11 +1395,13 @@
 
         // Initialize tabs on page load
         document.addEventListener('DOMContentLoaded', () => {
-            const isAdmin = {{ auth()->user()->isAdmin() ? 'true' : 'false' }};
+            const userRole = "{{ auth()->user()->role }}";
             let savedTab = localStorage.getItem('formBuilderTab') || 'global';
             
-            if (!isAdmin) {
+            if (userRole === 'operator_opd') {
                 savedTab = 'rekom';
+            } else if (userRole === 'verifikator') {
+                savedTab = 'izin';
             }
             
             switchTab(savedTab);

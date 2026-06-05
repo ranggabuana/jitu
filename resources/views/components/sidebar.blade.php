@@ -35,8 +35,8 @@
             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">MAIN</span>
         </div>
 
-        <!-- Master Data Dropdown (Admin & Assigned OPD Operators) -->
-        @if (Auth::user()->canAccessAdminMenus() || (Auth::user()->isOperatorOpd() && count(Auth::user()->getAccessiblePerijinanIds()) > 0))
+        <!-- Master Data Dropdown (Admin & Assigned OPD Operators/Verifikators) -->
+        @if (Auth::user()->canAccessAdminMenus() || Auth::user()->isVerifikator() || (Auth::user()->isOperatorOpd() && count(Auth::user()->getAccessiblePerijinanIds()) > 0))
             <div class="relative">
                 <button onclick="toggleSubmenu('master-data-submenu', 'master-data-icon')"
                     class="w-full flex items-center justify-between px-6 py-3 text-gray-700 dark:text-gray-300 transition-colors group menu-item {{ request()->routeIs('opd.*') || request()->routeIs('perijinan.*') ? 'active-menu' : '' }}">
@@ -384,8 +384,8 @@
                         if (perijinanIcon) perijinanIcon.classList.add('rotate-180');
                     }
 
-                    // Also auto-open Master Data for Operator OPD
-                    if ("{{ Auth::user()->role }}" === 'operator_opd') {
+                    // Also auto-open Master Data for Operator OPD and Verifikator
+                    if ("{{ Auth::user()->role }}" === 'operator_opd' || "{{ Auth::user()->role }}" === 'verifikator') {
                         const masterSubmenu = document.getElementById('master-data-submenu');
                         const masterIcon = document.getElementById('master-data-icon');
                         if (masterSubmenu && !masterSubmenu.classList.contains('open')) {
@@ -407,4 +407,6 @@
             });
         });
     </script>
+</div>
+   </script>
 </div>
