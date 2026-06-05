@@ -457,21 +457,39 @@
                         }
 
                         const status = data.status;
-                        const message = data.message;
+                        let message = data.message;
+                        const statusPemohon = '{{ $user->status_pemohon }}';
+                        const labelPajak = statusPemohon === 'badan_usaha' ? 'NPWP' : 'NIK';
                         
-                        if (status === 'LUNAS' || status === 'NIK TIDAK TERDAFTAR') {
-                            let icon = status === 'LUNAS' ? 'success' : 'info';
-                            let title = status === 'LUNAS' ? 'Konfirmasi Status Pajak' : 'NIK Tidak Terdaftar';
-                            let subTitle = status === 'LUNAS' ? 'Status Pajak: LUNAS' : 'NIK Anda tidak terdaftar dalam database pajak daerah.';
+                        // Clean up message from API if it mentions NIK for a badan_usaha user
+                        if (statusPemohon === 'badan_usaha' && message) {
+                            message = message.replace(/NIK/g, 'NPWP').replace(/nik/g, 'npwp');
+                        }
+                        
+                        // Check for both NIK and NPWP prefixes in status
+                        const isLunas = status === 'LUNAS';
+                        const isTidakTerdaftar = status === 'NIK TIDAK TERDAFTAR' || status === 'NPWP TIDAK TERDAFTAR';
+                        const isInvalid = status === 'NIK INVALID' || status === 'NPWP INVALID';
+                        const isBelumLunas = status === 'BELUM LUNAS';
+
+                        if (isLunas || isTidakTerdaftar) {
+                            let icon = isLunas ? 'success' : 'info';
+                            let title = isLunas ? 'Konfirmasi Status Pajak' : `${labelPajak} Tidak Terdaftar`;
+                            
+                            let displayMessage = message;
+                            if (isTidakTerdaftar) {
+                                displayMessage = `${labelPajak} Anda tidak ditemukan dalam <strong>Database Pajak Daerah (BPPKAD) Kabupaten Banjarnegara</strong>. Hal ini berarti Anda tidak memiliki riwayat objek pajak daerah yang terdaftar.`;
+                            } else if (isLunas) {
+                                displayMessage = `${message} pada <strong>Database Pajak Daerah Kabupaten Banjarnegara</strong>.`;
+                            }
 
                             Swal.fire({
                                 icon: icon,
                                 title: title,
                                 html: `
                                     <div class="text-left bg-gray-50 p-4 rounded-xl border border-gray-100 mt-2">
-                                        <p class="font-bold text-gray-800">${subTitle}</p>
-                                        <p class="text-sm text-gray-600 mt-2">${message}</p>
-                                        <p class="text-xs text-amber-600 mt-4 font-semibold italic">* Anda diperbolehkan untuk melanjutkan pengajuan.</p>
+                                        <p class="text-sm text-gray-700 leading-relaxed">${displayMessage}</p>
+                                        <p class="text-xs text-amber-600 mt-3 font-semibold italic">* Anda diperbolehkan untuk melanjutkan pengajuan.</p>
                                     </div>
                                 `,
                                 showCancelButton: true,
@@ -483,29 +501,25 @@
                                     btnSubmitReal.click();
                                 }
                             });
-                        } else if (status === 'BELUM LUNAS') {
+                        } else if (isBelumLunas) {
                             Swal.fire({
                                 icon: 'warning',
                                 title: 'Status Pajak: BELUM LUNAS',
                                 html: `
                                     <div class="text-left bg-red-50 p-4 rounded-xl border border-red-100 mt-2">
-                                        <p class="font-bold text-red-800">Terdapat Tunggakan Pajak</p>
-                                        <p class="text-sm text-red-600 mt-2">${message}</p>
-                                        <p class="text-sm text-gray-700 mt-4">Mohon selesaikan kewajiban pajak Anda terlebih dahulu untuk dapat melakukan pengajuan perizinan.</p>
+                                        <p class="text-sm text-red-700 leading-relaxed">${message} pada <strong>Database Pajak Daerah Kabupaten Banjarnegara</strong>. Mohon selesaikan kewajiban pajak daerah Anda terlebih dahulu untuk dapat melanjutkan pengajuan.</p>
                                     </div>
                                 `,
                                 confirmButtonText: 'Mengerti',
                                 confirmButtonColor: '#d97706',
                             });
-                        } else if (status === 'NIK INVALID') {
+                        } else if (isInvalid) {
                             Swal.fire({
                                 icon: 'error',
-                                title: 'NIK Tidak Valid',
+                                title: `${labelPajak} Tidak Valid`,
                                 html: `
                                     <div class="text-left bg-red-50 p-4 rounded-xl border border-red-100 mt-2">
-                                        <p class="font-bold text-red-800">Format NIK Salah</p>
-                                        <p class="text-sm text-red-600 mt-2">${message}</p>
-                                        <p class="text-sm text-gray-700 mt-4">Mohon periksa kembali NIK pada profil Anda.</p>
+                                        <p class="text-sm text-red-700 leading-relaxed">${message}. Sistem memvalidasi ${labelPajak} Anda berdasarkan format standar yang berlaku di <strong>Database Pajak Daerah</strong>.</p>
                                     </div>
                                 `,
                                 confirmButtonText: 'Perbaiki Profil',
