@@ -22,14 +22,25 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         
-        if (!$user->nip) {
-            return response()->json([
-                'status' => 'ERROR',
-                'message' => 'NIK Anda belum terdaftar di profil. Silakan lengkapi profil Anda terlebih dahulu.'
-            ]);
+        if ($user->status_pemohon === 'badan_usaha') {
+            if (!$user->npwp) {
+                return response()->json([
+                    'status' => 'ERROR',
+                    'message' => 'NPWP Perusahaan Anda belum terdaftar di profil. Silakan lengkapi profil Anda terlebih dahulu.'
+                ]);
+            }
+            // For badan_usaha, check using NPWP
+            $result = $kswpService->checkTaxStatus($user->npwp, 'NPWP');
+        } else {
+            // Default to perorangan, check using NIK (stored in nip column)
+            if (!$user->nip) {
+                return response()->json([
+                    'status' => 'ERROR',
+                    'message' => 'NIK Anda belum terdaftar di profil. Silakan lengkapi profil Anda terlebih dahulu.'
+                ]);
+            }
+            $result = $kswpService->checkTaxStatus($user->nip, 'NIK');
         }
-
-        $result = $kswpService->checkTaxStatus($user->nip);
 
         return response()->json($result);
     }

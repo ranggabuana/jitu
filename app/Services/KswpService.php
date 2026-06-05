@@ -86,9 +86,9 @@ class KswpService
     }
 
     /**
-     * Check tax status by NIK.
+     * Check tax status by NIK or NPWP.
      */
-    public function checkTaxStatus($nik)
+    public function checkTaxStatus($identifier, $type = 'NIK')
     {
         $token = $this->getToken();
 
@@ -100,10 +100,14 @@ class KswpService
         }
 
         try {
+            // According to common regional tax APIs, if the documentation only shows NIK, 
+            // but needs to support NPWP, sometimes it's the same endpoint with a different key 
+            // or the NIK key accepts NPWP.
+            // But based on user request, I will use the specific key provided.
             $response = Http::withOptions(['verify' => $this->verifySsl])
                 ->withToken($token)
                 ->post("{$this->baseUrl}/getKSWPService", [
-                    'NIK' => $nik
+                    $type => $identifier
                 ]);
 
             if ($response->successful()) {
