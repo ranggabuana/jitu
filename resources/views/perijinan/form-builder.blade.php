@@ -487,6 +487,12 @@
                             </p>
                         </div>
                         <div class="flex items-center gap-3">
+                            <input type="file" id="pdf-import-input" class="hidden" accept="application/pdf" onchange="handlePdfImport(this)">
+                            <button type="button" onclick="document.getElementById('pdf-import-input').click()"
+                                class="flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800 rounded-lg px-3 py-2 transition-all">
+                                <i class="mdi mdi-file-pdf-box text-base"></i>
+                                Import Template PDF
+                            </button>
                             <button type="button" onclick="togglePlaceholderGuide()" id="btn-toggle-guide"
                                 class="flex items-center gap-2 text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded-lg px-3 py-2 transition-all">
                                 <i class="mdi mdi-tag-text-outline text-base"></i>
@@ -1391,6 +1397,75 @@
                     });
                 }
             });
+        }
+
+        async function handlePdfImport(input) {
+            if (!input.files || !input.files[0]) return;
+
+            const file = input.files[0];
+            if (file.type !== 'application/pdf') {
+                Swal.fire('Error', 'Hanya file PDF yang diizinkan.', 'error');
+                return;
+            }
+
+            const result = await Swal.fire({
+                title: 'Import PDF?',
+                text: 'Konten editor saat ini akan digantikan dengan teks dari PDF. Lanjutkan?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Import',
+                cancelButtonText: 'Batal'
+            });
+
+            if (!result.isConfirmed) {
+                input.value = '';
+                return;
+            }
+
+            Swal.fire({
+                title: 'Mengimpor PDF...',
+                text: 'Sedang mengekstrak teks dari file PDF Anda.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            const formData = new FormData();
+            formData.append('file_pdf', file);
+
+            try {
+                const response = await fetch("{{ route('perijinan.import-pdf', $perijinan->id) }}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const currentTab = localStorage.getItem('formBuilderTab') || 'global';
+                    const editorId = currentTab === 'rekom' ? 'editor_rekom' : 'editor_izin';
+                    
+                    if (typeof tinymce !== 'undefined' && tinymce.get(editorId)) {
+                        tinymce.get(editorId).setContent(data.html);
+                        tinymce.get(editorId).save();
+                    } else {
+                        document.getElementById(editorId).value = data.html;
+                    }
+
+                    Swal.fire('Berhasil', 'Konten PDF berhasil diimpor ke editor.', 'success');
+                } else {
+                    throw new Error(data.message || 'Gagal mengimpor PDF');
+                }
+            } catch (error) {
+                console.error(error);
+                Swal.fire('Gagal', error.message || 'Terjadi kesalahan saat mengimpor PDF.', 'error');
+            } finally {
+                input.value = '';
+            }
         }
 
         // Initialize tabs on page load

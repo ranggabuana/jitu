@@ -154,6 +154,43 @@ class PerijinanController extends Controller
         return view('perijinan.form-builder', compact('perijinan'));
     }
 
+    public function importPdfTemplate(Request $request, string $id)
+    {
+        $request->validate([
+            'file_pdf' => 'required|file|mimes:pdf|max:5120',
+        ]);
+
+        try {
+            $parser = new \Smalot\PdfParser\Parser();
+            $pdf = $parser->parseFile($request->file('file_pdf')->path());
+            
+            // Extract text
+            $text = $pdf->getText();
+            
+            // Basic text to HTML conversion
+            $html = '';
+            $lines = explode("\n", $text);
+            foreach ($lines as $line) {
+                $trimmed = trim($line);
+                if ($trimmed !== '') {
+                    $html .= '<p>' . htmlspecialchars($trimmed) . '</p>';
+                } else {
+                    $html .= '<br>';
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'html' => $html
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengimpor PDF: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     /**
      * Preview the template by replacing placeholders with dummy data.
      */

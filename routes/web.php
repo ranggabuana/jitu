@@ -118,7 +118,7 @@ Route::middleware(['auth'])->group(function () {
         Route::put('perijinan/{id}/validation-flow/{flowId}', [PerijinanController::class, 'updateValidationFlow'])->name('perijinan.validation-flow.update');
         Route::delete('perijinan/{id}/validation-flow/{flowId}', [PerijinanController::class, 'deleteValidationFlow'])->name('perijinan.validation-flow.delete');
         Route::post('perijinan/{id}/validation-flow/reorder', [PerijinanController::class, 'reorderValidationFlows'])->name('perijinan.validation-flow.reorder');
-
+        Route::post('perijinan/{id}/import-pdf', [PerijinanController::class, 'importPdfTemplate'])->name('perijinan.import-pdf');
     });
 
     // Berita Routes (Admin Only)
