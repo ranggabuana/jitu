@@ -178,12 +178,43 @@ class DocumentGenerator
             $finalReplacements = $replacements; // Start with base (NAMA, NIK, etc)
             $finalReplacements = array_merge($finalReplacements, $applicantReplacements); // Add Global Form data
 
+            $kodePerijinan = $perijinan->kode_perijinan ?? 'PER';
+            $tahun = now()->year;
+
             if ($type === 'rekom') {
                 // For Rekom document: merge Rekom data (overrides global if same name)
                 $finalReplacements = array_merge($finalReplacements, $rekomReplacements);
+                $noUrut = $application->no_rekom ?? '-';
+
+                // Derive Kode OPD for Rekom
+                $kodeOpd = $application->no_rekom_kode;
+                if (!$kodeOpd) {
+                    $validationFlowWithOpd = $perijinan->activeValidationFlows()  
+                        ->whereIn('role', ['operator_opd', 'kepala_opd'])     
+                        ->whereNotNull('assigned_user_id')
+                        ->with('assignedUser.opd')
+                        ->get()
+                        ->first(function($flow) {
+                            return $flow->assignedUser && $flow->assignedUser->opd;
+                        });
+                    $kodeOpd = $validationFlowWithOpd->assignedUser->opd->kode_opd ?? 'OPD';
+                }
+
+                $finalReplacements['[NOMOR URUT]'] = $noUrut;
+                $finalReplacements['[NOMOR SURAT]'] = "{$kodePerijinan}/{$noUrut}/{$kodeOpd}/{$tahun}";
             } elseif ($type === 'izin') {
                 // For Izin document: merge Izin data (overrides global if same name)
                 $finalReplacements = array_merge($finalReplacements, $izinReplacements);
+                $noUrut = $application->no_izin ?? '-';
+
+                // Derive Kode OPD for Izin
+                $kodeOpd = $application->no_izin_kode;
+                if (!$kodeOpd) {
+                    $kodeOpd = 'DPMPTSP'; // Default for Izin if not explicitly assigned by a validator
+                }
+
+                $finalReplacements['[NOMOR URUT]'] = $noUrut;
+                $finalReplacements['[NOMOR SURAT]'] = "{$kodePerijinan}/{$noUrut}/{$kodeOpd}/{$tahun}";
             }
 
             // Global fix for checkmarks [x] or [v] or ✓ to ensure they render correctly
@@ -571,7 +602,7 @@ class DocumentGenerator
     </table>
     <div style=\"text-align: center; margin-bottom: 15px;\">
         <h4 style=\"margin: 0; font-size: 11pt; font-weight: bold; text-decoration: underline; font-family: 'Bookman Old Style', serif;\">SURAT REKOMENDASI IZIN OPERASIONAL</h4>
-        <p style=\"margin: 2px 0 0 0; font-size: 10pt; font-family: 'Bookman Old Style', serif;\">Nomor: [NO REGISTRASI]</p>
+        <p style=\"margin: 2px 0 0 0; font-size: 10pt; font-family: 'Bookman Old Style', serif;\">Nomor: [NOMOR SURAT]</p>
     </div>
     <p style=\"font-size: 10pt; text-align: justify; margin-bottom: 10px;\">Berdasarkan surat permohonan dari <strong>[NAMA PEMOHON]</strong> pada tanggal [TANGGAL]. Setelah dilakukan verifikasi kelayakan terhadap persyaratan administrasi dan persyaratan teknis pada entitas yang diusulkan, dengan ini Instansi/Dinas Terkait Kabupaten Banjarnegara menyatakan <strong>LAYAK</strong> dan <strong>MEMBERIKAN REKOMENDASI IZIN OPERASIONAL</strong> kepada:</p>
     <table style=\"width: 100%; font-size: 10pt; margin-bottom: 15px;\" border=\"0\">
@@ -635,7 +666,7 @@ class DocumentGenerator
     </table>
     <div style=\"text-align: center; margin-bottom: 15px;\">
         <h4 style=\"margin: 0; font-size: 11pt; font-weight: bold; text-decoration: underline; font-family: 'Bookman Old Style', serif;\">SURAT IZIN PENDIRIAN / OPERASIONAL</h4>
-        <p style=\"margin: 2px 0 0 0; font-size: 10pt; font-family: 'Bookman Old Style', serif;\">Nomor: [NO REGISTRASI]</p>
+        <p style=\"margin: 2px 0 0 0; font-size: 10pt; font-family: 'Bookman Old Style', serif;\">Nomor: [NOMOR SURAT]</p>
     </div>
     <p style=\"font-size: 10pt; text-align: justify; margin-bottom: 10px;\">Membaca surat permohonan dari <strong>[NAMA PEMOHON]</strong> tanggal [TANGGAL] dan berdasarkan Surat Rekomendasi Nomor: [NO REGISTRASI], dengan ini Kepala Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu Kabupaten Banjarnegara <strong>MEMBERIKAN IZIN</strong> kepada:</p>
     <table style=\"width: 100%; font-size: 10pt; margin-bottom: 15px;\" border=\"0\">

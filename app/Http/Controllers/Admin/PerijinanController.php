@@ -6,6 +6,7 @@ use App\Models\Perijinan;
 use App\Models\PerijinanFormField;
 use App\Models\PerijinanValidationFlow;
 use App\Models\User;
+use App\Models\Opd;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -149,7 +150,41 @@ class PerijinanController extends Controller
             '[NAMA IZIN]' => $perijinan->nama_perijinan,
             '[TANGGAL]' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
             '[NO REGISTRASI]' => 'REG-' . date('Ymd') . '-12345',
+            '[NOMOR URUT]' => '123',
         ];
+
+        // Derive Kode OPD from validation flow for preview
+        $kodeOpd = 'OPD';
+        if ($templateType === 'izin') {
+            $kodeOpd = 'DPMPTSP';
+        } else {
+            $validationFlowWithOpd = $perijinan->activeValidationFlows()      
+                ->whereIn('role', ['operator_opd', 'kepala_opd'])
+                ->whereNotNull('assigned_user_id')
+                ->with('assignedUser.opd')
+                ->get()
+                ->first(function($flow) {
+                    return $flow->assignedUser && $flow->assignedUser->opd;   
+                });
+
+            if ($validationFlowWithOpd) {
+                $kodeOpd = $validationFlowWithOpd->assignedUser->opd->kode_opd ?? 'OPD';
+            } else {
+                $anyFlowWithOpd = $perijinan->activeValidationFlows()
+                    ->whereNotNull('assigned_user_id')
+                    ->with('assignedUser.opd')
+                    ->get()
+                    ->first(function($flow) {
+                        return $flow->assignedUser && $flow->assignedUser->opd;
+                    });
+
+                if ($anyFlowWithOpd) {
+                    $kodeOpd = $anyFlowWithOpd->assignedUser->opd->kode_opd ?? 'OPD';
+                }
+            }
+        }
+
+        $replacements['[NOMOR SURAT]'] = ($perijinan->kode_perijinan ?? 'KODE') . '/123/' . $kodeOpd . '/' . date('Y');
 
         // [GAMBAR TTE]
         $gambarTte = \App\Models\Setting::get('gambar_tte');
@@ -726,6 +761,8 @@ class PerijinanController extends Controller
             'template_keabsahan' => 'nullable|string',
             'template_surat_rekom' => 'nullable|string',
             'template_surat_izin' => 'nullable|string',
+            'next_nomor_rekom' => 'nullable|integer',
+            'next_nomor_izin' => 'nullable|integer',
         ]);
 
         $perijinan->update([
@@ -734,6 +771,8 @@ class PerijinanController extends Controller
             'template_keabsahan' => $request->template_keabsahan ?? $perijinan->template_keabsahan,
             'template_surat_rekom' => $request->has('template_surat_rekom') ? $request->template_surat_rekom : $perijinan->template_surat_rekom,
             'template_surat_izin' => $request->has('template_surat_izin') ? $request->template_surat_izin : $perijinan->template_surat_izin,
+            'next_nomor_rekom' => $request->next_nomor_rekom ?? $perijinan->next_nomor_rekom,
+            'next_nomor_izin' => $request->next_nomor_izin ?? $perijinan->next_nomor_izin,
         ]);
 
         // Log activity

@@ -432,6 +432,7 @@ class DataPerijinanController extends Controller
         \Log::info('User retrieved', ['user_id' => $user->id, 'role' => $user->role]);
         
         $application = DataPerijinan::with([
+            'perijinan.opd',
             'perijinan.activeValidationFlows',
             'validasiRecords.validationFlow'
         ])->findOrFail($id);
@@ -494,34 +495,73 @@ class DataPerijinanController extends Controller
 
             // Handle based on action
             if ($request->action === 'approved') {
+                $perijinan = $application->perijinan;
+                $applicationUpdateData = [];
+
+                // Contextual OPD code assignment
+                if ($user->role === 'operator_opd' || $user->role === 'kepala_opd') {
+                    // Assign to Rekom code if not set
+                    if ($application->no_rekom_kode === null && $user->opd) {
+                        $applicationUpdateData['no_rekom_kode'] = $user->opd->kode_opd ?? 'OPD';
+                    }
+                } else if ($user->role === 'verifikator' || $user->role === 'kadin' || $user->role === 'admin') {
+                    // Assign to Izin code if not set
+                    if ($application->no_izin_kode === null) {
+                        $applicationUpdateData['no_izin_kode'] = 'DPMPTSP';
+                    }
+                }
+
                 // Check if this is the last validation step
                 $totalSteps = $application->perijinan->activeValidationFlows()->count();
-                
+
                 if ($application->current_step >= $totalSteps) {
                     // All validations complete - approve application
-                    $application->update([
-                        'status' => 'approved',
-                        'approved_at' => now(),
-                        'completed_at' => now(),
-                    ]);
+                    $applicationUpdateData['status'] = 'approved';
+                    $applicationUpdateData['approved_at'] = now();
+                    $applicationUpdateData['completed_at'] = now();
+
+                    // Assign Rekom Number if not already assigned
+                    if ($application->no_rekom === null) {
+                        $applicationUpdateData['no_rekom'] = $perijinan->next_nomor_rekom;
+                        $perijinan->increment('next_nomor_rekom');
+                    }
+
+                    // Assign Izin Number if not already assigned
+                    if ($application->no_izin === null) {
+                        $applicationUpdateData['no_izin'] = $perijinan->next_nomor_izin;
+                        $perijinan->increment('next_nomor_izin');
+                    }
                 } else {
                     // Move to next step
                     $newStep = $application->current_step + 1;
-                    $application->update([
-                        'current_step' => $newStep,
-                        'status' => 'in_progress',
-                    ]);
+                    $applicationUpdateData['current_step'] = $newStep;
+                    $applicationUpdateData['status'] = 'in_progress';
 
                     // Activate next validation step
                     $nextValidasi = $application->validasiRecords()
                         ->where('order', $newStep)
                         ->first();
-                    
+
                     if ($nextValidasi) {
                         $nextValidasi->update(['status' => 'pending']);
                     }
                 }
-            } elseif ($request->action === 'rejected') {
+
+                if (!empty($applicationUpdateData)) {
+                    $application->update($applicationUpdateData);
+
+                    // Regenerate documents to reflect assigned codes/numbers
+                    try {
+                        $generatedDocs = \App\Services\DocumentGenerator::generateDocuments($application->fresh());
+                        $application->update([
+                            'file_rekom' => $generatedDocs['file_rekom'] ?? $application->file_rekom,
+                            'file_izin' => $generatedDocs['file_izin'] ?? $application->file_izin,
+                        ]);
+                    } catch (\Exception $e) {
+                        \Log::error('Gagal meregenerasi dokumen saat validation step: ' . $e->getMessage());
+                    }
+                }
+            } else if ($request->action === 'rejected') {
                 // Reject application - stop all validations
                 $application->update([
                     'status' => 'rejected',
@@ -873,7 +913,7 @@ class DataPerijinanController extends Controller
             'catatan' => 'nullable|string',
         ]);
 
-        $application = DataPerijinan::findOrFail($id);
+        $application = DataPerijinan::with('perijinan.opd')->findOrFail($id);
         $oldStatus = $application->status;
 
         $updateData = [
@@ -883,6 +923,29 @@ class DataPerijinanController extends Controller
         if ($request->status === 'approved') {
             $updateData['approved_at'] = now();
             
+            // Determine Kode OPD from current validator
+            $user = auth()->user();
+            if ($user->role === 'operator_opd' || $user->role === 'kepala_opd') {
+                if ($application->no_rekom_kode === null && $user->opd) {
+                    $updateData['no_rekom_kode'] = $user->opd->kode_opd ?? 'OPD';
+                }
+            } else if ($user->role === 'verifikator' || $user->role === 'kadin' || $user->role === 'admin') {
+                if ($application->no_izin_kode === null) {
+                    $updateData['no_izin_kode'] = 'DPMPTSP';
+                }
+            }
+
+            // Assign Rekom & Izin Numbers if not already assigned
+            $perijinan = $application->perijinan;
+            if ($application->no_rekom === null) {
+                $updateData['no_rekom'] = $perijinan->next_nomor_rekom;
+                $perijinan->increment('next_nomor_rekom');
+            }
+            if ($application->no_izin === null) {
+                $updateData['no_izin'] = $perijinan->next_nomor_izin;
+                $perijinan->increment('next_nomor_izin');
+            }
+
             // Check if all validations are complete
             $allValidationsComplete = $application->validasiRecords->every(function ($validasi) {
                 return $validasi->status === 'approved';
@@ -891,6 +954,20 @@ class DataPerijinanController extends Controller
             if ($allValidationsComplete) {
                 $updateData['completed_at'] = now();
             }
+
+            // Update application first so freshest data is used for documents
+            $application->update($updateData);
+            
+            // Regenerate documents
+            try {
+                $generatedDocs = \App\Services\DocumentGenerator::generateDocuments($application->fresh());
+                $application->update([
+                    'file_rekom' => $generatedDocs['file_rekom'] ?? $application->file_rekom,
+                    'file_izin' => $generatedDocs['file_izin'] ?? $application->file_izin,
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Gagal meregenerasi dokumen saat update status ke approved: ' . $e->getMessage());
+            }
         } elseif ($request->status === 'perbaikan') {
             $updateData['catatan_perbaikan'] = $request->catatan;
         } elseif ($request->status === 'rejected') {
@@ -898,7 +975,10 @@ class DataPerijinanController extends Controller
             $updateData['rejected_at'] = now();
         }
 
-        $application->update($updateData);
+        // Only update if not already handled in 'approved' block to avoid redundant calls
+        if ($request->status !== 'approved') {
+            $application->update($updateData);
+        }
 
         // Log activity
         ActivityLog::log(

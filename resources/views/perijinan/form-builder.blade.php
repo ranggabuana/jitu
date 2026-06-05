@@ -70,6 +70,69 @@
             </ul>
         </div>
 
+        <!-- Sequence Number Configuration (Visible only for Rekom and Izin) -->
+        <div id="sequence-config-container" class="mb-6 hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-indigo-100 dark:border-indigo-900/30 overflow-hidden">
+                <div class="px-6 py-4 bg-indigo-50/50 dark:bg-indigo-900/10 border-b border-indigo-100 dark:border-indigo-900/30 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center">
+                        <i class="mdi mdi-numeric text-indigo-600 dark:text-indigo-400 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-800 dark:text-white">Pengaturan Nomor Surat</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Atur urutan nomor surat selanjutnya untuk jenis perijinan ini</p>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div id="rekom-number-config" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Nomor Urut Rekomendasi Selanjutnya
+                            </label>
+                            <div class="flex items-center">
+                                <div class="relative flex-grow">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="mdi mdi-format-list-numbered text-gray-400"></i>
+                                    </div>
+                                    <input type="number" form="template-form" name="next_nomor_rekom" id="next_nomor_rekom" 
+                                        value="{{ $perijinan->next_nomor_rekom ?? 1 }}" min="1"
+                                        class="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-l-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                                        placeholder="Contoh: 1">
+                                </div>
+                                <button type="submit" form="template-form" title="Simpan"
+                                    class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-r-lg border border-indigo-600 flex items-center gap-2 transition-all">
+                                    <i class="mdi mdi-content-save"></i>
+                                    <span class="hidden sm:inline text-xs font-semibold">Simpan</span>
+                                </button>
+                            </div>
+                            <p class="text-[10px] text-gray-500 mt-2">Nomor ini digunakan untuk urutan surat rekomendasi berikutnya.</p>
+                        </div>
+                        <div id="izin-number-config" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Nomor Urut Izin Selanjutnya
+                            </label>
+                            <div class="flex items-center">
+                                <div class="relative flex-grow">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="mdi mdi-format-list-numbered text-gray-400"></i>
+                                    </div>
+                                    <input type="number" form="template-form" name="next_nomor_izin" id="next_nomor_izin" 
+                                        value="{{ $perijinan->next_nomor_izin ?? 1 }}" min="1"
+                                        class="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-l-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                                        placeholder="Contoh: 1">
+                                </div>
+                                <button type="submit" form="template-form" title="Simpan"
+                                    class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-r-lg border border-indigo-600 flex items-center gap-2 transition-all">
+                                    <i class="mdi mdi-content-save"></i>
+                                    <span class="hidden sm:inline text-xs font-semibold">Simpan</span>
+                                </button>
+                            </div>
+                            <p class="text-[10px] text-gray-500 mt-2">Nomor ini digunakan untuk urutan surat izin berikutnya.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Form Tambah Field -->
             <div class="lg:col-span-1">
@@ -386,7 +449,7 @@
         <!-- Template Editor Container (Hidden by default, shown on rekom and izin tabs) -->
         <div id="template-editor-container" class="mt-6 hidden">
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <form action="{{ route('perijinan.templates.update', $perijinan->id) }}" method="POST">
+                <form action="{{ route('perijinan.templates.update', $perijinan->id) }}" method="POST" id="template-form">
                     @csrf
                     @method('PUT')
 
@@ -434,6 +497,8 @@
                                         '[NAMA IZIN]' => 'Jenis Izin',
                                         '[TANGGAL]' => 'Tanggal Pengajuan',
                                         '[NO REGISTRASI]' => 'No. Registrasi',
+                                        '[NOMOR URUT]' => 'Nomor Urut Surat (Hanya Rekom/Izin)',
+                                        '[NOMOR SURAT]' => 'Nomor Surat Lengkap (Format: KODE/NO/OPD/TAHUN)',
                                         '[LOGO KABUPATEN]' => 'Logo Kabupaten (Header)',
                                         '[GAMBAR TTE]' => 'Gambar TTE (Tanda Tangan Elektronik)',
                                         '<!-- pagebreak -->' => 'Tambah Halaman Baru (Pemisah)',
@@ -992,8 +1057,11 @@
             const listEl = document.getElementById(`fields_list_${tabId}`);
             if (listEl) listEl.classList.remove('hidden');
 
-            // 7. Toggle Template Editor
+            // 7. Toggle Template Editor and Sequence Config
             const templateContainer = document.getElementById('template-editor-container');
+            const sequenceContainer = document.getElementById('sequence-config-container');
+            const rekomNumConfig = document.getElementById('rekom-number-config');
+            const izinNumConfig = document.getElementById('izin-number-config');
             const editorRekom = document.getElementById('tpl-rekom-container');
             const editorIzin = document.getElementById('tpl-izin-container');
             const editorTitle = document.getElementById('template-editor-title');
@@ -1005,6 +1073,9 @@
 
             if (tabId === 'rekom') {
                 templateContainer.classList.remove('hidden');
+                sequenceContainer.classList.remove('hidden');
+                rekomNumConfig.classList.remove('hidden');
+                izinNumConfig.classList.add('hidden');
                 editorRekom.classList.remove('hidden');
                 editorIzin.classList.add('hidden');
                 if (editorTitle) editorTitle.textContent = 'Rekom';
@@ -1015,6 +1086,9 @@
                 varSectionIzin.classList.add('hidden');
             } else if (tabId === 'izin') {
                 templateContainer.classList.remove('hidden');
+                sequenceContainer.classList.remove('hidden');
+                rekomNumConfig.classList.add('hidden');
+                izinNumConfig.classList.remove('hidden');
                 editorRekom.classList.add('hidden');
                 editorIzin.classList.remove('hidden');
                 if (editorTitle) editorTitle.textContent = 'Izin';
@@ -1025,6 +1099,7 @@
                 varSectionIzin.classList.remove('hidden');
             } else {
                 templateContainer.classList.add('hidden');
+                sequenceContainer.classList.add('hidden');
             }
         }
 
