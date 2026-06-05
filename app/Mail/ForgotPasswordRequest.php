@@ -2,13 +2,14 @@
 
 namespace App\Mail;
 
-use App\Models\Setting;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Mail\Mailables\Address;
 use Illuminate\Queue\SerializesModels;
+use App\Models\Setting;
 
 class ForgotPasswordRequest extends Mailable
 {
@@ -20,12 +21,8 @@ class ForgotPasswordRequest extends Mailable
 
     /**
      * Create a new message instance.
-     *
-     * @param mixed $user The user requesting password reset
-     * @param string $resetUrl The password reset URL
-     * @param int $expiryMinutes Token expiry time in minutes
      */
-    public function __construct($user, string $resetUrl, int $expiryMinutes = 60)
+    public function __construct($user, $resetUrl, $expiryMinutes)
     {
         $this->user = $user;
         $this->resetUrl = $resetUrl;
@@ -55,10 +52,12 @@ class ForgotPasswordRequest extends Mailable
     {
         $body = Setting::get('forgot_password_content', 'Kami menerima permintaan untuk melakukan pengaturan ulang kata sandi (reset password) pada akun Anda. Klik tombol di bawah ini untuk melanjutkan proses:');
         
+        $appName = config('mail.from.name');
+
         // Replace placeholders
         $body = str_replace(
             ['{{userName}}', '{{appName}}'], 
-            [$this->user->name, config('mail.from.name')], 
+            [$this->user->name, $appName], 
             $body
         );
 
@@ -68,7 +67,7 @@ class ForgotPasswordRequest extends Mailable
                 'userName' => $this->user->name,
                 'resetUrl' => $this->resetUrl,
                 'expiryMinutes' => $this->expiryMinutes,
-                'appName' => config('mail.from.name'),
+                'appName' => $appName,
                 'bodyContent' => $body,
             ],
         );
@@ -76,8 +75,6 @@ class ForgotPasswordRequest extends Mailable
 
     /**
      * Get the attachments for the message.
-     *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
      */
     public function attachments(): array
     {

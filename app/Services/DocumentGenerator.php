@@ -184,7 +184,7 @@ class DocumentGenerator
             if ($type === 'rekom') {
                 // For Rekom document: merge Rekom data (overrides global if same name)
                 $finalReplacements = array_merge($finalReplacements, $rekomReplacements);
-                $noUrut = $application->no_rekom ?? '-';
+                $noUrut = $application->no_rekom ?? $perijinan->next_nomor_rekom ?? '-';
 
                 // Derive Kode OPD for Rekom
                 $kodeOpd = $application->no_rekom_kode;
@@ -205,7 +205,7 @@ class DocumentGenerator
             } elseif ($type === 'izin') {
                 // For Izin document: merge Izin data (overrides global if same name)
                 $finalReplacements = array_merge($finalReplacements, $izinReplacements);
-                $noUrut = $application->no_izin ?? '-';
+                $noUrut = $application->no_izin ?? $perijinan->next_nomor_izin ?? '-';
 
                 // Derive Kode OPD for Izin
                 $kodeOpd = $application->no_izin_kode;

@@ -434,7 +434,6 @@ class DataPerijinanController extends Controller
         \Log::info('User retrieved', ['user_id' => $user->id, 'role' => $user->role]);
         
         $application = DataPerijinan::with([
-            'perijinan.opd',
             'perijinan.activeValidationFlows',
             'validasiRecords.validationFlow'
         ])->findOrFail($id);
@@ -536,7 +535,7 @@ class DataPerijinanController extends Controller
 
                     // Send Email Notification: Approved
                     if ($application->user && $application->user->email) {
-                        EmailService::queue(
+                        EmailService::send(
                             $application->user->email,
                             $application->user->name,
                             new ApplicationStatusNotification($application, 'approved')
@@ -582,7 +581,7 @@ class DataPerijinanController extends Controller
 
                 // Send Email Notification: Rejected
                 if ($application->user && $application->user->email) {
-                    EmailService::queue(
+                        EmailService::send(
                         $application->user->email,
                         $application->user->name,
                         new ApplicationStatusNotification($application, 'rejected', $request->catatan)
@@ -602,7 +601,7 @@ class DataPerijinanController extends Controller
 
                 // Send Email Notification: Returned/Revision
                 if ($application->user && $application->user->email) {
-                    EmailService::queue(
+                        EmailService::send(
                         $application->user->email,
                         $application->user->name,
                         new ApplicationStatusNotification($application, 'returned', $request->catatan)
@@ -694,9 +693,10 @@ class DataPerijinanController extends Controller
 
             DB::commit();
 
-            $msg = ($request->action === 'approved') ? 'Validasi berhasil disetujui.' : 
-                  (($request->action === 'rejected') ? 'Pengajuan ditolak.' : 
-                  'Pengajuan berhasil dikembalikan ke tahap sebelumnya.');
+            $msg = ($request->action === 'approved') ? 'Validasi berhasil disetujui.' :
+                  (($request->action === 'rejected') ? 'Pengajuan ditolak.' :
+                  (($request->action === 'revision') ? 'Pengajuan berhasil dikembalikan kepada pemohon.' :
+                  'Pengajuan berhasil dikembalikan ke tahap sebelumnya.'));
             
             return redirect()->route('data-perijinan.show', $id)->with('success', $msg);
 
@@ -942,7 +942,7 @@ class DataPerijinanController extends Controller
             'catatan' => 'nullable|string',
         ]);
 
-        $application = DataPerijinan::with('perijinan.opd')->findOrFail($id);
+        $application = DataPerijinan::findOrFail($id);
         $oldStatus = $application->status;
 
         $updateData = [

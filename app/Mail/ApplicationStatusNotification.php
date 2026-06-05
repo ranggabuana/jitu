@@ -2,26 +2,24 @@
 
 namespace App\Mail;
 
+use App\Models\Setting;
+use App\Models\DataPerijinan;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
+use Illuminate\Mail\Mailables\Attachment;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use App\Models\Setting;
-use App\Models\DataPerijinan;
 
-class ApplicationStatusNotification extends Mailable implements ShouldQueue
+class ApplicationStatusNotification extends Mailable
 {
     use Queueable, SerializesModels;
 
     public $application;
     public $status;
     public $notes;
-    public $userName;
-    public $appName;
-    public $regNo;
-    public $permitName;
-    public $bodyContent;
-    public $loginUrl;
 
     /**
      * Create a new message instance.
@@ -31,29 +29,15 @@ class ApplicationStatusNotification extends Mailable implements ShouldQueue
         $this->application = $application;
         $this->status = $status; // 'approved', 'rejected', 'returned'
         $this->notes = $notes ?? $application->catatan_perbaikan ?? $application->catatan_reject ?? '-';
-        
-        $this->userName = $application->user->name ?? 'Pemohon';
-        $this->appName = Setting::get('mail_from_name', config('mail.from.name'));
-        $this->regNo = $application->no_registrasi;
-        $this->permitName = $application->perijinan->nama_perijinan ?? 'Perizinan';
-        $this->loginUrl = route('pemohon.tracking.detail', $application->id);
+    }
 
-        // Load template from settings
-        $templateKey = "permit_{$status}_content";
-        $subjectKey = "permit_{$status}_subject";
-        
-        $template = Setting::get($templateKey);
+    /**
+     * Get the message envelope.
+     */
+    public function envelope(): Envelope
+    {
+        $subjectKey = "permit_{$this->status}_subject";
         $subject = Setting::get($subjectKey);
-
-        // Fallbacks if not set
-        if (!$template) {
-            $fallbacks = [
-                'approved' => 'Permohonan Anda telah disetujui.',
-                'rejected' => 'Permohonan Anda ditolak.',
-                'returned' => 'Permohonan Anda perlu perbaikan.',
-            ];
-            $template = $fallbacks[$status] ?? 'Status permohonan Anda telah berubah.';
-        }
 
         if (!$subject) {
             $subjectFallbacks = [
@@ -61,29 +45,78 @@ class ApplicationStatusNotification extends Mailable implements ShouldQueue
                 'rejected' => 'Permohonan Izin Ditolak',
                 'returned' => 'Perbaikan Berkas Permohonan Izin',
             ];
-            $subject = $subjectFallbacks[$status] ?? 'Update Status Permohonan';
+            $subject = $subjectFallbacks[$this->status] ?? 'Update Status Permohonan';
         }
 
-        // Replace placeholders
-        $this->bodyContent = str_replace(
-            ['{{userName}}', '{{appName}}', '{{registrationNumber}}', '{{permitName}}', '{{notes}}'],
-            [$this->userName, $this->appName, $this->regNo, $this->permitName, $this->notes],
-            $template
+        // Replace placeholders in subject
+        $regNo = $this->application->no_registrasi;
+        $permitName = $this->application->perijinan->nama_perijinan ?? 'Perizinan';
+        
+        $finalSubject = str_replace(
+            ['{{registrationNumber}}', '{{permitName}}'],
+            [$regNo, $permitName],
+            $subject
         );
 
-        $this->subject = str_replace(
-            ['{{registrationNumber}}', '{{permitName}}'],
-            [$this->regNo, $this->permitName],
-            $subject
+        return new Envelope(
+            subject: $finalSubject . ' - ' . config('app.name'),
+            from: new Address(
+                config('mail.from.address'),
+                config('mail.from.name')
+            ),
         );
     }
 
     /**
-     * Build the message.
+     * Get the message content definition.
      */
-    public function build()
+    public function content(): Content
     {
-        return $this->view('emails.application-status')
-                    ->subject($this->subject);
+        $templateKey = "permit_{$this->status}_content";
+        $template = Setting::get($templateKey);
+
+        if (!$template) {
+            $fallbacks = [
+                'approved' => 'Permohonan Anda telah disetujui.',
+                'rejected' => 'Permohonan Anda ditolak.',
+                'returned' => 'Permohonan Anda perlu perbaikan.',
+            ];
+            $template = $fallbacks[$this->status] ?? 'Status permohonan Anda telah berubah.';
+        }
+
+        $userName = $this->application->user->name ?? 'Pemohon';
+        $appName = config('mail.from.name');
+        $regNo = $this->application->no_registrasi;
+        $permitName = $this->application->perijinan->nama_perijinan ?? 'Perizinan';
+
+        // Replace placeholders in body
+        $bodyContent = str_replace(
+            ['{{userName}}', '{{appName}}', '{{registrationNumber}}', '{{permitName}}', '{{notes}}'],
+            [$userName, $appName, $regNo, $permitName, $this->notes],
+            $template
+        );
+
+        return new Content(
+            view: 'emails.application-status',
+            with: [
+                'userName' => $userName,
+                'appName' => $appName,
+                'bodyContent' => $bodyContent,
+                'status' => $this->status,
+                'regNo' => $regNo,
+                'permitName' => $permitName,
+                'loginUrl' => route('pemohon.tracking.detail', $this->application->id),
+            ],
+        );
+    }
+
+    /**
+     * Get the attachments for the message.
+     *
+     * @return array<int, Attachment>
+     */
+    public function attachments(): array
+    {
+        return [];
     }
 }

@@ -445,6 +445,18 @@ class DashboardController extends Controller
 
             DB::commit();
 
+            // Log activity
+            ActivityLog::log(
+                'Mengajukan perizinan baru: ' . $perijinan->nama_perijinan,
+                $data,
+                'created',
+                [
+                    'no_registrasi' => $data->no_registrasi,
+                    'perijinan' => $perijinan->nama_perijinan,
+                ],
+                'data_perijinan'
+            );
+
             return redirect()->route('pemohon.pengajuan.success', $data->id)
                 ->with('success', 'Pengajuan berhasil dikirim. Nomor registrasi: ' . $data->no_registrasi);
         } catch (\Exception $e) {
