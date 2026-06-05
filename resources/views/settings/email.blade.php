@@ -191,6 +191,11 @@
 
         <!-- Tab: Email Templates -->
         <div id="tab-templates" class="tab-content hidden space-y-6">
+            @php
+                $defaultApproved = 'Kabar baik! Permohonan izin Anda dengan nomor registrasi {{registrationNumber}} untuk jenis {{permitName}} telah resmi disetujui. Silakan login ke dashboard dan mengisi Survei Kepuasan Masyarakat (SKM) untuk mengunduh dokumen izin Anda.';
+                $defaultRejected = 'Mohon maaf, permohonan izin Anda dengan nomor registrasi {{registrationNumber}} untuk jenis {{permitName}} ditolak dikarenakan hal berikut: {{notes}}';
+                $defaultReturned = 'Terdapat berkas yang perlu Anda perbaiki pada permohonan izin dengan nomor registrasi {{registrationNumber}} ({{permitName}}). Berikut catatan perbaikan dari petugas: {{notes}}. Mohon segera lengkapi agar proses dapat dilanjutkan.';
+            @endphp
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <!-- Left Side: Forms (8/12) -->
                 <div class="lg:col-span-8">
@@ -269,10 +274,122 @@
                                         <textarea name="account_activated_content" id="account_activated_content" rows="6" class="form-input resize-none">{{ old('account_activated_content', $templateSettings['account_activated_content'] ?? 'Selamat! Akun Anda telah berhasil diverifikasi dan diaktifkan oleh admin. Sekarang Anda sudah dapat mengakses dashboard pemohon untuk mengajukan perizinan secara online.') }}</textarea>
                                         <!-- Quick Variables -->
                                         <div class="mt-3 flex flex-wrap gap-2">
-                                            <span
-                                                class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-[10px] font-bold rounded text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600">@{{ userName }}</span>
-                                            <span
-                                                class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-[10px] font-bold rounded text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600">@{{ appName }}</span>
+                                            <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-[10px] font-bold rounded text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600">@{{ userName }}</span>
+                                            <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-[10px] font-bold rounded text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600">@{{ appName }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Template: Permohonan Disetujui -->
+                            <div
+                                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                <div
+                                    class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-700/30 flex justify-between items-center">
+                                    <h2
+                                        class="text-base font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                                        <i class="mdi mdi-file-check text-emerald-500"></i>
+                                        Email Permohonan Disetujui (Final)
+                                    </h2>
+                                    <button type="button" onclick="previewEmail('permit_approved')" class="text-xs bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 border border-emerald-200">
+                                        <i class="mdi mdi-eye"></i> Preview
+                                    </button>
+                                </div>
+                                <div class="p-6 space-y-4">
+                                    <div>
+                                        <label
+                                            class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Subjek
+                                            Email</label>
+                                        <input type="text" name="permit_approved_subject" id="permit_approved_subject"
+                                            value="{{ old('permit_approved_subject', $templateSettings['permit_approved_subject'] ?? 'Selamat! Permohonan Izin Anda Telah Disetujui') }}"
+                                            class="form-input">
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Isi
+                                            Pesan (Body)</label>
+                                        <textarea name="permit_approved_content" id="permit_approved_content" rows="6" class="form-input resize-none">{{ old('permit_approved_content', $templateSettings['permit_approved_content'] ?? $defaultApproved) }}</textarea>
+                                        <!-- Quick Variables -->
+                                        <div class="mt-3 flex flex-wrap gap-2">
+                                            <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-[10px] font-bold rounded text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600">@{{ userName }}</span>
+                                            <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-[10px] font-bold rounded text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600">@{{ registrationNumber }}</span>
+                                            <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-[10px] font-bold rounded text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600">@{{ permitName }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Template: Permohonan Ditolak -->
+                            <div
+                                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                <div
+                                    class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-700/30 flex justify-between items-center">
+                                    <h2
+                                        class="text-base font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                                        <i class="mdi mdi-file-cancel text-red-500"></i>
+                                        Email Permohonan Ditolak
+                                    </h2>
+                                    <button type="button" onclick="previewEmail('permit_rejected')" class="text-xs bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 border border-red-200">
+                                        <i class="mdi mdi-eye"></i> Preview
+                                    </button>
+                                </div>
+                                <div class="p-6 space-y-4">
+                                    <div>
+                                        <label
+                                            class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Subjek
+                                            Email</label>
+                                        <input type="text" name="permit_rejected_subject" id="permit_rejected_subject"
+                                            value="{{ old('permit_rejected_subject', $templateSettings['permit_rejected_subject'] ?? 'Pemberitahuan: Permohonan Izin Anda Ditolak') }}"
+                                            class="form-input">
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Isi
+                                            Pesan (Body)</label>
+                                        <textarea name="permit_rejected_content" id="permit_rejected_content" rows="6" class="form-input resize-none">{{ old('permit_rejected_content', $templateSettings['permit_rejected_content'] ?? $defaultRejected) }}</textarea>
+                                        <!-- Quick Variables -->
+                                        <div class="mt-3 flex flex-wrap gap-2">
+                                            <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-[10px] font-bold rounded text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600">@{{ userName }}</span>
+                                            <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-[10px] font-bold rounded text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600">@{{ registrationNumber }}</span>
+                                            <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-[10px] font-bold rounded text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600">@{{ notes }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Template: Permohonan Dikembalikan -->
+                            <div
+                                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                <div
+                                    class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-700/30 flex justify-between items-center">
+                                    <h2
+                                        class="text-base font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                                        <i class="mdi mdi-file-replace text-orange-500"></i>
+                                        Email Permohonan Perlu Perbaikan
+                                    </h2>
+                                    <button type="button" onclick="previewEmail('permit_returned')" class="text-xs bg-orange-100 hover:bg-orange-200 text-orange-700 px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 border border-orange-200">
+                                        <i class="mdi mdi-eye"></i> Preview
+                                    </button>
+                                </div>
+                                <div class="p-6 space-y-4">
+                                    <div>
+                                        <label
+                                            class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Subjek
+                                            Email</label>
+                                        <input type="text" name="permit_returned_subject" id="permit_returned_subject"
+                                            value="{{ old('permit_returned_subject', $templateSettings['permit_returned_subject'] ?? 'Pemberitahuan: Perbaikan Berkas Permohonan Izin') }}"
+                                            class="form-input">
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Isi
+                                            Pesan (Body)</label>
+                                        <textarea name="permit_returned_content" id="permit_returned_content" rows="6" class="form-input resize-none">{{ old('permit_returned_content', $templateSettings['permit_returned_content'] ?? $defaultReturned) }}</textarea>
+                                        <!-- Quick Variables -->
+                                        <div class="mt-3 flex flex-wrap gap-2">
+                                            <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-[10px] font-bold rounded text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600">@{{ userName }}</span>
+                                            <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-[10px] font-bold rounded text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600">@{{ registrationNumber }}</span>
+                                            <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-[10px] font-bold rounded text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600">@{{ notes }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -320,6 +437,30 @@
                                         class="text-blue-600 dark:text-blue-400 font-bold text-sm">@{{ appName }}</code>
                                     <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">Berubah menjadi
                                         <strong>Nama Pengirim</strong> aplikasi.
+                                    </p>
+                                </div>
+                                <div
+                                    class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-100 dark:border-gray-700">
+                                    <code
+                                        class="text-blue-600 dark:text-blue-400 font-bold text-sm">@{{ registrationNumber }}</code>
+                                    <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">Berubah menjadi
+                                        <strong>Nomor Registrasi</strong> pengajuan.
+                                    </p>
+                                </div>
+                                <div
+                                    class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-100 dark:border-gray-700">
+                                    <code
+                                        class="text-blue-600 dark:text-blue-400 font-bold text-sm">@{{ permitName }}</code>
+                                    <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">Berubah menjadi
+                                        <strong>Nama Jenis Perizinan</strong>.
+                                    </p>
+                                </div>
+                                <div
+                                    class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-100 dark:border-gray-700">
+                                    <code
+                                        class="text-blue-600 dark:text-blue-400 font-bold text-sm">@{{ notes }}</code>
+                                    <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">Berubah menjadi
+                                        <strong>Catatan</strong> dari validator.
                                     </p>
                                 </div>
                             </div>

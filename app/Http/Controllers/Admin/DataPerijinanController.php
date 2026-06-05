@@ -9,6 +9,8 @@ use App\Models\User;
 use App\Models\DataPerijinanValidasi;
 use App\Models\PerijinanValidationFlow;
 use App\Models\ActivityLog;
+use App\Mail\ApplicationStatusNotification;
+use App\Services\EmailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -531,6 +533,15 @@ class DataPerijinanController extends Controller
                         $applicationUpdateData['no_izin'] = $perijinan->next_nomor_izin;
                         $perijinan->increment('next_nomor_izin');
                     }
+
+                    // Send Email Notification: Approved
+                    if ($application->user && $application->user->email) {
+                        EmailService::queue(
+                            $application->user->email,
+                            $application->user->name,
+                            new ApplicationStatusNotification($application, 'approved')
+                        );
+                    }
                 } else {
                     // Move to next step
                     $newStep = $application->current_step + 1;
@@ -569,6 +580,15 @@ class DataPerijinanController extends Controller
                     'rejected_at' => now(),
                 ]);
 
+                // Send Email Notification: Rejected
+                if ($application->user && $application->user->email) {
+                    EmailService::queue(
+                        $application->user->email,
+                        $application->user->name,
+                        new ApplicationStatusNotification($application, 'rejected', $request->catatan)
+                    );
+                }
+
                 // Mark all remaining validations as rejected
                 $application->validasiRecords()
                     ->where('status', 'pending')
@@ -579,6 +599,15 @@ class DataPerijinanController extends Controller
                     'status' => 'perbaikan',
                     'catatan_perbaikan' => $request->catatan,
                 ]);
+
+                // Send Email Notification: Returned/Revision
+                if ($application->user && $application->user->email) {
+                    EmailService::queue(
+                        $application->user->email,
+                        $application->user->name,
+                        new ApplicationStatusNotification($application, 'returned', $request->catatan)
+                    );
+                }
             } elseif ($isReturnAction) {
                 $targetRole = '';
                 $roleLabel = '';

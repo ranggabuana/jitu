@@ -44,6 +44,12 @@ class EmailSettingsController extends Controller
             'forgot_password_content' => 'required_if:type,templates|string',
             'account_activated_subject' => 'required_if:type,templates|string|max:255',
             'account_activated_content' => 'required_if:type,templates|string',
+            'permit_approved_subject' => 'required_if:type,templates|string|max:255',
+            'permit_approved_content' => 'required_if:type,templates|string',
+            'permit_rejected_subject' => 'required_if:type,templates|string|max:255',
+            'permit_rejected_content' => 'required_if:type,templates|string',
+            'permit_returned_subject' => 'required_if:type,templates|string|max:255',
+            'permit_returned_content' => 'required_if:type,templates|string',
         ]);
 
         $type = $request->input('type', 'smtp');
@@ -53,7 +59,13 @@ class EmailSettingsController extends Controller
             $group = 'email';
             $logMsg = 'Mengupdate konfigurasi server SMTP';
         } else {
-            $keys = ['forgot_password_subject', 'forgot_password_content', 'account_activated_subject', 'account_activated_content'];
+            $keys = [
+                'forgot_password_subject', 'forgot_password_content', 
+                'account_activated_subject', 'account_activated_content',
+                'permit_approved_subject', 'permit_approved_content',
+                'permit_rejected_subject', 'permit_rejected_content',
+                'permit_returned_subject', 'permit_returned_content',
+            ];
             $group = 'email_templates';
             $logMsg = 'Mengupdate template isi email';
         }
@@ -122,7 +134,7 @@ class EmailSettingsController extends Controller
     public function preview(Request $request)
     {
         $request->validate([
-            'type' => 'required|string|in:forgot_password,account_activated',
+            'type' => 'required|string|in:forgot_password,account_activated,permit_approved,permit_rejected,permit_returned',
             'content' => 'required|string',
         ]);
 
@@ -130,11 +142,14 @@ class EmailSettingsController extends Controller
         $content = $request->content;
         $userName = auth()->user()->name ?? 'Budi Santoso';
         $appName = Setting::get('mail_from_name', config('mail.from.name'));
+        $regNo = 'REG-' . date('Ymd') . '-001';
+        $permitName = 'Izin Mendirikan Bangunan (IMB)';
+        $notes = 'Data KTP kurang jelas, mohon upload ulang pindaian asli.';
 
         // Replace placeholders
         $bodyContent = str_replace(
-            ['{{userName}}', '{{appName}}'],
-            [$userName, $appName],
+            ['{{userName}}', '{{appName}}', '{{registrationNumber}}', '{{permitName}}', '{{notes}}'],
+            [$userName, $appName, $regNo, $permitName, $notes],
             $content
         );
 
@@ -146,12 +161,23 @@ class EmailSettingsController extends Controller
                 'appName' => $appName,
                 'bodyContent' => $bodyContent,
             ]);
-        } else {
+        } elseif ($type === 'account_activated') {
             return view('emails.account-activated', [
                 'userName' => $userName,
                 'loginUrl' => 'javascript:void(0)',
                 'appName' => $appName,
                 'bodyContent' => $bodyContent,
+            ]);
+        } else {
+            // New template types use a generic view
+            return view('emails.application-status', [
+                'userName' => $userName,
+                'appName' => $appName,
+                'bodyContent' => $bodyContent,
+                'status' => $type,
+                'regNo' => $regNo,
+                'permitName' => $permitName,
+                'loginUrl' => 'javascript:void(0)',
             ]);
         }
     }
