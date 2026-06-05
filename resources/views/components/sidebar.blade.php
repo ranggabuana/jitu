@@ -35,8 +35,8 @@
             <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">MAIN</span>
         </div>
 
-        <!-- Master Data Dropdown (Admin Only) -->
-        @if (Auth::user()->canAccessAdminMenus())
+        <!-- Master Data Dropdown (Admin & Assigned OPD Operators) -->
+        @if (Auth::user()->canAccessAdminMenus() || (Auth::user()->isOperatorOpd() && count(Auth::user()->getAccessiblePerijinanIds()) > 0))
             <div class="relative">
                 <button onclick="toggleSubmenu('master-data-submenu', 'master-data-icon')"
                     class="w-full flex items-center justify-between px-6 py-3 text-gray-700 dark:text-gray-300 transition-colors group menu-item {{ request()->routeIs('opd.*') || request()->routeIs('perijinan.*') ? 'active-menu' : '' }}">
@@ -50,11 +50,13 @@
                 </button>
 
                 <div id="master-data-submenu" class="submenu pl-10 mt-1" style="max-height: 0;">
-                    <a href="{{ route('opd.index') }}"
-                        class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-lg mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('opd.*') ? 'active-menu' : '' }}">
-                        <i class="mdi mdi-circle text-[8px] mr-2 text-gray-500 dark:text-gray-400"></i>
-                        <span>Data OPD</span>
-                    </a>
+                    @if(Auth::user()->isAdmin())
+                        <a href="{{ route('opd.index') }}"
+                            class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-lg mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('opd.*') ? 'active-menu' : '' }}">
+                            <i class="mdi mdi-circle text-[8px] mr-2 text-gray-500 dark:text-gray-400"></i>
+                            <span>Data OPD</span>
+                        </a>
+                    @endif
                     <a href="{{ route('perijinan.index') }}"
                         class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-lg mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('perijinan.*') ? 'active-menu' : '' }}">
                         <i class="mdi mdi-circle text-[8px] mr-2 text-gray-500 dark:text-gray-400"></i>
@@ -380,6 +382,17 @@
                         perijinanSubmenu.classList.add('open');
                         perijinanSubmenu.style.maxHeight = perijinanSubmenu.scrollHeight + 'px';
                         if (perijinanIcon) perijinanIcon.classList.add('rotate-180');
+                    }
+
+                    // Also auto-open Master Data for Operator OPD
+                    if ("{{ Auth::user()->role }}" === 'operator_opd') {
+                        const masterSubmenu = document.getElementById('master-data-submenu');
+                        const masterIcon = document.getElementById('master-data-icon');
+                        if (masterSubmenu && !masterSubmenu.classList.contains('open')) {
+                            masterSubmenu.classList.add('open');
+                            masterSubmenu.style.maxHeight = masterSubmenu.scrollHeight + 'px';
+                            if (masterIcon) masterIcon.classList.add('rotate-180');
+                        }
                     }
                 }, 100);
             @endif

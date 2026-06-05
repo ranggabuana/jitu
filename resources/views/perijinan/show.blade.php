@@ -159,78 +159,113 @@
 
         <!-- Tab: Isian Formulir -->
         <div id="tab-formulir" class="tab-content hidden space-y-6">
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-700/30 flex items-center justify-between">
-                    <h2 class="text-base font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                        <i class="mdi mdi-file-document-edit text-indigo-500"></i>
-                        Field Formulir Permohonan
-                    </h2>
-                    <a href="{{ route('perijinan.form-builder', $perijinan->id) }}" class="text-xs font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 flex items-center gap-1">
-                        <i class="mdi mdi-cog"></i> Kelola Form
-                    </a>
-                </div>
-                <div class="p-0">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left">
-                            <thead>
-                                <tr class="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700">
-                                    <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Field</th>
-                                    <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Tipe</th>
-                                    <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase text-center">Wajib</th>
-                                    <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Konfigurasi</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                                @forelse($perijinan->activeFormFields as $field)
-                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                                        <td class="px-6 py-4">
-                                            <div class="text-sm font-bold text-gray-900 dark:text-white">{{ $field->label }}</div>
-                                            <div class="text-[10px] font-mono text-gray-400 mt-0.5">name: {{ $field->name }}</div>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400">
-                                                {{ $field->type }}
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 text-center">
-                                            @if($field->is_required)
-                                                <i class="mdi mdi-check-circle text-green-500 text-lg"></i>
-                                            @else
-                                                <i class="mdi mdi-minus text-gray-300"></i>
-                                            @endif
-                                        </td>
-                                        <td class="px-6 py-4 text-xs text-gray-500 dark:text-gray-400">
-                                            @if($field->type == 'file')
-                                                <div class="flex flex-col gap-1">
-                                                    <span>Format: {{ $field->file_types ?: '*' }}</span>
-                                                    <span>Max: {{ $field->max_file_size ? ($field->max_file_size/1024).'MB' : 'Default' }}</span>
-                                                </div>
-                                            @elseif(in_array($field->type, ['select', 'radio', 'checkbox']) && $field->options)
-                                                <div class="flex flex-wrap gap-1">
-                                                    @foreach($field->options as $option)
-                                                        <span class="bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">{{ $option }}</span>
-                                                    @endforeach
-                                                </div>
-                                            @else
-                                                -
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="4" class="px-6 py-12 text-center">
-                                            <div class="flex flex-col items-center">
-                                                <i class="mdi mdi-file-document-outline text-4xl text-gray-300 mb-2"></i>
-                                                <p class="text-sm text-gray-500 italic">Belum ada field formulir yang dikonfigurasi.</p>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+            @php
+                $groupedFields = $perijinan->activeFormFields->groupBy('form_type');
+                $formTypes = [
+                    'global' => [
+                        'label' => 'Global Form (Data Umum)',
+                        'icon' => 'mdi-earth',
+                        'color' => 'text-indigo-500',
+                        'bg' => 'bg-indigo-50/30 dark:bg-indigo-900/10'
+                    ],
+                    'rekom' => [
+                        'label' => 'Rekom Form (Data Rekomendasi)',
+                        'icon' => 'mdi-file-document-outline',
+                        'color' => 'text-purple-500',
+                        'bg' => 'bg-purple-50/30 dark:bg-purple-900/10'
+                    ],
+                    'izin' => [
+                        'label' => 'Izin Form (Data Surat Izin)',
+                        'icon' => 'mdi-file-certificate-outline',
+                        'color' => 'text-blue-500',
+                        'bg' => 'bg-blue-50/30 dark:bg-blue-900/10'
+                    ],
+                ];
+            @endphp
+
+            @foreach($formTypes as $type => $info)
+                @if(auth()->user()->isAdmin() || auth()->user()->isOperatorOpd())
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 {{ $info['bg'] }} flex items-center justify-between">
+                            <h2 class="text-sm font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                                <i class="mdi {{ $info['icon'] }} {{ $info['color'] }} text-lg"></i>
+                                {{ $info['label'] }}
+                            </h2>
+                            @if(auth()->user()->isAdmin())
+                                @php 
+                                    $targetTab = $type === 'global' ? 'global' : ($type === 'rekom' ? 'rekom' : 'izin');
+                                @endphp
+                                <a href="{{ route('perijinan.form-builder', ['id' => $perijinan->id, 'tab' => $targetTab]) }}" 
+                                   class="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 flex items-center gap-1 bg-white dark:bg-gray-700 px-2 py-1 rounded border border-gray-100 dark:border-gray-600 shadow-sm">
+                                    <i class="mdi mdi-cog"></i> Atur
+                                </a>
+                            @endif
+                        </div>
+                        <div class="p-0">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead>
+                                        <tr class="bg-gray-50/50 dark:bg-gray-700/30 border-b border-gray-100 dark:border-gray-700">
+                                            <th class="px-6 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Field</th>
+                                            <th class="px-6 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Tipe</th>
+                                            <th class="px-6 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center">Wajib</th>
+                                            <th class="px-6 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Konfigurasi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                                        @php $fields = $groupedFields->get($type, collect()); @endphp
+                                        @forelse($fields as $field)
+                                            <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors">
+                                                <td class="px-6 py-4">
+                                                    <div class="text-sm font-bold text-gray-900 dark:text-white">{{ $field->label }}</div>
+                                                    <div class="text-[10px] font-mono text-gray-400 mt-0.5">name: {{ $field->name }}</div>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                                                        {{ strtoupper($field->type) }}
+                                                    </span>
+                                                </td>
+                                                <td class="px-6 py-4 text-center">
+                                                    @if($field->is_required)
+                                                        <i class="mdi mdi-check-circle text-green-500 text-lg"></i>
+                                                    @else
+                                                        <i class="mdi mdi-minus text-gray-300"></i>
+                                                    @endif
+                                                </td>
+                                                <td class="px-6 py-4 text-[11px] text-gray-500 dark:text-gray-400">
+                                                    @if($field->type == 'file')
+                                                        <div class="flex flex-col gap-0.5">
+                                                            <span class="flex items-center gap-1"><i class="mdi mdi-file-outline"></i> {{ $field->file_types ?: '*' }}</span>
+                                                            <span class="flex items-center gap-1"><i class="mdi mdi-weight-outline"></i> Max: {{ $field->max_file_size ? ($field->max_file_size/1024).'MB' : 'Def' }}</span>
+                                                        </div>
+                                                    @elseif(in_array($field->type, ['select', 'radio', 'checkbox']) && $field->options)
+                                                        <div class="flex flex-wrap gap-1 max-w-[200px]">
+                                                            @foreach($field->options as $option)
+                                                                <span class="bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded border border-gray-200 dark:border-gray-600">{{ $option }}</span>
+                                                            @endforeach
+                                                        </div>
+                                                    @else
+                                                        -
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="4" class="px-6 py-8 text-center">
+                                                    <div class="flex flex-col items-center">
+                                                        <i class="mdi mdi-file-document-outline text-3xl text-gray-300 mb-2"></i>
+                                                        <p class="text-xs text-gray-500 italic">Belum ada field di group ini.</p>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
+                @endif
+            @endforeach
         </div>
 
         <!-- Tab: Alur Validasi -->
@@ -241,9 +276,11 @@
                         <i class="mdi mdi-sitemap text-orange-500"></i>
                         Tahapan Alur Validasi
                     </h2>
-                    <a href="{{ route('perijinan.alur-validasi', $perijinan->id) }}" class="text-xs font-bold text-orange-600 hover:text-orange-700 dark:text-orange-400 flex items-center gap-1">
-                        <i class="mdi mdi-cog"></i> Kelola Alur
-                    </a>
+                    @if(auth()->user()->isAdmin())
+                        <a href="{{ route('perijinan.alur-validasi', $perijinan->id) }}" class="text-xs font-bold text-orange-600 hover:text-orange-700 dark:text-orange-400 flex items-center gap-1">
+                            <i class="mdi mdi-cog"></i> Kelola Alur
+                        </a>
+                    @endif
                 </div>
                 <div class="p-6">
                     <div class="relative">

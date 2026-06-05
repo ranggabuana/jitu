@@ -94,27 +94,29 @@
                                         <i class="mdi mdi-form-select"></i>
                                         <span>Formulir</span>
                                     </a>
-                                    <a href="{{ route('perijinan.alur-validasi', $perijinan->id) }}"
-                                        class="inline-flex items-center gap-1 bg-orange-600 hover:bg-orange-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors">
-                                        <i class="mdi mdi-sitemap"></i>
-                                        <span>Alur Validasi</span>
-                                    </a>
-                                    <a href="{{ route('perijinan.edit', $perijinan->id) }}"
-                                        class="inline-flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors">
-                                        <i class="mdi mdi-pencil"></i>
-                                        <span>Edit</span>
-                                    </a>
-                                    <form action="{{ route('perijinan.destroy', $perijinan->id) }}" method="POST"
-                                        class="delete-form">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="button"
-                                            class="inline-flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors btn-delete"
-                                            data-action="{{ route('perijinan.destroy', $perijinan->id) }}">
-                                            <i class="mdi mdi-delete"></i>
-                                            <span>Hapus</span>
-                                        </button>
-                                    </form>
+                                    @if(auth()->user()->isAdmin())
+                                        <a href="{{ route('perijinan.alur-validasi', $perijinan->id) }}"
+                                            class="inline-flex items-center gap-1 bg-orange-600 hover:bg-orange-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors">
+                                            <i class="mdi mdi-sitemap"></i>
+                                            <span>Alur Validasi</span>
+                                        </a>
+                                        <a href="{{ route('perijinan.edit', $perijinan->id) }}"
+                                            class="inline-flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors">
+                                            <i class="mdi mdi-pencil"></i>
+                                            <span>Edit</span>
+                                        </a>
+                                        <form action="{{ route('perijinan.destroy', $perijinan->id) }}" method="POST"
+                                            class="delete-form">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="button"
+                                                class="inline-flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors btn-delete"
+                                                data-action="{{ route('perijinan.destroy', $perijinan->id) }}">
+                                                <i class="mdi mdi-delete"></i>
+                                                <span>Hapus</span>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

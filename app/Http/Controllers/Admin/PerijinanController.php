@@ -36,6 +36,13 @@ class PerijinanController extends Controller
 
         $query = Perijinan::query();
 
+        // Apply access control for non-admin users (e.g. operator_opd)
+        $user = auth()->user();
+        if (!$user->isAdmin()) {
+            $accessibleIds = $user->getAccessiblePerijinanIds();
+            $query->whereIn('id', $accessibleIds);
+        }
+
         // Apply search filter
         if ($search) {
             $query->where('nama_perijinan', 'like', "%{$search}%")
@@ -61,6 +68,9 @@ class PerijinanController extends Controller
      */
     public function create()
     {
+        if (!auth()->user()->isAdmin()) {
+            return redirect()->route('perijinan.index')->with('error', 'Hanya Admin yang dapat menambah data perijinan.');
+        }
         return view('perijinan.create');
     }
 
@@ -69,6 +79,9 @@ class PerijinanController extends Controller
      */
     public function store(Request $request)
     {
+        if (!auth()->user()->isAdmin()) {
+            return redirect()->route('perijinan.index')->with('error', 'Hanya Admin yang dapat menambah data perijinan.');
+        }
         $request->validate([
             'nama_perijinan' => 'required|string|max:255',
             'opsi_perpanjangan' => 'nullable|in:setelah_habis,sebelum_habis,keduanya',
@@ -109,7 +122,7 @@ class PerijinanController extends Controller
         );
 
         return redirect()->route('perijinan.index')
-            ->with('success', 'Jenis Perijinan berhasil ditambahkan.');
+            ->with('success', 'Jenis perijinan berhasil ditambahkan.');
     }
 
     /**
@@ -117,6 +130,11 @@ class PerijinanController extends Controller
      */
     public function show(string $id)
     {
+        $user = auth()->user();
+        if (!$user->isAdmin() && !in_array($id, $user->getAccessiblePerijinanIds())) {
+            return redirect()->route('perijinan.index')->with('error', 'Anda tidak memiliki akses ke data perijinan ini.');
+        }
+
         $perijinan = Perijinan::with(['activeFormFields', 'validationFlows.assignedUser'])->findOrFail($id);
         return view('perijinan.show', compact('perijinan'));
     }
@@ -126,6 +144,11 @@ class PerijinanController extends Controller
      */
     public function formBuilder(string $id)
     {
+        $user = auth()->user();
+        if (!$user->isAdmin() && !in_array($id, $user->getAccessiblePerijinanIds())) {
+            return redirect()->route('perijinan.index')->with('error', 'Anda tidak memiliki akses ke form builder perijinan ini.');
+        }
+
         $perijinan = Perijinan::with('formFields')->findOrFail($id);
         return view('perijinan.form-builder', compact('perijinan'));
     }
@@ -139,6 +162,13 @@ class PerijinanController extends Controller
         $templateType = $request->input('template_type', 'rekom'); // 'rekom' or 'izin'
         $htmlContent = $request->input('template_content', '');
 
+        // Use real values from request (unsaved) or database (saved)
+        if ($templateType === 'izin') {
+            $realNumber = $request->input('next_nomor_izin') ?? $perijinan->next_nomor_izin ?? 1;
+        } else {
+            $realNumber = $request->input('next_nomor_rekom') ?? $perijinan->next_nomor_rekom ?? 1;
+        }
+
         // Dummy Data Replacements
         $replacements = [
             '[NAMA PEMOHON]' => 'Joko Susilo',
@@ -150,7 +180,7 @@ class PerijinanController extends Controller
             '[NAMA IZIN]' => $perijinan->nama_perijinan,
             '[TANGGAL]' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
             '[NO REGISTRASI]' => 'REG-' . date('Ymd') . '-12345',
-            '[NOMOR URUT]' => '123',
+            '[NOMOR URUT]' => $realNumber,
         ];
 
         // Derive Kode OPD from validation flow for preview
@@ -184,65 +214,57 @@ class PerijinanController extends Controller
             }
         }
 
-        $replacements['[NOMOR SURAT]'] = ($perijinan->kode_perijinan ?? 'KODE') . '/123/' . $kodeOpd . '/' . date('Y');
+        $replacements['[NOMOR SURAT]'] = ($perijinan->kode_perijinan ?? 'KODE') . '/' . $realNumber . '/' . $kodeOpd . '/' . date('Y');
 
         // [GAMBAR TTE]
         $gambarTte = \App\Models\Setting::get('gambar_tte');
         $tteHtml = '<div style="width: 100px; height: 100px; border: 1px dashed #ccc; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; color: #999;">[QR CODE TTE]</div>';
         if ($gambarTte && \Illuminate\Support\Facades\File::exists(public_path($gambarTte))) {
             $imageData = base64_encode(\Illuminate\Support\Facades\File::get(public_path($gambarTte)));
-            $mime = \Illuminate\Support\Facades\File::mimeType(public_path($gambarTte));
-            $src = 'data:' . $mime . ';base64,' . $imageData;
-            $tteHtml = '<img src="' . $src . '" style="max-width: 150px; max-height: 150px;" alt="TTE" />';
+            $tteHtml = '<img src="data:image/png;base64,' . $imageData . '" style="width: 100px; height: 100px; object-fit: contain;">';
         }
         $replacements['[GAMBAR TTE]'] = $tteHtml;
 
         // [LOGO KABUPATEN]
-        $logoKabupaten = \App\Models\Setting::get('logo_kabupaten');
-        $logoKabHtml = '<div style="width: 80px; height: 80px; border: 1px dashed #ccc; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; color: #999;">[LOGO KAB]</div>';
-        if ($logoKabupaten && \Illuminate\Support\Facades\File::exists(public_path($logoKabupaten))) {
-            $imageData = base64_encode(\Illuminate\Support\Facades\File::get(public_path($logoKabupaten)));
-            $mime = \Illuminate\Support\Facades\File::mimeType(public_path($logoKabupaten));
-            $src = 'data:' . $mime . ';base64,' . $imageData;
-            $logoKabHtml = '<img src="' . $src . '" style="max-height: 90px; width: auto;" alt="Logo Kabupaten" />';
+        $logoKab = \App\Models\Setting::get('logo_kabupaten');
+        $logoHtml = '<div style="width: 80px; height: 100px; border: 1px dashed #ccc; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; color: #999;">[LOGO KAB]</div>';
+        if ($logoKab && \Illuminate\Support\Facades\File::exists(public_path($logoKab))) {
+            $imageData = base64_encode(\Illuminate\Support\Facades\File::get(public_path($logoKab)));
+            $logoHtml = '<img src="data:image/png;base64,' . $imageData . '" style="width: 80px; height: auto; object-fit: contain;">';
         }
-        $replacements['[LOGO KABUPATEN]'] = $logoKabHtml;
+        $replacements['[LOGO KABUPATEN]'] = $logoHtml;
 
-        // Dynamic Form Fields Dummy
-        foreach ($perijinan->formFields as $field) {
-            $replacements['[' . strtoupper($field->name) . ']'] = '[Contoh ' . $field->label . ']';
+        // Add dynamic form field placeholders
+        $formFields = $perijinan->activeFormFields()->where('form_type', $templateType)->get();
+        foreach ($formFields as $field) {
+            $placeholder = '[' . strtoupper($field->name) . ']';
+            $replacements[$placeholder] = 'DUMMY_' . strtoupper($field->name);
         }
 
-        // Global fix for checkmarks [x] or [v] or ✓
-        $checkmarkHtml = '<span class="checkmark">&#10003;</span>';
-        $htmlContent = str_replace(['[x]', '[v]', '[V]', '✓'], $checkmarkHtml, $htmlContent);
-
-        // Handle Page Breaks
-        $htmlContent = str_replace('<!-- pagebreak -->', '<div class="page-break"></div>', $htmlContent);
+        // Global form fields also available
+        $globalFields = $perijinan->activeFormFields()->where('form_type', 'global')->get();
+        foreach ($globalFields as $field) {
+            $placeholder = '[' . strtoupper($field->name) . ']';
+            if (!isset($replacements[$placeholder])) {
+                $replacements[$placeholder] = 'DUMMY_GLOBAL_' . strtoupper($field->name);
+            }
+        }
 
         // Replace placeholders
-        $htmlContent = str_replace(
+        $previewHtml = str_replace(
             array_keys($replacements),
             array_values($replacements),
             $htmlContent
         );
 
-        $fullHtml = \App\Services\DocumentGenerator::wrapHtmlTemplate($htmlContent, $templateType, 'PREVIEW');
+        // Fix for Tinymce pagebreaks in preview
+        $previewHtml = str_replace('<!-- pagebreak -->', '<div style="page-break-after: always; border-top: 1px dashed #ccc; margin: 20px 0; position: relative;"><span style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #eee; padding: 0 10px; font-size: 10px; color: #666;">PAGE BREAK</span></div>', $previewHtml);
 
-        if (class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($fullHtml)
-                ->setPaper('a4', 'portrait')
-                ->setWarnings(false)
-                ->setOptions([
-                    'isRemoteEnabled' => true,
-                    'isHtml5ParserEnabled' => true,
-                    'isFontSubsettingEnabled' => true,
-                    'defaultFont' => 'DejaVu Sans',
-                ]);
-            return $pdf->stream('Pratinjau_' . ucfirst($templateType) . '.pdf');
-        }
+        // Generate PDF for preview
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($previewHtml);
+        $pdf->setPaper('a4', 'portrait');
 
-        return response($fullHtml);
+        return $pdf->stream('preview.pdf');
     }
 
     /**
@@ -251,6 +273,14 @@ class PerijinanController extends Controller
     public function storeFormField(Request $request, string $id)
     {
         $perijinan = Perijinan::findOrFail($id);
+        $user = auth()->user();
+
+        // Access Control: Operator OPD can only add 'rekom' fields
+        if (!$user->isAdmin()) {
+            if ($request->input('form_type') !== 'rekom') {
+                return redirect()->back()->with('error', 'Anda hanya memiliki akses untuk mengelola field Formulir Rekomendasi.');
+            }
+        }
 
         $validated = $request->validate([
             'form_type' => 'nullable|in:global,rekom,izin',
@@ -289,13 +319,14 @@ class PerijinanController extends Controller
             [
                 'field_label' => $validated['label'],
                 'field_type' => $validated['type'],
-                'field_name' => $validated['name']
+                'form_type' => $validated['form_type']
             ],
             'perijinan_form'
         );
 
         return redirect()->route('perijinan.form-builder', $id)
-            ->with('success', 'Field formulir berhasil ditambahkan.');
+            ->with('success', 'Field formulir berhasil ditambahkan.')
+            ->with('active_tab', $validated['form_type']);
     }
 
     /**
@@ -305,6 +336,14 @@ class PerijinanController extends Controller
     {
         $perijinan = Perijinan::findOrFail($perijinanId);
         $field = PerijinanFormField::where('perijinan_id', $perijinan->id)->findOrFail($fieldId);
+        $user = auth()->user();
+
+        // Access Control: Operator OPD can only update 'rekom' fields
+        if (!$user->isAdmin()) {
+            if ($field->form_type !== 'rekom' || $request->input('form_type') !== 'rekom') {
+                return redirect()->back()->with('error', 'Anda hanya memiliki akses untuk mengelola field Formulir Rekomendasi.');
+            }
+        }
 
         $validated = $request->validate([
             'form_type' => 'nullable|in:global,rekom,izin',
@@ -348,7 +387,8 @@ class PerijinanController extends Controller
         );
 
         return redirect()->route('perijinan.form-builder', $perijinanId)
-            ->with('success', 'Field formulir berhasil diperbarui.');
+            ->with('success', 'Field formulir berhasil diperbarui.')
+            ->with('active_tab', $field->form_type);
     }
 
     /**
@@ -358,29 +398,34 @@ class PerijinanController extends Controller
     {
         $perijinan = Perijinan::findOrFail($perijinanId);
         $field = PerijinanFormField::where('perijinan_id', $perijinan->id)->findOrFail($fieldId);
-        
+        $user = auth()->user();
+
+        // Access Control: Operator OPD can only delete 'rekom' fields    
+        if (!$user->isAdmin()) {
+            if ($field->form_type !== 'rekom') {
+                return redirect()->back()->with('error', 'Anda hanya memiliki akses untuk menghapus field Formulir Rekomendasi.');
+            }
+        }
+
         // Log activity before delete
         ActivityLog::log(
             'Menghapus field formulir',
             $perijinan,
             'deleted',
-            [
-                'field_id' => $field->id,
-                'field_label' => $field->label,
-                'field_type' => $field->type,
-                'data' => $field->toArray()
-            ],
+            ['field' => $field->toArray()],
             'perijinan_form'
         );
-        
+
+        $formType = $field->form_type;
         $field->delete();
 
         return redirect()->route('perijinan.form-builder', $perijinanId)
-            ->with('success', 'Field formulir berhasil dihapus.');
+            ->with('success', 'Field formulir berhasil dihapus.')
+            ->with('active_tab', $formType);
     }
 
     /**
-     * Reorder form fields.
+     * Reorder form fields via AJAX.
      */
     public function reorderFormFields(Request $request, string $id)
     {
@@ -388,7 +433,7 @@ class PerijinanController extends Controller
 
         $validated = $request->validate([
             'field_ids' => 'required|array',
-            'field_ids.*' => 'exists:perijinan_form_fields,id',
+            'field_ids.*' => 'required|exists:perijinan_form_fields,id'
         ]);
 
         DB::transaction(function () use ($perijinan, $validated) {
@@ -419,6 +464,11 @@ class PerijinanController extends Controller
      */
     public function alurValidasi(string $id)
     {
+        $user = auth()->user();
+        if (!$user->isAdmin()) {
+            return redirect()->route('perijinan.index')->with('error', 'Hanya Admin yang dapat mengelola alur validasi.');
+        }
+        
         $perijinan = Perijinan::with([
             'validationFlows' => function ($q) {
                 $q->orderBy('order');
@@ -432,209 +482,132 @@ class PerijinanController extends Controller
         $kepalaOpdUsers = PerijinanValidationFlow::getUsersByRole('kepala_opd');
         $verifikatorUsers = PerijinanValidationFlow::getUsersByRole('verifikator');
         $kadinUsers = PerijinanValidationFlow::getUsersByRole('kadin');
-        return view('perijinan.alur-validasi', compact('perijinan', 'availableRoles', 'foUsers', 'boUsers', 'operatorOpdUsers', 'kepalaOpdUsers', 'verifikatorUsers', 'kadinUsers'));
+
+        return view('perijinan.alur-validasi', compact(
+            'perijinan',
+            'availableRoles',
+            'foUsers',
+            'boUsers',
+            'operatorOpdUsers',
+            'kepalaOpdUsers',
+            'verifikatorUsers',
+            'kadinUsers'
+        ));
     }
 
     /**
-     * Store a validation flow step.
+     * Store validation flow.
      */
     public function storeValidationFlow(Request $request, string $id)
     {
+        if (!auth()->user()->isAdmin()) {
+            return redirect()->route('perijinan.index')->with('error', 'Hanya Admin yang dapat mengelola alur validasi.');
+        }
         $perijinan = Perijinan::findOrFail($id);
 
         $validated = $request->validate([
             'role' => 'required|string|in:fo,bo,operator_opd,kepala_opd,verifikator,kadin',
             'assigned_user_id' => 'nullable|exists:users,id',
-            'order' => 'required|integer|min:1',
-            'is_active' => 'boolean',
-            'description' => 'nullable|string|max:500',
-            'sla_hours' => 'nullable|integer|min:1|max:720',
+            'description' => 'nullable|string',
+            'sla_hours' => 'nullable|integer|min:1',
+            'order' => 'integer'
         ]);
 
         $validated['perijinan_id'] = $perijinan->id;
-        $validated['is_active'] = $request->has('is_active');
-
-        // Validate assigned user for OPD roles
-        if (PerijinanValidationFlow::requiresUserAssignment($validated['role'])) {
-            if (empty($validated['assigned_user_id'])) {
-                return redirect()->route('perijinan.alur-validasi', $id)
-                    ->with('error', 'Harap pilih user untuk role ini.');
-            }
-
-            // Verify user has the correct role
-            $user = User::find($validated['assigned_user_id']);
-            if ($user && $user->role !== $validated['role']) {
-                return redirect()->route('perijinan.alur-validasi', $id)
-                    ->with('error', 'User yang dipilih tidak memiliki role yang sesuai.');
-            }
-        } else {
-            $validated['assigned_user_id'] = null;
-        }
-
-        // Allow multiple instances of the same role for different users
-        // No duplicate check needed - multiple users can have the same role
+        $validated['order'] = $request->input('order', $perijinan->validationFlows()->count() + 1);
 
         PerijinanValidationFlow::create($validated);
 
         // Log activity
         ActivityLog::log(
-            'Menambah tahap validasi baru',
+            'Menambah alur validasi baru',
             $perijinan,
             'created',
-            [
-                'role' => $validated['role'],
-                'order' => $validated['order'],
-                'assigned_user_id' => $validated['assigned_user_id'],
-                'sla_hours' => $validated['sla_hours']
-            ],
+            ['role' => $validated['role']],
             'perijinan_validation'
         );
 
         return redirect()->route('perijinan.alur-validasi', $id)
-            ->with('success', 'Tahap validasi berhasil ditambahkan.');
+            ->with('success', 'Alur validasi berhasil ditambahkan.');
     }
 
     /**
-     * Update a validation flow step.
+     * Update validation flow.
      */
     public function updateValidationFlow(Request $request, string $perijinanId, string $flowId)
     {
-        try {
-            $perijinan = Perijinan::findOrFail($perijinanId);
-            $flow = PerijinanValidationFlow::where('perijinan_id', $perijinan->id)->findOrFail($flowId);
-
-            $validated = $request->validate([
-                'role' => 'required|string|in:fo,bo,operator_opd,kepala_opd,verifikator,kadin',
-                'assigned_user_id' => 'nullable|exists:users,id',
-                'order' => 'nullable|integer|min:1',
-                'is_active' => 'boolean',
-                'description' => 'nullable|string|max:500',
-                'sla_hours' => 'nullable|integer|min:1|max:720',
-            ]);
-
-            $validated['is_active'] = $request->has('is_active');
-
-            // Keep existing order if not provided
-            if (!isset($validated['order'])) {
-                $validated['order'] = $flow->order;
-            }
-
-            // Validate assigned user for OPD roles
-            if (PerijinanValidationFlow::requiresUserAssignment($validated['role'])) {
-                if (empty($validated['assigned_user_id'])) {
-                    if ($request->expectsJson()) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Harap pilih user untuk role ini.'
-                        ], 422);
-                    }
-                    return redirect()->route('perijinan.alur-validasi', $perijinanId)
-                        ->with('error', 'Harap pilih user untuk role ini.');
-                }
-
-                // Verify user has the correct role
-                $user = User::find($validated['assigned_user_id']);
-                if ($user && $user->role !== $validated['role']) {
-                    if ($request->expectsJson()) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'User yang dipilih tidak memiliki role yang sesuai.'
-                        ], 422);
-                    }
-                    return redirect()->route('perijinan.alur-validasi', $perijinanId)
-                        ->with('error', 'User yang dipilih tidak memiliki role yang sesuai.');
-                }
-            } else {
-                $validated['assigned_user_id'] = null;
-            }
-
-            $flow->update($validated);
-
-            // Log activity
-            ActivityLog::log(
-                'Mengupdate tahap validasi',
-                $perijinan,
-                'updated',
-                [
-                    'flow_id' => $flow->id,
-                    'role' => $validated['role'],
-                    'order' => $validated['order'],
-                    'old' => $flow->toArray(),
-                    'new' => $validated
-                ],
-                'perijinan_validation'
-            );
-
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Tahap validasi berhasil diperbarui.'
-                ]);
-            }
-
-            return redirect()->route('perijinan.alur-validasi', $perijinanId)
-                ->with('success', 'Tahap validasi berhasil diperbarui.');
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $e->getMessage(),
-                    'errors' => $e->errors()
-                ], 422);
-            }
-            throw $e;
-        } catch (\Exception $e) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Terjadi kesalahan: ' . $e->getMessage()
-                ], 500);
-            }
-            throw $e;
+        if (!auth()->user()->isAdmin()) {
+            return redirect()->route('perijinan.index')->with('error', 'Hanya Admin yang dapat mengelola alur validasi.');
         }
+        $perijinan = Perijinan::findOrFail($perijinanId);
+        $flow = PerijinanValidationFlow::where('perijinan_id', $perijinan->id)->findOrFail($flowId);
+
+        $validated = $request->validate([
+            'role' => 'required|string|in:fo,bo,operator_opd,kepala_opd,verifikator,kadin',
+            'assigned_user_id' => 'nullable|exists:users,id',
+            'description' => 'nullable|string',
+            'sla_hours' => 'nullable|integer|min:1',
+            'is_active' => 'boolean'
+        ]);
+
+        $validated['is_active'] = $request->has('is_active');
+        $flow->update($validated);
+
+        // Log activity
+        ActivityLog::log(
+            'Mengupdate alur validasi',
+            $perijinan,
+            'updated',
+            ['role' => $validated['role']],
+            'perijinan_validation'
+        );
+
+        return redirect()->route('perijinan.alur-validasi', $perijinanId)
+            ->with('success', 'Alur validasi berhasil diperbarui.');
     }
 
     /**
-     * Delete a validation flow step.
+     * Delete validation flow.
      */
     public function deleteValidationFlow(string $perijinanId, string $flowId)
     {
+        if (!auth()->user()->isAdmin()) {
+            return redirect()->route('perijinan.index')->with('error', 'Hanya Admin yang dapat mengelola alur validasi.');
+        }
         $perijinan = Perijinan::findOrFail($perijinanId);
         $flow = PerijinanValidationFlow::where('perijinan_id', $perijinan->id)->findOrFail($flowId);
-        
+
         // Log activity before delete
         ActivityLog::log(
-            'Menghapus tahap validasi',
+            'Menghapus alur validasi',
             $perijinan,
             'deleted',
-            [
-                'flow_id' => $flow->id,
-                'role' => $flow->role,
-                'order' => $flow->order,
-                'data' => $flow->toArray()
-            ],
+            ['role' => $flow->role],
             'perijinan_validation'
         );
-        
+
         $flow->delete();
 
         return redirect()->route('perijinan.alur-validasi', $perijinanId)
-            ->with('success', 'Tahap validasi berhasil dihapus.');
+            ->with('success', 'Alur validasi berhasil dihapus.');
     }
 
     /**
-     * Reorder validation flows.
+     * Reorder validation flows via AJAX.
      */
     public function reorderValidationFlows(Request $request, string $id)
     {
+        if (!auth()->user()->isAdmin()) {
+            return response()->json(['success' => false, 'message' => 'Hanya Admin yang dapat mengelola alur validasi.'], 403);
+        }
         $perijinan = Perijinan::findOrFail($id);
 
         $validated = $request->validate([
             'flow_ids' => 'required|array',
-            'flow_ids.*' => 'exists:perijinan_validation_flows,id',
+            'flow_ids.*' => 'required|exists:perijinan_validation_flows,id'
         ]);
 
-        DB::transaction(function () use ($validated, $perijinan) {
+        DB::transaction(function () use ($perijinan, $validated) {
             foreach ($validated['flow_ids'] as $index => $flowId) {
                 PerijinanValidationFlow::where('id', $flowId)
                     ->where('perijinan_id', $perijinan->id)
@@ -644,13 +617,10 @@ class PerijinanController extends Controller
 
         // Log activity
         ActivityLog::log(
-            'Mengurutkan ulang tahap validasi',
+            'Mengurutkan ulang alur validasi',
             $perijinan,
             'updated',
-            [
-                'flow_ids' => $validated['flow_ids'],
-                'total_flows' => count($validated['flow_ids'])
-            ],
+            ['total_flows' => count($validated['flow_ids'])],
             'perijinan_validation'
         );
 
@@ -662,6 +632,9 @@ class PerijinanController extends Controller
      */
     public function edit(string $id)
     {
+        if (!auth()->user()->isAdmin()) {
+            return redirect()->route('perijinan.index')->with('error', 'Hanya Admin yang dapat mengubah data perijinan.');
+        }
         $perijinan = Perijinan::findOrFail($id);
         return view('perijinan.edit', compact('perijinan'));
     }
@@ -671,6 +644,9 @@ class PerijinanController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        if (!auth()->user()->isAdmin()) {
+            return redirect()->route('perijinan.index')->with('error', 'Hanya Admin yang dapat mengubah data perijinan.');
+        }
         $request->validate([
             'kode_perijinan' => 'nullable|string|max:50|unique:perijinan,kode_perijinan,' . $id,
             'nama_perijinan' => 'required|string|max:255',
@@ -684,8 +660,6 @@ class PerijinanController extends Controller
         ]);
 
         $perijinan = Perijinan::findOrFail($id);
-        $oldData = $perijinan->toArray();
-
         $data = $request->all();
 
         // Handle gambar_alur upload
@@ -693,7 +667,6 @@ class PerijinanController extends Controller
             $gambarAlur = $request->file('gambar_alur');
             $gambarAlurName = time() . '_alur_' . str_replace(' ', '_', $request->nama_perijinan) . '.' . $gambarAlur->getClientOriginalExtension();
             
-            // Ensure directory exists
             $uploadPath = public_path('uploads/data-perijinan');
             if (!file_exists($uploadPath)) {
                 mkdir($uploadPath, 0755, true);
@@ -701,7 +674,7 @@ class PerijinanController extends Controller
             
             // Delete old image if exists
             if ($perijinan->gambar_alur && file_exists(public_path($perijinan->gambar_alur))) {
-                unlink(public_path($perijinan->gambar_alur));
+                @unlink(public_path($perijinan->gambar_alur));
             }
             
             $gambarAlur->move($uploadPath, $gambarAlurName);
@@ -712,13 +685,10 @@ class PerijinanController extends Controller
 
         // Log activity
         ActivityLog::log(
-            'Mengupdate data jenis perijinan',
+            'Mengupdate jenis perijinan',
             $perijinan,
             'updated',
-            [
-                'old' => $oldData,
-                'new' => $request->all()
-            ],
+            ['data' => $request->all()],
             'perijinan'
         );
 
@@ -731,6 +701,9 @@ class PerijinanController extends Controller
      */
     public function destroy(string $id)
     {
+        if (!auth()->user()->isAdmin()) {
+            return redirect()->route('perijinan.index')->with('error', 'Hanya Admin yang dapat menghapus data perijinan.');
+        }
         $perijinan = Perijinan::findOrFail($id);
 
         // Log activity
@@ -745,7 +718,7 @@ class PerijinanController extends Controller
         $perijinan->delete();
 
         return redirect()->route('perijinan.index')
-            ->with('success', 'Jenis Perijinan berhasil dihapus.');
+            ->with('success', 'Jenis perijinan berhasil dihapus.');
     }
 
     /**
@@ -754,6 +727,7 @@ class PerijinanController extends Controller
     public function updateTemplates(Request $request, string $id)
     {
         $perijinan = Perijinan::findOrFail($id);
+        $user = auth()->user();
 
         $request->validate([
             'template_pernyataan' => 'nullable|string',
@@ -765,30 +739,44 @@ class PerijinanController extends Controller
             'next_nomor_izin' => 'nullable|integer',
         ]);
 
-        $perijinan->update([
-            'template_pernyataan' => $request->template_pernyataan ?? $perijinan->template_pernyataan,
-            'template_permohonan' => $request->template_permohonan ?? $perijinan->template_permohonan,
-            'template_keabsahan' => $request->template_keabsahan ?? $perijinan->template_keabsahan,
-            'template_surat_rekom' => $request->has('template_surat_rekom') ? $request->template_surat_rekom : $perijinan->template_surat_rekom,
-            'template_surat_izin' => $request->has('template_surat_izin') ? $request->template_surat_izin : $perijinan->template_surat_izin,
-            'next_nomor_rekom' => $request->next_nomor_rekom ?? $perijinan->next_nomor_rekom,
-            'next_nomor_izin' => $request->next_nomor_izin ?? $perijinan->next_nomor_izin,
-        ]);
+        $updateData = [];
 
-        // Log activity
-        \App\Models\ActivityLog::log(
-            'Memperbarui template surat perijinan',
-            $perijinan,
-            'updated',
-            [
-                'template_pernyataan' => !empty($request->template_pernyataan) ? 'Updated' : 'Empty',
-                'template_permohonan' => !empty($request->template_permohonan) ? 'Updated' : 'Empty',
-                'template_keabsahan' => !empty($request->template_keabsahan) ? 'Updated' : 'Empty',
-                'template_surat_rekom' => !empty($request->template_surat_rekom) ? 'Updated' : 'Empty',
-                'template_surat_izin' => !empty($request->template_surat_izin) ? 'Updated' : 'Empty',
-            ],
-            'perijinan'
-        );
+        // Check and prepare data based on permissions
+        if ($user->isAdmin()) {
+            // Admin can update everything
+            if ($request->has('template_pernyataan')) $updateData['template_pernyataan'] = $request->template_pernyataan;
+            if ($request->has('template_permohonan')) $updateData['template_permohonan'] = $request->template_permohonan;
+            if ($request->has('template_keabsahan')) $updateData['template_keabsahan'] = $request->template_keabsahan;
+            if ($request->has('template_surat_rekom')) $updateData['template_surat_rekom'] = $request->template_surat_rekom;
+            if ($request->has('template_surat_izin')) $updateData['template_surat_izin'] = $request->template_surat_izin;
+            if ($request->has('next_nomor_rekom')) $updateData['next_nomor_rekom'] = $request->next_nomor_rekom;
+            if ($request->has('next_nomor_izin')) $updateData['next_nomor_izin'] = $request->next_nomor_izin;
+        } else {
+            // Operator OPD restricted to Rekom only
+            // If they try to change other things, block it
+            $restrictedFields = ['template_surat_izin', 'next_nomor_izin', 'template_pernyataan', 'template_permohonan', 'template_keabsahan'];
+            foreach ($restrictedFields as $field) {
+                if ($request->has($field) && $request->get($field) !== null && $request->get($field) != $perijinan->$field) {
+                    return redirect()->back()->with('error', 'Anda hanya memiliki akses untuk memperbarui Template Rekomendasi.');
+                }
+            }
+
+            if ($request->has('template_surat_rekom')) $updateData['template_surat_rekom'] = $request->template_surat_rekom;
+            if ($request->has('next_nomor_rekom')) $updateData['next_nomor_rekom'] = $request->next_nomor_rekom;
+        }
+
+        if (!empty($updateData)) {
+            $perijinan->update($updateData);
+
+            // Log activity
+            ActivityLog::log(
+                'Memperbarui template surat perijinan',
+                $perijinan,
+                'updated',
+                array_map(fn($val) => !empty($val) ? 'Updated' : 'Empty', $updateData),
+                'perijinan'
+            );
+        }
 
         return back()
             ->with('success', 'Template surat berhasil diperbarui.')
