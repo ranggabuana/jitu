@@ -17,7 +17,7 @@ class DocumentGenerator
      * @param DataPerijinan $application
      * @return array Array of paths for [pernyataan, permohonan, keabsahan]
      */
-    public static function generateDocuments(DataPerijinan $application): array
+    public static function generateDocuments(DataPerijinan $application, $targetOpdId = null): array
     {
         $perijinan = $application->perijinan;
         $user = $application->user;
@@ -48,7 +48,7 @@ class DocumentGenerator
         }
 
         // 2. Prepare Replacements Map
-        $replacements = [
+        $baseReplacements = [
             '[NAMA PEMOHON]' => $user->name ?? '-',
             '[NIK]' => $user->nip ?? '-',
             '[ALAMAT LENGKAP]' => $fullAlamat ?: '-',
@@ -88,11 +88,6 @@ class DocumentGenerator
                 'default_method' => 'getDefaultKeabsahanTemplate',
                 'filename' => 'Surat_Keabsahan_' . $safeNoRegistrasi,
             ],
-            'rekom' => [
-                'template_field' => 'template_surat_rekom',
-                'default_method' => 'getDefaultSuratRekomTemplate',
-                'filename' => 'Surat_Rekomendasi_' . $safeNoRegistrasi,
-            ],
             'izin' => [
                 'template_field' => 'template_surat_izin',
                 'default_method' => 'getDefaultSuratIzinTemplate',
@@ -104,13 +99,12 @@ class DocumentGenerator
         $gambarTte = \App\Models\Setting::get('gambar_tte');
         $tteHtml = '';
         if ($gambarTte && File::exists(public_path($gambarTte))) {
-            // Using base64 to ensure it renders correctly in DOMPDF without path issues
             $imageData = base64_encode(File::get(public_path($gambarTte)));
             $mime = File::mimeType(public_path($gambarTte));
             $src = 'data:' . $mime . ';base64,' . $imageData;
             $tteHtml = '<img src="' . $src . '" style="max-width: 150px; max-height: 150px;" alt="TTE" />';
         }
-        $replacements['[GAMBAR TTE]'] = $tteHtml;
+        $baseReplacements['[GAMBAR TTE]'] = $tteHtml;
 
         $logoKabupaten = \App\Models\Setting::get('logo_kabupaten');
         $logoKabHtml = '';
@@ -120,14 +114,10 @@ class DocumentGenerator
             $src = 'data:' . $mime . ';base64,' . $imageData;
             $logoKabHtml = '<img src="' . $src . '" style="max-height: 110px; width: auto;" alt="Logo Kabupaten" />';
         }
-        $replacements['[LOGO KABUPATEN]'] = $logoKabHtml;
+        $baseReplacements['[LOGO KABUPATEN]'] = $logoKabHtml;
         
-        // Context-specific replacements to avoid data collision
+        // 5. Build Applicant Data Map (Global Form)
         $applicantReplacements = [];
-        $rekomReplacements = [];
-        $izinReplacements = [];
-
-        // 1. Build Applicant Data Map
         if (!empty($application->form_data) && is_array($application->form_data)) {
             foreach ($application->form_data as $fieldId => $value) {
                 if (!is_array($value)) {
@@ -140,9 +130,50 @@ class DocumentGenerator
             }
         }
 
-        // 2. Build Rekom Data Map
-        if (!empty($application->rekom_data) && is_array($application->rekom_data)) {
-            foreach ($application->rekom_data as $key => $value) {
+        // 6. Handle Recommendation Documents (The Complex Part)
+        $rekomList = [];
+        if ($perijinan->is_multi_opd) {
+            // Multi OPD: Get all OPDs involved in the validation flow
+            $involvedOpds = $perijinan->activeValidationFlows()
+                ->whereIn('role', ['operator_opd', 'kepala_opd'])
+                ->whereNotNull('assigned_user_id')
+                ->with('assignedUser.opd')
+                ->get()
+                ->pluck('assignedUser.opd')
+                ->filter()
+                ->unique('id');
+
+            foreach ($involvedOpds as $opd) {
+                // Only generate for target OPD if specified, otherwise generate all that have data
+                if ($targetOpdId && $opd->id != $targetOpdId) continue;
+                
+                $opdRekomData = $application->rekom_data_multi[$opd->id] ?? null;
+                if (!$opdRekomData && !$targetOpdId) continue;
+
+                $rekomList[] = [
+                    'opd' => $opd,
+                    'data' => $opdRekomData ?? [],
+                    'filename' => 'Surat_Rekomendasi_' . Str::slug($opd->nama_opd, '_') . '_' . $safeNoRegistrasi,
+                ];
+            }
+        } else {
+            // Single OPD: Just standard rekom
+            $rekomList[] = [
+                'opd' => null,
+                'data' => $application->rekom_data ?? [],
+                'filename' => 'Surat_Rekomendasi_' . $safeNoRegistrasi,
+            ];
+        }
+
+        // Generate Recommendation Documents
+        $fileRekomMulti = $application->file_rekom_multi ?? [];
+        foreach ($rekomList as $rekomItem) {
+            $opd = $rekomItem['opd'];
+            $rekomData = $rekomItem['data'];
+            $filename = $rekomItem['filename'];
+
+            $rekomReplacements = [];
+            foreach ($rekomData as $key => $value) {
                 if (!is_array($value)) {
                     $rekomReplacements['[' . strtoupper($key) . ']'] = $value;
                     $field = $perijinan->activeFormFields->where('form_type', 'rekom')->firstWhere('name', $key);
@@ -151,125 +182,117 @@ class DocumentGenerator
                     }
                 }
             }
-        }
 
-        // 3. Build Izin Data Map
-        if (!empty($application->izin_data) && is_array($application->izin_data)) {
-            foreach ($application->izin_data as $key => $value) {
-                if (!is_array($value)) {
-                    $izinReplacements['[' . strtoupper($key) . ']'] = $value;
-                    $field = $perijinan->activeFormFields->where('form_type', 'izin')->firstWhere('name', $key);
-                    if ($field) {
-                        $izinReplacements['[' . strtoupper($field->label) . ']'] = $value;
-                    }
-                }
+            $finalReplacements = array_merge($baseReplacements, $applicantReplacements, $rekomReplacements);
+            $kodePerijinan = $perijinan->kode_perijinan ?? 'PER';
+            $noUrut = $application->no_rekom ?? $perijinan->next_nomor_rekom ?? '-';
+            $kodeOpd = $opd ? ($opd->kode_opd ?? 'OPD') : ($application->no_rekom_kode ?? 'OPD');
+            $tahun = now()->year;
+
+            $finalReplacements['[NOMOR URUT]'] = $noUrut;
+            $finalReplacements['[NOMOR SURAT]'] = "{$kodePerijinan}/{$noUrut}/{$kodeOpd}/{$tahun}";
+
+            $rawTemplate = $perijinan->template_surat_rekom ?? \App\Models\Setting::get('template_rekom');
+            if (empty(trim(strip_tags($rawTemplate ?? '')))) {
+                $rawTemplate = self::getDefaultSuratRekomTemplate();
+            }
+
+            $path = self::renderAndSave($rawTemplate, $finalReplacements, $filename, $folderPath, $absoluteFolder, $application->no_registrasi);
+            
+            if ($opd) {
+                $fileRekomMulti[$opd->id] = $path;
+                // If it's multi-OPD, we also set the main file_rekom to the latest one generated
+                $generatedPaths['file_rekom'] = $path;
+            } else {
+                $generatedPaths['file_rekom'] = $path;
             }
         }
+        if ($perijinan->is_multi_opd) {
+            $generatedPaths['file_rekom_multi'] = $fileRekomMulti;
+        }
 
+        // 7. Generate Other Documents (Pernyataan, Permohonan, Keabsahan, Izin)
         foreach ($documentTypes as $type => $config) {
-            // Get raw template from perijinan first, then fallback to global settings, then default
             $rawTemplate = $perijinan->{$config['template_field']} ?? \App\Models\Setting::get('template_' . $type);
-            
             if (empty(trim(strip_tags($rawTemplate ?? '')))) {
                 $rawTemplate = self::{$config['default_method']}();
             }
 
-            // Assemble document-specific replacements
-            $finalReplacements = $replacements; // Start with base (NAMA, NIK, etc)
-            $finalReplacements = array_merge($finalReplacements, $applicantReplacements); // Add Global Form data
-
-            $kodePerijinan = $perijinan->kode_perijinan ?? 'PER';
-            $tahun = now()->year;
-
-            if ($type === 'rekom') {
-                // For Rekom document: merge Rekom data (overrides global if same name)
-                $finalReplacements = array_merge($finalReplacements, $rekomReplacements);
-                $noUrut = $application->no_rekom ?? $perijinan->next_nomor_rekom ?? '-';
-
-                // Derive Kode OPD for Rekom
-                $kodeOpd = $application->no_rekom_kode;
-                if (!$kodeOpd) {
-                    $validationFlowWithOpd = $perijinan->activeValidationFlows()  
-                        ->whereIn('role', ['operator_opd', 'kepala_opd'])     
-                        ->whereNotNull('assigned_user_id')
-                        ->with('assignedUser.opd')
-                        ->get()
-                        ->first(function($flow) {
-                            return $flow->assignedUser && $flow->assignedUser->opd;
-                        });
-                    $kodeOpd = $validationFlowWithOpd->assignedUser->opd->kode_opd ?? 'OPD';
+            $dataReplacements = [];
+            if ($type === 'izin') {
+                if (!empty($application->izin_data) && is_array($application->izin_data)) {
+                    foreach ($application->izin_data as $key => $value) {
+                        if (!is_array($value)) {
+                            $dataReplacements['[' . strtoupper($key) . ']'] = $value;
+                            $field = $perijinan->activeFormFields->where('form_type', 'izin')->firstWhere('name', $key);
+                            if ($field) {
+                                $dataReplacements['[' . strtoupper($field->label) . ']'] = $value;
+                            }
+                        }
+                    }
                 }
+            }
 
-                $finalReplacements['[NOMOR URUT]'] = $noUrut;
-                $finalReplacements['[NOMOR SURAT]'] = "{$kodePerijinan}/{$noUrut}/{$kodeOpd}/{$tahun}";
-            } elseif ($type === 'izin') {
-                // For Izin document: merge Izin data (overrides global if same name)
-                $finalReplacements = array_merge($finalReplacements, $izinReplacements);
+            $finalReplacements = array_merge($baseReplacements, $applicantReplacements, $dataReplacements);
+            
+            if ($type === 'izin') {
+                $kodePerijinan = $perijinan->kode_perijinan ?? 'PER';
                 $noUrut = $application->no_izin ?? $perijinan->next_nomor_izin ?? '-';
-
-                // Derive Kode OPD for Izin
-                $kodeOpd = $application->no_izin_kode;
-                if (!$kodeOpd) {
-                    $kodeOpd = 'DPMPTSP'; // Default for Izin if not explicitly assigned by a validator
-                }
-
+                $kodeOpd = $application->no_izin_kode ?? 'DPMPTSP';
+                $tahun = now()->year;
                 $finalReplacements['[NOMOR URUT]'] = $noUrut;
                 $finalReplacements['[NOMOR SURAT]'] = "{$kodePerijinan}/{$noUrut}/{$kodeOpd}/{$tahun}";
             }
 
-            // Global fix for checkmarks [x] or [v] or ✓ to ensure they render correctly
-            $checkmarkHtml = '<span class="checkmark">&#10003;</span>';
-            $rawTemplate = str_replace(['[x]', '[v]', '[V]', '✓'], $checkmarkHtml, $rawTemplate);
-
-            // Handle Page Breaks
-            $rawTemplate = str_replace('<!-- pagebreak -->', '<div class="page-break"></div>', $rawTemplate);
-
-            // Replace placeholders
-            $htmlContent = str_replace(
-                array_keys($finalReplacements),
-                array_values($finalReplacements),
-                $rawTemplate
-            );
-
-            // Wrap with basic page structure and styles for PDF rendering
-            $fullHtml = self::wrapHtmlTemplate($htmlContent, $type, $application->no_registrasi);
-
-            // Path to save
-            $relativePath = $folderPath . '/' . $config['filename'];
-
-            try {
-                // If Barryvdh DomPDF is loaded, generate PDF, else fallback to HTML
-                if (class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
-                    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($fullHtml)
-                        ->setPaper('a4', 'portrait')
-                        ->setWarnings(false)
-                        ->setOptions([
-                            'isRemoteEnabled' => true,
-                            'isHtml5ParserEnabled' => true,
-                            'isFontSubsettingEnabled' => true,
-                            'defaultFont' => 'DejaVu Sans',
-                        ]);
-                    
-                    $absolutePdfPath = $absoluteFolder . '/' . $config['filename'] . '.pdf';
-                    File::put($absolutePdfPath, $pdf->output());
-                    $generatedPaths['file_' . $type] = $relativePath . '.pdf';
-                    \Log::info("DocumentGenerator: Generated PDF for $type: " . $relativePath . '.pdf');
-                } else {
-                    $absoluteHtmlPath = $absoluteFolder . '/' . $config['filename'] . '.html';
-                    File::put($absoluteHtmlPath, $fullHtml);
-                    $generatedPaths['file_' . $type] = $relativePath . '.html';
-                    \Log::warning("DocumentGenerator: DomPDF not loaded. Generated HTML fallback for $type: " . $relativePath . '.html');
-                }
-            } catch (\Exception $e) {
-                \Log::error("DocumentGenerator: Failed to generate $type document: " . $e->getMessage());
-                // Fallback to basic HTML if PDF generation crashes
-                $absoluteHtmlPath = $absoluteFolder . '/' . $config['filename'] . '.html';
-                File::put($absoluteHtmlPath, $fullHtml);
-                $generatedPaths['file_' . $type] = $relativePath . '.html';
-            }
+            $path = self::renderAndSave($rawTemplate, $finalReplacements, $config['filename'], $folderPath, $absoluteFolder, $application->no_registrasi);
+            $generatedPaths['file_' . $type] = $path;
         }
 
         return $generatedPaths;
+    }
+
+    /**
+     * Helper to render template and save as PDF.
+     */
+    private static function renderAndSave($template, $replacements, $filename, $folderPath, $absoluteFolder, $noRegistrasi): string
+    {
+        $checkmarkHtml = '<span class="checkmark">&#10003;</span>';
+        $template = str_replace(['[x]', '[v]', '[V]', '✓'], $checkmarkHtml, $template);
+        $template = str_replace('<!-- pagebreak -->', '<div class="page-break"></div>', $template);
+
+        $htmlContent = str_replace(
+            array_keys($replacements),
+            array_values($replacements),
+            $template
+        );
+
+        $fullHtml = self::wrapHtmlTemplate($htmlContent, $filename, $noRegistrasi);
+        $relativePath = $folderPath . '/' . $filename;
+
+        try {
+            if (class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+                $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($fullHtml)
+                    ->setPaper('a4', 'portrait')
+                    ->setWarnings(false)
+                    ->setOptions([
+                        'isRemoteEnabled' => true,
+                        'isHtml5ParserEnabled' => true,
+                        'isFontSubsettingEnabled' => true,
+                        'defaultFont' => 'DejaVu Sans',
+                    ]);
+                
+                $absolutePdfPath = $absoluteFolder . '/' . $filename . '.pdf';
+                File::put($absolutePdfPath, $pdf->output());
+                return $relativePath . '.pdf';
+            }
+        } catch (\Exception $e) {
+            \Log::error("DocumentGenerator: Failed to generate PDF $filename: " . $e->getMessage());
+        }
+
+        // Fallback to HTML
+        $absoluteHtmlPath = $absoluteFolder . '/' . $filename . '.html';
+        File::put($absoluteHtmlPath, $fullHtml);
+        return $relativePath . '.html';
     }
 
     /**

@@ -85,6 +85,7 @@ class PerijinanController extends Controller
         }
         $request->validate([
             'nama_perijinan' => 'required|string|max:255',
+            'is_multi_opd' => 'nullable|boolean',
             'opsi_perpanjangan' => 'nullable|in:setelah_habis,sebelum_habis,keduanya',
             'dasar_hukum' => 'required|string',
             'persyaratan' => 'required|string',
@@ -95,6 +96,7 @@ class PerijinanController extends Controller
         ]);
 
         $data = $request->all();
+        $data['is_multi_opd'] = $request->has('is_multi_opd');
 
         // Handle gambar_alur upload
         if ($request->hasFile('gambar_alur')) {
@@ -118,7 +120,7 @@ class PerijinanController extends Controller
             'Menambah jenis perijinan baru',
             $perijinan,
             'created',
-            ['data' => $request->all()],
+            ['data' => $data],
             'perijinan'
         );
 
@@ -697,9 +699,12 @@ class PerijinanController extends Controller
         if (!auth()->user()->isAdmin()) {
             return redirect()->route('perijinan.index')->with('error', 'Hanya Admin yang dapat mengubah data perijinan.');
         }
+        $perijinan = Perijinan::findOrFail($id);
+
         $request->validate([
             'kode_perijinan' => 'nullable|string|max:50|unique:perijinan,kode_perijinan,' . $id,
             'nama_perijinan' => 'required|string|max:255',
+            'is_multi_opd' => 'nullable|boolean',
             'opsi_perpanjangan' => 'nullable|in:setelah_habis,sebelum_habis,keduanya',
             'dasar_hukum' => 'required|string',
             'persyaratan' => 'required|string',
@@ -709,8 +714,8 @@ class PerijinanController extends Controller
             'gambar_alur' => 'nullable|file|mimes:png,jpg,jpeg|max:2048',
         ]);
 
-        $perijinan = Perijinan::findOrFail($id);
         $data = $request->all();
+        $data['is_multi_opd'] = $request->has('is_multi_opd');
 
         // Handle gambar_alur upload
         if ($request->hasFile('gambar_alur')) {
@@ -738,7 +743,7 @@ class PerijinanController extends Controller
             'Mengupdate jenis perijinan',
             $perijinan,
             'updated',
-            ['data' => $request->all()],
+            ['data' => $data],
             'perijinan'
         );
 

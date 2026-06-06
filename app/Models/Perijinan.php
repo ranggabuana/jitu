@@ -12,6 +12,7 @@ class Perijinan extends Model
     protected $fillable = [
         'kode_perijinan',
         'nama_perijinan',
+        'is_multi_opd',
         'opsi_perpanjangan',
         'dasar_hukum',
         'persyaratan',
@@ -26,6 +27,10 @@ class Perijinan extends Model
         'template_surat_izin',
         'next_nomor_rekom',
         'next_nomor_izin',
+    ];
+
+    protected $casts = [
+        'is_multi_opd' => 'boolean',
     ];
 
     /**

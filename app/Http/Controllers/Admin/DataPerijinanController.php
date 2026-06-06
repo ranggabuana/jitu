@@ -459,23 +459,71 @@ class DataPerijinanController extends Controller
                 return redirect()->back()->with('error', 'Tahap validasi saat ini tidak ditemukan.');
             }
 
-            \Log::info('Current validation found', [
-                'validation_id' => $currentValidasi->id,
-                'order' => $currentValidasi->order,
-                'status' => $currentValidasi->status,
-                'user_id' => $currentValidasi->user_id
-            ]);
-
             $validationFlow = $currentValidasi->validationFlow;
+            $isMultiOpd = $application->perijinan->is_multi_opd;
             $userRole = $user->role;
 
-            // Strict check: current user must be explicitly assigned to this step in validation flow
-            if ($validationFlow->assigned_user_id !== $user->id) {
-                return redirect()->back()->with('error', 'Anda tidak ditugaskan untuk melakukan validasi pada tahap saat ini (sedang dalam tahapan ' . ($validationFlow->role_label ?? 'Lainnya') . ').');
+            // Target record for this user
+            $myValidasi = null;
+            
+            // Logic for parallel validation in Multi-OPD
+            if ($isMultiOpd && in_array($userRole, ['operator_opd', 'kepala_opd'])) {
+                // Find all OPD steps
+                $opdSteps = $application->validasiRecords()
+                    ->whereHas('validationFlow', function($q) {
+                        $q->whereIn('role', ['operator_opd', 'kepala_opd']);
+                    })
+                    ->get();
+                
+                $minOpdOrder = $opdSteps->min('order');
+                $maxOpdOrder = $opdSteps->max('order');
+
+                // Check if we are currently in the OPD validation phase
+                if ($application->current_step < $minOpdOrder) {
+                    return redirect()->back()->with('error', 'Permohonan belum mencapai tahap validasi OPD.');
+                }
+                
+                // Find specific record assigned to this user
+                $myValidasi = $application->validasiRecords()
+                    ->whereHas('validationFlow', function($q) use ($user) {
+                        $q->where('assigned_user_id', $user->id);
+                    })
+                    ->where('status', 'pending')
+                    ->first();
+                
+                if (!$myValidasi) {
+                    return redirect()->back()->with('error', 'Anda tidak memiliki tugas validasi yang tertunda untuk permohonan ini.');
+                }
+                
+                // If Kepala OPD, ensure their Operator OPD has finished
+                if ($userRole === 'kepala_opd') {
+                    $operatorFlow = $application->perijinan->activeValidationFlows()
+                        ->where('role', 'operator_opd')
+                        ->whereHas('assignedUser', function($q) use ($user) {
+                            $q->where('opd_id', $user->opd_id);
+                        })
+                        ->first();
+                    
+                    if ($operatorFlow) {
+                        $operatorRecord = $application->validasiRecords()
+                            ->where('validation_flow_id', $operatorFlow->id)
+                            ->first();
+                        
+                        if ($operatorRecord && $operatorRecord->status !== 'approved') {
+                            return redirect()->back()->with('error', 'Menunggu validasi dari Operator OPD Anda terlebih dahulu.');
+                        }
+                    }
+                }
+            } else {
+                // Standard sequential check
+                if ($validationFlow->assigned_user_id !== $user->id) {
+                    return redirect()->back()->with('error', 'Anda tidak ditugaskan untuk melakukan validasi pada tahap saat ini (sedang dalam tahapan ' . ($validationFlow->role_label ?? 'Lainnya') . ').');
+                }
+                $myValidasi = $currentValidasi;
             }
 
-            // Check if already validated
-            if ($currentValidasi->status !== 'pending') {
+            // Check if already validated (failsafe)
+            if ($myValidasi->status !== 'pending') {
                 return redirect()->back()->with('error', 'Tahap validasi ini sudah diselesaikan.');
             }
 
@@ -491,7 +539,7 @@ class DataPerijinanController extends Controller
             // Jika bukan aksi pengembalian, update status record saat ini
             if (!$isReturnAction) {
                 $updateData['status'] = $request->action;
-                $currentValidasi->update($updateData);
+                $myValidasi->update($updateData);
             }
 
             // Handle based on action
@@ -501,60 +549,46 @@ class DataPerijinanController extends Controller
 
                 // Contextual OPD code assignment
                 if ($user->role === 'operator_opd' || $user->role === 'kepala_opd') {
-                    // Assign to Rekom code if not set
                     if ($application->no_rekom_kode === null && $user->opd) {
                         $applicationUpdateData['no_rekom_kode'] = $user->opd->kode_opd ?? 'OPD';
                     }
                 } else if ($user->role === 'verifikator' || $user->role === 'kadin' || $user->role === 'admin') {
-                    // Assign to Izin code if not set
                     if ($application->no_izin_kode === null) {
                         $applicationUpdateData['no_izin_kode'] = 'DPMPTSP';
                     }
                 }
 
-                // Check if this is the last validation step
+                // Check overall progress
                 $totalSteps = $application->perijinan->activeValidationFlows()->count();
+                
+                // Find next incomplete step in the sequence
+                $nextPendingRecord = $application->validasiRecords()
+                    ->where('status', 'pending')
+                    ->orderBy('order', 'asc')
+                    ->first();
 
-                if ($application->current_step >= $totalSteps) {
+                if (!$nextPendingRecord) {
                     // All validations complete - approve application
                     $applicationUpdateData['status'] = 'approved';
                     $applicationUpdateData['approved_at'] = now();
                     $applicationUpdateData['completed_at'] = now();
 
-                    // Assign Rekom Number if not already assigned
                     if ($application->no_rekom === null) {
                         $applicationUpdateData['no_rekom'] = $perijinan->next_nomor_rekom;
                         $perijinan->increment('next_nomor_rekom');
                     }
-
-                    // Assign Izin Number if not already assigned
                     if ($application->no_izin === null) {
                         $applicationUpdateData['no_izin'] = $perijinan->next_nomor_izin;
                         $perijinan->increment('next_nomor_izin');
                     }
 
-                    // Send Email Notification: Approved
                     if ($application->user && $application->user->email) {
-                        EmailService::send(
-                            $application->user->email,
-                            $application->user->name,
-                            new ApplicationStatusNotification($application, 'approved')
-                        );
+                        EmailService::send($application->user->email, $application->user->name, new ApplicationStatusNotification($application, 'approved'));
                     }
                 } else {
-                    // Move to next step
-                    $newStep = $application->current_step + 1;
-                    $applicationUpdateData['current_step'] = $newStep;
+                    // Update current_step to the next pending one
+                    $applicationUpdateData['current_step'] = $nextPendingRecord->order;
                     $applicationUpdateData['status'] = 'in_progress';
-
-                    // Activate next validation step
-                    $nextValidasi = $application->validasiRecords()
-                        ->where('order', $newStep)
-                        ->first();
-
-                    if ($nextValidasi) {
-                        $nextValidasi->update(['status' => 'pending']);
-                    }
                 }
 
                 if (!empty($applicationUpdateData)) {
@@ -724,8 +758,8 @@ class DataPerijinanController extends Controller
             'user.kelurahan',
             'perijinan',
             'perijinan.activeFormFields',
-            'validasiRecords.validationFlow.assignedUser',
-            'validasiRecords.validator'
+            'validasiRecords.validationFlow.assignedUser.opd',
+            'validasiRecords.validator.opd'
         ])->findOrFail($id);
 
         // Ensure documents are generated if missing
@@ -790,64 +824,111 @@ class DataPerijinanController extends Controller
         }
 
         $application = DataPerijinan::with(['perijinan.activeFormFields', 'validasiRecords.validationFlow'])->findOrFail($id);
+        $perijinan = $application->perijinan;
         
-        // Strict check: current step must belong to this user if not admin
+        // Strict check for Multi-OPD Parallelism
         if (!$user->isAdmin()) {
-            $cv = $application->validasiRecords->where('order', $application->current_step)->first();
-            if (!$cv || !$cv->validationFlow || $cv->validationFlow->assigned_user_id !== $user->id) {
-                return redirect()->back()->with('error', 'Gagal menyimpan. Anda belum dapat mengisi data pada tahap ini (sedang tahapan ' . ($cv->validationFlow->role_label ?? 'Lainnya') . ').');
+            $isParallelAllowed = false;
+            if ($perijinan->is_multi_opd && $user->role === 'operator_opd') {
+                $opdSteps = $application->validasiRecords->filter(function($v) {
+                    return $v->validationFlow && in_array($v->validationFlow->role, ['operator_opd', 'kepala_opd']);
+                });
+                $minOpdOrder = $opdSteps->min('order');
+                if ($application->current_step >= $minOpdOrder) {
+                    $isParallelAllowed = true;
+                }
+            }
+
+            if (!$isParallelAllowed) {
+                $cv = $application->validasiRecords->where('order', $application->current_step)->first();
+                if (!$cv || !$cv->validationFlow || $cv->validationFlow->assigned_user_id !== $user->id) {
+                    return redirect()->back()->with('error', 'Gagal menyimpan. Anda belum dapat mengisi data pada tahap ini (sedang tahapan ' . ($cv->validationFlow->role_label ?? 'Lainnya') . ').');
+                }
             }
         }
         
-        $rekomFields = $application->perijinan->activeFormFields
-            ->where('form_type', 'rekom');
+        $rekomFields = $perijinan->activeFormFields->where('form_type', 'rekom');
             
         $rules = [];
         foreach ($rekomFields as $field) {
-            // Force all fields to be nullable in the official forms to prevent blockers
             $fieldRules = ['nullable'];
-            
             if ($field->type === 'email') $fieldRules[] = 'email';
             if ($field->type === 'number') $fieldRules[] = 'numeric';
-            if ($field->type === 'file') $fieldRules[] = 'file|max:5120'; // Max 5MB
-            
+            if ($field->type === 'file') $fieldRules[] = 'file|max:5120';
             $rules[$field->name] = $fieldRules;
         }
 
         $validated = $request->validate($rules);
         
-        // Handle existing rekom_data
-        $rekomData = $application->rekom_data ?? [];
+        // Handle Multi-OPD Isolation
+        if ($perijinan->is_multi_opd) {
+            $opdId = $user->opd_id;
+            if (!$opdId && $user->isAdmin()) {
+                // Admin might need to select which OPD if they are filling it? 
+                // For now, let's assume they pick the first one or we need an opd_id in request.
+                // But usually Admin just supervises. If Admin edits, they might need to specify.
+                // Let's use a fallback if Admin doesn't have opd_id.
+                $opdId = $request->opd_id ?? 0; 
+            }
 
-        foreach ($rekomFields as $field) {
-            if ($field->type === 'file' && $request->hasFile($field->name)) {
-                $file = $request->file($field->name);
-                if ($file->isValid()) {
+            $multiData = $application->rekom_data_multi ?? [];
+            $currentData = $multiData[$opdId] ?? [];
+
+            foreach ($rekomFields as $field) {
+                if ($field->type === 'file' && $request->hasFile($field->name)) {
+                    $file = $request->file($field->name);
+                    $filename = 'rekom_' . $opdId . '_' . $field->name . '_' . time() . '.' . $file->getClientOriginalExtension();
+                    $path = 'uploads/perijinan/' . $application->perijinan_id;
+                    $file->move(public_path($path), $filename);
+                    $currentData[$field->name] = $path . '/' . $filename;
+                } else {
+                    if (array_key_exists($field->name, $validated)) {
+                        $currentData[$field->name] = $validated[$field->name];
+                    }
+                }
+            }
+
+            $multiData[$opdId] = $currentData;
+            $application->rekom_data_multi = $multiData;
+            
+            // Also update standard rekom_data for backward compatibility/single-opd views if needed
+            // or just leave it. The user wants them separate.
+            $application->save();
+        } else {
+            // Standard Single OPD Logic
+            $rekomData = $application->rekom_data ?? [];
+            foreach ($rekomFields as $field) {
+                if ($field->type === 'file' && $request->hasFile($field->name)) {
+                    $file = $request->file($field->name);
                     $filename = 'rekom_' . $field->name . '_' . time() . '.' . $file->getClientOriginalExtension();
                     $path = 'uploads/perijinan/' . $application->perijinan_id;
                     $file->move(public_path($path), $filename);
                     $rekomData[$field->name] = $path . '/' . $filename;
-                }
-            } else {
-                if (array_key_exists($field->name, $validated)) {
-                    $rekomData[$field->name] = $validated[$field->name];
+                } else {
+                    if (array_key_exists($field->name, $validated)) {
+                        $rekomData[$field->name] = $validated[$field->name];
+                    }
                 }
             }
+            $application->rekom_data = $rekomData;
+            $application->save();
         }
 
-        $application = DataPerijinan::with(['perijinan.activeFormFields', 'validasiRecords.validationFlow'])->findOrFail($id);
-        
-        $application->forceFill([
-            'rekom_data' => $rekomData,
-        ])->save();
-
-        // Reload to ensure everything is fresh for document generation
+        // Reload and generate documents
         $application->load(['perijinan.activeFormFields', 'user']);
-
         try {
-            $generatedDocs = \App\Services\DocumentGenerator::generateDocuments($application);
+            $targetOpdId = $perijinan->is_multi_opd ? ($user->opd_id ?? $request->opd_id) : null;
+            $generatedDocs = \App\Services\DocumentGenerator::generateDocuments($application, $targetOpdId);
+            
             if (!empty($generatedDocs)) {
-                $application->update($generatedDocs);
+                $updateData = [];
+                if (isset($generatedDocs['file_rekom'])) $updateData['file_rekom'] = $generatedDocs['file_rekom'];
+                if (isset($generatedDocs['file_rekom_multi'])) $updateData['file_rekom_multi'] = $generatedDocs['file_rekom_multi'];
+                if (isset($generatedDocs['file_izin'])) $updateData['file_izin'] = $generatedDocs['file_izin'];
+                
+                if (!empty($updateData)) {
+                    $application->update($updateData);
+                }
             }
         } catch (\Exception $e) {
             \Log::error('Failed to regenerate documents after saving rekom data: ' . $e->getMessage());

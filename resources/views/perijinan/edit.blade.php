@@ -82,6 +82,19 @@
                 @enderror
             </div>
 
+            <div class="mb-6 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800">
+                <div class="flex items-center">
+                    <input id="is_multi_opd" name="is_multi_opd" type="checkbox" value="1" {{ old('is_multi_opd', $perijinan->is_multi_opd) ? 'checked' : '' }}
+                        class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                    <label for="is_multi_opd" class="ml-3 text-sm font-bold text-blue-800 dark:text-blue-300">
+                        Melibatkan Multi OPD (Lebih dari 1 OPD)
+                    </label>
+                </div>
+                <p class="mt-2 text-xs text-blue-600 dark:text-blue-400 ml-8 leading-relaxed">
+                    <i class="mdi mdi-information-outline mr-1"></i> Jika aktif, sistem akan mengisolasi form rekomendasi untuk setiap OPD yang terlibat. Verifikator juga akan menggunakan default data dari formulir pemohon untuk penyusunan izin.
+                </p>
+            </div>
+
             <div class="mb-6">
                 <label for="opsi_perpanjangan" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Opsi Perpanjangan

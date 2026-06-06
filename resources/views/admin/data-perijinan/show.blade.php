@@ -153,29 +153,71 @@
         $isFo = $userRole === 'fo';
         $isBo = $userRole === 'bo';
         $isKadin = $userRole === 'kadin';
+        $isMultiOpd = $application->perijinan->is_multi_opd;
 
         $rekomFields = $application->perijinan->formFields->where('form_type', 'rekom')->where('is_active', true)->sortBy('order');
         $izinFields = $application->perijinan->formFields->where('form_type', 'izin')->where('is_active', true)->sortBy('order');
 
         // Validation flow variables
-        $cv = $application->validasiRecords->where('order', $application->current_step)->first(); 
-        $userAssignedStep = $application->validasiRecords->first(function($v) {
-            return $v->validationFlow && $v->validationFlow->assigned_user_id == auth()->id();
-        });
-        $isFutureValidator = ($userAssignedStep && $userAssignedStep->order > $application->current_step);
-        $canVal = ($application->status !== 'approved' && $application->status !== 'perbaikan' && $cv && $cv->validationFlow->assigned_user_id === auth()->id()); 
+        $cv = $application->validasiRecords->where('order', $application->current_step)->first();
 
-        // Strict sequential editing logic
-        $userRekomStep = $application->validasiRecords->first(function($v) {
-            return $v->validationFlow && $v->validationFlow->assigned_user_id == auth()->id() && $v->validationFlow->role === 'operator_opd';
+        // Find specific record for CURRENT USER
+        $userAssignedRecord = $application->validasiRecords->first(function($v) {
+            return $v->validationFlow && $v->validationFlow->assigned_user_id == auth()->id() && $v->status === 'pending';
         });
-        $isRekomTurn = $userRekomStep && $userRekomStep->order == $application->current_step;
-        $canEditRekom = ($isOperatorOpd || $isAdmin) && $isRekomTurn && !in_array($application->status, ['approved', 'rejected', 'perbaikan']);
 
-        $userIzinStep = $application->validasiRecords->first(function($v) {
-            return $v->validationFlow && $v->validationFlow->assigned_user_id == auth()->id() && $v->validationFlow->role === 'verifikator';
-        });
-        $isIzinTurn = $userIzinStep && $userIzinStep->order == $application->current_step;
+        // Parallel Validation Check for Multi-OPD
+        $isParallelOpdTurn = false;
+        if ($isMultiOpd && ($isOperatorOpd || $isKepalaOpd)) {
+            $opdSteps = $application->validasiRecords->filter(function($v) {
+                return $v->validationFlow && in_array($v->validationFlow->role, ['operator_opd', 'kepala_opd']);
+            });
+            $minOpdOrder = $opdSteps->min('order');
+
+            // Logic: phase starts when current_step reaches the first OPD step
+            if ($application->current_step >= $minOpdOrder && $userAssignedRecord) {
+                // If Kepala OPD, must wait for their specific Operator in the same OPD
+                if ($isKepalaOpd) {
+                    $myOperatorRecord = $application->validasiRecords->first(function($v) {
+                        return $v->validationFlow->role === 'operator_opd' && 
+                               $v->validationFlow->assignedUser &&
+                               $v->validationFlow->assignedUser->opd_id == auth()->user()->opd_id;
+                    });
+                    // Only turn if Operator has approved OR if there is no operator flow for this OPD (unlikely but safe)
+                    $isParallelOpdTurn = !$myOperatorRecord || $myOperatorRecord->status === 'approved';
+                } else {
+                    // Operator can start as soon as phase is reached
+                    $isParallelOpdTurn = true;
+                }
+            }
+        }
+
+        $canVal = false;
+        if ($application->status !== 'approved' && $application->status !== 'perbaikan' && $application->status !== 'rejected') {
+            if ($isParallelOpdTurn) {
+                $canVal = true;
+            } elseif ($cv && $cv->validationFlow->assigned_user_id === auth()->id()) {
+                $canVal = true;
+            }
+        }
+
+        // Fix: isFutureValidator should be false if canVal is true (parallel case)
+        $isFutureValidator = (!$canVal && $userAssignedRecord && $userAssignedRecord->order > $application->current_step);
+
+        // Strict sequential editing logic for Recommendation Form
+        // For Multi-OPD, any OPD operator can edit if phase is reached
+        $canEditRekom = ($isOperatorOpd || $isAdmin) && !in_array($application->status, ['approved', 'rejected', 'perbaikan']);
+        if ($isOperatorOpd && !$isAdmin && $isMultiOpd) {
+            $opdSteps = $application->validasiRecords->filter(fn($v) => in_array($v->validationFlow->role, ['operator_opd', 'kepala_opd']));
+            $minOpdOrder = $opdSteps->min('order');
+            $canEditRekom = ($application->current_step >= $minOpdOrder);
+        } elseif ($isOperatorOpd && !$isAdmin) {
+            // Single OPD sequential
+            $canEditRekom = ($cv && $cv->validationFlow->assigned_user_id === auth()->id() && $cv->validationFlow->role === 'operator_opd');
+        }
+
+        // Strict sequential editing logic for Izin Form
+        $isIzinTurn = ($cv && $cv->validationFlow->assigned_user_id === auth()->id() && $cv->validationFlow->role === 'verifikator');
         $canEditIzin = ($isVerifikator || $isAdmin) && $isIzinTurn && !in_array($application->status, ['approved', 'rejected', 'perbaikan']);
 
         // Admin can always edit if not finished
@@ -188,7 +230,6 @@
         $showRekomTab = ($isOperatorOpd || $isKepalaOpd || $isAdmin || $isVerifikator || $isKadin);
         $showIzinTab = ($isVerifikator || $isAdmin || $isKadin);
     @endphp
-
     <!-- Navigation Tabs -->
     <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
         <ul class="flex flex-wrap -mb-px text-sm font-medium text-center">
@@ -349,113 +390,270 @@
             <!-- TAB 2: DOKUMEN REKOMENDASI -->
             @if($showRekomTab)
             <div id="tab-panel-dokumen-rekom" class="tab-content-panel hidden space-y-6">
-                @if($isKepalaOpd)
-                    <div class="p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded-r-xl flex gap-3 shadow-sm">
-                        <i class="mdi mdi-information-variant text-blue-600 text-xl mt-0.5"></i>
-                        <div class="flex-1">
-                            <h4 class="text-sm font-bold text-blue-800 dark:text-blue-300">Informasi Verifikasi</h4>
-                            <p class="text-xs text-blue-700 dark:text-blue-400 leading-relaxed mt-1">Berikut adalah <strong>Draft Surat Rekomendasi</strong> dari Operator OPD. Silahkan berikan TTE pada Draft agar menjadi Surat Rekomendasi Resmi.</p>
+                @if($application->perijinan->is_multi_opd)
+                    @php
+                        $involvedOpds = $application->perijinan->activeValidationFlows
+                            ->whereIn('role', ['operator_opd', 'kepala_opd'])
+                            ->whereNotNull('assigned_user_id')
+                            ->map(fn($f) => $f->assignedUser->opd)
+                            ->filter()
+                            ->unique('id');
+                        
+                        $isHighLevel = $isAdmin || $isVerifikator || $isKadin;
+                        $myOpd = auth()->user()->opd;
+                    @endphp
+
+                    @if($isKepalaOpd && $myOpd)
+                        <div class="p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded-r-xl flex gap-3 shadow-sm mb-4">
+                            <i class="mdi mdi-information-variant text-blue-600 text-xl mt-0.5"></i>
+                            <div class="flex-1">
+                                <h4 class="text-sm font-bold text-blue-800 dark:text-blue-300 uppercase">Informasi Verifikasi</h4>
+                                <p class="text-xs text-blue-700 dark:text-blue-400 leading-relaxed mt-1">Berikut adalah <strong>Draft Surat Rekomendasi</strong> dari Operator {{ $myOpd->nama_opd }}. Silahkan berikan TTE pada Draft agar menjadi Surat Rekomendasi Resmi.</p>
+                            </div>
                         </div>
-                    </div>
-                @endif
+                    @endif
 
-                @if($application->file_rekom && !empty($application->rekom_data))
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-purple-200 dark:border-purple-900/30 overflow-hidden">
-                        <div class="px-5 py-4 border-b border-purple-100 dark:border-purple-900/50 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center border border-purple-200 dark:border-purple-800"><i class="mdi mdi-file-check text-purple-600 dark:text-purple-400 text-xl"></i></div>
-                                <div><h3 class="text-sm font-bold text-gray-800 dark:text-white">Draft Surat Rekomendasi</h3><p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Hasil Generate Otomatis</p></div>
-                            </div>
-                            <div class="flex gap-2">
-                                <button onclick="openPdfPreview('{{ asset($application->file_rekom) }}?t={{ time() }}', 'Surat Rekomendasi')" class="px-4 py-2 bg-purple-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm">Pratinjau PDF</button>
-                                <a href="{{ route('data-perijinan.download-file', rawurlencode(str_replace('uploads/perijinan/', '', $application->file_rekom))) }}?t={{ time() }}" class="p-2 bg-purple-50 dark:bg-purple-900/30 text-purple-700 border border-purple-200 rounded-xl"><i class="mdi mdi-download"></i></a>
-                            </div>
-                        </div>
-                    </div>
-                @endif
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center border border-purple-200 dark:border-purple-800"><i class="mdi mdi-file-document-edit text-purple-600 dark:text-purple-400 text-xl"></i></div>
-                            <div><h3 class="text-base font-bold text-gray-800 dark:text-white">Formulir Rekomendasi</h3><p class="text-[10px] text-purple-600 font-bold uppercase tracking-wider">Tugas Operator OPD</p></div>
-                        </div>
-                        @if(!$canEditRekom) <span class="px-3 py-1 bg-gray-100 text-gray-500 text-[10px] font-bold rounded-full uppercase border">Hanya Baca</span> @endif
-                    </div>
-                    <div class="p-6">
-                        @if($isFutureValidator && !in_array($application->status, ['approved', 'rejected', 'perbaikan']))
-                            <div class="mb-6 p-4 bg-rose-50 dark:bg-rose-900/20 border-l-4 border-rose-500 rounded-r-xl flex gap-3 shadow-sm">
-                                <i class="mdi mdi-lock-clock text-rose-600 text-xl mt-0.5"></i>
-                                <div class="flex-1">
-                                    <h4 class="text-sm font-bold text-rose-800 dark:text-rose-300 uppercase tracking-tight">Belum Waktu Tindakan</h4>
-                                    <p class="text-xs text-rose-700 dark:text-rose-400 leading-relaxed mt-1">Anda (sebagai <strong>{{ auth()->user()->role_label }}</strong>) belum dapat melakukan tindakan pada tab ini karena permohonan masih dalam <strong>tahapan {{ $cv->validationFlow->role_label ?? 'Lainnya' }}</strong>.</p>
+                    @foreach($involvedOpds as $opd)
+                        @php
+                            $isMyOpd = auth()->user()->opd_id == $opd->id;
+                            $opdRekomData = $application->rekom_data_multi[$opd->id] ?? [];
+                            $opdFileRekom = $application->file_rekom_multi[$opd->id] ?? null;
+                            
+                            // Check if this OPD has finished their part (Head approved)
+                            $opdHeadValidation = $application->validasiRecords->first(function($v) use ($opd) {
+                                return $v->validationFlow->role === 'kepala_opd' && $v->validationFlow->assignedUser->opd_id == $opd->id;
+                            });
+                            $isOpdFinished = $opdHeadValidation && $opdHeadValidation->status === 'approved';
+                        @endphp
+
+                        @if($isHighLevel || $isMyOpd)
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border {{ $isMyOpd ? 'border-purple-300 ring-1 ring-purple-100' : 'border-gray-200' }} overflow-hidden">
+                            <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center border border-purple-200 dark:border-purple-800"><i class="mdi mdi-office-building text-purple-600 dark:text-purple-400 text-xl"></i></div>
+                                    <div>
+                                        <h3 class="text-sm font-bold text-gray-800 dark:text-white">Rekomendasi: {{ $opd->nama_opd }}</h3>
+                                        <div class="flex items-center gap-2 mt-0.5">
+                                            <span class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Status:</span>
+                                            @if($isOpdFinished)
+                                                <span class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[8px] font-black uppercase">Selesai</span>
+                                            @else
+                                                <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[8px] font-black uppercase">Draft</span>
+                                            @endif
+                                        </div>
+                                    </div>
                                 </div>
+                                @if($opdFileRekom)
+                                    <div class="flex gap-2">
+                                        <button onclick="openPdfPreview('{{ asset($opdFileRekom) }}?t={{ time() }}', 'Rekomendasi {{ $opd->nama_opd }}')" class="px-3 py-1.5 bg-purple-600 text-white rounded-lg text-[9px] font-black uppercase shadow-sm">Pratinjau PDF</button>
+                                        <a href="{{ route('data-perijinan.download-file', rawurlencode(str_replace('uploads/perijinan/', '', $opdFileRekom))) }}?t={{ time() }}" class="p-1.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-lg"><i class="mdi mdi-download text-sm"></i></a>
+                                    </div>
+                                @endif
                             </div>
-                        @endif
 
-                        @if($isOperatorOpd && $canEditRekom)
-                            <div class="mb-6 p-4 bg-purple-50 dark:bg-purple-900/20 border-l-4 border-purple-500 rounded-r-xl flex flex-col gap-1">
-                                <div class="flex gap-3">
-                                    <i class="mdi mdi-information-outline text-purple-600 text-xl mt-0.5"></i>
-                                    <p class="text-xs text-purple-700 dark:text-purple-300 leading-relaxed">Lengkapi data verifikasi teknis. Data ini akan otomatis digunakan dalam <strong>Surat Rekomendasi</strong>.</p>
-                                </div>
-                                <div class="flex gap-3 mt-1">
-                                    <i class="mdi mdi-auto-fix text-purple-500 text-base"></i>
-                                    <p class="text-[11px] text-purple-600/80 italic">Beberapa isian telah terisi otomatis dari data formulir global pemohon. Silakan ubah jika terdapat data yang belum sesuai.</p>
-                                </div>
-                            </div>
-                        @endif
-                        <form action="{{ route('data-perijinan.rekom-data.save', $application->id) }}" method="POST" enctype="multipart/form-data">
-                            @csrf @method('PUT')
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                @foreach($rekomFields as $field)
-                                    <div class="space-y-2">
-                                        <label class="block text-[11px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-tighter">{{ $field->label }} @if($field->is_required)<span class="text-red-500">*</span>@endif</label>
-                                        @php 
-                                            $val = $application->rekom_data[$field->name] ?? null; 
-                                            $isAlreadySaved = array_key_exists($field->name, $application->rekom_data ?? []);
-
-                                            // Auto-fill from global form ONLY if never saved before
-                                            if (!$isAlreadySaved && $field->type !== 'file') {
-                                                $matchingGlobalField = $application->perijinan->activeFormFields
-                                                    ->where('form_type', 'global')
-                                                    ->where('name', $field->name)
-                                                    ->first() ?? $application->perijinan->activeFormFields
-                                                    ->where('form_type', 'global')
-                                                    ->filter(function($f) use ($field) {
-                                                        return strtolower($f->label) === strtolower($field->label);
-                                                    })->first();
-
-                                                if ($matchingGlobalField) {
-                                                    $val = $application->form_data[$matchingGlobalField->id] ?? '';
-                                                    if (is_array($val)) $val = implode(', ', $val);
-                                                }
-                                            }
-
-                                            $val = $val ?? '';
-                                            $ro = !$canEditRekom ? 'readonly disabled' : ''; 
-                                            $cls = "w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-purple-500 outline-none transition-all"; 
-                                        @endphp
-
-                                        @if($field->type === 'textarea')
-                                            <textarea name="{{ $field->name }}" class="{{ $cls }} min-h-[120px]" {{ $ro }}>{{ $val }}</textarea>
-                                        @elseif($field->type === 'select')
-                                            <select name="{{ $field->name }}" class="{{ $cls }}" {{ $ro }}>
-                                                <option value="">-- Pilih --</option>
-                                                @foreach($field->options ?? [] as $opt)
-                                                    <option value="{{ $opt }}" {{ $val == $opt ? 'selected' : '' }}>{{ $opt }}</option>
-                                                @endforeach
-                                            </select>
-                                        @elseif($field->type === 'file')
+                            @if($isMyOpd && $isOperatorOpd && $canEditRekom)
+                            <div class="p-6">
+                                <form action="{{ route('data-perijinan.rekom-data.save', $application->id) }}" method="POST" enctype="multipart/form-data">
+                                    @csrf @method('PUT')
+                                    <input type="hidden" name="opd_id" value="{{ $opd->id }}">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        @foreach($rekomFields as $field)
                                             <div class="space-y-2">
-                                                <input type="file" name="{{ $field->name }}" class="{{ $cls }}" {{ $ro }}>
-                                                @if($val)
-                                                    <div class="flex items-center gap-2 mt-2 p-2 bg-purple-50 dark:bg-purple-900/30 rounded-lg border border-purple-100 dark:border-purple-800">
-                                                        <i class="mdi mdi-file-check text-purple-600"></i>
-                                                        <a href="{{ asset($val) }}" target="_blank" class="text-xs font-bold text-purple-700 dark:text-purple-300 hover:underline truncate">Lihat File Terupload</a>
+                                                <label class="block text-[11px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-tighter">{{ $field->label }} @if($field->is_required)<span class="text-red-500">*</span>@endif</label>
+                                                @php 
+                                                    $val = $opdRekomData[$field->name] ?? null; 
+                                                    $isAlreadySaved = array_key_exists($field->name, $opdRekomData);
+
+                                                    if (!$isAlreadySaved && $field->type !== 'file') {
+                                                        $matchingGlobalField = $application->perijinan->activeFormFields
+                                                            ->where('form_type', 'global')
+                                                            ->where('name', $field->name)
+                                                            ->first() ?? $application->perijinan->activeFormFields
+                                                            ->where('form_type', 'global')
+                                                            ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                                                            ->first();
+
+                                                        if ($matchingGlobalField) {
+                                                            $val = $application->form_data[$matchingGlobalField->id] ?? '';
+                                                            if (is_array($val)) $val = implode(', ', $val);
+                                                        }
+                                                    }
+
+                                                    $val = $val ?? '';
+                                                    $cls = "w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-purple-500 outline-none transition-all"; 
+                                                @endphp
+
+                                                @if($field->type === 'textarea')
+                                                    <textarea name="{{ $field->name }}" class="{{ $cls }} min-h-[120px]">{{ $val }}</textarea>
+                                                @elseif($field->type === 'select')
+                                                    <select name="{{ $field->name }}" class="{{ $cls }}">
+                                                        <option value="">-- Pilih --</option>
+                                                        @foreach($field->options ?? [] as $opt)
+                                                            <option value="{{ $opt }}" {{ $val == $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                @elseif($field->type === 'file')
+                                                    <div class="space-y-2">
+                                                        <input type="file" name="{{ $field->name }}" class="{{ $cls }}">
+                                                        @if($val)
+                                                            <div class="flex items-center gap-2 mt-2 p-2 bg-purple-50 dark:bg-purple-900/30 rounded-lg border border-purple-100 dark:border-purple-800">
+                                                                <i class="mdi mdi-file-check text-purple-600"></i>
+                                                                <a href="{{ asset($val) }}" target="_blank" class="text-xs font-bold text-purple-700 dark:text-purple-300 hover:underline truncate">Lihat File Terupload</a>
+                                                            </div>
+                                                        @endif
+
+                                                        @php
+                                                            $matchingGlobalField = $application->perijinan->activeFormFields
+                                                                ->where('form_type', 'global')
+                                                                ->where('name', $field->name)
+                                                                ->first() ?? $application->perijinan->activeFormFields
+                                                                ->where('form_type', 'global')
+                                                                ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                                                                ->first();
+                                                            
+                                                            $globalFile = null;
+                                                            if ($matchingGlobalField) {
+                                                                $globalFiles = $application->form_files[$matchingGlobalField->id] ?? [];
+                                                                $globalFile = is_array($globalFiles) ? ($globalFiles[0] ?? null) : $globalFiles;
+                                                            }
+                                                        @endphp
+                                                        @if($globalFile && $globalFile !== $val)
+                                                            <div class="flex items-center gap-2 mt-1 p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800/50">
+                                                                <i class="mdi mdi-information-outline text-amber-600 text-sm"></i>
+                                                                <span class="text-[10px] text-amber-700 dark:text-amber-400 font-bold">Referensi Pemohon:</span>
+                                                                <a href="{{ asset($globalFile) }}" target="_blank" class="text-[10px] font-bold text-blue-600 hover:underline truncate">Buka Berkas Pemohon</a>
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                @elseif($field->type === 'date')
+                                                    <input type="date" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}">
+                                                @elseif($field->type === 'number')
+                                                    <input type="number" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}">
+                                                @else
+                                                    <input type="text" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}">
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                    <div class="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700 flex justify-end">
+                                        <button type="submit" class="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg flex items-center gap-3 active:scale-95"><i class="mdi mdi-content-save-check text-lg"></i> SIMPAN & GENERATE REKOMENDASI</button>
+                                    </div>
+                                </form>
+                            </div>
+                            @else
+                            <div class="p-6 bg-gray-50/50 dark:bg-gray-900/20">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    @foreach($rekomFields as $field)
+                                        <div class="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700">
+                                            <label class="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">{{ $field->label }}</label>
+                                            <p class="text-xs font-semibold text-gray-700 dark:text-gray-200">
+                                                @php $v = $opdRekomData[$field->name] ?? '-'; @endphp
+                                                @if($field->type === 'file' && $v !== '-')
+                                                    <a href="{{ asset($v) }}" target="_blank" class="text-blue-600 hover:underline">Buka Berkas</a>
+                                                @else
+                                                    {{ $v }}
+                                                @endif
+                                            </p>
+                                            @if($field->type === 'file')
+                                                @php
+                                                    $matchingGlobalField = $application->perijinan->activeFormFields
+                                                        ->where('form_type', 'global')
+                                                        ->where('name', $field->name)
+                                                        ->first() ?? $application->perijinan->activeFormFields
+                                                        ->where('form_type', 'global')
+                                                        ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                                                        ->first();
+                                                    
+                                                    $globalFile = null;
+                                                    if ($matchingGlobalField) {
+                                                        $globalFiles = $application->form_files[$matchingGlobalField->id] ?? [];
+                                                        $globalFile = is_array($globalFiles) ? ($globalFiles[0] ?? null) : $globalFiles;
+                                                    }
+                                                @endphp
+                                                @if($globalFile && $globalFile !== $v)
+                                                    <div class="mt-2 flex items-center gap-1.5 text-[10px]">
+                                                        <span class="text-amber-600 font-bold uppercase tracking-tighter">Ref Pemohon:</span>
+                                                        <a href="{{ asset($globalFile) }}" target="_blank" class="text-blue-600 font-bold hover:underline">Lihat Dokumen</a>
                                                     </div>
                                                 @endif
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                            @endif
+                        </div>
+                        @endif
+                    @endforeach
+                @else
+                    <!-- Existing Standard Recommendation View -->
+                    @if($isKepalaOpd)
+                        <div class="p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded-r-xl flex gap-3 shadow-sm">
+                            <i class="mdi mdi-information-variant text-blue-600 text-xl mt-0.5"></i>
+                            <div class="flex-1">
+                                <h4 class="text-sm font-bold text-blue-800 dark:text-blue-300">Informasi Verifikasi</h4>
+                                <p class="text-xs text-blue-700 dark:text-blue-400 leading-relaxed mt-1">Berikut adalah <strong>Draft Surat Rekomendasi</strong> dari Operator OPD. Silahkan berikan TTE pada Draft agar menjadi Surat Rekomendasi Resmi.</p>
+                            </div>
+                        </div>
+                    @endif
 
-                                                @php
+                    @if($application->file_rekom && !empty($application->rekom_data))
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-purple-200 dark:border-purple-900/30 overflow-hidden">
+                            <div class="px-5 py-4 border-b border-purple-100 dark:border-purple-900/50 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center border border-purple-200 dark:border-purple-800"><i class="mdi mdi-file-check text-purple-600 dark:text-purple-400 text-xl"></i></div>
+                                    <div><h3 class="text-sm font-bold text-gray-800 dark:text-white">Draft Surat Rekomendasi</h3><p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Hasil Generate Otomatis</p></div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button onclick="openPdfPreview('{{ asset($application->file_rekom) }}?t={{ time() }}', 'Surat Rekomendasi')" class="px-4 py-2 bg-purple-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm">Pratinjau PDF</button>
+                                    <a href="{{ route('data-perijinan.download-file', rawurlencode(str_replace('uploads/perijinan/', '', $application->file_rekom))) }}?t={{ time() }}" class="p-2 bg-purple-50 dark:bg-purple-900/30 text-purple-700 border border-purple-200 rounded-xl"><i class="mdi mdi-download"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                        <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center border border-purple-200 dark:border-purple-800"><i class="mdi mdi-file-document-edit text-purple-600 dark:text-purple-400 text-xl"></i></div>
+                                <div><h3 class="text-base font-bold text-gray-800 dark:text-white">Formulir Rekomendasi</h3><p class="text-[10px] text-purple-600 font-bold uppercase tracking-wider">Tugas Operator OPD</p></div>
+                            </div>
+                            @if(!$canEditRekom) <span class="px-3 py-1 bg-gray-100 text-gray-500 text-[10px] font-bold rounded-full uppercase border">Hanya Baca</span> @endif
+                        </div>
+                        <div class="p-6">
+                            @if($isFutureValidator && !in_array($application->status, ['approved', 'rejected', 'perbaikan']))
+                                <div class="mb-6 p-4 bg-rose-50 dark:bg-rose-900/20 border-l-4 border-rose-500 rounded-r-xl flex gap-3 shadow-sm">
+                                    <i class="mdi mdi-lock-clock text-rose-600 text-xl mt-0.5"></i>
+                                    <div class="flex-1">
+                                        <h4 class="text-sm font-bold text-rose-800 dark:text-rose-300 uppercase tracking-tight">Belum Waktu Tindakan</h4>
+                                        <p class="text-xs text-rose-700 dark:text-rose-400 leading-relaxed mt-1">Anda (sebagai <strong>{{ auth()->user()->role_label }}</strong>) belum dapat melakukan tindakan pada tab ini karena permohonan masih dalam <strong>tahapan {{ $cv->validationFlow->role_label ?? 'Lainnya' }}</strong>.</p>
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if($isOperatorOpd && $canEditRekom)
+                                <div class="mb-6 p-4 bg-purple-50 dark:bg-purple-900/20 border-l-4 border-purple-500 rounded-r-xl flex flex-col gap-1">
+                                    <div class="flex gap-3">
+                                        <i class="mdi mdi-information-outline text-purple-600 text-xl mt-0.5"></i>
+                                        <p class="text-xs text-purple-700 dark:text-purple-300 leading-relaxed">Lengkapi data verifikasi teknis. Data ini akan otomatis digunakan dalam <strong>Surat Rekomendasi</strong>.</p>
+                                    </div>
+                                    <div class="flex gap-3 mt-1">
+                                        <i class="mdi mdi-auto-fix text-purple-500 text-base"></i>
+                                        <p class="text-[11px] text-purple-600/80 italic">Beberapa isian telah terisi otomatis dari data formulir global pemohon. Silakan ubah jika terdapat data yang belum sesuai.</p>
+                                    </div>
+                                </div>
+                            @endif
+                            <form action="{{ route('data-perijinan.rekom-data.save', $application->id) }}" method="POST" enctype="multipart/form-data">
+                                @csrf @method('PUT')
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    @foreach($rekomFields as $field)
+                                        <div class="space-y-2">
+                                            <label class="block text-[11px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-tighter">{{ $field->label }} @if($field->is_required)<span class="text-red-500">*</span>@endif</label>
+                                            @php 
+                                                $val = $application->rekom_data[$field->name] ?? null; 
+                                                $isAlreadySaved = array_key_exists($field->name, $application->rekom_data ?? []);
+
+                                                // Auto-fill from global form ONLY if never saved before
+                                                if (!$isAlreadySaved && $field->type !== 'file') {
                                                     $matchingGlobalField = $application->perijinan->activeFormFields
                                                         ->where('form_type', 'global')
                                                         ->where('name', $field->name)
@@ -464,39 +662,80 @@
                                                         ->filter(function($f) use ($field) {
                                                             return strtolower($f->label) === strtolower($field->label);
                                                         })->first();
-                                                    
-                                                    $globalFile = null;
+
                                                     if ($matchingGlobalField) {
-                                                        $globalFiles = $application->form_files[$matchingGlobalField->id] ?? [];
-                                                        $globalFile = is_array($globalFiles) ? ($globalFiles[0] ?? null) : $globalFiles;
+                                                        $val = $application->form_data[$matchingGlobalField->id] ?? '';
+                                                        if (is_array($val)) $val = implode(', ', $val);
                                                     }
-                                                @endphp
-                                                @if($globalFile && $globalFile !== $val)
-                                                    <div class="flex items-center gap-2 mt-1 p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800/50">
-                                                        <i class="mdi mdi-information-outline text-amber-600 text-sm"></i>
-                                                        <span class="text-[10px] text-amber-700 dark:text-amber-400 font-bold">Referensi Pemohon:</span>
-                                                        <a href="{{ asset($globalFile) }}" target="_blank" class="text-[10px] font-bold text-blue-600 hover:underline truncate">Buka Berkas Pemohon</a>
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        @elseif($field->type === 'date')
-                                            <input type="date" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }}>
-                                        @elseif($field->type === 'number')
-                                            <input type="number" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }}>
-                                        @else
-                                            <input type="text" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }}>
-                                        @endif
-                                    </div>
-                                @endforeach
-                            </div>
-                            @if($canEditRekom)
-                                <div class="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700 flex justify-end">
-                                    <button type="submit" class="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg flex items-center gap-3 active:scale-95"><i class="mdi mdi-content-save-check text-lg"></i> SIMPAN & GENERATE REKOMENDASI</button>
+                                                }
+
+                                                $val = $val ?? '';
+                                                $ro = !$canEditRekom ? 'readonly disabled' : ''; 
+                                                $cls = "w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-purple-500 outline-none transition-all"; 
+                                            @endphp
+
+                                            @if($field->type === 'textarea')
+                                                <textarea name="{{ $field->name }}" class="{{ $cls }} min-h-[120px]" {{ $ro }}>{{ $val }}</textarea>
+                                            @elseif($field->type === 'select')
+                                                <select name="{{ $field->name }}" class="{{ $cls }}" {{ $ro }}>
+                                                    <option value="">-- Pilih --</option>
+                                                    @foreach($field->options ?? [] as $opt)
+                                                        <option value="{{ $opt }}" {{ $val == $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                                                    @endforeach
+                                                </select>
+                                            @elseif($field->type === 'file')
+                                                <div class="space-y-2">
+                                                    <input type="file" name="{{ $field->name }}" class="{{ $cls }}" {{ $ro }}>
+                                                    @if($val)
+                                                        <div class="flex items-center gap-2 mt-2 p-2 bg-purple-50 dark:bg-purple-900/30 rounded-lg border border-purple-100 dark:border-purple-800">
+                                                            <i class="mdi mdi-file-check text-purple-600"></i>
+                                                            <a href="{{ asset($val) }}" target="_blank" class="text-xs font-bold text-purple-700 dark:text-purple-300 hover:underline truncate">Lihat File Terupload</a>
+                                                        </div>
+                                                    @endif
+
+                                                    @php
+                                                        $matchingGlobalField = $application->perijinan->activeFormFields
+                                                            ->where('form_type', 'global')
+                                                            ->where('name', $field->name)
+                                                            ->first() ?? $application->perijinan->activeFormFields
+                                                            ->where('form_type', 'global')
+                                                            ->filter(function($f) use ($field) {
+                                                                return strtolower($f->label) === strtolower($field->label);
+                                                            })->first();
+                                                        
+                                                        $globalFile = null;
+                                                        if ($matchingGlobalField) {
+                                                            $globalFiles = $application->form_files[$matchingGlobalField->id] ?? [];
+                                                            $globalFile = is_array($globalFiles) ? ($globalFiles[0] ?? null) : $globalFiles;
+                                                        }
+                                                    @endphp
+                                                    @if($globalFile && $globalFile !== $val)
+                                                        <div class="flex items-center gap-2 mt-1 p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800/50">
+                                                            <i class="mdi mdi-information-outline text-amber-600 text-sm"></i>
+                                                            <span class="text-[10px] text-amber-700 dark:text-amber-400 font-bold">Referensi Pemohon:</span>
+                                                            <a href="{{ asset($globalFile) }}" target="_blank" class="text-[10px] font-bold text-blue-600 hover:underline truncate">Buka Berkas Pemohon</a>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            @elseif($field->type === 'date')
+                                                <input type="date" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }}>
+                                            @elseif($field->type === 'number')
+                                                <input type="number" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }}>
+                                            @else
+                                                <input type="text" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }}>
+                                            @endif
+                                        </div>
+                                    @endforeach
                                 </div>
-                            @endif
-                        </form>
+                                @if($canEditRekom)
+                                    <div class="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700 flex justify-end">
+                                        <button type="submit" class="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg flex items-center gap-3 active:scale-95"><i class="mdi mdi-content-save-check text-lg"></i> SIMPAN & GENERATE REKOMENDASI</button>
+                                    </div>
+                                @endif
+                            </form>
+                        </div>
                     </div>
-                </div>
+                @endif
             </div>
             @endif
 
@@ -568,44 +807,53 @@
                                             $val = $application->izin_data[$field->name] ?? null; 
                                             $isAlreadySaved = array_key_exists($field->name, $application->izin_data ?? []);
                                             
-                                            // Auto-fill logic for Permit form:
-                                            // 1. Priority: Data from Recommendation form (rekom_data)
-                                            // 2. Fallback: Data from Global form (form_data)
-                                            // ONLY auto-fill if the field has never been saved in this form before
                                             if (!$isAlreadySaved) {
-                                                // Try finding in Recommendation data first (by name or label)
-                                                $matchingRekomField = $application->perijinan->activeFormFields
-                                                    ->where('form_type', 'rekom')
-                                                    ->where('name', $field->name)
-                                                    ->first() ?? $application->perijinan->activeFormFields
-                                                    ->where('form_type', 'rekom')
-                                                    ->filter(function($f) use ($field) {
-                                                        return strtolower($f->label) === strtolower($field->label);
-                                                    })->first();
-
-                                                if ($matchingRekomField && !empty($application->rekom_data[$matchingRekomField->name])) {
-                                                    $val = $application->rekom_data[$matchingRekomField->name];
-                                                }
-
-                                                // If still empty and not a file field, try Global form
-                                                if (empty($val) && $field->type !== 'file') {
+                                                if ($application->perijinan->is_multi_opd) {
+                                                    // Multi-OPD: Default from Global form
                                                     $matchingGlobalField = $application->perijinan->activeFormFields
                                                         ->where('form_type', 'global')
                                                         ->where('name', $field->name)
                                                         ->first() ?? $application->perijinan->activeFormFields
                                                         ->where('form_type', 'global')
-                                                        ->filter(function($f) use ($field) {
-                                                            return strtolower($f->label) === strtolower($field->label);
-                                                        })->first();
+                                                        ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                                                        ->first();
 
                                                     if ($matchingGlobalField) {
                                                         $val = $application->form_data[$matchingGlobalField->id] ?? '';
                                                         if (is_array($val)) $val = implode(', ', $val);
                                                     }
+                                                } else {
+                                                    // Single OPD: Default from Rekom data
+                                                    $matchingRekomField = $application->perijinan->activeFormFields
+                                                        ->where('form_type', 'rekom')
+                                                        ->where('name', $field->name)
+                                                        ->first() ?? $application->perijinan->activeFormFields
+                                                        ->where('form_type', 'rekom')
+                                                        ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                                                        ->first();
+
+                                                    if ($matchingRekomField && !empty($application->rekom_data[$matchingRekomField->name])) {
+                                                        $val = $application->rekom_data[$matchingRekomField->name];
+                                                    }
+
+                                                    if (empty($val) && $field->type !== 'file') {
+                                                        $matchingGlobalField = $application->perijinan->activeFormFields
+                                                            ->where('form_type', 'global')
+                                                            ->where('name', $field->name)
+                                                            ->first() ?? $application->perijinan->activeFormFields
+                                                            ->where('form_type', 'global')
+                                                            ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                                                            ->first();
+
+                                                        if ($matchingGlobalField) {
+                                                            $val = $application->form_data[$matchingGlobalField->id] ?? '';
+                                                            if (is_array($val)) $val = implode(', ', $val);
+                                                        }
+                                                    }
                                                 }
                                             }
 
-                                            $val = $val ?? ''; // Final fallback to empty string for display
+                                            $val = $val ?? ''; 
                                             $ro = !$canEditIzin ? 'readonly disabled' : ''; 
                                             $cls = "w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"; 
                                         @endphp
@@ -704,13 +952,32 @@
                                 $sc = ['approved' => 'bg-green-500', 'pending' => 'bg-gray-300 dark:bg-gray-600', 'rejected' => 'bg-red-500', 'revision' => 'bg-orange-500']; 
                                 $isCurrent = ($v->order == $application->current_step && in_array($application->status, ['submitted', 'in_progress']));
                                 
-                                // Check if this is current user's task
+                                // Check if this is current user's task (including parallel multi-opd)
                                 $isMyTurn = false;
-                                if ($isCurrent) {
-                                    $isMyTurn = ($v->validationFlow->role === $userRole && 
-                                               (in_array($v->validationFlow->role, ['verifikator', 'kadin']) || 
-                                                $v->user_id === auth()->id() || 
-                                                $v->validationFlow->assigned_user_id === auth()->id()));
+                                if ($application->status === 'submitted' || $application->status === 'in_progress') {
+                                    if ($isMultiOpd && in_array($userRole, ['operator_opd', 'kepala_opd'])) {
+                                        // Highlight specific parallel task
+                                        if ($v->validationFlow->assigned_user_id == auth()->id() && $v->status === 'pending') {
+                                            $opdSteps = $application->validasiRecords->filter(fn($vr) => in_array($v->validationFlow->role, ['operator_opd', 'kepala_opd']));
+                                            $minOpdOrder = $opdSteps->min('order');
+                                            if ($application->current_step >= $minOpdOrder) {
+                                                if ($userRole === 'kepala_opd') {
+                                                    $myOp = $application->validasiRecords->first(fn($vr) => $vr->validationFlow->role === 'operator_opd' && $vr->validationFlow->assignedUser->opd_id == auth()->user()->opd_id);
+                                                    $isMyTurn = $myOp && $myOp->status === 'approved';
+                                                } else {
+                                                    $isMyTurn = true;
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        // Standard sequential highlight
+                                        if ($isCurrent) {
+                                            $isMyTurn = ($v->validationFlow->role === $userRole && 
+                                                       (in_array($v->validationFlow->role, ['verifikator', 'kadin']) || 
+                                                        $v->user_id === auth()->id() || 
+                                                        $v->validationFlow->assigned_user_id === auth()->id()));
+                                        }
+                                    }
                                 }
                             @endphp
                             <div class="relative flex gap-3 {{ !$loop->last ? 'pb-4' : '' }} {{ $isCurrent ? 'bg-blue-50/50 dark:bg-blue-900/10 -mx-5 px-5 py-3 first:rounded-t-none last:rounded-b-none border-y border-blue-100/50 dark:border-blue-800/30' : '' }}">
@@ -724,19 +991,36 @@
 
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center justify-between mb-0.5">
-                                        <h4 class="font-bold text-gray-800 dark:text-white text-[11px] uppercase tracking-tighter flex items-center gap-1.5">
+                                        <h4 class="font-bold text-gray-800 dark:text-white text-[11px] uppercase tracking-tighter flex items-center gap-1.5 flex-wrap">
                                             {{ $v->validationFlow->role_label ?? 'Tahap ' . ($index + 1) }}
+                                            @php
+                                                $assignedOpd = $v->validationFlow->assignedUser->opd ?? null;
+                                                $actualOpd = $v->validator->opd ?? null;
+                                                $opdToDisplay = $actualOpd ?? $assignedOpd;
+                                            @endphp
+                                            @if($opdToDisplay)
+                                                <span class="text-purple-600 dark:text-purple-400 font-bold">({{ $opdToDisplay->nama_opd }})</span>
+                                            @endif
                                             @if($isCurrent)
                                                 <span class="flex h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-blue-400"></span>
                                             @endif
                                         </h4>
                                         <div class="flex items-center gap-2">
                                             @if($isMyTurn)
-                                                <span class="px-2 py-0.5 rounded-full text-[8px] font-black bg-blue-600 text-white uppercase tracking-wider animate-bounce">Tugas Anda</span>
+                                                <span class="px-2 py-0.5 rounded-full text-[8px] font-black bg-blue-600 text-white uppercase tracking-wider animate-bounce">Anda</span>
                                             @endif
                                             <span class="px-2 py-0.5 rounded-full text-[9px] font-black {{ $v->status_color }} uppercase">{{ $v->status_label }}</span>
                                         </div>
                                     </div>
+                                    @php
+                                        $displayUser = $v->validator ?? ($v->validationFlow->assignedUser ?? null);
+                                    @endphp
+                                    @if($displayUser)
+                                        <p class="text-[10px] text-gray-600 dark:text-gray-400 font-medium mb-1">
+                                            <i class="mdi mdi-account-outline text-[11px]"></i> {{ $displayUser->name }}
+                                        </p>
+                                    @endif
+
                                     @if ($v->validated_at) 
                                         <p class="text-[9px] text-gray-500">{{ $v->validated_at->format('d/m/Y H:i') }}</p> 
                                     @else
@@ -797,7 +1081,9 @@
                             @csrf <input type="hidden" name="action" id="validationAction" value="">
                             <textarea name="catatan" id="catatan" rows="3" class="w-full px-3 py-2 text-xs border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-xl mb-4 focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="Berikan catatan..."></textarea>
                             <div class="grid grid-cols-2 gap-2">
-                                <button type="button" onclick="submitValidation('approved')" class="py-2.5 bg-green-600 text-white rounded-xl text-[9px] font-black uppercase">{{ $isKadin ? 'Terbitkan Surat Izin' : 'Setujui' }}</button>
+                                <button type="button" onclick="submitValidation('approved')" class="py-2.5 bg-green-600 text-white rounded-xl text-[9px] font-black uppercase">
+                                    {{ $isKadin ? 'Terbitkan Surat Izin' : 'Setujui' }}
+                                </button>
                                 <button type="button" onclick="submitValidation('rejected')" class="py-2.5 bg-red-600 text-white rounded-xl text-[9px] font-black uppercase">Tolak</button>
                                 <button type="button" onclick="submitValidation('revision')" class="col-span-2 py-2.5 bg-orange-500 text-white rounded-xl text-[9px] font-black uppercase mb-1">Perbaikan ke Pemohon</button>
                                 
