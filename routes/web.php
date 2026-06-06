@@ -181,11 +181,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/perlu-perbaikan/export', [DataPerijinanController::class, 'exportPerluPerbaikan'])->name('perlu-perbaikan.export');
         Route::get('/selesai', [DataPerijinanController::class, 'selesai'])->name('selesai');
         Route::get('/selesai/export', [DataPerijinanController::class, 'exportSelesai'])->name('selesai.export');
+        Route::get('/selesai/export-sla', [DataPerijinanController::class, 'exportSla'])->name('selesai.export-sla');
         Route::get('/ditolak', [DataPerijinanController::class, 'ditolak'])->name('ditolak');
         Route::get('/ditolak/export', [DataPerijinanController::class, 'exportDitolak'])->name('ditolak.export');
         Route::get('/{id}', [DataPerijinanController::class, 'show'])->name('show');
         Route::put('/{id}/rekom-data', [DataPerijinanController::class, 'saveRekomData'])->name('rekom-data.save');
         Route::put('/{id}/izin-data', [DataPerijinanController::class, 'saveIzinData'])->name('izin-data.save');
+        Route::get('/{id}/sla-report', [DataPerijinanController::class, 'slaReport'])->name('sla-report');
         Route::post('/{id}/validate', [DataPerijinanController::class, 'processValidation'])->name('validate');
         Route::patch('/{id}/status', [DataPerijinanController::class, 'updateStatus'])->name('update-status');
         Route::get('/download/{filepath}', [DataPerijinanController::class, 'downloadFile'])->name('download-file')->where('filepath', '.*');

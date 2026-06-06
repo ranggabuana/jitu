@@ -151,6 +151,14 @@ class DataPerijinan extends Model
     }
 
     /**
+     * Get all return logs for this application.
+     */
+    public function returnLogs(): HasMany
+    {
+        return $this->hasMany(DataPerijinanReturnLog::class, 'data_perijinan_id');
+    }
+
+    /**
      * Get pending validation records.
      */
     public function pendingValidasi(): HasMany

@@ -140,7 +140,45 @@
             const lastTab = localStorage.getItem('active_detail_tab') || 'data-pemohon';
             const tabBtn = document.getElementById('tab-btn-' + lastTab);
             switchTab(tabBtn ? lastTab : 'data-pemohon');
+
+            // --- SLA Timer Logic ---
+            const counterEl = document.getElementById('sla-counter');
+            if (counterEl && counterEl.dataset.running === 'true') {
+                let initialSeconds = parseInt(counterEl.dataset.initial) || 0;
+                let sessionSeconds = 0;
+
+                setInterval(() => {
+                    sessionSeconds++;
+                    let totalSeconds = initialSeconds + sessionSeconds;
+                    
+                    // Update display
+                    counterEl.textContent = formatDuration(totalSeconds);
+                    
+                    // Update hidden inputs in all forms
+                    document.querySelectorAll('.elapsed-seconds-input').forEach(input => {
+                        input.value = sessionSeconds;
+                    });
+                }, 1000);
+            }
         });
+
+        /**
+         * Helper to format seconds to Indonesian duration string (JS version)
+         */
+        function formatDuration(seconds) {
+            if (seconds < 1) return '0 detik';
+            
+            let hours = Math.floor(seconds / 3600);
+            let minutes = Math.floor((seconds % 3600) / 60);
+            let secs = seconds % 60;
+            
+            let parts = [];
+            if (hours > 0) parts.push(hours + ' jam');
+            if (minutes > 0) parts.push(minutes + ' menit');
+            if (secs > 0 || parts.length === 0) parts.push(secs + ' detik');
+            
+            return parts.join(' ');
+        }
     </script>
     @endpush
 
@@ -231,7 +269,7 @@
         $showIzinTab = ($isVerifikator || $isAdmin || $isKadin);
     @endphp
     <!-- Navigation Tabs -->
-    <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
+    <div class="mb-6 border-b border-gray-200 dark:border-gray-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <ul class="flex flex-wrap -mb-px text-sm font-medium text-center">
             <li class="mr-2">
                 <button type="button" onclick="switchTab('data-pemohon')" id="tab-btn-data-pemohon"
@@ -256,6 +294,36 @@
             </li>
             @endif
         </ul>
+
+        @php
+            $myFinishedRecord = $application->validasiRecords->where('user_id', auth()->id())->where('status', '!=', 'pending')->sortByDesc('validated_at')->first();
+            $activeTask = ($canVal) ? (($isParallelOpdTurn && $userAssignedRecord) ? $userAssignedRecord : $cv) : null;
+        @endphp
+
+        @if($canVal || $myFinishedRecord)
+            @php
+                $isRunning = (bool)$canVal;
+                $initialSeconds = $isRunning ? ($activeTask->duration_seconds ?? 0) : ($myFinishedRecord->duration_seconds ?? 0);
+                $bgColor = $isRunning ? 'bg-blue-50 dark:bg-blue-900/30' : 'bg-red-50 dark:bg-red-900/20';
+                $borderColor = $isRunning ? 'border-blue-100 dark:border-blue-800' : 'border-red-100 dark:border-red-900/30';
+                $textColor = $isRunning ? 'text-blue-700 dark:text-blue-300' : 'text-red-700 dark:text-red-400';
+                $iconColor = $isRunning ? 'text-blue-600' : 'text-red-600';
+                $labelColor = $isRunning ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400';
+            @endphp
+            <div class="flex items-center gap-3 px-4 py-2 {{ $bgColor }} border {{ $borderColor }} rounded-xl mb-2 md:mb-0">
+                <div class="flex flex-col">
+                    <span class="text-[9px] font-black {{ $labelColor }} uppercase tracking-widest">SLA {{ $isRunning ? 'Counter' : 'Record' }}</span>
+                    <div class="flex items-center gap-2">
+                        <i class="mdi {{ $isRunning ? 'mdi-timer-outline animate-pulse' : 'mdi-timer-off-outline' }} {{ $iconColor }}"></i>
+                        <span id="sla-counter" class="text-sm font-mono font-black {{ $textColor }}" 
+                            data-initial="{{ $initialSeconds }}" 
+                            data-running="{{ $isRunning ? 'true' : 'false' }}">
+                            {{ formatDuration($initialSeconds) }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
 
     <!-- Main Grid -->
@@ -467,6 +535,7 @@
                                 <form action="{{ route('data-perijinan.rekom-data.save', $application->id) }}" method="POST" enctype="multipart/form-data">
                                     @csrf @method('PUT')
                                     <input type="hidden" name="opd_id" value="{{ $opd->id }}">
+                                    <input type="hidden" name="elapsed_seconds" class="elapsed-seconds-input" value="0">
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         @foreach($rekomFields as $field)
                                             <div class="space-y-2">
@@ -664,6 +733,7 @@
                             @endif
                             <form action="{{ route('data-perijinan.rekom-data.save', $application->id) }}" method="POST" enctype="multipart/form-data">
                                 @csrf @method('PUT')
+                                <input type="hidden" name="elapsed_seconds" class="elapsed-seconds-input" value="0">
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     @foreach($rekomFields as $field)
                                         <div class="space-y-2">
@@ -828,6 +898,7 @@
                         @endif
                         <form action="{{ route('data-perijinan.izin-data.save', $application->id) }}" method="POST" enctype="multipart/form-data">
                             @csrf @method('PUT')
+                            <input type="hidden" name="elapsed_seconds" class="elapsed-seconds-input" value="0">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 @foreach($izinFields as $field)
                                     <div class="space-y-2">
@@ -1108,6 +1179,7 @@
                     <div class="p-5">
                         <form id="validationForm" action="{{ route('data-perijinan.validate', $application->id) }}" method="POST">
                             @csrf <input type="hidden" name="action" id="validationAction" value="">
+                            <input type="hidden" name="elapsed_seconds" class="elapsed-seconds-input" value="0">
                             <textarea name="catatan" id="catatan" rows="3" class="w-full px-3 py-2 text-xs border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-xl mb-4 focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="Berikan catatan..."></textarea>
                             <div class="grid grid-cols-2 gap-2">
                                 <button type="button" onclick="submitValidation('approved')" class="py-2.5 bg-green-600 text-white rounded-xl text-[9px] font-black uppercase">

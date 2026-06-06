@@ -135,24 +135,26 @@ if (!function_exists('maskName')) {
     }
 }
 
-if (!function_exists('maskEmail')) {
+if (!function_exists('formatDuration')) {
     /**
-     * Mask email for privacy (e.g., "john.doe@example.com" -> "jo*******@example.com")
+     * Format duration in seconds to human readable string
      *
-     * @param string|null $email
+     * @param int $seconds
      * @return string
      */
-    function maskEmail(?string $email): string
+    function formatDuration($seconds): string
     {
-        if (!$email) return '-';
-        $parts = explode('@', $email);
-        $name = $parts[0];
-        $domain = $parts[1] ?? '';
+        if ($seconds < 1) return '0 detik';
         
-        if (strlen($name) <= 2) {
-            return $name . '***@' . $domain;
-        }
+        $hours = floor($seconds / 3600);
+        $minutes = floor(($seconds % 3600) / 60);
+        $secs = $seconds % 60;
         
-        return substr($name, 0, 2) . str_repeat('*', strlen($name) - 2) . '@' . $domain;
+        $parts = [];
+        if ($hours > 0) $parts[] = $hours . ' jam';
+        if ($minutes > 0) $parts[] = $minutes . ' menit';
+        if ($secs > 0 || empty($parts)) $parts[] = $secs . ' detik';
+        
+        return implode(' ', $parts);
     }
 }

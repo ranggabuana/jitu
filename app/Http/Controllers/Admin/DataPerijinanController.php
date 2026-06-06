@@ -414,6 +414,25 @@ class DataPerijinanController extends Controller
     }
 
     /**
+     * Show SLA Report for a specific application.
+     */
+    public function slaReport($id)
+    {
+        $application = DataPerijinan::with([
+            'perijinan',
+            'user',
+            'validasiRecords.validationFlow', 
+            'validasiRecords.validator.opd',
+            'returnLogs.fromUser.opd'
+        ])->findOrFail($id);
+        
+        $records = $application->validasiRecords->sortBy('order');
+        $returnLogs = $application->returnLogs->sortByDesc('created_at');
+        
+        return view('admin.data-perijinan.sla-report', compact('application', 'records', 'returnLogs'));
+    }
+
+    /**
      * Process validation (approve/reject) for current step.
      */
     public function processValidation(Request $request, $id)
@@ -533,14 +552,19 @@ class DataPerijinanController extends Controller
                 'catatan' => $request->catatan,
                 'validated_at' => now(),
             ];
+
+            // Accumulate SLA Duration correctly
+            if ($request->has('elapsed_seconds')) {
+                $myValidasi->increment('duration_seconds', intval($request->elapsed_seconds));
+            }
             
             $isReturnAction = in_array($request->action, ['return_to_bo', 'return_to_operator_opd', 'return_to_kepala_opd', 'return_to_verifikator']);
             
-            // Jika bukan aksi pengembalian, update status record saat ini
+            // Update status
             if (!$isReturnAction) {
                 $updateData['status'] = $request->action;
-                $myValidasi->update($updateData);
             }
+            $myValidasi->update($updateData);
 
             // Handle based on action
             if ($request->action === 'approved') {
@@ -627,11 +651,14 @@ class DataPerijinanController extends Controller
                     ->where('status', 'pending')
                     ->update(['status' => 'rejected']);
             } elseif ($request->action === 'revision') {
-                // Send back for revision
+                // Send back for revision - RESET SLA
                 $application->update([
                     'status' => 'perbaikan',
                     'catatan_perbaikan' => $request->catatan,
                 ]);
+
+                // Reset all duration_seconds for this application's validators
+                $application->validasiRecords()->update(['duration_seconds' => 0]);
 
                 // Send Email Notification: Returned/Revision
                 if ($application->user && $application->user->email) {
@@ -670,6 +697,15 @@ class DataPerijinanController extends Controller
                     $targetOrder = $targetRecord->order;
                     
                     \Log::info("Returning application {$application->no_registrasi} to {$roleLabel} (Order: {$targetOrder})");
+
+                    // Log the return for SLA Report
+                    \App\Models\DataPerijinanReturnLog::create([
+                        'data_perijinan_id' => $application->id,
+                        'from_user_id' => $user->id,
+                        'from_role_label' => $user->role_label,
+                        'to_role_label' => $roleLabel,
+                        'catatan' => $request->catatan,
+                    ]);
 
                     // Reset all records from targetOrder onwards using Eloquent to trigger any possible events
                     $recordsToReset = $application->validasiRecords()
@@ -891,8 +927,15 @@ class DataPerijinanController extends Controller
             $multiData[$opdId] = $currentData;
             $application->rekom_data_multi = $multiData;
             
-            // Also update standard rekom_data for backward compatibility/single-opd views if needed
-            // or just leave it. The user wants them separate.
+            // Accumulate SLA Duration correctly for the specific step assigned to this user
+            if ($request->has('elapsed_seconds')) {
+                $targetRecord = $application->validasiRecords->where('validationFlow.assigned_user_id', $user->id)->where('status', 'pending')->first()
+                                ?? $application->validasiRecords->where('order', $application->current_step)->first();
+                if ($targetRecord) {
+                    $targetRecord->increment('duration_seconds', intval($request->elapsed_seconds));
+                }
+            }
+
             $application->save();
         } else {
             // Standard Single OPD Logic
@@ -911,6 +954,16 @@ class DataPerijinanController extends Controller
                 }
             }
             $application->rekom_data = $rekomData;
+
+            // Accumulate SLA Duration correctly for the specific step assigned to this user
+            if ($request->has('elapsed_seconds')) {
+                $targetRecord = $application->validasiRecords->where('validationFlow.assigned_user_id', $user->id)->where('status', 'pending')->first()
+                                ?? $application->validasiRecords->where('order', $application->current_step)->first();
+                if ($targetRecord) {
+                    $targetRecord->increment('duration_seconds', intval($request->elapsed_seconds));
+                }
+            }
+
             $application->save();
         }
 
@@ -997,6 +1050,15 @@ class DataPerijinanController extends Controller
         $application->forceFill([
             'izin_data' => $izinData,
         ])->save();
+
+        // Accumulate SLA Duration correctly for the specific step assigned to this user
+        if ($request->has('elapsed_seconds')) {
+            $targetRecord = $application->validasiRecords->where('validationFlow.assigned_user_id', $user->id)->where('status', 'pending')->first()
+                            ?? $application->validasiRecords->where('order', $application->current_step)->first();
+            if ($targetRecord) {
+                $targetRecord->increment('duration_seconds', intval($request->elapsed_seconds));
+            }
+        }
 
         // Reload to ensure everything is fresh for document generation
         $application->load(['perijinan.activeFormFields', 'user']);
@@ -1208,6 +1270,96 @@ class DataPerijinanController extends Controller
         $applications = $query->orderBy('updated_at', 'desc')->get();
 
         return $this->exportToExcel($applications, 'perlu_perbaikan', $dateFrom, $dateTo);
+    }
+
+    /**
+     * Export SLA data to Excel.
+     */
+    public function exportSla(Request $request)
+    {
+        $user = auth()->user();
+        $query = DataPerijinan::with(['user', 'perijinan', 'validasiRecords.validationFlow', 'validasiRecords.validator.opd']);
+
+        if (!$user->isAdmin()) {
+            $accessiblePerijinanIds = $user->getAccessiblePerijinanIds();
+            if (!empty($accessiblePerijinanIds)) {
+                $query->whereIn('perijinan_id', $accessiblePerijinanIds);
+            } else {
+                $query->where('id', 0);
+            }
+        }
+
+        $dateFrom = $request->get('date_from', '');
+        $dateTo = $request->get('date_to', '');
+        
+        if ($dateFrom) {
+            $query->whereDate('approved_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('approved_at', '<=', $dateTo);
+        }
+
+        $query->where('status', 'approved');
+        $applications = $query->orderBy('approved_at', 'desc')->get();
+
+        // XML-based Excel Export (matching existing pattern)
+        $filename = 'report_sla_' . date('Y-m-d_His') . '.xls';
+
+        header('Content-Type: application/vnd.ms-excel; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+
+        echo '<?xml version="1.0" encoding="UTF-8"?>';
+        echo '<?mso-application progid="Excel.Sheet"?>';
+        echo '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40">';
+        
+        echo '<Styles>
+            <Style ss:ID="header"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#2563EB" ss:Pattern="Solid"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/></Borders></Style>
+            <Style ss:ID="title"><Font ss:Size="14" ss:Bold="1"/><Alignment ss:Horizontal="Center"/></Style>
+            <Style ss:ID="wrap"><Alignment ss:Vertical="Top" ss:WrapText="1"/></Style>
+        </Styles>';
+
+        echo '<Worksheet ss:Name="Laporan SLA">';
+        echo '<Table>';
+        echo '<Column ss:Width="100"/>'; // No Reg
+        echo '<Column ss:Width="150"/>'; // Jenis
+        echo '<Column ss:Width="120"/>'; // Pemohon
+        echo '<Column ss:Width="300"/>'; // Detail SLA
+        echo '<Column ss:Width="100"/>'; // Total SLA
+        
+        echo '<Row ss:Height="25"><Cell ss:MergeAcross="4" ss:StyleID="title"><Data ss:Type="String">LAPORAN KINERJA SLA VALIDASI (SELESAI)</Data></Cell></Row>';
+        echo '<Row><Cell ss:MergeAcross="4" ss:StyleID="title"><Data ss:Type="String">Periode: ' . ($dateFrom ?: 'Semua') . ' s/d ' . ($dateTo ?: 'Sekarang') . '</Data></Cell></Row>';
+        echo '<Row ss:Index="4">
+            <Cell ss:StyleID="header"><Data ss:Type="String">No. Registrasi</Data></Cell>
+            <Cell ss:StyleID="header"><Data ss:Type="String">Jenis Perijinan</Data></Cell>
+            <Cell ss:StyleID="header"><Data ss:Type="String">Pemohon</Data></Cell>
+            <Cell ss:StyleID="header"><Data ss:Type="String">Detail Tahapan (Petugas | Durasi)</Data></Cell>
+            <Cell ss:StyleID="header"><Data ss:Type="String">Total Net SLA</Data></Cell>
+        </Row>';
+
+        foreach ($applications as $app) {
+            $slaDetails = [];
+            $totalSeconds = 0;
+            foreach ($app->validasiRecords as $v) {
+                $duration = $v->duration_seconds ?? 0;
+                $totalSeconds += $duration;
+                $opd = ($v->validator->opd ?? ($v->validationFlow->assignedUser->opd ?? null))->nama_opd ?? 'N/A';
+                $user = $v->validator->name ?? ($v->validationFlow->assignedUser->name ?? '-');
+                $role = $v->validationFlow->role_label ?? 'Tahapan';
+                $slaDetails[] = "{$role} ({$opd}) | {$user} | " . formatDuration($duration);
+            }
+
+            echo '<Row ss:AutoHeight="1">
+                <Cell><Data ss:Type="String">' . $app->no_registrasi . '</Data></Cell>
+                <Cell><Data ss:Type="String">' . $app->perijinan->nama_perijinan . '</Data></Cell>
+                <Cell><Data ss:Type="String">' . $app->user->name . '</Data></Cell>
+                <Cell ss:StyleID="wrap"><Data ss:Type="String">' . implode("&#10;", $slaDetails) . '</Data></Cell>
+                <Cell><Data ss:Type="String">' . formatDuration($totalSeconds) . '</Data></Cell>
+            </Row>';
+        }
+
+        echo '</Table></Worksheet></Workbook>';
+        exit;
     }
 
     /**

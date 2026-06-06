@@ -47,10 +47,15 @@
             </div>
 
             <div class="flex items-center gap-2">
-                <button onclick="openExportModal()"
+                <button onclick="openExportModal('standard')"
                     class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium">
                     <i class="mdi mdi-file-excel"></i>
                     <span>Export Excel</span>
+                </button>
+                <button onclick="openExportModal('sla')"
+                    class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium">
+                    <i class="mdi mdi-timer-star"></i>
+                    <span>Export SLA</span>
                 </button>
                 <form method="GET" action="{{ route('data-perijinan.selesai') }}" class="flex items-center gap-2">
                     <select name="perijinan_id" onchange="this.form.submit()"
@@ -127,11 +132,18 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <a href="{{ route('data-perijinan.show', $app->id) }}"
-                                    class="inline-flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors">
-                                    <i class="mdi mdi-eye"></i>
-                                    <span>Detail</span>
-                                </a>
+                                <div class="flex justify-end gap-2">
+                                    <a href="{{ route('data-perijinan.sla-report', $app->id) }}"
+                                        class="inline-flex items-center gap-1 bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors">
+                                        <i class="mdi mdi-timer-star"></i>
+                                        <span>SLA Report</span>
+                                    </a>
+                                    <a href="{{ route('data-perijinan.show', $app->id) }}"
+                                        class="inline-flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors">
+                                        <i class="mdi mdi-eye"></i>
+                                        <span>Detail</span>
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     @empty
@@ -169,6 +181,7 @@
                     <i class="mdi mdi-close text-xl"></i>
                 </button>
             </div>
+            <input type="hidden" id="export_mode" value="standard">
             <div class="p-6 space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -200,12 +213,40 @@
             </div>
         </div>
     </div>
+
 </x-layout>
 
 <script>
-    function openExportModal() {
-        document.getElementById('exportModal').classList.remove('hidden');
-        document.getElementById('exportModal').classList.add('flex');
+    function openExportModal(mode = 'standard') {
+        const modal = document.getElementById('exportModal');
+        const modeInput = document.getElementById('export_mode');
+        const titleText = modal.querySelector('h3');
+        const icon = modal.querySelector('.mdi-file-excel');
+        const header = modal.querySelector('.bg-gradient-to-r');
+        const btn = document.querySelector('button[onclick="exportData()"]');
+
+        modeInput.value = mode;
+        
+        if (mode === 'sla') {
+            titleText.textContent = 'Export Laporan SLA';
+            header.classList.remove('from-green-600', 'to-green-700');
+            header.classList.add('from-amber-600', 'to-amber-700');
+            icon.classList.remove('mdi-file-excel');
+            icon.classList.add('mdi-timer-star');
+            btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+            btn.classList.add('bg-amber-600', 'hover:bg-amber-700');
+        } else {
+            titleText.textContent = 'Export Data Selesai';
+            header.classList.remove('from-amber-600', 'to-amber-700');
+            header.classList.add('from-green-600', 'to-green-700');
+            icon.classList.remove('mdi-timer-star');
+            icon.classList.add('mdi-file-excel');
+            btn.classList.remove('bg-amber-600', 'hover:bg-amber-700');
+            btn.classList.add('bg-green-600', 'hover:bg-green-700');
+        }
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
         document.getElementById('date_from').value = '';
         document.getElementById('date_to').value = '';
     }
@@ -218,14 +259,23 @@
     function exportData() {
         const dateFrom = document.getElementById('date_from').value;
         const dateTo = document.getElementById('date_to').value;
-        const baseUrl = '{{ route("data-perijinan.selesai.export") }}';
+        const mode = document.getElementById('export_mode').value;
+        
+        const baseUrl = mode === 'sla' 
+            ? '{{ route("data-perijinan.selesai.export-sla") }}' 
+            : '{{ route("data-perijinan.selesai.export") }}';
+            
         const url = new URL(baseUrl);
         const currentParams = new URLSearchParams(window.location.search);
         currentParams.forEach((value, key) => {
-            if (key !== 'page') url.searchParams.set(key, value);
+            if (key !== 'page' && key !== 'date_from' && key !== 'date_to') {
+                url.searchParams.set(key, value);
+            }
         });
+        
         if (dateFrom) url.searchParams.set('date_from', dateFrom);
         if (dateTo) url.searchParams.set('date_to', dateTo);
+        
         window.location.href = url.toString();
         closeExportModal();
     }
