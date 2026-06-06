@@ -81,61 +81,98 @@
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-indigo-100 dark:border-indigo-900/30 overflow-hidden">
                 <div class="px-6 py-4 bg-indigo-50/50 dark:bg-indigo-900/10 border-b border-indigo-100 dark:border-indigo-900/30 flex items-center gap-3">
                     <div class="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center">
-                        <i class="mdi mdi-numeric text-indigo-600 dark:text-indigo-400 text-xl"></i>
+                        <i class="mdi mdi-cog-outline text-indigo-600 dark:text-indigo-400 text-xl"></i>
                     </div>
                     <div>
-                        <h3 class="text-base font-semibold text-gray-800 dark:text-white">Pengaturan Nomor Surat</h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Atur urutan nomor surat selanjutnya untuk jenis perijinan ini</p>
+                        <h3 class="text-base font-semibold text-gray-800 dark:text-white">Pengaturan Tambahan Form <span id="config-header-type"></span></h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400" id="config-header-subtitle">Atur nomor surat dan panduan pengisian untuk formulir ini</p>
                     </div>
                 </div>
                 <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="w-full">
                         @if(auth()->user()->isAdmin() || auth()->user()->isOperatorOpd())
                             <div id="rekom-number-config" class="hidden">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Nomor Urut Rekomendasi Selanjutnya
-                                </label>
-                                <div class="flex items-center">
-                                    <div class="relative flex-grow">
-                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <i class="mdi mdi-format-list-numbered text-gray-400"></i>
+                                <div class="flex flex-col md:flex-row items-end gap-4 w-full">
+                                    <div class="w-full md:w-48">
+                                        <label class="block text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-1.5">
+                                            Nomor Urut Selanjutnya
+                                        </label>
+                                        <div class="relative">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <i class="mdi mdi-numeric text-gray-400"></i>
+                                            </div>
+                                            <input type="number" form="template-form" name="next_nomor_rekom" id="next_nomor_rekom"
+                                                value="{{ $perijinan->next_nomor_rekom ?? 1 }}" min="1"
+                                                class="w-full pl-9 pr-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm font-bold"
+                                                placeholder="1">
                                         </div>
-                                        <input type="number" form="template-form" name="next_nomor_rekom" id="next_nomor_rekom" 
-                                            value="{{ $perijinan->next_nomor_rekom ?? 1 }}" min="1"
-                                            class="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-l-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-                                            placeholder="Contoh: 1">
                                     </div>
-                                    <button type="submit" form="template-form" title="Simpan"
-                                        class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-r-lg border border-indigo-600 flex items-center gap-2 transition-all">
-                                        <i class="mdi mdi-content-save"></i>
-                                        <span class="hidden sm:inline text-xs font-semibold">Simpan</span>
-                                    </button>
+                                    <div class="flex-grow w-full">
+                                        <label class="block text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-1.5">
+                                            Keterangan Panduan (Informasi untuk Petugas)
+                                        </label>
+                                        <div class="relative">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <i class="mdi mdi-information-outline text-gray-400"></i>
+                                            </div>
+                                            <input type="text" form="template-form" name="keterangan_rekom" 
+                                                value="{{ $perijinan->keterangan_rekom }}"
+                                                class="w-full pl-9 pr-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
+                                                placeholder="Masukkan informasi panduan pengisian untuk Operator OPD...">
+                                        </div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <button type="submit" form="template-form"
+                                            class="h-[42px] px-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl border border-indigo-600 flex items-center gap-2 transition-all shadow-lg shadow-indigo-200 dark:shadow-none active:scale-95">
+                                            <i class="mdi mdi-content-save-check text-lg"></i>
+                                            <span class="text-xs font-black uppercase tracking-widest">Simpan</span>
+                                        </button>
+                                    </div>
                                 </div>
-                                <p class="text-[10px] text-gray-500 mt-2">Nomor ini digunakan untuk urutan surat rekomendasi berikutnya.</p>
+                                <p class="text-[10px] text-gray-400 mt-2 italic ml-1">Keterangan ini akan tampil sebagai panduan di halaman validasi Operator OPD.</p>
                             </div>
                         @endif
+
                         @if(auth()->user()->isAdmin() || auth()->user()->role === 'verifikator')
                             <div id="izin-number-config" class="hidden">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Nomor Urut Izin Selanjutnya
-                                </label>
-                                <div class="flex items-center">
-                                    <div class="relative flex-grow">
-                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <i class="mdi mdi-format-list-numbered text-gray-400"></i>
+                                <div class="flex flex-col md:flex-row items-end gap-4 w-full">
+                                    <div class="w-full md:w-48">
+                                        <label class="block text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-1.5">
+                                            Nomor Urut Selanjutnya
+                                        </label>
+                                        <div class="relative">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <i class="mdi mdi-numeric text-gray-400"></i>
+                                            </div>
+                                            <input type="number" form="template-form" name="next_nomor_izin" id="next_nomor_izin"
+                                                value="{{ $perijinan->next_nomor_izin ?? 1 }}" min="1"
+                                                class="w-full pl-9 pr-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm font-bold"
+                                                placeholder="1">
                                         </div>
-                                        <input type="number" form="template-form" name="next_nomor_izin" id="next_nomor_izin" 
-                                            value="{{ $perijinan->next_nomor_izin ?? 1 }}" min="1"
-                                            class="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-l-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-                                            placeholder="Contoh: 1">
                                     </div>
-                                    <button type="submit" form="template-form" title="Simpan"
-                                        class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-r-lg border border-indigo-600 flex items-center gap-2 transition-all">
-                                        <i class="mdi mdi-content-save"></i>
-                                        <span class="hidden sm:inline text-xs font-semibold">Simpan</span>
-                                    </button>
+                                    <div class="flex-grow w-full">
+                                        <label class="block text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-1.5">
+                                            Keterangan Panduan (Informasi untuk Verifikator)
+                                        </label>
+                                        <div class="relative">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <i class="mdi mdi-information-outline text-gray-400"></i>
+                                            </div>
+                                            <input type="text" form="template-form" name="keterangan_izin" 
+                                                value="{{ $perijinan->keterangan_izin }}"
+                                                class="w-full pl-9 pr-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
+                                                placeholder="Masukkan informasi panduan pengisian untuk Verifikator...">
+                                        </div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <button type="submit" form="template-form"
+                                            class="h-[42px] px-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl border border-indigo-600 flex items-center gap-2 transition-all shadow-lg shadow-indigo-200 dark:shadow-none active:scale-95">
+                                            <i class="mdi mdi-content-save-check text-lg"></i>
+                                            <span class="text-xs font-black uppercase tracking-widest">Simpan</span>
+                                        </button>
+                                    </div>
                                 </div>
-                                <p class="text-[10px] text-gray-500 mt-2">Nomor ini digunakan untuk urutan surat izin berikutnya.</p>
+                                <p class="text-[10px] text-gray-400 mt-2 italic ml-1">Keterangan ini akan tampil sebagai panduan di halaman validasi Verifikator.</p>
                             </div>
                         @endif
                     </div>
@@ -1112,6 +1149,12 @@
                 if (editorRekom) editorRekom.classList.remove('hidden');
                 if (editorIzin) editorIzin.classList.add('hidden');
                 if (editorTitle) editorTitle.textContent = 'Rekom';
+
+                // Update Header
+                const configHeaderType = document.getElementById('config-header-type');
+                if (configHeaderType) configHeaderType.textContent = 'Rekomendasi';
+                const configHeaderSubtitle = document.getElementById('config-header-subtitle');
+                if (configHeaderSubtitle) configHeaderSubtitle.textContent = 'Atur nomor urut dan panduan pengisian untuk Surat Rekomendasi';
                 
                 // Show Global + Rekom variables
                 if (varSectionGlobal) varSectionGlobal.classList.remove('hidden');
@@ -1125,6 +1168,12 @@
                 if (editorRekom) editorRekom.classList.add('hidden');
                 if (editorIzin) editorIzin.classList.remove('hidden');
                 if (editorTitle) editorTitle.textContent = 'Izin';
+
+                // Update Header
+                const configHeaderType = document.getElementById('config-header-type');
+                if (configHeaderType) configHeaderType.textContent = 'Izin';
+                const configHeaderSubtitle = document.getElementById('config-header-subtitle');
+                if (configHeaderSubtitle) configHeaderSubtitle.textContent = 'Atur nomor urut dan panduan pengisian untuk Surat Izin';
                 
                 // Show Global + Izin variables
                 if (varSectionGlobal) varSectionGlobal.classList.remove('hidden');

@@ -801,6 +801,8 @@ class PerijinanController extends Controller
             'template_keabsahan' => 'nullable|string',
             'template_surat_rekom' => 'nullable|string',
             'template_surat_izin' => 'nullable|string',
+            'keterangan_rekom' => 'nullable|string',
+            'keterangan_izin' => 'nullable|string',
             'next_nomor_rekom' => 'nullable|integer',
             'next_nomor_izin' => 'nullable|integer',
         ]);
@@ -815,6 +817,8 @@ class PerijinanController extends Controller
             if ($request->has('template_keabsahan')) $updateData['template_keabsahan'] = $request->template_keabsahan;
             if ($request->has('template_surat_rekom')) $updateData['template_surat_rekom'] = $request->template_surat_rekom;
             if ($request->has('template_surat_izin')) $updateData['template_surat_izin'] = $request->template_surat_izin;
+            if ($request->has('keterangan_rekom')) $updateData['keterangan_rekom'] = $request->keterangan_rekom;
+            if ($request->has('keterangan_izin')) $updateData['keterangan_izin'] = $request->keterangan_izin;
             if ($request->has('next_nomor_rekom')) $updateData['next_nomor_rekom'] = $request->next_nomor_rekom;
             if ($request->has('next_nomor_izin')) $updateData['next_nomor_izin'] = $request->next_nomor_izin;
         } else {
@@ -823,10 +827,10 @@ class PerijinanController extends Controller
             $roleLabel = '';
             
             if ($user->role === 'operator_opd') {
-                $restrictedFields = ['template_surat_izin', 'next_nomor_izin', 'template_pernyataan', 'template_permohonan', 'template_keabsahan'];
+                $restrictedFields = ['template_surat_izin', 'keterangan_izin', 'next_nomor_izin', 'template_pernyataan', 'template_permohonan', 'template_keabsahan'];
                 $roleLabel = 'Rekomendasi';
             } elseif ($user->role === 'verifikator') {
-                $restrictedFields = ['template_surat_rekom', 'next_nomor_rekom', 'template_pernyataan', 'template_permohonan', 'template_keabsahan'];
+                $restrictedFields = ['template_surat_rekom', 'keterangan_rekom', 'next_nomor_rekom', 'template_pernyataan', 'template_permohonan', 'template_keabsahan'];
                 $roleLabel = 'Izin';
             }
 
@@ -839,9 +843,11 @@ class PerijinanController extends Controller
             // Assign allowed data
             if ($user->role === 'operator_opd') {
                 if ($request->has('template_surat_rekom')) $updateData['template_surat_rekom'] = $request->template_surat_rekom;
+                if ($request->has('keterangan_rekom')) $updateData['keterangan_rekom'] = $request->keterangan_rekom;
                 if ($request->has('next_nomor_rekom')) $updateData['next_nomor_rekom'] = $request->next_nomor_rekom;
             } elseif ($user->role === 'verifikator') {
                 if ($request->has('template_surat_izin')) $updateData['template_surat_izin'] = $request->template_surat_izin;
+                if ($request->has('keterangan_izin')) $updateData['keterangan_izin'] = $request->keterangan_izin;
                 if ($request->has('next_nomor_izin')) $updateData['next_nomor_izin'] = $request->next_nomor_izin;
             }
         }

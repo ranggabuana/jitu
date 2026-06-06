@@ -453,6 +453,17 @@
 
                             @if($isMyOpd && $isOperatorOpd && $canEditRekom)
                             <div class="p-6">
+                                @if($application->perijinan->keterangan_rekom)
+                                    <div class="mb-6 p-4 bg-purple-50 dark:bg-purple-900/20 border-l-4 border-purple-500 rounded-r-xl flex gap-3 shadow-sm">
+                                        <i class="mdi mdi-information-outline text-purple-600 text-xl mt-0.5"></i>
+                                        <div class="flex-1">
+                                            <h4 class="text-sm font-bold text-purple-800 dark:text-purple-300 uppercase">Panduan Pengisian</h4>
+                                            <p class="text-xs text-purple-700 dark:text-purple-400 leading-relaxed mt-1 italic">
+                                                {!! nl2br(e($application->perijinan->keterangan_rekom)) !!}
+                                            </p>
+                                        </div>
+                                    </div>
+                                @endif
                                 <form action="{{ route('data-perijinan.rekom-data.save', $application->id) }}" method="POST" enctype="multipart/form-data">
                                     @csrf @method('PUT')
                                     <input type="hidden" name="opd_id" value="{{ $opd->id }}">
@@ -634,10 +645,19 @@
                                 <div class="mb-6 p-4 bg-purple-50 dark:bg-purple-900/20 border-l-4 border-purple-500 rounded-r-xl flex flex-col gap-1">
                                     <div class="flex gap-3">
                                         <i class="mdi mdi-information-outline text-purple-600 text-xl mt-0.5"></i>
-                                        <p class="text-xs text-purple-700 dark:text-purple-300 leading-relaxed">Lengkapi data verifikasi teknis. Data ini akan otomatis digunakan dalam <strong>Surat Rekomendasi</strong>.</p>
+                                        <div class="flex-1">
+                                            <p class="text-xs text-purple-700 dark:text-purple-300 leading-relaxed">Lengkapi data verifikasi teknis. Data ini akan otomatis digunakan dalam <strong>Surat Rekomendasi</strong>.</p>
+                                            @if($application->perijinan->keterangan_rekom)
+                                                <div class="mt-2 p-2 bg-white/50 dark:bg-purple-800/30 rounded-lg border border-purple-100 dark:border-purple-800">
+                                                    <p class="text-[11px] text-purple-800 dark:text-purple-200 font-medium italic">
+                                                        <i class="mdi mdi-lightbulb-on-outline mr-1"></i> {!! nl2br(e($application->perijinan->keterangan_rekom)) !!}
+                                                    </p>
+                                                </div>
+                                            @endif
+                                        </div>
                                     </div>
                                     <div class="flex gap-3 mt-1">
-                                        <i class="mdi mdi-auto-fix text-purple-500 text-base"></i>
+                                        <i class="mdi mdi-auto-fix text-purple-50 text-base"></i>
                                         <p class="text-[11px] text-purple-600/80 italic">Beberapa isian telah terisi otomatis dari data formulir global pemohon. Silakan ubah jika terdapat data yang belum sesuai.</p>
                                     </div>
                                 </div>
@@ -789,7 +809,16 @@
                             <div class="mb-6 p-4 bg-indigo-50 dark:bg-indigo-900/20 border-l-4 border-indigo-500 rounded-r-xl flex flex-col gap-1">
                                 <div class="flex gap-3">
                                     <i class="mdi mdi-information-outline text-indigo-600 text-xl mt-0.5"></i>
-                                    <p class="text-xs text-indigo-700 dark:text-indigo-300 leading-relaxed">Lengkapi data izin final. Data ini akan otomatis digunakan dalam <strong>Surat Izin / Keputusan</strong>.</p>
+                                    <div class="flex-1">
+                                        <p class="text-xs text-indigo-700 dark:text-indigo-300 leading-relaxed">Lengkapi data izin final. Data ini akan otomatis digunakan dalam <strong>Surat Izin / Keputusan</strong>.</p>
+                                        @if($application->perijinan->keterangan_izin)
+                                            <div class="mt-2 p-2 bg-white/50 dark:bg-indigo-800/30 rounded-lg border border-indigo-100 dark:border-indigo-800">
+                                                <p class="text-[11px] text-indigo-800 dark:text-indigo-200 font-medium italic">
+                                                    <i class="mdi mdi-lightbulb-on-outline mr-1"></i> {!! nl2br(e($application->perijinan->keterangan_izin)) !!}
+                                                </p>
+                                            </div>
+                                        @endif
+                                    </div>
                                 </div>
                                 <div class="flex gap-3 mt-1">
                                     <i class="mdi mdi-auto-fix text-indigo-500 text-base"></i>

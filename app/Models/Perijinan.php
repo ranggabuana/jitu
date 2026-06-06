@@ -25,6 +25,8 @@ class Perijinan extends Model
         'template_keabsahan',
         'template_surat_rekom',
         'template_surat_izin',
+        'keterangan_rekom',
+        'keterangan_izin',
         'next_nomor_rekom',
         'next_nomor_izin',
     ];
