@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 
 class LoginController extends Controller
 {
@@ -42,10 +44,22 @@ class LoginController extends Controller
             'password' => 'required|string',
         ]);
 
+        $throttleKey = Str::transliterate(Str::lower($request->input('username')).'|'.$request->ip());
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 3)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+
+            throw ValidationException::withMessages([
+                'username' => ['Terlalu banyak percobaan login. Silakan coba lagi dalam '.$seconds.' detik.'],
+            ]);
+        }
+
         // Find user by username
         $user = User::where('username', $request->username)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
+            RateLimiter::hit($throttleKey, 60);
+
             throw ValidationException::withMessages([
                 'username' => ['Username atau password salah.'],
             ]);
@@ -57,6 +71,8 @@ class LoginController extends Controller
                 'username' => ['Akun Anda belum diaktifkan. Silakan hubungi admin untuk aktivasi.'],
             ]);
         }
+
+        RateLimiter::clear($throttleKey);
 
         // Attempt to log in the user
         Auth::login($user, $request->filled('remember'));
@@ -83,6 +99,22 @@ class LoginController extends Controller
         }
 
         return redirect()->intended('/dashboard');
+    }
+
+    /**
+     * Validate the user login request.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return void
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    protected function validateLogin(Request $request)
+    {
+        $request->validate([
+            $this->username() => 'required|string',
+            'password' => 'required|string',
+        ]);
     }
 
     /**

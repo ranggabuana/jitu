@@ -159,15 +159,20 @@
                     </div>
 
                     @if ($errors->any())
-                        <div
+                        <div id="error-container"
                             class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                             <ul class="list-disc pl-5 space-y-1">
                                 @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
+                                    <li class="error-message">{{ $error }}</li>
                                 @endforeach
                             </ul>
                         </div>
                     @endif
+
+                    <div id="lockout-timer" class="hidden bg-amber-50 border border-amber-200 text-amber-700 px-4 py-3 rounded-lg text-sm text-center">
+                        <i class="mdi mdi-clock-outline mr-2"></i>
+                        Terlalu banyak percobaan login. Silakan coba lagi dalam <span id="seconds-remaining" class="font-bold"></span> detik.
+                    </div>
 
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
@@ -228,6 +233,52 @@
                 `
             });
         @endif
+
+        // Login Lockout Countdown
+        document.addEventListener('DOMContentLoaded', function() {
+            const errorMessages = document.querySelectorAll('.error-message');
+            let lockoutSeconds = 0;
+
+            errorMessages.forEach(msg => {
+                const text = msg.textContent;
+                // Check for "Too many login attempts" or similar Laravel message
+                // Laravel lockout message contains seconds, e.g., "Too many login attempts. Please try again in 59 seconds."
+                const match = text.match(/(\d+)\s+detik/);
+                if (match && match[1]) {
+                    lockoutSeconds = parseInt(match[1]);
+                    // Hide the standard error container if it's just the lockout message
+                    if (errorMessages.length === 1) {
+                        document.getElementById('error-container').classList.add('hidden');
+                    }
+                }
+            });
+
+            if (lockoutSeconds > 0) {
+                const timerContainer = document.getElementById('lockout-timer');
+                const secondsSpan = document.getElementById('seconds-remaining');
+                const submitBtn = document.querySelector('button[type="submit"]');
+
+                timerContainer.classList.remove('hidden');
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+                let remaining = lockoutSeconds;
+                secondsSpan.textContent = remaining;
+
+                const interval = setInterval(() => {
+                    remaining--;
+                    secondsSpan.textContent = remaining;
+
+                    if (remaining <= 0) {
+                        clearInterval(interval);
+                        timerContainer.classList.add('hidden');
+                        submitBtn.disabled = false;
+                        submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                        // Optional: reload to clear error state or just allow submit
+                    }
+                }, 1000);
+            }
+        });
     </script>
 </body>
 
