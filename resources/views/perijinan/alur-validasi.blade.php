@@ -292,7 +292,7 @@
                     <i class="mdi mdi-close text-xl"></i>
                 </button>
             </div>
-            <form id="editForm" method="POST" class="p-6 space-y-4" onsubmit="return handleFormSubmit(event)">
+            <form id="editForm" method="POST" class="p-6 space-y-4">
                 @csrf
                 @method('PUT')
 

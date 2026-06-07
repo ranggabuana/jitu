@@ -614,6 +614,13 @@ class PerijinanController extends Controller
             'perijinan_validation'
         );
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Alur validasi berhasil diperbarui.'
+            ]);
+        }
+
         return redirect()->route('perijinan.alur-validasi', $perijinanId)
             ->with('success', 'Alur validasi berhasil diperbarui.');
     }
