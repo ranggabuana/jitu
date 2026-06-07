@@ -64,6 +64,7 @@
                             <i class="fas {{ request('sort') === 'created_at' || !request('sort') ? (request('direction') === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort' }} opacity-50"></i>
                         </a>
                     </th>
+                    <th class="p-4 border-b">Masa Aktif</th>
                     <th class="p-4 border-b">
                         <a href="{{ request()->fullUrlWithQuery(['sort' => 'status', 'direction' => request('direction') === 'asc' ? 'desc' : 'asc']) }}" class="flex items-center gap-1 hover:text-amber-700">
                             Status
@@ -86,6 +87,11 @@
                             <span class="text-sm text-gray-500">{{ $app->created_at->format('d M Y') }}</span>
                         </td>
                         <td class="p-4 border-b">
+                            <span class="text-sm {{ $app->masa_aktif && $app->masa_aktif->isPast() ? 'text-red-600 font-bold' : 'text-gray-600' }}">
+                                {{ $app->masa_aktif ? $app->masa_aktif->format('d M Y') : '-' }}
+                            </span>
+                        </td>
+                        <td class="p-4 border-b">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $app->status_color }}">
                                 {{ $app->status_label }}
                             </span>
@@ -99,7 +105,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="p-8 text-center text-gray-500">
+                        <td colspan="6" class="p-8 text-center text-gray-500">
                             <i class="fas fa-folder-open text-4xl mb-3 opacity-20"></i>
                             <p>Tidak ada data pengajuan yang ditemukan.</p>
                         </td>

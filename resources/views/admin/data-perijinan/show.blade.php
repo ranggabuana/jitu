@@ -899,6 +899,7 @@
                         <form action="{{ route('data-perijinan.izin-data.save', $application->id) }}" method="POST" enctype="multipart/form-data">
                             @csrf @method('PUT')
                             <input type="hidden" name="elapsed_seconds" class="elapsed-seconds-input" value="0">
+                            
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 @foreach($izinFields as $field)
                                     <div class="space-y-2">
@@ -1029,8 +1030,20 @@
                                     </div>
                                 @endforeach
                             </div>
+
+                            <!-- Masa Aktif Field (Above Save Button) -->
+                            <div class="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700">
+                               <div class="max-w-xs">
+                                   <label class="block text-[11px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-tighter mb-2">Masa Aktif Surat Izin</label>
+                                   <input type="date" name="masa_aktif" value="{{ $application->masa_aktif ? $application->masa_aktif->format('Y-m-d') : '' }}" 
+                                       class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                                       {{ !$canEditIzin ? 'readonly disabled' : '' }}>
+                                   <p class="text-[10px] text-gray-400 mt-2 italic">Atur batas waktu berlakunya surat izin.</p>
+                               </div>
+                            </div>
+
                             @if($canEditIzin)
-                                <div class="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700 flex justify-end">
+                                <div class="mt-4 flex justify-end">
                                     <button type="submit" class="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-[10px] font-black uppercase active:scale-95 transition-all shadow-lg flex items-center gap-3"><i class="mdi mdi-content-save-check text-lg"></i> SIMPAN & GENERATE IZIN</button>
                                 </div>
                             @endif

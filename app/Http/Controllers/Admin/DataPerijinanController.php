@@ -1025,6 +1025,8 @@ class DataPerijinanController extends Controller
             $rules[$field->name] = $fieldRules;
         }
 
+        $rules['masa_aktif'] = 'nullable|date';
+
         $validated = $request->validate($rules);
         
         $izinData = $application->izin_data ?? [];
@@ -1049,6 +1051,7 @@ class DataPerijinanController extends Controller
         
         $application->forceFill([
             'izin_data' => $izinData,
+            'masa_aktif' => array_key_exists('masa_aktif', $validated) ? $validated['masa_aktif'] : $application->masa_aktif,
         ])->save();
 
         // Accumulate SLA Duration correctly for the specific step assigned to this user

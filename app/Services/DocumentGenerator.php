@@ -58,6 +58,7 @@ class DocumentGenerator
             '[NAMA IZIN]' => $perijinan->nama_perijinan ?? '-',
             '[TANGGAL]' => self::formatDateIndonesian($application->created_at ?? now()),
             '[NO REGISTRASI]' => $application->no_registrasi ?? '-',
+            '[MASA AKTIF]' => $application->masa_aktif ? self::formatDateIndonesian($application->masa_aktif) : '-',
         ];
 
         // 3. Define output directory
@@ -708,6 +709,11 @@ class DocumentGenerator
                 <td style=\"padding: 2px 0;\">Jenis Izin</td>
                 <td style=\"padding: 2px 0;\">:</td>
                 <td style=\"padding: 2px 0;\">[NAMA IZIN]</td>
+            </tr>
+            <tr>
+                <td style=\"padding: 2px 0;\">Masa Berlaku s/d</td>
+                <td style=\"padding: 2px 0;\">:</td>
+                <td style=\"padding: 2px 0;\"><strong>[MASA AKTIF]</strong></td>
             </tr>
         </tbody>
     </table>
