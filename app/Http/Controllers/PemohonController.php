@@ -9,6 +9,7 @@ use App\Services\EmailService;
 use App\Mail\AccountActivatedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class PemohonController extends Controller
 {
@@ -87,13 +88,25 @@ class PemohonController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'username' => 'required|string|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => [
+                'required',
+                'string',
+                'confirmed',
+                Password::min(8)
+                    ->letters()
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols(),
+            ],
             'status_pemohon' => 'required|in:perorangan,badan_usaha',
             'nama_perusahaan' => 'nullable|string|max:255',
             'npwp' => 'nullable|string|max:50',
             'nip' => 'nullable|string|max:50',
             'no_hp' => 'nullable|string|max:20',
             'status' => 'required|in:aktif,tidak_aktif',
+        ], [
+            'password.required' => 'Password wajib diisi.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
         ]);
 
         $data = $request->except('password', 'password_confirmation');
@@ -164,7 +177,16 @@ class PemohonController extends Controller
                 'regex:/^[0-9]{16}$/',
                 \Illuminate\Validation\Rule::unique('users')->ignore($pemohon->id),
             ],
-            'password' => 'nullable|string|min:8|confirmed',
+            'password' => [
+                'nullable',
+                'string',
+                'confirmed',
+                Password::min(8)
+                    ->letters()
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols(),
+            ],
             'status_pemohon' => 'required|in:perorangan,badan_usaha',
             'nama_perusahaan' => 'nullable|string|max:255',
             'npwp' => 'nullable|string|max:50',
@@ -182,6 +204,7 @@ class PemohonController extends Controller
             'nip.size' => 'NIK harus terdiri dari 16 digit.',
             'nip.regex' => 'NIK hanya boleh berisi angka.',
             'nip.unique' => 'NIK sudah terdaftar.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
         ]);
 
         $data = $request->except('password', 'password_confirmation', 'foto_ktp');
