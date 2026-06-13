@@ -158,6 +158,37 @@
                         </div>
                     </div>
 
+                    <!-- CAPTCHA -->
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
+                        <label class="block text-sm font-semibold text-gray-700 mb-3">
+                            <i class="mdi mdi-shield-check text-blue-600 mr-2"></i>Verifikasi Keamanan
+                        </label>
+                        <div class="flex items-end gap-3">
+                            <div class="flex-1">
+                                <span id="captcha-question" class="block text-xl font-bold text-blue-600 mb-2">
+                                    {{ session('login_num1') }} + {{ session('login_num2') }} = ?
+                                </span>
+                                <input type="number"
+                                    id="captcha"
+                                    name="captcha"
+                                    required
+                                    placeholder="Hasil"
+                                    class="w-full px-4 py-2 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-lg font-semibold @if(session('captcha_error')) border-red-500 @endif">
+                                @if(session('captcha_error'))
+                                    <p class="mt-2 text-sm text-red-600 flex items-center gap-1">
+                                        <i class="mdi mdi-alert-circle"></i>
+                                        {{ session('captcha_error') }}
+                                    </p>
+                                @endif
+                            </div>
+                            <button type="button"
+                                id="refresh-captcha"
+                                class="shrink-0 bg-blue-600 hover:bg-blue-700 text-white w-12 h-12 rounded-xl font-semibold transition-all flex items-center justify-center text-xl shadow-lg hover:shadow-xl">
+                                <i class="mdi mdi-refresh" id="refresh-icon"></i>
+                            </button>
+                        </div>
+                    </div>
+
                     @if ($errors->any())
                         <div id="error-container"
                             class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
@@ -279,6 +310,44 @@
                 }, 1000);
             }
         });
+
+        // Captcha Refresh
+        const refreshBtn = document.getElementById('refresh-captcha');
+        const refreshIcon = document.getElementById('refresh-icon');
+        const captchaQuestion = document.getElementById('captcha-question');
+        const captchaInput = document.getElementById('captcha');
+
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', function() {
+                // Show loading state
+                refreshIcon.classList.add('mdi-spin');
+                refreshBtn.disabled = true;
+
+                fetch('{{ route("api.refresh-login-captcha") }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        captchaQuestion.textContent = `${data.num1} + ${data.num2} = ?`;
+                        captchaInput.value = '';
+                        captchaInput.focus();
+
+                        // Reset button
+                        refreshIcon.classList.remove('mdi-spin');
+                        refreshBtn.disabled = false;
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        refreshIcon.classList.remove('mdi-spin');
+                        refreshBtn.disabled = false;
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Gagal refresh CAPTCHA. Silakan coba lagi.',
+                            confirmButtonColor: '#3b82f6',
+                            confirmButtonText: 'OK'
+                        });
+                    });
+            });
+        }
     </script>
 </body>
 

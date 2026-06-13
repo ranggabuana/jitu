@@ -25,8 +25,30 @@ class LoginController extends Controller
         if (auth()->check()) {
             return redirect()->intended('/dashboard');
         }
+
+        // Generate CAPTCHA
+        session([
+            'login_num1' => rand(1, 10),
+            'login_num2' => rand(1, 10),
+        ]);
         
         return view('auth.login');
+    }
+
+    /**
+     * Refresh CAPTCHA for login.
+     */
+    public function refreshCaptcha()
+    {
+        session([
+            'login_num1' => rand(1, 10),
+            'login_num2' => rand(1, 10),
+        ]);
+
+        return response()->json([
+            'num1' => session('login_num1'),
+            'num2' => session('login_num2'),
+        ]);
     }
 
     /**
@@ -39,6 +61,25 @@ class LoginController extends Controller
      */
     public function login(Request $request)
     {
+        // Validate CAPTCHA first
+        $request->validate([
+            'captcha' => 'required|numeric',
+        ], [
+            'captcha.required' => 'Silakan masukkan hasil penjumlahan.',
+            'captcha.numeric' => 'Hasil penjumlahan harus berupa angka.',
+        ]);
+
+        // Check CAPTCHA
+        $captchaAnswer = ($request->session()->get('login_num1', 0) + $request->session()->get('login_num2', 0));
+        if ($request->captcha != $captchaAnswer) {
+            return redirect()->back()
+                ->withInput()
+                ->with('captcha_error', 'Hasil penjumlahan CAPTCHA salah. Silakan coba lagi.');
+        }
+
+        // Clear CAPTCHA after verification
+        session()->forget(['login_num1', 'login_num2']);
+
         $request->validate([
             'username' => 'required|string',
             'password' => 'required|string',
