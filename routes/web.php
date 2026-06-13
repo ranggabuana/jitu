@@ -47,6 +47,7 @@ Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('fron
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/api/nik/check', [AuthController::class, 'checkNik'])->name('api.nik.check');
 Route::get('/api/refresh-captcha', [AuthController::class, 'refreshCaptcha'])->name('api.refresh-captcha');
+Route::post('/api/upload-temp-ktp', [AuthController::class, 'uploadTempKtp'])->name('api.upload-temp-ktp');
 
 // Wilayah API routes
 Route::get('/api/wilayah/provinsi', [\App\Http\Controllers\Api\WilayahController::class, 'getProvinsi'])->name('api.wilayah.provinsi');

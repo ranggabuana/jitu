@@ -8,6 +8,7 @@ use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
@@ -67,7 +68,16 @@ class AuthController extends Controller
             'status_pemohon' => 'required|in:perorangan,badan_usaha',
             'nama_perusahaan' => 'nullable|string|max:255',
             'npwp' => 'nullable|string|max:20',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => [
+                'required',
+                'string',
+                'confirmed',
+                Password::min(8)
+                    ->letters()
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols(),
+            ],
             'no_hp' => 'nullable|string|max:20',
             'provinsi_id' => 'nullable|exists:provinsis,id',
             'kabupaten_id' => 'nullable|exists:kabupatens,id',
@@ -76,17 +86,20 @@ class AuthController extends Controller
             'alamat_ktp' => 'nullable|string|max:500',
             'is_alamat_sama' => 'boolean',
             'alamat_domisili' => 'nullable|required_if:is_alamat_sama,0|string|max:500',
-            'foto_ktp' => 'required|file|mimes:jpeg,png,jpg,pdf|max:2048',
+            'foto_ktp' => 'nullable|required_without:temp_foto_ktp|file|mimes:jpeg,png,jpg,pdf|max:2048',
+            'temp_foto_ktp' => 'nullable|string',
         ], [
             'nik.required' => 'NIK harus diisi.',
             'nik.size' => 'NIK harus terdiri dari 16 digit.',
             'nik.regex' => 'NIK hanya boleh berisi angka.',
             'status_pemohon.required' => 'Status pemohon harus dipilih.',
             'alamat_domisili.required_if' => 'Alamat domisili harus diisi jika tidak sama dengan alamat KTP.',
-            'foto_ktp.required' => 'Foto KTP wajib diunggah.',
+            'foto_ktp.required_without' => 'Foto KTP wajib diunggah.',
             'foto_ktp.file' => 'File KTP tidak valid.',
             'foto_ktp.mimes' => 'Format KTP harus jpeg, png, jpg, atau pdf.',
             'foto_ktp.max' => 'Ukuran file KTP maksimal 2MB.',
+            'password.required' => 'Password wajib diisi.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
         ]);
 
         // Check if NIK already exists with the same status_pemohon
@@ -119,23 +132,34 @@ class AuthController extends Controller
             'alamat_domisili' => $request->is_alamat_sama ? $request->alamat_ktp : $request->alamat_domisili,
         ];
 
-        // Handle KTP file upload - store in public/uploads/register
+        // Handle KTP file upload
         if ($request->hasFile('foto_ktp')) {
             $file = $request->file('foto_ktp');
             $extension = $file->getClientOriginalExtension();
             $filename = 'ktp_' . time() . '_' . $request->nik . '.' . $extension;
             $uploadPath = public_path('uploads/register');
 
-            // Create directory if not exists
             if (!file_exists($uploadPath)) {
                 mkdir($uploadPath, 0755, true);
             }
 
-            // Move file to public/uploads/register
             $file->move($uploadPath, $filename);
-
-            // Store relative path in database
             $userData['foto_ktp'] = 'uploads/register/' . $filename;
+        } elseif ($request->temp_foto_ktp) {
+            // Use temporary file
+            $tempFile = public_path($request->temp_foto_ktp);
+            if (file_exists($tempFile)) {
+                $filename = basename($tempFile);
+                $uploadPath = public_path('uploads/register');
+
+                if (!file_exists($uploadPath)) {
+                    mkdir($uploadPath, 0755, true);
+                }
+
+                $newPath = $uploadPath . '/' . $filename;
+                rename($tempFile, $newPath);
+                $userData['foto_ktp'] = 'uploads/register/' . $filename;
+            }
         }
 
         // Add company data if badan usaha
@@ -185,6 +209,37 @@ class AuthController extends Controller
         return response()->json([
             'exists' => $exists,
         ]);
+    }
+
+    /**
+     * Handle temporary KTP upload.
+     */
+    public function uploadTempKtp(Request $request)
+    {
+        $request->validate([
+            'foto_ktp' => 'required|file|mimes:jpeg,png,jpg,pdf|max:2048',
+        ]);
+
+        if ($request->hasFile('foto_ktp')) {
+            $file = $request->file('foto_ktp');
+            $extension = $file->getClientOriginalExtension();
+            $filename = 'temp_ktp_' . time() . '_' . uniqid() . '.' . $extension;
+            $uploadPath = public_path('uploads/temp');
+
+            if (!file_exists($uploadPath)) {
+                mkdir($uploadPath, 0755, true);
+            }
+
+            $file->move($uploadPath, $filename);
+
+            return response()->json([
+                'success' => true,
+                'path' => 'uploads/temp/' . $filename,
+                'filename' => $file->getClientOriginalName()
+            ]);
+        }
+
+        return response()->json(['success' => false], 400);
     }
 
     /**

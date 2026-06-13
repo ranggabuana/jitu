@@ -478,10 +478,17 @@
                                 <i class="fas fa-id-card text-green-600 mr-2"></i>Foto KTP <span class="text-red-500">*</span>
                             </label>
                             <div class="file-upload-wrapper">
-                                <input type="file" id="foto_ktp" name="foto_ktp" accept="image/jpeg,image/png,image/jpg,application/pdf" onchange="previewKTP(this)" required>
-                                <label for="foto_ktp" class="file-upload-label" id="ktpUploadLabel">
-                                    <i class="fas fa-cloud-upload-alt"></i>
-                                    <span class="text-sm text-gray-600">Klik atau drag & drop untuk mengunggah KTP</span>
+                                <input type="hidden" name="temp_foto_ktp" id="temp_foto_ktp" value="{{ old('temp_foto_ktp') }}">
+                                <input type="file" id="foto_ktp" name="foto_ktp" accept="image/jpeg,image/png,image/jpg,application/pdf" onchange="previewKTP(this)">
+                                <label for="foto_ktp" class="file-upload-label {{ old('temp_foto_ktp') ? 'has-file' : '' }}" id="ktpUploadLabel">
+                                    <i class="fas fa-{{ old('temp_foto_ktp') ? 'check-circle' : 'cloud-upload-alt' }}"></i>
+                                    <span class="text-sm text-gray-600">
+                                        @if(old('temp_foto_ktp'))
+                                            File KTP Tersimpan: {{ basename(old('temp_foto_ktp')) }}
+                                        @else
+                                            Klik atau drag & drop untuk mengunggah KTP
+                                        @endif
+                                    </span>
                                     <span class="text-xs text-gray-500 mt-1">Format: JPG, PNG, PDF (Maks. 2MB)</span>
                                     <img id="ktpPreview" class="preview-image hidden" alt="Preview KTP">
                                 </label>
@@ -521,6 +528,15 @@
                                     class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                                     <i class="fas fa-eye" id="password-eye"></i>
                                 </button>
+                            </div>
+                            <div class="mt-2 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                <p class="text-xs font-semibold text-gray-700 mb-1">Kriteria Password Kuat:</p>
+                                <ul class="text-[10px] text-gray-600 space-y-1 list-disc list-inside">
+                                    <li>Minimal 8 karakter</li>
+                                    <li>Mengandung huruf besar (A-Z) dan kecil (a-z)</li>
+                                    <li>Mengandung angka (0-9)</li>
+                                    <li>Mengandung simbol (contoh: @, #, $, %, dll)</li>
+                                </ul>
                             </div>
                             @error('password')
                                 <p class="mt-1 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}</p>
@@ -802,6 +818,13 @@
 
             // Load provinsi
             loadProvinsi();
+
+            // Auto-switch to step if has errors
+            @if($errors->hasAny(['password', 'captcha']) || session('captcha_error'))
+                showStep(3);
+            @elseif($errors->hasAny(['provinsi_id', 'kabupaten_id', 'kecamatan_id', 'kelurahan_id', 'alamat_ktp', 'alamat_domisili', 'foto_ktp']))
+                showStep(2);
+            @endif
         });
 
         // Wilayah Select2 functions
@@ -969,6 +992,9 @@
         function previewKTP(input) {
             const label = document.getElementById('ktpUploadLabel');
             const preview = document.getElementById('ktpPreview');
+            const tempInput = document.getElementById('temp_foto_ktp');
+            const labelIcon = label.querySelector('i');
+            const labelText = label.querySelector('span.text-sm');
 
             if (input.files && input.files[0]) {
                 const file = input.files[0];
@@ -988,26 +1014,54 @@
                     return;
                 }
 
-                label.classList.add('has-file');
+                // Show uploading state
+                labelIcon.className = 'fas fa-spinner fa-spin';
+                labelText.textContent = 'Sedang mengunggah...';
 
-                // Show preview for images
-                if (fileType.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        preview.src = e.target.result;
-                        preview.classList.remove('hidden');
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    preview.classList.add('hidden');
-                }
+                // Create FormData for AJAX upload
+                const formData = new FormData();
+                formData.append('foto_ktp', file);
+                formData.append('_token', '{{ csrf_token() }}');
 
-                // Update label text
-                label.querySelector('span.text-sm').textContent = file.name;
-            } else {
-                label.classList.remove('has-file');
-                preview.classList.add('hidden');
-                label.querySelector('span.text-sm').textContent = 'Klik atau drag & drop untuk mengunggah KTP';
+                fetch('{{ route("api.upload-temp-ktp") }}', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        label.classList.add('has-file');
+                        labelIcon.className = 'fas fa-check-circle';
+                        labelText.textContent = 'File Berhasil Diunggah: ' + data.filename;
+                        tempInput.value = data.path;
+
+                        // Show preview for images
+                        if (fileType.startsWith('image/')) {
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                preview.src = e.target.result;
+                                preview.classList.remove('hidden');
+                            };
+                            reader.readAsDataURL(file);
+                        } else {
+                            preview.classList.add('hidden');
+                        }
+                    } else {
+                        throw new Error('Upload gagal');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error uploading KTP:', error);
+                    labelIcon.className = 'fas fa-cloud-upload-alt';
+                    labelText.textContent = 'Gagal mengunggah. Klik untuk coba lagi.';
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Upload Gagal',
+                        text: 'Terjadi kesalahan saat mengunggah KTP. Silakan coba lagi.',
+                        confirmButtonColor: '#3b82f6',
+                        confirmButtonText: 'OK'
+                    });
+                });
             }
         }
 
