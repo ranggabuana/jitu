@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class PenggunaController extends Controller
 {
@@ -83,12 +84,24 @@ class PenggunaController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'username' => 'required|string|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => [
+                'required',
+                'string',
+                'confirmed',
+                Password::min(8)
+                    ->letters()
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols(),
+            ],
             'role' => 'required|in:admin,fo,bo,operator_opd,kepala_opd,verifikator,kadin',
             'opd_id' => 'nullable|exists:opd,id',
             'nip' => 'required|string|max:16|min:16',
             'no_hp' => 'nullable|string|max:20',
             'status' => 'required|in:aktif,tidak_aktif',
+        ], [
+            'password.required' => 'Password wajib diisi.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
         ]);
 
         $data = $request->except('password', 'password_confirmation');
@@ -148,12 +161,23 @@ class PenggunaController extends Controller
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($id)],
             'username' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($id)],
-            'password' => 'nullable|string|min:8|confirmed',
+            'password' => [
+                'nullable',
+                'string',
+                'confirmed',
+                Password::min(8)
+                    ->letters()
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols(),
+            ],
             'role' => 'required|in:admin,fo,bo,operator_opd,kepala_opd,verifikator,kadin',
             'opd_id' => 'nullable|exists:opd,id',
             'nip' => 'required|string|max:16|min:16',
             'no_hp' => 'nullable|string|max:20',
             'status' => 'required|in:aktif,tidak_aktif',
+        ], [
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
         ]);
 
         $data = $request->except('password', 'password_confirmation');

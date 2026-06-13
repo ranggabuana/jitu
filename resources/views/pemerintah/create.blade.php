@@ -124,6 +124,15 @@
                             <i id="password-eye-icon" class="mdi mdi-eye"></i>
                         </button>
                     </div>
+                    <div class="mt-2 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-200 dark:border-gray-600">
+                        <p class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Kriteria Password Kuat:</p>
+                        <ul class="text-[10px] text-gray-600 dark:text-gray-400 space-y-1 list-disc list-inside">
+                            <li>Minimal 8 karakter</li>
+                            <li>Mengandung huruf besar (A-Z) dan kecil (a-z)</li>
+                            <li>Mengandung angka (0-9)</li>
+                            <li>Mengandung simbol (contoh: @, #, $, %, dll)</li>
+                        </ul>
+                    </div>
                     @error('password')
                         <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                     @enderror

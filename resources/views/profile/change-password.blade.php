@@ -71,10 +71,15 @@
                             <i class="mdi mdi-eye-off text-lg"></i>
                         </button>
                     </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
-                        <i class="mdi mdi-information-outline"></i>
-                        Minimal 8 karakter
-                    </p>
+                    <div class="mt-2 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-200 dark:border-gray-600">
+                        <p class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Kriteria Password Kuat:</p>
+                        <ul class="text-[10px] text-gray-600 dark:text-gray-400 space-y-1 list-disc list-inside">
+                            <li>Minimal 8 karakter</li>
+                            <li>Mengandung huruf besar (A-Z) dan kecil (a-z)</li>
+                            <li>Mengandung angka (0-9)</li>
+                            <li>Mengandung simbol (contoh: @, #, $, %, dll)</li>
+                        </ul>
+                    </div>
                     @error('password')
                         <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                     @enderror
@@ -93,21 +98,6 @@
                             class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
                             <i class="mdi mdi-eye-off text-lg"></i>
                         </button>
-                    </div>
-                </div>
-
-                <!-- Security Notice -->
-                <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-                    <div class="flex items-start gap-2">
-                        <i class="mdi mdi-shield-lock text-amber-600 dark:text-amber-400 mt-0.5"></i>
-                        <div class="text-amber-700 dark:text-amber-400 text-sm">
-                            <p class="font-medium mb-1">Tips Keamanan:</p>
-                            <ul class="list-disc list-inside space-y-1 text-xs">
-                                <li>Gunakan kombinasi huruf, angka, dan simbol</li>
-                                <li>Jangan gunakan password yang mudah ditebak</li>
-                                <li>Jangan bagikan password kepada siapapun</li>
-                            </ul>
-                        </div>
                     </div>
                 </div>
 
