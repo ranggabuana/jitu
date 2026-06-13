@@ -222,6 +222,12 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
+        // Generate CAPTCHA
+        session([
+            'pengajuan_num1' => rand(1, 10),
+            'pengajuan_num2' => rand(1, 10),
+        ]);
+
         $perijinan = Perijinan::with([
             'activeFormFields' => function ($query) {
                 $query->where('form_type', 'global')
@@ -239,11 +245,46 @@ class DashboardController extends Controller
     }
 
     /**
+     * Refresh CAPTCHA for pengajuan form.
+     */
+    public function refreshPengajuanCaptcha()
+    {
+        session([
+            'pengajuan_num1' => rand(1, 10),
+            'pengajuan_num2' => rand(1, 10),
+        ]);
+
+        return response()->json([
+            'num1' => session('pengajuan_num1'),
+            'num2' => session('pengajuan_num2'),
+        ]);
+    }
+
+    /**
      * Store pengajuan perizinan.
      */
     public function storePengajuan(Request $request)
     {
         $user = Auth::user();
+
+        // Validate CAPTCHA first
+        $request->validate([
+            'captcha' => 'required|numeric',
+        ], [
+            'captcha.required' => 'Silakan masukkan hasil penjumlahan.',
+            'captcha.numeric' => 'Hasil penjumlahan harus berupa angka.',
+        ]);
+
+        // Check CAPTCHA
+        $captchaAnswer = ($request->session()->get('pengajuan_num1', 0) + $request->session()->get('pengajuan_num2', 0));
+        if ($request->captcha != $captchaAnswer) {
+            return redirect()->back()
+                ->withInput()
+                ->with('captcha_error', 'Hasil penjumlahan CAPTCHA salah. Silakan coba lagi.');
+        }
+
+        // Clear CAPTCHA after verification
+        session()->forget(['pengajuan_num1', 'pengajuan_num2']);
 
         $request->validate([
             'perijinan_id' => 'required|exists:perijinan,id',

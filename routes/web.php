@@ -207,6 +207,7 @@ Route::middleware(['auth'])->group(function () {
         // Pengajuan Routes for Pemohon
         Route::get('/pengajuan/create/{perijinanId}', [PemohonDashboardController::class, 'createPengajuan'])->name('pengajuan.create');
         Route::post('/pengajuan', [PemohonDashboardController::class, 'storePengajuan'])->name('pengajuan.store');
+        Route::get('/api/refresh-pengajuan-captcha', [PemohonDashboardController::class, 'refreshPengajuanCaptcha'])->name('api.refresh-pengajuan-captcha');
         Route::get('/pengajuan/success/{id}', [PemohonDashboardController::class, 'successPengajuan'])->name('pengajuan.success');
         // Edit Pengajuan (for perbaikan)
         Route::get('/pengajuan/{id}/edit', [PemohonDashboardController::class, 'editPengajuan'])->name('pengajuan.edit');
