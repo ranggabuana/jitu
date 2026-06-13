@@ -23,7 +23,29 @@ class ForgotPasswordController extends Controller
      */
     public function showForgotPasswordForm()
     {
+        // Generate CAPTCHA
+        session([
+            'forgot_num1' => rand(1, 10),
+            'forgot_num2' => rand(1, 10),
+        ]);
+
         return view('auth.forgot-password');
+    }
+
+    /**
+     * Refresh CAPTCHA for forgot password.
+     */
+    public function refreshCaptcha()
+    {
+        session([
+            'forgot_num1' => rand(1, 10),
+            'forgot_num2' => rand(1, 10),
+        ]);
+
+        return response()->json([
+            'num1' => session('forgot_num1'),
+            'num2' => session('forgot_num2'),
+        ]);
     }
 
     /**
@@ -34,24 +56,42 @@ class ForgotPasswordController extends Controller
      */
     public function sendResetLink(Request $request)
     {
+        // Validate CAPTCHA first
         $request->validate([
-            'email' => 'required|email|exists:users,email',
+            'captcha' => 'required|numeric',
+        ], [
+            'captcha.required' => 'Silakan masukkan hasil penjumlahan.',
+            'captcha.numeric' => 'Hasil penjumlahan harus berupa angka.',
+        ]);
+
+        // Check CAPTCHA
+        $captchaAnswer = ($request->session()->get('forgot_num1', 0) + $request->session()->get('forgot_num2', 0));
+        if ($request->captcha != $captchaAnswer) {
+            return redirect()->back()
+                ->withInput()
+                ->with('captcha_error', 'Hasil penjumlahan CAPTCHA salah. Silakan coba lagi.');
+        }
+
+        // Clear CAPTCHA after verification
+        session()->forget(['forgot_num1', 'forgot_num2']);
+
+        $request->validate([
+            'email' => 'required|email',
         ]);
 
         // Find user by email
         $user = User::where('email', $request->email)->first();
 
+        // Generic message to prevent user enumeration
+        $successMessage = 'Jika alamat email tersebut terdaftar di sistem kami, Anda akan segera menerima link untuk mereset password.';
+
         if (!$user) {
-            throw ValidationException::withMessages([
-                'email' => ['Email tidak ditemukan di sistem kami.'],
-            ]);
+            return back()->with('success', $successMessage);
         }
 
-        // Check if user has email
+        // Check if user has email (safety check, though we searched by email)
         if (!$user->email) {
-            throw ValidationException::withMessages([
-                'email' => ['User ini tidak memiliki alamat email. Silakan hubungi admin.'],
-            ]);
+            return back()->with('success', $successMessage);
         }
 
         // Generate reset token
@@ -78,12 +118,15 @@ class ForgotPasswordController extends Controller
         );
 
         if (!$emailSent) {
-            throw ValidationException::withMessages([
-                'email' => ['Gagal mengirim email reset password. Silakan coba lagi.'],
-            ]);
+            // Keep it generic even on failure if we want to be safe, 
+            // but usually email sending failure is okay to report as error 
+            // as long as it doesn't confirm existence. 
+            // However, if we are here, we know the user exists.
+            // Let's keep a generic error if it fails to send.
+            return back()->with('error', 'Gagal mengirim email reset password. Silakan coba lagi beberapa saat lagi.');
         }
 
-        return back()->with('success', 'Link reset password telah dikirim ke email Anda. Silakan cek inbox email Anda.');
+        return back()->with('success', $successMessage);
     }
 
     /**
@@ -135,7 +178,7 @@ class ForgotPasswordController extends Controller
     public function reset(Request $request)
     {
         $request->validate([
-            'email' => 'required|email|exists:users,email',
+            'email' => 'required|email',
             'password' => 'required|string|min:8|confirmed',
             'token' => 'required',
         ]);
@@ -147,7 +190,7 @@ class ForgotPasswordController extends Controller
 
         if (!$resetRecord) {
             throw ValidationException::withMessages([
-                'email' => ['Link reset password tidak valid.'],
+                'email' => ['Link reset password tidak valid atau sudah kedaluwarsa.'],
             ]);
         }
 
@@ -161,14 +204,14 @@ class ForgotPasswordController extends Controller
             DB::table('password_reset_tokens')->where('email', $request->email)->delete();
             
             throw ValidationException::withMessages([
-                'email' => ['Link reset password sudah kedaluwarsa. Silakan minta link baru.'],
+                'email' => ['Link reset password tidak valid atau sudah kedaluwarsa.'],
             ]);
         }
 
         // Verify token
         if (!Hash::check($request->token, $resetRecord->token)) {
             throw ValidationException::withMessages([
-                'email' => ['Token reset password tidak valid.'],
+                'email' => ['Link reset password tidak valid atau sudah kedaluwarsa.'],
             ]);
         }
 
@@ -177,7 +220,7 @@ class ForgotPasswordController extends Controller
 
         if (!$user) {
             throw ValidationException::withMessages([
-                'email' => ['User tidak ditemukan.'],
+                'email' => ['Gagal memproses permintaan Anda. Silakan hubungi administrator.'],
             ]);
         }
 

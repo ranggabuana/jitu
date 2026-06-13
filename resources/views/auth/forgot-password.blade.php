@@ -115,7 +115,8 @@
                 <div class="text-center mb-8">
                     <!-- Logo -->
                     <div class="flex justify-center mb-4">
-                        <div class="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                        <div
+                            class="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                             <i class="mdi mdi-lock-reset text-white text-4xl"></i>
                         </div>
                     </div>
@@ -129,7 +130,8 @@
                         <i class="mdi mdi-information text-blue-600 text-xl mt-0.5"></i>
                         <div class="text-sm text-blue-800">
                             <p class="font-semibold mb-1">Petunjuk:</p>
-                            <p>Kami akan mengirimkan link reset password ke email Anda. Link berlaku selama 60 menit.</p>
+                            <p>Kami akan mengirimkan link reset password ke email Anda. Link berlaku selama 60 menit.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -155,6 +157,32 @@
                         </div>
                     @endif
 
+                    <!-- CAPTCHA -->
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 mt-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-3">
+                            <i class="mdi mdi-shield-check text-blue-600 mr-2"></i>Verifikasi Keamanan
+                        </label>
+                        <div class="flex items-end gap-3">
+                            <div class="flex-1">
+                                <span id="captcha-question" class="block text-xl font-bold text-blue-600 mb-2">
+                                    {{ session('forgot_num1') }} + {{ session('forgot_num2') }} = ?
+                                </span>
+                                <input type="number" id="captcha" name="captcha" required placeholder="Hasil"
+                                    class="w-full px-4 py-2 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-lg font-semibold @if (session('captcha_error')) border-red-500 @endif">
+                                @if (session('captcha_error'))
+                                    <p class="mt-2 text-sm text-red-600 flex items-center gap-1">
+                                        <i class="mdi mdi-alert-circle"></i>
+                                        {{ session('captcha_error') }}
+                                    </p>
+                                @endif
+                            </div>
+                            <button type="button" id="refresh-captcha"
+                                class="shrink-0 bg-blue-600 hover:bg-blue-700 text-white w-12 h-12 rounded-xl font-semibold transition-all flex items-center justify-center text-xl shadow-lg hover:shadow-xl">
+                                <i class="mdi mdi-refresh" id="refresh-icon"></i>
+                            </button>
+                        </div>
+                    </div>
+
                     <button type="submit"
                         class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-4 rounded-xl font-medium hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-[1.02] cursor-pointer">
                         <i class="mdi mdi-send mr-2"></i>Kirim Link Reset Password
@@ -176,7 +204,7 @@
         @if (session('success'))
             Swal.fire({
                 icon: 'success',
-                title: 'Berhasil! 📧',
+                title: 'Berhasil!',
                 html: '{{ session('success') }}',
                 confirmButtonColor: '#3b82f6',
                 confirmButtonText: 'OK, Mengerti',
@@ -196,6 +224,44 @@
                 padding: '2rem',
             });
         @endif
+
+        // Captcha Refresh
+        const refreshBtn = document.getElementById('refresh-captcha');
+        const refreshIcon = document.getElementById('refresh-icon');
+        const captchaQuestion = document.getElementById('captcha-question');
+        const captchaInput = document.getElementById('captcha');
+
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', function() {
+                // Show loading state
+                refreshIcon.classList.add('mdi-spin');
+                refreshBtn.disabled = true;
+
+                fetch('{{ route('api.refresh-forgot-captcha') }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        captchaQuestion.textContent = `${data.num1} + ${data.num2} = ?`;
+                        captchaInput.value = '';
+                        captchaInput.focus();
+
+                        // Reset button
+                        refreshIcon.classList.remove('mdi-spin');
+                        refreshBtn.disabled = false;
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        refreshIcon.classList.remove('mdi-spin');
+                        refreshBtn.disabled = false;
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Gagal refresh CAPTCHA. Silakan coba lagi.',
+                            confirmButtonColor: '#3b82f6',
+                            confirmButtonText: 'OK'
+                        });
+                    });
+            });
+        }
     </script>
 </body>
 

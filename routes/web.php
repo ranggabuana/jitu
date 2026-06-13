@@ -38,6 +38,7 @@ Route::post('/login', [LoginController::class, 'login']);
 // Password reset routes (public)
 Route::get('/forgot-password', [ForgotPasswordController::class, 'showForgotPasswordForm'])->name('password.request');
 Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink'])->name('password.email');
+Route::get('/api/refresh-forgot-captcha', [ForgotPasswordController::class, 'refreshCaptcha'])->name('api.refresh-forgot-captcha');
 Route::get('/reset-password/{token}', [ForgotPasswordController::class, 'showResetForm'])->name('password.reset.form');
 Route::post('/reset-password', [ForgotPasswordController::class, 'reset'])->name('password.reset');
 
