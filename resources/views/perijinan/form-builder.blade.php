@@ -509,7 +509,7 @@
         <!-- Template Editor Container (Hidden by default, shown on rekom and izin tabs) -->
         <div id="template-editor-container" class="mt-6 hidden">
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <form action="{{ route('perijinan.templates.update', $perijinan->id) }}" method="POST" id="template-form">
+                <form action="{{ route('perijinan.templates.update', $perijinan->id) }}" method="POST" id="template-form" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
 
@@ -524,21 +524,10 @@
                             </p>
                         </div>
                         <div class="flex items-center gap-3">
-                            <input type="file" id="pdf-import-input" class="hidden" accept="application/pdf" onchange="handlePdfImport(this)">
-                            <button type="button" onclick="document.getElementById('pdf-import-input').click()"
-                                class="flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800 rounded-lg px-3 py-2 transition-all">
-                                <i class="mdi mdi-file-pdf-box text-base"></i>
-                                Import Template PDF
-                            </button>
                             <button type="button" onclick="togglePlaceholderGuide()" id="btn-toggle-guide"
                                 class="flex items-center gap-2 text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded-lg px-3 py-2 transition-all">
                                 <i class="mdi mdi-tag-text-outline text-base"></i>
                                 Lihat Variabel Dinamis
-                            </button>
-                            <button type="button" onclick="resetTemplateToDefault()"
-                                class="flex items-center gap-2 text-xs font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2 transition-all">
-                                <i class="mdi mdi-refresh text-base"></i>
-                                Reset ke Default
                             </button>
                         </div>
                     </div>
@@ -632,75 +621,63 @@
                         </div>
                     </div>
 
-                    <div class="p-0">
+                    <div class="p-6">
                         @if(auth()->user()->isAdmin() || auth()->user()->isOperatorOpd())
                             <div id="tpl-rekom-container" class="hidden">
-                                <textarea name="template_surat_rekom" id="editor_rekom" class="w-full focus:outline-none">{{ $perijinan->template_surat_rekom }}</textarea>
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Upload Template Surat Rekomendasi (.docx)
+                                    </label>
+                                    <input type="file" name="file_template_rekom" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
+                                           class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200">
+                                    @if($perijinan->template_surat_rekom && Str::endsWith($perijinan->template_surat_rekom, '.docx'))
+                                        <div class="mt-2 flex items-center justify-between bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                                            <p class="text-sm text-green-700 dark:text-green-400 font-medium">
+                                                <i class="mdi mdi-check-circle mr-1"></i> File template aktif: {{ basename($perijinan->template_surat_rekom) }}
+                                            </p>
+                                            <a href="{{ route('perijinan.templates.download', ['id' => $perijinan->id, 'type' => 'rekom']) }}" class="flex items-center gap-1.5 text-xs bg-white dark:bg-gray-800 border border-green-300 dark:border-green-700 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-800 px-3 py-1.5 rounded transition-colors shadow-sm font-semibold">
+                                                <i class="mdi mdi-download"></i> Unduh Template
+                                            </a>
+                                        </div>
+                                    @endif
+                                    <p class="mt-2 text-xs text-gray-500">
+                                        <i class="mdi mdi-information"></i> Buat surat menggunakan Microsoft Word, gunakan variabel dengan format <code>${NAMA_VARIABEL}</code>, lalu unggah ke sini.
+                                    </p>
+                                </div>
                             </div>
                         @endif
                         @if(auth()->user()->isAdmin() || auth()->user()->role === 'verifikator')
                             <div id="tpl-izin-container" class="hidden">
-                                <textarea name="template_surat_izin" id="editor_izin" class="w-full focus:outline-none">{{ $perijinan->template_surat_izin }}</textarea>
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Upload Template Surat Izin (.docx)
+                                    </label>
+                                    <input type="file" name="file_template_izin" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
+                                           class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200">
+                                    @if($perijinan->template_surat_izin && Str::endsWith($perijinan->template_surat_izin, '.docx'))
+                                        <div class="mt-2 flex items-center justify-between bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                                            <p class="text-sm text-green-700 dark:text-green-400 font-medium">
+                                                <i class="mdi mdi-check-circle mr-1"></i> File template aktif: {{ basename($perijinan->template_surat_izin) }}
+                                            </p>
+                                            <a href="{{ route('perijinan.templates.download', ['id' => $perijinan->id, 'type' => 'izin']) }}" class="flex items-center gap-1.5 text-xs bg-white dark:bg-gray-800 border border-green-300 dark:border-green-700 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-800 px-3 py-1.5 rounded transition-colors shadow-sm font-semibold">
+                                                <i class="mdi mdi-download"></i> Unduh Template
+                                            </a>
+                                        </div>
+                                    @endif
+                                    <p class="mt-2 text-xs text-gray-500">
+                                        <i class="mdi mdi-information"></i> Buat surat menggunakan Microsoft Word, gunakan variabel dengan format <code>${NAMA_VARIABEL}</code>, lalu unggah ke sini.
+                                    </p>
+                                </div>
                             </div>
                         @endif
                     </div>
 
                     <div class="px-6 py-4 bg-gray-50/50 dark:bg-gray-700/30 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-3">
-                        <button type="button" onclick="previewCurrentTemplate()" class="bg-amber-500 hover:bg-amber-600 text-white px-6 py-2 rounded-lg font-bold transition-all flex items-center gap-2 shadow-sm">
-                            <i class="mdi mdi-eye-outline"></i> Pratinjau Dokumen
-                        </button>
                         <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold transition-all flex items-center gap-2 shadow-sm">
                             <i class="mdi mdi-content-save"></i> Simpan Template
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
-
-        <!-- Pratinjau Dokumen Modal -->
-        <div id="modal-doc-preview" class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/60 backdrop-blur-sm">
-            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-6xl mx-4 flex flex-col" style="height: 95vh; max-height: 95vh;">
-                <!-- Modal header -->
-                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-t-2xl flex-shrink-0">
-                    <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
-                            <i class="mdi mdi-file-eye-outline text-emerald-600 dark:text-emerald-400 text-lg"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-base font-bold text-gray-800 dark:text-white" id="modal-preview-title">Pratinjau Dokumen</h3>
-                            <p class="text-xs text-gray-500">Simulasi tampilan surat saat dicetak. Data ditampilkan dengan data simulasi.</p>
-                        </div>
-                    </div>
-                    <button type="button" onclick="closeDocPreview()"
-                        class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
-                        <i class="mdi mdi-close text-xl"></i>
-                    </button>
-                </div>
-
-                <!-- PDF Preview container -->
-                <div class="flex-1 overflow-hidden bg-gray-100 dark:bg-gray-950 p-0 relative">
-                    <div id="modal-preview-loading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/80 dark:bg-gray-900/80 hidden">
-                        <div class="flex flex-col items-center">
-                            <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                            <p class="mt-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Menyiapkan PDF...</p>
-                        </div>
-                    </div>
-                    <iframe id="modal-preview-iframe" class="w-full h-full border-0" src="about:blank"></iframe>
-                </div>
-
-                <!-- Modal footer -->
-                <div class="px-6 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-b-2xl flex-shrink-0 flex justify-between items-center">
-                    <p class="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-                        <i class="mdi mdi-alert-circle-outline"></i>
-                        Data di atas adalah simulasi pratinjau.
-                    </p>
-                    <div class="flex items-center gap-3">
-                        <button type="button" onclick="closeDocPreview()"
-                            class="px-5 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 transition-all">
-                            Tutup Pratinjau
-                        </button>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -1212,308 +1189,6 @@
                         ta.selectionEnd = start + code.length + 2;
                     }
                 }
-            }
-        }
-
-        async function previewCurrentTemplate() {
-            const currentTab = localStorage.getItem('formBuilderTab') || 'global';
-            if (currentTab !== 'rekom' && currentTab !== 'izin') return;
-
-            const editorId = currentTab === 'rekom' ? 'editor_rekom' : 'editor_izin';
-            let content = '';
-
-            if (typeof tinymce !== 'undefined' && tinymce.get(editorId)) {
-                content = tinymce.get(editorId).getContent();
-            } else {
-                content = document.getElementById(editorId).value;
-            }
-
-            // Show Modal and Loading
-            document.getElementById('modal-preview-title').textContent = 'Pratinjau PDF — ' + (currentTab === 'rekom' ? 'Surat Rekomendasi' : 'Surat Izin');
-            const modal = document.getElementById('modal-doc-preview');
-            const iframe = document.getElementById('modal-preview-iframe');
-            const loading = document.getElementById('modal-preview-loading');
-            
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            loading.classList.remove('hidden');
-            iframe.src = 'about:blank';
-
-            const nextRekom = document.getElementById('next_nomor_rekom')?.value;
-            const nextIzin = document.getElementById('next_nomor_izin')?.value;
-
-            try {
-                const response = await fetch("{{ route('perijinan.preview-template', $perijinan->id) }}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    },
-                    body: JSON.stringify({
-                        template_type: currentTab,
-                        template_content: content,
-                        next_nomor_rekom: nextRekom,
-                        next_nomor_izin: nextIzin
-                    })
-                });
-
-                if (!response.ok) throw new Error('Gagal mengenerate pratinjau');
-
-                const blob = await response.blob();
-                const url = URL.createObjectURL(blob);
-                
-                iframe.src = url;
-                iframe.onload = () => {
-                    loading.classList.add('hidden');
-                };
-            } catch (error) {
-                console.error(error);
-                loading.classList.add('hidden');
-                Swal.fire('Gagal', 'Terjadi kesalahan saat menyiapkan pratinjau PDF.', 'error');
-                closeDocPreview();
-            }
-        }
-
-        function makeElementManageable(el) {
-            let isDragging = false;
-            let startX, startY, initialLeft, initialTop;
-
-            // Apply styles for resize and basic positioning
-            el.style.position = 'relative';
-            el.style.cursor = 'move';
-            el.style.resize = 'both';
-            el.style.overflow = 'hidden'; // Required for 'resize' property to work
-            el.style.border = '1px dashed #3b82f6';
-            el.style.backgroundColor = 'rgba(59, 130, 246, 0.05)';
-            el.style.minWidth = '40px';
-            el.style.minHeight = '40px';
-            
-            // Add a small resize handle indicator at the bottom right
-            const handle = document.createElement('div');
-            handle.style.position = 'absolute';
-            handle.style.right = '0';
-            handle.style.bottom = '0';
-            handle.style.width = '10px';
-            handle.style.height = '10px';
-            handle.style.background = 'linear-gradient(135deg, transparent 50%, #3b82f6 50%)';
-            handle.style.cursor = 'nwse-resize';
-            handle.style.pointerEvents = 'none'; // click goes to parent for resize
-            el.appendChild(handle);
-            
-            el.onmousedown = function(e) {
-                // If clicking near the bottom-right corner, assume we want to resize (let browser handle it)
-                const rect = el.getBoundingClientRect();
-                const isResizeZone = (e.clientX > rect.right - 15 && e.clientY > rect.bottom - 15);
-                
-                if (isResizeZone) {
-                    // Let the default browser behavior handle resizing
-                    return;
-                }
-
-                isDragging = true;
-                startX = e.clientX;
-                startY = e.clientY;
-                
-                // Get current computed style for left/top
-                const style = window.getComputedStyle(el);
-                initialLeft = parseInt(style.left) || 0;
-                initialTop = parseInt(style.top) || 0;
-
-                el.style.zIndex = 1000;
-
-                function onMouseMove(e) {
-                    if (!isDragging) return;
-                    const dx = e.clientX - startX;
-                    const dy = e.clientY - startY;
-                    el.style.left = (initialLeft + dx) + 'px';
-                    el.style.top = (initialTop + dy) + 'px';
-                }
-
-                function onMouseUp() {
-                    isDragging = false;
-                    document.removeEventListener('mousemove', onMouseMove);
-                    document.removeEventListener('mouseup', onMouseUp);
-                }
-
-                document.addEventListener('mousemove', onMouseMove);
-                document.addEventListener('mouseup', onMouseUp);
-            };
-
-            el.ondragstart = function() { return false; };
-        }
-
-        function closeDocPreview() {
-            const modal = document.getElementById('modal-doc-preview');
-            modal.classList.remove('flex');
-            modal.classList.add('hidden');
-        }
-
-        async function applyAndSavePreview() {
-            const currentTab = localStorage.getItem('formBuilderTab') || 'global';
-            const editorId = currentTab === 'rekom' ? 'editor_rekom' : 'editor_izin';
-            
-            let content = '';
-            if (typeof tinymce !== 'undefined' && tinymce.get(editorId)) {
-                content = tinymce.get(editorId).getContent();
-            } else {
-                content = document.getElementById(editorId).value;
-            }
-
-            const managedElements = document.querySelectorAll('#modal-preview-body .preview-manageable');
-            
-            managedElements.forEach(managedEl => {
-                const placeholder = managedEl.dataset.placeholder;
-                const width = managedEl.style.width;
-                const left = managedEl.style.left || '0px';
-                const top = managedEl.style.top || '0px';
-
-                const styleStr = `display: inline-block; width: ${width}; position: relative; left: ${left}; top: ${top}; vertical-align: middle;`;
-                
-                const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                // Regex to find the placeholder either bare or inside an existing template-wrapper
-                const regex = new RegExp(`(<div class="template-wrapper"[^>]*>)?${escapedPlaceholder}(<\\/div>)?`, 'g');
-                
-                content = content.replace(regex, `<div class="template-wrapper" style="${styleStr}">${placeholder}</div>`);
-            });
-
-            // Update TinyMCE
-            if (typeof tinymce !== 'undefined' && tinymce.get(editorId)) {
-                tinymce.get(editorId).setContent(content);
-                tinymce.get(editorId).save();
-            } else {
-                document.getElementById(editorId).value = content;
-            }
-
-            // Show loading and submit
-            Swal.fire({
-                title: 'Menyimpan Tata Letak...',
-                text: 'Perubahan ukuran dan posisi sedang diterapkan.',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                    const form = document.querySelector('form[action*="templates"]');
-                    if (form) form.submit();
-                }
-            });
-        }
-
-        // Close modal on backdrop click
-        document.addEventListener('click', function(e) {
-            const modal = document.getElementById('modal-doc-preview');
-            if (e.target === modal) closeDocPreview();
-        });
-
-        const defaultTemplates = {
-            rekom: @json(\App\Services\DocumentGenerator::getDefaultSuratRekomTemplate()),
-            izin: @json(\App\Services\DocumentGenerator::getDefaultSuratIzinTemplate())
-        };
-
-        function resetTemplateToDefault() {
-            const currentTab = localStorage.getItem('formBuilderTab') || 'global';
-            if (currentTab !== 'rekom' && currentTab !== 'izin') return;
-
-            Swal.fire({
-                title: 'Reset Template?',
-                text: 'Template ' + (currentTab === 'rekom' ? 'Rekomendasi' : 'Izin') + ' akan dikembalikan ke format bawaan asli. Perubahan yang belum disimpan akan hilang.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc2626',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Ya, Reset!',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    const editorId = currentTab === 'rekom' ? 'editor_rekom' : 'editor_izin';
-                    const defaultHtml = defaultTemplates[currentTab];
-
-                    if (typeof tinymce !== 'undefined' && tinymce.get(editorId)) {
-                        tinymce.get(editorId).setContent(defaultHtml);
-                        tinymce.get(editorId).save();
-                    } else {
-                        document.getElementById(editorId).value = defaultHtml;
-                    }
-
-                    // Show loading and submit form
-                    Swal.fire({
-                        title: 'Menyimpan...',
-                        text: 'Template sedang dikembalikan ke bawaan.',
-                        allowOutsideClick: false,
-                        didOpen: () => {
-                            Swal.showLoading();
-                            const form = document.querySelector('form[action*="templates"]');
-                            if (form) form.submit();
-                        }
-                    });
-                }
-            });
-        }
-
-        async function handlePdfImport(input) {
-            if (!input.files || !input.files[0]) return;
-
-            const file = input.files[0];
-            if (file.type !== 'application/pdf') {
-                Swal.fire('Error', 'Hanya file PDF yang diizinkan.', 'error');
-                return;
-            }
-
-            const result = await Swal.fire({
-                title: 'Import PDF?',
-                text: 'Konten editor saat ini akan digantikan dengan teks dari PDF. Lanjutkan?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Ya, Import',
-                cancelButtonText: 'Batal'
-            });
-
-            if (!result.isConfirmed) {
-                input.value = '';
-                return;
-            }
-
-            Swal.fire({
-                title: 'Mengimpor PDF...',
-                text: 'Sedang mengekstrak teks dari file PDF Anda.',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-
-            const formData = new FormData();
-            formData.append('file_pdf', file);
-
-            try {
-                const response = await fetch("{{ route('perijinan.import-pdf', $perijinan->id) }}", {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    },
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    const currentTab = localStorage.getItem('formBuilderTab') || 'global';
-                    const editorId = currentTab === 'rekom' ? 'editor_rekom' : 'editor_izin';
-                    
-                    if (typeof tinymce !== 'undefined' && tinymce.get(editorId)) {
-                        tinymce.get(editorId).setContent(data.html);
-                        tinymce.get(editorId).save();
-                    } else {
-                        document.getElementById(editorId).value = data.html;
-                    }
-
-                    Swal.fire('Berhasil', 'Konten PDF berhasil diimpor ke editor.', 'success');
-                } else {
-                    throw new Error(data.message || 'Gagal mengimpor PDF');
-                }
-            } catch (error) {
-                console.error(error);
-                Swal.fire('Gagal', error.message || 'Terjadi kesalahan saat mengimpor PDF.', 'error');
-            } finally {
-                input.value = '';
             }
         }
 

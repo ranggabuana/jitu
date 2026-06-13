@@ -156,43 +156,6 @@ class PerijinanController extends Controller
         return view('perijinan.form-builder', compact('perijinan'));
     }
 
-    public function importPdfTemplate(Request $request, string $id)
-    {
-        $request->validate([
-            'file_pdf' => 'required|file|mimes:pdf|max:5120',
-        ]);
-
-        try {
-            $parser = new \Smalot\PdfParser\Parser();
-            $pdf = $parser->parseFile($request->file('file_pdf')->path());
-            
-            // Extract text
-            $text = $pdf->getText();
-            
-            // Basic text to HTML conversion
-            $html = '';
-            $lines = explode("\n", $text);
-            foreach ($lines as $line) {
-                $trimmed = trim($line);
-                if ($trimmed !== '') {
-                    $html .= '<p>' . htmlspecialchars($trimmed) . '</p>';
-                } else {
-                    $html .= '<br>';
-                }
-            }
-
-            return response()->json([
-                'success' => true,
-                'html' => $html
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengimpor PDF: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
     /**
      * Preview the template by replacing placeholders with dummy data.
      */
@@ -806,8 +769,10 @@ class PerijinanController extends Controller
             'template_pernyataan' => 'nullable|string',
             'template_permohonan' => 'nullable|string',
             'template_keabsahan' => 'nullable|string',
-            'template_surat_rekom' => 'nullable|string',
-            'template_surat_izin' => 'nullable|string',
+            'template_surat_rekom' => 'nullable',
+            'template_surat_izin' => 'nullable',
+            'file_template_rekom' => 'nullable|file|mimes:docx|max:10240',
+            'file_template_izin' => 'nullable|file|mimes:docx|max:10240',
             'keterangan_rekom' => 'nullable|string',
             'keterangan_izin' => 'nullable|string',
             'next_nomor_rekom' => 'nullable|integer',
@@ -828,16 +793,40 @@ class PerijinanController extends Controller
             if ($request->has('keterangan_izin')) $updateData['keterangan_izin'] = $request->keterangan_izin;
             if ($request->has('next_nomor_rekom')) $updateData['next_nomor_rekom'] = $request->next_nomor_rekom;
             if ($request->has('next_nomor_izin')) $updateData['next_nomor_izin'] = $request->next_nomor_izin;
+
+            // Handle file uploads
+            if ($request->hasFile('file_template_rekom')) {
+                $file = $request->file('file_template_rekom');
+                $filename = 'template_rekom_' . $perijinan->id . '_' . time() . '.docx';
+                $uploadPath = public_path('uploads/templates');
+                if (!file_exists($uploadPath)) {
+                    mkdir($uploadPath, 0755, true);
+                }
+                $file->move($uploadPath, $filename);
+                $path = 'uploads/templates/' . $filename;
+                $updateData['template_surat_rekom'] = $path;
+            }
+            if ($request->hasFile('file_template_izin')) {
+                $file = $request->file('file_template_izin');
+                $filename = 'template_izin_' . $perijinan->id . '_' . time() . '.docx';
+                $uploadPath = public_path('uploads/templates');
+                if (!file_exists($uploadPath)) {
+                    mkdir($uploadPath, 0755, true);
+                }
+                $file->move($uploadPath, $filename);
+                $path = 'uploads/templates/' . $filename;
+                $updateData['template_surat_izin'] = $path;
+            }
         } else {
             // Role-based restrictions logic
             $restrictedFields = [];
             $roleLabel = '';
             
             if ($user->role === 'operator_opd') {
-                $restrictedFields = ['template_surat_izin', 'keterangan_izin', 'next_nomor_izin', 'template_pernyataan', 'template_permohonan', 'template_keabsahan'];
+                $restrictedFields = ['template_surat_izin', 'file_template_izin', 'keterangan_izin', 'next_nomor_izin', 'template_pernyataan', 'template_permohonan', 'template_keabsahan'];
                 $roleLabel = 'Rekomendasi';
             } elseif ($user->role === 'verifikator') {
-                $restrictedFields = ['template_surat_rekom', 'keterangan_rekom', 'next_nomor_rekom', 'template_pernyataan', 'template_permohonan', 'template_keabsahan'];
+                $restrictedFields = ['template_surat_rekom', 'file_template_rekom', 'keterangan_rekom', 'next_nomor_rekom', 'template_pernyataan', 'template_permohonan', 'template_keabsahan'];
                 $roleLabel = 'Izin';
             }
 
@@ -852,10 +841,32 @@ class PerijinanController extends Controller
                 if ($request->has('template_surat_rekom')) $updateData['template_surat_rekom'] = $request->template_surat_rekom;
                 if ($request->has('keterangan_rekom')) $updateData['keterangan_rekom'] = $request->keterangan_rekom;
                 if ($request->has('next_nomor_rekom')) $updateData['next_nomor_rekom'] = $request->next_nomor_rekom;
+                if ($request->hasFile('file_template_rekom')) {
+                    $file = $request->file('file_template_rekom');
+                    $filename = 'template_rekom_' . $perijinan->id . '_' . time() . '.docx';
+                    $uploadPath = public_path('uploads/templates');
+                if (!file_exists($uploadPath)) {
+                    mkdir($uploadPath, 0755, true);
+                }
+                $file->move($uploadPath, $filename);
+                $path = 'uploads/templates/' . $filename;
+                    $updateData['template_surat_rekom'] = $path;
+                }
             } elseif ($user->role === 'verifikator') {
                 if ($request->has('template_surat_izin')) $updateData['template_surat_izin'] = $request->template_surat_izin;
                 if ($request->has('keterangan_izin')) $updateData['keterangan_izin'] = $request->keterangan_izin;
                 if ($request->has('next_nomor_izin')) $updateData['next_nomor_izin'] = $request->next_nomor_izin;
+                if ($request->hasFile('file_template_izin')) {
+                    $file = $request->file('file_template_izin');
+                    $filename = 'template_izin_' . $perijinan->id . '_' . time() . '.docx';
+                    $uploadPath = public_path('uploads/templates');
+                if (!file_exists($uploadPath)) {
+                    mkdir($uploadPath, 0755, true);
+                }
+                $file->move($uploadPath, $filename);
+                $path = 'uploads/templates/' . $filename;
+                    $updateData['template_surat_izin'] = $path;
+                }
             }
         }
 
@@ -875,5 +886,45 @@ class PerijinanController extends Controller
         return back()
             ->with('success', 'Template surat berhasil diperbarui.')
             ->with('active_tab', 'templates');
+    }
+
+    /**
+     * Download the uploaded template document.
+     */
+    public function downloadTemplate(string $id, string $type)
+    {
+        $perijinan = Perijinan::findOrFail($id);
+        $user = auth()->user();
+
+        // Access Control: Role based template restrictions
+        if ($user->role === 'operator_opd' && $type !== 'rekom') {
+            return redirect()->back()->with('error', 'Anda hanya memiliki akses untuk mengunduh Template Rekomendasi.');
+        } elseif ($user->role === 'verifikator' && $type !== 'izin') {
+            return redirect()->back()->with('error', 'Anda hanya memiliki akses untuk mengunduh Template Izin.');
+        }
+
+        $path = '';
+        $filename = '';
+
+        if ($type === 'rekom') {
+            $path = $perijinan->template_surat_rekom;
+            $filename = 'Template_Rekomendasi_' . str_replace(' ', '_', $perijinan->nama_perijinan) . '.docx';
+        } elseif ($type === 'izin') {
+            $path = $perijinan->template_surat_izin;
+            $filename = 'Template_Izin_' . str_replace(' ', '_', $perijinan->nama_perijinan) . '.docx';
+        }
+
+        if (empty($path)) {
+            return redirect()->back()->with('error', 'File template tidak ditemukan di database.');
+        }
+
+        // Files are now stored in public/uploads/templates
+        $absolutePath = public_path($path);
+
+        if (!file_exists($absolutePath)) {
+            return redirect()->back()->with('error', 'File fisik template tidak ditemukan di server.');
+        }
+
+        return response()->download($absolutePath, $filename);
     }
 }

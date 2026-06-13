@@ -198,7 +198,11 @@ class DocumentGenerator
                 $rawTemplate = self::getDefaultSuratRekomTemplate();
             }
 
-            $path = self::renderAndSave($rawTemplate, $finalReplacements, $filename, $folderPath, $absoluteFolder, $application->no_registrasi);
+            if (Str::endsWith($rawTemplate, '.docx')) {
+                $path = self::generateFromWord($rawTemplate, $finalReplacements, $filename, $folderPath, $absoluteFolder);
+            } else {
+                $path = self::renderAndSave($rawTemplate, $finalReplacements, $filename, $folderPath, $absoluteFolder, $application->no_registrasi);
+            }
             
             if ($opd) {
                 $fileRekomMulti[$opd->id] = $path;
@@ -245,7 +249,11 @@ class DocumentGenerator
                 $finalReplacements['[NOMOR SURAT]'] = "{$kodePerijinan}/{$noUrut}/{$kodeOpd}/{$tahun}";
             }
 
-            $path = self::renderAndSave($rawTemplate, $finalReplacements, $config['filename'], $folderPath, $absoluteFolder, $application->no_registrasi);
+            if (Str::endsWith($rawTemplate, '.docx')) {
+                $path = self::generateFromWord($rawTemplate, $finalReplacements, $config['filename'], $folderPath, $absoluteFolder);
+            } else {
+                $path = self::renderAndSave($rawTemplate, $finalReplacements, $config['filename'], $folderPath, $absoluteFolder, $application->no_registrasi);
+            }
             $generatedPaths['file_' . $type] = $path;
         }
 
@@ -294,6 +302,92 @@ class DocumentGenerator
         $absoluteHtmlPath = $absoluteFolder . '/' . $filename . '.html';
         File::put($absoluteHtmlPath, $fullHtml);
         return $relativePath . '.html';
+    }
+
+    /**
+     * Generate PDF from Word (.docx) template using LibreOffice
+     */
+    private static function generateFromWord($templatePathDB, $replacements, $filename, $folderPath, $absoluteFolder)
+    {
+        // Templates are now stored in public/uploads/templates
+        $realTemplatePath = public_path($templatePathDB);
+        
+        // Backward compatibility fallback for old files in storage/app/private/ or storage/app/
+        if (!File::exists($realTemplatePath)) {
+            $realTemplatePath = storage_path('app/private/' . $templatePathDB);
+            if (!File::exists($realTemplatePath)) {
+                $realTemplatePath = storage_path('app/' . $templatePathDB);
+            }
+        }
+
+        if (!File::exists($realTemplatePath)) {
+            \Log::error("Template Word tidak ditemukan: " . $realTemplatePath);
+            return null;
+        }
+
+        try {
+            $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($realTemplatePath);
+
+            // Replace Data Teks
+            foreach ($replacements as $key => $value) {
+                $cleanKey = trim($key, '[]'); // remove [ ] to get NAMA_PEMOHON
+                // Bypass if value is HTML (like img tag)
+                if (is_string($value) && !str_contains($value, '<img')) {
+                    $templateProcessor->setValue($cleanKey, htmlspecialchars(strip_tags($value)));
+                }
+            }
+
+            // Replace Gambar (TTE/Kop)
+            $gambarTte = \App\Models\Setting::get('gambar_tte');
+            if ($gambarTte && File::exists(public_path($gambarTte))) {
+                try {
+                    $templateProcessor->setImageValue('GAMBAR TTE', [
+                        'path' => public_path($gambarTte),
+                        'width' => 100, 'height' => 100, 'ratio' => false
+                    ]);
+                } catch (\Exception $e) {}
+            } else {
+                try { $templateProcessor->setValue('GAMBAR TTE', ''); } catch (\Exception $e) {}
+            }
+
+            $logoKab = \App\Models\Setting::get('logo_kabupaten');
+            if ($logoKab && File::exists(public_path($logoKab))) {
+                try {
+                    $templateProcessor->setImageValue('LOGO KABUPATEN', [
+                        'path' => public_path($logoKab),
+                        'width' => 80, 'height' => 100, 'ratio' => false
+                    ]);
+                } catch (\Exception $e) {}
+            } else {
+                try { $templateProcessor->setValue('LOGO KABUPATEN', ''); } catch (\Exception $e) {}
+            }
+
+            $tempDocxPath = $absoluteFolder . '/' . $filename . '.docx';
+            $templateProcessor->saveAs($tempDocxPath);
+
+            $librePath = env('LIBREOFFICE_PATH', 'libreoffice');
+            $profilePath = storage_path('app/libreoffice_profile');
+            
+            if (!File::exists($profilePath)) {
+                File::makeDirectory($profilePath, 0755, true);
+            }
+
+            $command = "\"{$librePath}\" -env:UserInstallation=file://\"{$profilePath}\" --headless --convert-to pdf \"{$tempDocxPath}\" --outdir \"{$absoluteFolder}\"";
+            
+            exec($command . ' 2>&1', $output, $returnVar);
+
+            if ($returnVar === 0) {
+                @unlink($tempDocxPath);
+                return $folderPath . '/' . $filename . '.pdf';
+            } else {
+                \Log::error("LibreOffice Error: " . implode("\n", $output));
+                return null;
+            }
+
+        } catch (\Exception $e) {
+            \Log::error("Error Generate Word: " . $e->getMessage());
+            return null;
+        }
     }
 
     /**
