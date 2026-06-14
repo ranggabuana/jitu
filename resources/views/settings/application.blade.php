@@ -453,28 +453,64 @@
                             <i class="mdi mdi-information-outline mr-1"></i>
                             Ketikkan kode berikut di dalam dokumen. Kode ini akan <strong>diganti otomatis</strong> dengan data riil pemohon saat surat dicetak:
                         </p>
-                        <div class="flex flex-wrap gap-2">
-                            @foreach([
-                                '[NAMA PEMOHON]' => 'Nama Lengkap',
-                                '[NIK]' => 'NIK (KTP)',
-                                '[ALAMAT LENGKAP]' => 'Alamat Pemohon',
-                                '[NO HP]' => 'No. Telepon',
-                                '[EMAIL]' => 'Email',
-                                '[PEKERJAAN]' => 'Pekerjaan',
-                                '[NAMA IZIN]' => 'Jenis Izin',
-                                '[TANGGAL]' => 'Tanggal Pengajuan',
-                                '[NO REGISTRASI]' => 'No. Registrasi',
-                                '[LOGO KABUPATEN]' => 'Logo Kabupaten (Header)',
-                                '[GAMBAR TTE]' => 'Gambar TTE (Tanda Tangan Elektronik)',
-                                '<!-- pagebreak -->' => 'Tambah Halaman Baru (Pemisah)',
-                            ] as $code => $label)
-                            <button type="button"
-                                onclick="insertPlaceholder('{{ $code }}')"
-                                title="{{ $label }}"
-                                class="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-700 hover:border-blue-600 rounded-lg px-3 py-1.5 text-xs font-mono font-bold transition-all shadow-sm">
-                                <i class="mdi mdi-plus text-sm"></i>{{ $code }}
-                            </button>
-                            @endforeach
+                        <div class="space-y-4">
+                            <!-- Variabel Data Pemohon -->
+                            <div>
+                                <span class="text-[10px] uppercase tracking-wider font-bold text-blue-800 dark:text-blue-300 block mb-2">Variabel Data Pemohon (Tabel Users & Wilayah):</span>
+                                <div class="flex flex-wrap gap-2">
+                                    @foreach([
+                                        '${NAMA_PEMOHON}' => 'Nama Lengkap',
+                                        '${NIK}' => 'NIK (KTP)',
+                                        '${USERNAME}' => 'Username',
+                                        '${EMAIL}' => 'Email',
+                                        '${NO_HP}' => 'No. Telepon',
+                                        '${PEKERJAAN}' => 'Pekerjaan',
+                                        '${NAMA_PERUSAHAAN}' => 'Nama Perusahaan',
+                                        '${NPWP}' => 'NPWP',
+                                        '${ALAMAT_KTP}' => 'Alamat Sesuai KTP',
+                                        '${ALAMAT_DOMISILI}' => 'Alamat Domisili',
+                                        '${PROVINSI}' => 'Provinsi',
+                                        '${KABUPATEN}' => 'Kabupaten/Kota',
+                                        '${KECAMATAN}' => 'Kecamatan',
+                                        '${KELURAHAN}' => 'Kelurahan/Desa',
+                                        '${ALAMAT_LENGKAP}' => 'Alamat Lengkap (Gabungan)',
+                                        '${STATUS_PEMOHON}' => 'Status Pemohon',
+                                        '${ROLE}' => 'Role User',
+                                        '${STATUS_USER}' => 'Status Akun User',
+                                        '${OPD_USER}' => 'OPD Asal User',
+                                    ] as $code => $label)
+                                    <button type="button"
+                                        onclick="insertPlaceholder('{{ $code }}')"
+                                        title="{{ $label }}"
+                                        class="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-700 hover:border-blue-600 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold transition-all shadow-sm">
+                                        <i class="mdi mdi-plus text-xs"></i>{{ $code }}
+                                    </button>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <!-- Variabel Dasar (Sistem) -->
+                            <div>
+                                <span class="text-[10px] uppercase tracking-wider font-bold text-amber-800 dark:text-amber-300 block mb-2">Variabel Dasar (Sistem):</span>
+                                <div class="flex flex-wrap gap-2">
+                                    @foreach([
+                                        '${NAMA_IZIN}' => 'Jenis Izin',
+                                        '${TANGGAL}' => 'Tanggal Hari Ini (Lengkap)',
+                                        '${NO_REGISTRASI}' => 'Nomor Registrasi Permohonan',
+                                        '${NOMOR_SURAT}' => 'Nomor Surat Lengkap (Format: KODE/NO/OPD/TAHUN)',
+                                        '${MASA_AKTIF}' => 'Masa Aktif Izin',
+                                        '${LOGO_KABUPATEN}' => 'Logo Kabupaten (Header)',
+                                        '${GAMBAR_TTE}' => 'Gambar TTE (Tanda Tangan Elektronik)',
+                                    ] as $code => $label)
+                                    <button type="button"
+                                        onclick="insertPlaceholder('{{ $code }}')"
+                                        title="{{ $label }}"
+                                        class="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-600 hover:text-white dark:hover:bg-amber-700 hover:border-amber-600 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold transition-all shadow-sm">
+                                        <i class="mdi mdi-plus text-xs"></i>{{ $code }}
+                                    </button>
+                                    @endforeach
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -872,15 +908,26 @@
 
         // Map placeholder → sample values for preview simulation
         const previewData = {
-            '[NAMA PEMOHON]': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">Budi Santoso</span>',
-            '[NIK]': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">3304123456789001</span>',
-            '[ALAMAT LENGKAP]': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">Jl. Pemuda No. 45, Kel/Desa Krandegan, Kec. Banjarnegara, Kab/Kota Banjarnegara, Provinsi Jawa Tengah</span>',
-            '[NO HP]': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">081234567890</span>',
-            '[EMAIL]': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">budi.santoso@email.com</span>',
-            '[PEKERJAAN]': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">Wiraswasta</span>',
-            '[NAMA IZIN]': '<span style="background:#ede9fe;color:#5b21b6;padding:0 4px;border-radius:3px;font-weight:bold;">Izin Apotek</span>',
-            '[TANGGAL]': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">Banjarnegara, 20 Mei 2026</span>',
-            '[NO REGISTRASI]': '<span style="background:#fef3c7;color:#92400e;padding:0 4px;border-radius:3px;font-weight:bold;">REG-2026-0520-001</span>',
+            '${NAMA_PEMOHON}': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">Budi Santoso</span>',
+            '${NIK}': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">3304123456789001</span>',
+            '${USERNAME}': 'budisan',
+            '${EMAIL}': 'budi.santoso@email.com',
+            '${NO_HP}': '081234567890',
+            '${PEKERJAAN}': 'Wiraswasta',
+            '${NAMA_PERUSAHAAN}': 'PT. Maju Bersama',
+            '${NPWP}': '01.234.567.8-901.000',
+            '${ALAMAT_KTP}': 'Jl. Pemuda No. 45',
+            '${ALAMAT_DOMISILI}': 'Jl. Pemuda No. 45',
+            '${PROVINSI}': 'Jawa Tengah',
+            '${KABUPATEN}': 'Banjarnegara',
+            '${KECAMATAN}': 'Banjarnegara',
+            '${KELURAHAN}': 'Krandegan',
+            '${ALAMAT_LENGKAP}': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">Jl. Pemuda No. 45, Kel/Desa Krandegan, Kec. Banjarnegara, Kab/Kota Banjarnegara, Provinsi Jawa Tengah</span>',
+            '${STATUS_PEMOHON}': 'Perseorangan',
+            '${ROLE}': 'Pemohon',
+            '${NAMA_IZIN}': '<span style="background:#ede9fe;color:#5b21b6;padding:0 4px;border-radius:3px;font-weight:bold;">Izin Apotek</span>',
+            '${TANGGAL}': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">Banjarnegara, 20 Mei 2026</span>',
+            '${NO_REGISTRASI}': '<span style="background:#fef3c7;color:#92400e;padding:0 4px;border-radius:3px;font-weight:bold;">REG-2026-0520-001</span>',
         };
 
         let activeTemplateType = 'pernyataan';
@@ -919,6 +966,24 @@
         }
 
         function insertPlaceholder(code) {
+            // Copy to clipboard
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(code).then(() => {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            title: 'Tersalin!',
+                            text: 'Variabel ' + code + ' telah disalin ke clipboard.',
+                            icon: 'success',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 2000,
+                            timerProgressBar: true
+                        });
+                    }
+                });
+            }
+
             const ed = typeof tinymce !== 'undefined' ? tinymce.get('editor_' + activeTemplateType) : null;
             if (ed) {
                 ed.insertContent(code);

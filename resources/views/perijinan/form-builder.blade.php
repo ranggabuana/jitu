@@ -538,25 +538,30 @@
                             Ketikkan kode berikut di dalam dokumen. Kode ini akan <strong>diganti otomatis</strong> dengan data riil pemohon saat surat dicetak:
                         </p>
                         <div class="space-y-4">
-                            <!-- Variabel Dasar -->
+                            <!-- Variabel Data Pemohon -->
                             <div>
-                                <span class="text-[10px] uppercase tracking-wider font-bold text-blue-800 dark:text-blue-300 block mb-2">Variabel Dasar (Sistem):</span>
+                                <span class="text-[10px] uppercase tracking-wider font-bold text-blue-800 dark:text-blue-300 block mb-2">Variabel Data Pemohon (Tabel Users & Wilayah):</span>
                                 <div class="flex flex-wrap gap-2">
                                     @foreach([
-                                        '[NAMA PEMOHON]' => 'Nama Lengkap',
-                                        '[NIK]' => 'NIK (KTP)',
-                                        '[ALAMAT LENGKAP]' => 'Alamat Pemohon',
-                                        '[NO HP]' => 'No. Telepon',
-                                        '[EMAIL]' => 'Email',
-                                        '[PEKERJAAN]' => 'Pekerjaan',
-                                        '[NAMA IZIN]' => 'Jenis Izin',
-                                        '[TANGGAL]' => 'Tanggal Pengajuan',
-                                        '[NO REGISTRASI]' => 'No. Registrasi',
-                                        '[NOMOR URUT]' => 'Nomor Urut Surat (Hanya Rekom/Izin)',
-                                        '[NOMOR SURAT]' => 'Nomor Surat Lengkap (Format: KODE/NO/OPD/TAHUN)',
-                                        '[LOGO KABUPATEN]' => 'Logo Kabupaten (Header)',
-                                        '[GAMBAR TTE]' => 'Gambar TTE (Tanda Tangan Elektronik)',
-                                        '<!-- pagebreak -->' => 'Tambah Halaman Baru (Pemisah)',
+                                        '${NAMA_PEMOHON}' => 'Nama Lengkap',
+                                        '${NIK}' => 'NIK (KTP)',
+                                        '${USERNAME}' => 'Username',
+                                        '${EMAIL}' => 'Email',
+                                        '${NO_HP}' => 'No. Telepon',
+                                        '${PEKERJAAN}' => 'Pekerjaan',
+                                        '${NAMA_PERUSAHAAN}' => 'Nama Perusahaan',
+                                        '${NPWP}' => 'NPWP',
+                                        '${ALAMAT_KTP}' => 'Alamat Sesuai KTP',
+                                        '${ALAMAT_DOMISILI}' => 'Alamat Domisili',
+                                        '${PROVINSI}' => 'Provinsi',
+                                        '${KABUPATEN}' => 'Kabupaten/Kota',
+                                        '${KECAMATAN}' => 'Kecamatan',
+                                        '${KELURAHAN}' => 'Kelurahan/Desa',
+                                        '${ALAMAT_LENGKAP}' => 'Alamat Lengkap (Gabungan)',
+                                        '${STATUS_PEMOHON}' => 'Status Pemohon',
+                                        '${ROLE}' => 'Role User',
+                                        '${STATUS_USER}' => 'Status Akun User',
+                                        '${OPD_USER}' => 'OPD Asal User',
                                     ] as $code => $label)
                                     <button type="button"
                                         onclick="insertPlaceholder('{{ $code }}')"
@@ -568,16 +573,40 @@
                                 </div>
                             </div>
 
+                            <!-- Variabel Dasar (Sistem) -->
+                            <div>
+                                <span class="text-[10px] uppercase tracking-wider font-bold text-amber-800 dark:text-amber-300 block mb-2">Variabel Dasar (Sistem):</span>
+                                <div class="flex flex-wrap gap-2">
+                                    @foreach([
+                                        '${NAMA_IZIN}' => 'Jenis Izin',
+                                        '${TANGGAL}' => 'Tanggal Hari Ini (Lengkap)',
+                                        '${NO_REGISTRASI}' => 'Nomor Registrasi Permohonan',
+                                        '${NOMOR_SURAT}' => 'Nomor Surat Lengkap (Format: KODE/NO/OPD/TAHUN)',
+                                        '${MASA_AKTIF}' => 'Masa Aktif Izin',
+                                        '${LOGO_KABUPATEN}' => 'Logo Kabupaten (Header)',
+                                        '${GAMBAR_TTE}' => 'Gambar TTE (Tanda Tangan Elektronik)',
+                                    ] as $code => $label)
+                                    <button type="button"
+                                        onclick="insertPlaceholder('{{ $code }}')"
+                                        title="{{ $label }}"
+                                        class="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-600 hover:text-white dark:hover:bg-amber-700 hover:border-amber-600 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold transition-all shadow-sm">
+                                        <i class="mdi mdi-plus text-xs"></i>{{ $code }}
+                                    </button>
+                                    @endforeach
+                                </div>
+                            </div>
+
                             <!-- Variabel Global -->
                             <div class="dynamic-var-section" id="var-section-global">
                                 <span class="text-[10px] uppercase tracking-wider font-bold text-emerald-800 dark:text-emerald-300 block mb-2">Variabel dari Global Form:</span>
                                 <div class="flex flex-wrap gap-2">
                                     @forelse($perijinan->formFields->where('form_type', 'global') as $field)
+                                        @php $varName = strtoupper(str_replace(' ', '_', $field->label)); @endphp
                                         <button type="button"
-                                            onclick="insertPlaceholder('[{{ strtoupper($field->name) }}]')"
+                                            onclick="insertPlaceholder('{{ '${' . $varName . '}' }}')"
                                             title="{{ $field->label }}"
                                             class="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-700 hover:border-emerald-600 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold transition-all shadow-sm">
-                                            <i class="mdi mdi-plus text-xs"></i>[{{ strtoupper($field->name) }}]
+                                            <i class="mdi mdi-plus text-xs"></i>{{ '${' . $varName . '}' }}
                                         </button>
                                     @empty
                                         <span class="text-xs text-gray-400 italic">Belum ada field di Global Form</span>
@@ -590,11 +619,12 @@
                                 <span class="text-[10px] uppercase tracking-wider font-bold text-purple-800 dark:text-purple-300 block mb-2">Variabel Khusus Rekom Form:</span>
                                 <div class="flex flex-wrap gap-2">
                                     @forelse($perijinan->formFields->where('form_type', 'rekom') as $field)
+                                        @php $varName = strtoupper(str_replace(' ', '_', $field->label)); @endphp
                                         <button type="button"
-                                            onclick="insertPlaceholder('[{{ strtoupper($field->name) }}]')"
+                                            onclick="insertPlaceholder('{{ '${' . $varName . '}' }}')"
                                             title="{{ $field->label }}"
                                             class="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300 hover:bg-purple-600 hover:text-white dark:hover:bg-purple-700 hover:border-purple-600 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold transition-all shadow-sm">
-                                            <i class="mdi mdi-plus text-xs"></i>[{{ strtoupper($field->name) }}]
+                                            <i class="mdi mdi-plus text-xs"></i>{{ '${' . $varName . '}' }}
                                         </button>
                                     @empty
                                         <span class="text-xs text-gray-400 italic">Belum ada field di Rekom Form</span>
@@ -607,11 +637,12 @@
                                 <span class="text-[10px] uppercase tracking-wider font-bold text-indigo-800 dark:text-indigo-300 block mb-2">Variabel Khusus Izin Form:</span>
                                 <div class="flex flex-wrap gap-2">
                                     @forelse($perijinan->formFields->where('form_type', 'izin') as $field)
+                                        @php $varName = strtoupper(str_replace(' ', '_', $field->label)); @endphp
                                         <button type="button"
-                                            onclick="insertPlaceholder('[{{ strtoupper($field->name) }}]')"
+                                            onclick="insertPlaceholder('{{ '${' . $varName . '}' }}')"
                                             title="{{ $field->label }}"
                                             class="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-700 hover:border-indigo-600 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold transition-all shadow-sm">
-                                            <i class="mdi mdi-plus text-xs"></i>[{{ strtoupper($field->name) }}]
+                                            <i class="mdi mdi-plus text-xs"></i>{{ '${' . $varName . '}' }}
                                         </button>
                                     @empty
                                         <span class="text-xs text-gray-400 italic">Belum ada field di Izin Form</span>
@@ -1168,9 +1199,27 @@
         }
 
         function insertPlaceholder(code) {
+            // Copy to clipboard
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(code).then(() => {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            title: 'Tersalin!',
+                            text: 'Variabel ' + code + ' telah disalin ke clipboard.',
+                            icon: 'success',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 2000,
+                            timerProgressBar: true
+                        });
+                    }
+                });
+            }
+
             const currentTab = localStorage.getItem('formBuilderTab') || 'global';
             let activeEditorId = currentTab === 'rekom' ? 'editor_rekom' : 'editor_izin';
-            
+
             if (typeof tinymce !== 'undefined') {
                 const ed = tinymce.get(activeEditorId);
                 if (ed) {

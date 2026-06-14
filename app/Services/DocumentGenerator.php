@@ -49,16 +49,29 @@ class DocumentGenerator
 
         // 2. Prepare Replacements Map
         $baseReplacements = [
-            '[NAMA PEMOHON]' => $user->name ?? '-',
-            '[NIK]' => $user->nip ?? '-',
-            '[ALAMAT LENGKAP]' => $fullAlamat ?: '-',
-            '[NO HP]' => $user->no_hp ?? '-',
-            '[EMAIL]' => $user->email ?? '-',
-            '[PEKERJAAN]' => $pekerjaan,
-            '[NAMA IZIN]' => $perijinan->nama_perijinan ?? '-',
-            '[TANGGAL]' => self::formatDateIndonesian($application->created_at ?? now()),
-            '[NO REGISTRASI]' => $application->no_registrasi ?? '-',
-            '[MASA AKTIF]' => $application->masa_aktif ? self::formatDateIndonesian($application->masa_aktif) : '-',
+            '${NAMA_PEMOHON}' => $user->name ?? '-',
+            '${NIK}' => $user->nip ?? '-',
+            '${USERNAME}' => $user->username ?? '-',
+            '${EMAIL}' => $user->email ?? '-',
+            '${NO_HP}' => $user->no_hp ?? '-',
+            '${PEKERJAAN}' => $pekerjaan,
+            '${NAMA_PERUSAHAAN}' => $user->nama_perusahaan ?? '-',
+            '${NPWP}' => $user->npwp ?? '-',
+            '${ALAMAT_KTP}' => $user->alamat_ktp ?? '-',
+            '${ALAMAT_DOMISILI}' => $user->alamat_domisili ?? '-',
+            '${PROVINSI}' => $user->provinsi->name ?? '-',
+            '${KABUPATEN}' => $user->kabupaten->name ?? '-',
+            '${KECAMATAN}' => $user->kecamatan->name ?? '-',
+            '${KELURAHAN}' => $user->kelurahan->name ?? '-',
+            '${ALAMAT_LENGKAP}' => $fullAlamat ?: '-',
+            '${STATUS_PEMOHON}' => $user->status_pemohon ?? '-',
+            '${ROLE}' => $user->role_label ?? $user->role ?? '-',
+            '${STATUS_USER}' => $user->status ?? '-',
+            '${OPD_USER}' => $user->opd->nama_opd ?? '-',
+            '${NAMA_IZIN}' => $perijinan->nama_perijinan ?? '-',
+            '${TANGGAL}' => self::formatDateIndonesian($application->created_at ?? now()),
+            '${NO_REGISTRASI}' => $application->no_registrasi ?? '-',
+            '${MASA_AKTIF}' => $application->masa_aktif ? self::formatDateIndonesian($application->masa_aktif) : '-',
         ];
 
         // 3. Define output directory
@@ -96,7 +109,7 @@ class DocumentGenerator
             ],
         ];
 
-        // 4.5. Add [GAMBAR TTE] and [LOGO KABUPATEN] to replacements
+        // 4.5. Add ${GAMBAR_TTE} and ${LOGO_KABUPATEN} to replacements
         $gambarTte = \App\Models\Setting::get('gambar_tte');
         $tteHtml = '';
         if ($gambarTte && File::exists(public_path($gambarTte))) {
@@ -105,7 +118,7 @@ class DocumentGenerator
             $src = 'data:' . $mime . ';base64,' . $imageData;
             $tteHtml = '<img src="' . $src . '" style="max-width: 150px; max-height: 150px;" alt="TTE" />';
         }
-        $baseReplacements['[GAMBAR TTE]'] = $tteHtml;
+        $baseReplacements['${GAMBAR_TTE}'] = $tteHtml;
 
         $logoKabupaten = \App\Models\Setting::get('logo_kabupaten');
         $logoKabHtml = '';
@@ -115,17 +128,17 @@ class DocumentGenerator
             $src = 'data:' . $mime . ';base64,' . $imageData;
             $logoKabHtml = '<img src="' . $src . '" style="max-height: 110px; width: auto;" alt="Logo Kabupaten" />';
         }
-        $baseReplacements['[LOGO KABUPATEN]'] = $logoKabHtml;
+        $baseReplacements['${LOGO_KABUPATEN}'] = $logoKabHtml;
         
         // 5. Build Applicant Data Map (Global Form)
         $applicantReplacements = [];
         if (!empty($application->form_data) && is_array($application->form_data)) {
             foreach ($application->form_data as $fieldId => $value) {
                 if (!is_array($value)) {
-                    $applicantReplacements['[' . strtoupper($fieldId) . ']'] = $value;
+                    $applicantReplacements['${' . strtoupper(str_replace(' ', '_', $fieldId)) . '}'] = $value;
                     $field = $perijinan->activeFormFields->firstWhere('id', $fieldId);
                     if ($field) {
-                        $applicantReplacements['[' . strtoupper($field->label) . ']'] = $value;
+                        $applicantReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $value;
                     }
                 }
             }
@@ -176,10 +189,10 @@ class DocumentGenerator
             $rekomReplacements = [];
             foreach ($rekomData as $key => $value) {
                 if (!is_array($value)) {
-                    $rekomReplacements['[' . strtoupper($key) . ']'] = $value;
+                    $rekomReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $value;
                     $field = $perijinan->activeFormFields->where('form_type', 'rekom')->firstWhere('name', $key);
                     if ($field) {
-                        $rekomReplacements['[' . strtoupper($field->label) . ']'] = $value;
+                        $rekomReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $value;
                     }
                 }
             }
@@ -190,8 +203,8 @@ class DocumentGenerator
             $kodeOpd = $opd ? ($opd->kode_opd ?? 'OPD') : ($application->no_rekom_kode ?? 'OPD');
             $tahun = now()->year;
 
-            $finalReplacements['[NOMOR URUT]'] = $noUrut;
-            $finalReplacements['[NOMOR SURAT]'] = "{$kodePerijinan}/{$noUrut}/{$kodeOpd}/{$tahun}";
+            $finalReplacements['${NOMOR_URUT}'] = $noUrut;
+            $finalReplacements['${NOMOR_SURAT}'] = "{$kodePerijinan}/{$noUrut}/{$kodeOpd}/{$tahun}";
 
             $rawTemplate = $perijinan->template_surat_rekom ?? \App\Models\Setting::get('template_rekom');
             if (empty(trim(strip_tags($rawTemplate ?? '')))) {
@@ -228,10 +241,10 @@ class DocumentGenerator
                 if (!empty($application->izin_data) && is_array($application->izin_data)) {
                     foreach ($application->izin_data as $key => $value) {
                         if (!is_array($value)) {
-                            $dataReplacements['[' . strtoupper($key) . ']'] = $value;
+                            $dataReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $value;
                             $field = $perijinan->activeFormFields->where('form_type', 'izin')->firstWhere('name', $key);
                             if ($field) {
-                                $dataReplacements['[' . strtoupper($field->label) . ']'] = $value;
+                                $dataReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $value;
                             }
                         }
                     }
@@ -245,8 +258,8 @@ class DocumentGenerator
                 $noUrut = $application->no_izin ?? $perijinan->next_nomor_izin ?? '-';
                 $kodeOpd = $application->no_izin_kode ?? 'DPMPTSP';
                 $tahun = now()->year;
-                $finalReplacements['[NOMOR URUT]'] = $noUrut;
-                $finalReplacements['[NOMOR SURAT]'] = "{$kodePerijinan}/{$noUrut}/{$kodeOpd}/{$tahun}";
+                $finalReplacements['${NOMOR_URUT}'] = $noUrut;
+                $finalReplacements['${NOMOR_SURAT}'] = "{$kodePerijinan}/{$noUrut}/{$kodeOpd}/{$tahun}";
             }
 
             if (Str::endsWith($rawTemplate, '.docx')) {
@@ -328,38 +341,54 @@ class DocumentGenerator
         try {
             $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($realTemplatePath);
 
-            // Replace Data Teks
+            // Replace Data Teks (Supports both [VAR] and ${VAR} formats)
             foreach ($replacements as $key => $value) {
-                $cleanKey = trim($key, '[]'); // remove [ ] to get NAMA_PEMOHON
+                $cleanKey = str_replace(['[', ']', '${', '}'], '', $key);
                 // Bypass if value is HTML (like img tag)
                 if (is_string($value) && !str_contains($value, '<img')) {
-                    $templateProcessor->setValue($cleanKey, htmlspecialchars(strip_tags($value)));
+                    $val = htmlspecialchars(strip_tags($value));
+                    
+                    // Pass 1: Replace [VAR]
+                    $templateProcessor->setMacroChars('[', ']');
+                    $templateProcessor->setValue($cleanKey, $val);
+                    
+                    // Pass 2: Replace ${VAR}
+                    $templateProcessor->setMacroChars('${', '}');
+                    $templateProcessor->setValue($cleanKey, $val);
                 }
             }
 
             // Replace Gambar (TTE/Kop)
             $gambarTte = \App\Models\Setting::get('gambar_tte');
-            if ($gambarTte && File::exists(public_path($gambarTte))) {
-                try {
-                    $templateProcessor->setImageValue('GAMBAR TTE', [
-                        'path' => public_path($gambarTte),
-                        'width' => 100, 'height' => 100, 'ratio' => false
-                    ]);
-                } catch (\Exception $e) {}
-            } else {
-                try { $templateProcessor->setValue('GAMBAR TTE', ''); } catch (\Exception $e) {}
-            }
-
             $logoKab = \App\Models\Setting::get('logo_kabupaten');
-            if ($logoKab && File::exists(public_path($logoKab))) {
-                try {
-                    $templateProcessor->setImageValue('LOGO KABUPATEN', [
-                        'path' => public_path($logoKab),
-                        'width' => 80, 'height' => 100, 'ratio' => false
-                    ]);
-                } catch (\Exception $e) {}
-            } else {
-                try { $templateProcessor->setValue('LOGO KABUPATEN', ''); } catch (\Exception $e) {}
+
+            // Handle Image Placeholders for both formats
+            foreach (['GAMBAR TTE' => $gambarTte, 'LOGO KABUPATEN' => $logoKab] as $macro => $path) {
+                if ($path && File::exists(public_path($path))) {
+                    $imgConfig = [
+                        'path' => public_path($path),
+                        'width' => ($macro === 'GAMBAR TTE' ? 100 : 80), 
+                        'height' => 100, 
+                        'ratio' => false
+                    ];
+
+                    try {
+                        // Replace ${IMAGE_VAR}
+                        $templateProcessor->setMacroChars('${', '}');
+                        $templateProcessor->setImageValue($macro, $imgConfig);
+
+                        // Replace ${IMAGE_VAR}
+                        $templateProcessor->setMacroChars('${', '}');
+                        $templateProcessor->setImageValue($macro, $imgConfig);
+                    } catch (\Exception $e) {}
+                } else {
+                    try {
+                        $templateProcessor->setMacroChars('[', ']');
+                        $templateProcessor->setValue($macro, '');
+                        $templateProcessor->setMacroChars('${', '}');
+                        $templateProcessor->setValue($macro, '');
+                    } catch (\Exception $e) {}
+                }
             }
 
             $tempDocxPath = $absoluteFolder . '/' . $filename . '.docx';
@@ -372,7 +401,14 @@ class DocumentGenerator
                 File::makeDirectory($profilePath, 0755, true);
             }
 
-            $command = "\"{$librePath}\" -env:UserInstallation=file://\"{$profilePath}\" --headless --convert-to pdf \"{$tempDocxPath}\" --outdir \"{$absoluteFolder}\"";
+            // Adjust command for Windows vs Linux compatibility
+            if (str_contains(strtoupper(PHP_OS), 'WIN')) {
+                $librePathWin = str_replace('/', DIRECTORY_SEPARATOR, $librePath);
+                $profilePathUrl = str_replace(DIRECTORY_SEPARATOR, '/', $profilePath);
+                $command = "\"{$librePathWin}\" \"-env:UserInstallation=file:///{$profilePathUrl}\" --headless --convert-to pdf \"{$tempDocxPath}\" --outdir \"{$absoluteFolder}\"";
+            } else {
+                $command = "\"{$librePath}\" -env:UserInstallation=file://\"{$profilePath}\" --headless --convert-to pdf \"{$tempDocxPath}\" --outdir \"{$absoluteFolder}\"";
+            }
             
             exec($command . ' 2>&1', $output, $returnVar);
 
@@ -540,32 +576,32 @@ class DocumentGenerator
         <tr>
             <td style="width: 25%;">Nama</td>
             <td style="width: 2%;">:</td>
-            <td>[NAMA PEMOHON]</td>
+            <td>${NAMA_PEMOHON}</td>
         </tr>
         <tr>
             <td>NIK</td>
             <td>:</td>
-            <td>[NIK]</td>
+            <td>${NIK}</td>
         </tr>
         <tr>
             <td>Alamat</td>
             <td>:</td>
-            <td>[ALAMAT LENGKAP]</td>
+            <td>${ALAMAT_LENGKAP}</td>
         </tr>
         <tr>
             <td>No. HP</td>
             <td>:</td>
-            <td>[NO HP]</td>
+            <td>${NO_HP}</td>
         </tr>
         <tr>
             <td>Pekerjaan</td>
             <td>:</td>
-            <td>[PEKERJAAN]</td>
+            <td>${PEKERJAAN}</td>
         </tr>
         <tr>
             <td>Email</td>
             <td>:</td>
-            <td>[EMAIL]</td>
+            <td>${EMAIL}</td>
         </tr>
     </tbody>
 </table>
@@ -576,9 +612,9 @@ class DocumentGenerator
         <tr>
             <td style="width: 60%;">&nbsp;</td>
             <td>
-                <p>Banjarnegara, [TANGGAL]<br />Pemohon,</p>
+                <p>Banjarnegara, ${TANGGAL}<br />Pemohon,</p>
                 <br /><br />
-                <p><strong>[NAMA PEMOHON]</strong></p>
+                <p><strong>${NAMA_PEMOHON}</strong></p>
             </td>
         </tr>
     </tbody>
@@ -598,31 +634,31 @@ class DocumentGenerator
         <tr>
             <td style="width: 25%;">Nama</td>
             <td style="width: 2%;">:</td>
-            <td>[NAMA PEMOHON]</td>
+            <td>${NAMA_PEMOHON}</td>
         </tr>
         <tr>
             <td>NIK</td>
             <td>:</td>
-            <td>[NIK]</td>
+            <td>${NIK}</td>
         </tr>
         <tr>
             <td>Alamat</td>
             <td>:</td>
-            <td>[ALAMAT LENGKAP]</td>
+            <td>${ALAMAT_LENGKAP}</td>
         </tr>
         <tr>
             <td>No. HP</td>
             <td>:</td>
-            <td>[NO HP]</td>
+            <td>${NO_HP}</td>
         </tr>
         <tr>
             <td>Email</td>
             <td>:</td>
-            <td>[EMAIL]</td>
+            <td>${EMAIL}</td>
         </tr>
     </tbody>
 </table>
-<p>Dengan ini mengajukan permohonan untuk memperoleh :<br />Perizinan: <strong>[NAMA IZIN]</strong></p>
+<p>Dengan ini mengajukan permohonan untuk memperoleh :<br />Perizinan: <strong>${NAMA_IZIN}</strong></p>
 <p>Sebagai bahan pertimbangan, bersama ini kami sampaikan kelengkapan persyaratan melalui Sistem Perizinan Online "Dawet Ayu" Banjarnegara.</p>
 <p>Demikian permohonan ini disampaikan, atas perhatian dan perkenannya diucapkan terima kasih.</p>
 <table class="signature-table">
@@ -632,9 +668,9 @@ class DocumentGenerator
                 <p><strong>Pernyataan Pemohon:</strong><br />[x] Data yang disampaikan adalah benar.<br />[x] Bersedia bertanggung jawab atas data yang diberikan.</p>
             </td>
             <td>
-                <p>Banjarnegara, [TANGGAL]<br />Pemohon,</p>
+                <p>Banjarnegara, ${TANGGAL}<br />Pemohon,</p>
                 <br /><br />
-                <p><strong>[NAMA PEMOHON]</strong></p>
+                <p><strong>${NAMA_PEMOHON}</strong></p>
             </td>
         </tr>
     </tbody>
@@ -653,32 +689,32 @@ class DocumentGenerator
         <tr>
             <td style="width: 25%;">Nama</td>
             <td style="width: 2%;">:</td>
-            <td>[NAMA PEMOHON]</td>
+            <td>${NAMA_PEMOHON}</td>
         </tr>
         <tr>
             <td>NIK</td>
             <td>:</td>
-            <td>[NIK]</td>
+            <td>${NIK}</td>
         </tr>
         <tr>
             <td>Alamat</td>
             <td>:</td>
-            <td>[ALAMAT LENGKAP]</td>
+            <td>${ALAMAT_LENGKAP}</td>
         </tr>
         <tr>
             <td>No. HP</td>
             <td>:</td>
-            <td>[NO HP]</td>
+            <td>${NO_HP}</td>
         </tr>
         <tr>
             <td>Pekerjaan</td>
             <td>:</td>
-            <td>[PEKERJAAN]</td>
+            <td>${PEKERJAAN}</td>
         </tr>
         <tr>
             <td>Email</td>
             <td>:</td>
-            <td>[EMAIL]</td>
+            <td>${EMAIL}</td>
         </tr>
     </tbody>
 </table>
@@ -689,9 +725,9 @@ class DocumentGenerator
         <tr>
             <td style="width: 60%;">&nbsp;</td>
             <td>
-                <p>Banjarnegara, [TANGGAL]<br />Pemohon,</p>
+                <p>Banjarnegara, ${TANGGAL}<br />Pemohon,</p>
                 <br /><br />
-                <p><strong>[NAMA PEMOHON]</strong></p>
+                <p><strong>${NAMA_PEMOHON}</strong></p>
             </td>
         </tr>
     </tbody>
@@ -703,55 +739,55 @@ class DocumentGenerator
      */
     public static function getDefaultSuratRekomTemplate(): string
     {
-        return "<div style=\"font-family: 'Bookman Old Style', serif; line-height: 1.5; color: #000;\">
-    <table style=\"width: 100%; border-collapse: collapse; border-bottom: 2px solid black; margin-bottom: 15px;\">
+        return '<div style="font-family: \'Bookman Old Style\', serif; line-height: 1.5; color: #000;">
+    <table style="width: 100%; border-collapse: collapse; border-bottom: 2px solid black; margin-bottom: 15px;">
         <tbody>
             <tr>
-                <td style=\"width: 18%; text-align: center; vertical-align: middle; padding-bottom: 5px;\">
-                    [LOGO KABUPATEN]
+                <td style="width: 18%; text-align: center; vertical-align: middle; padding-bottom: 5px;">
+                    ${LOGO_KABUPATEN}
                 </td>
-                <td style=\"width: 82%; text-align: center; vertical-align: middle; padding-bottom: 5px;\">
-                    <h3 style=\"margin: 0; font-size: 14pt; font-weight: bold; font-family: 'Bookman Old Style', serif; text-align: center;\">PEMERINTAH KABUPATEN BANJARNEGARA</h3>
-                    <h2 style=\"margin: 2px 0; font-size: 14pt; font-weight: bold; font-family: 'Bookman Old Style', serif; text-align: center;\">DINAS PENANAMAN MODAL DAN PELAYANAN TERPADU SATU PINTU</h2>
-                    <p style=\"margin: 0; font-size: 10pt; font-family: 'Bookman Old Style', serif; text-align: center;\">Jl. Letjend Suprapto No. 1, Banjarnegara, Jawa Tengah 53414</p>
+                <td style="width: 82%; text-align: center; vertical-align: middle; padding-bottom: 5px;">
+                    <h3 style="margin: 0; font-size: 14pt; font-weight: bold; font-family: \'Bookman Old Style\', serif; text-align: center;">PEMERINTAH KABUPATEN BANJARNEGARA</h3>
+                    <h2 style="margin: 2px 0; font-size: 14pt; font-weight: bold; font-family: \'Bookman Old Style\', serif; text-align: center;">DINAS PENANAMAN MODAL DAN PELAYANAN TERPADU SATU PINTU</h2>
+                    <p style="margin: 0; font-size: 10pt; font-family: \'Bookman Old Style\', serif; text-align: center;">Jl. Letjend Suprapto No. 1, Banjarnegara, Jawa Tengah 53414</p>
                 </td>
             </tr>
         </tbody>
     </table>
-    <div style=\"text-align: center; margin-bottom: 15px;\">
-        <h4 style=\"margin: 0; font-size: 11pt; font-weight: bold; text-decoration: underline; font-family: 'Bookman Old Style', serif;\">SURAT REKOMENDASI IZIN OPERASIONAL</h4>
-        <p style=\"margin: 2px 0 0 0; font-size: 10pt; font-family: 'Bookman Old Style', serif;\">Nomor: [NOMOR SURAT]</p>
+    <div style="text-align: center; margin-bottom: 15px;">
+        <h4 style="margin: 0; font-size: 11pt; font-weight: bold; text-decoration: underline; font-family: \'Bookman Old Style\', serif;">SURAT REKOMENDASI IZIN OPERASIONAL</h4>
+        <p style="margin: 2px 0 0 0; font-size: 10pt; font-family: \'Bookman Old Style\', serif;">Nomor: ${NOMOR_SURAT}</p>
     </div>
-    <p style=\"font-size: 10pt; text-align: justify; margin-bottom: 10px;\">Berdasarkan surat permohonan dari <strong>[NAMA PEMOHON]</strong> pada tanggal [TANGGAL]. Setelah dilakukan verifikasi kelayakan terhadap persyaratan administrasi dan persyaratan teknis pada entitas yang diusulkan, dengan ini Instansi/Dinas Terkait Kabupaten Banjarnegara menyatakan <strong>LAYAK</strong> dan <strong>MEMBERIKAN REKOMENDASI IZIN OPERASIONAL</strong> kepada:</p>
-    <table style=\"width: 100%; font-size: 10pt; margin-bottom: 15px;\" border=\"0\">
+    <p style="font-size: 10pt; text-align: justify; margin-bottom: 10px;">Berdasarkan surat permohonan dari <strong>${NAMA_PEMOHON}</strong> pada tanggal ${TANGGAL}. Setelah dilakukan verifikasi kelayakan terhadap persyaratan administrasi dan persyaratan teknis pada entitas yang diusulkan, dengan ini Instansi/Dinas Terkait Kabupaten Banjarnegara menyatakan <strong>LAYAK</strong> dan <strong>MEMBERIKAN REKOMENDASI IZIN OPERASIONAL</strong> kepada:</p>
+    <table style="width: 100%; font-size: 10pt; margin-bottom: 15px;" border="0">
         <tbody>
             <tr>
-                <td style=\"width: 30%; padding: 2px 0;\">Nama Pemohon</td>
-                <td style=\"width: 2%; padding: 2px 0;\">:</td>
-                <td style=\"padding: 2px 0;\"><strong>[NAMA PEMOHON]</strong></td>
+                <td style="width: 30%; padding: 2px 0;">Nama Pemohon</td>
+                <td style="width: 2%; padding: 2px 0;">:</td>
+                <td style="padding: 2px 0;"><strong>${NAMA_PEMOHON}</strong></td>
             </tr>
             <tr>
-                <td style=\"padding: 2px 0;\">Alamat</td>
-                <td style=\"padding: 2px 0;\">:</td>
-                <td style=\"padding: 2px 0;\">[ALAMAT LENGKAP]</td>
+                <td style="padding: 2px 0;">Alamat</td>
+                <td style="padding: 2px 0;">:</td>
+                <td style="padding: 2px 0;">${ALAMAT_LENGKAP}</td>
             </tr>
             <tr>
-                <td style=\"padding: 2px 0;\">Jenis Izin</td>
-                <td style=\"padding: 2px 0;\">:</td>
-                <td style=\"padding: 2px 0;\">[NAMA IZIN]</td>
+                <td style="padding: 2px 0;">Jenis Izin</td>
+                <td style="padding: 2px 0;">:</td>
+                <td style="padding: 2px 0;">${NAMA_IZIN}</td>
             </tr>
         </tbody>
     </table>
-    <p style=\"font-size: 10pt; text-align: justify; margin-bottom: 20px;\">Demikian surat rekomendasi ini dibuat untuk dipergunakan sebagaimana mestinya.</p>
-    <table style=\"width: 100%; font-size: 10pt;\">
+    <p style="font-size: 10pt; text-align: justify; margin-bottom: 20px;">Demikian surat rekomendasi ini dibuat untuk dipergunakan sebagaimana mestinya.</p>
+    <table style="width: 100%; font-size: 10pt;">
         <tbody>
             <tr>
-                <td style=\"width: 55%;\"></td>
-                <td style=\"width: 45%; text-align: center;\">
-                    Banjarnegara, [TANGGAL]<br />
+                <td style="width: 55%;"></td>
+                <td style="width: 45%; text-align: center;">
+                    Banjarnegara, ${TANGGAL}<br />
                     Kepala Instansi Terkait,<br />
                     <br />
-                    [GAMBAR TTE]<br />
+                    ${GAMBAR_TTE}<br />
                     <br />
                     <strong><u>Nama Kepala Instansi</u></strong><br />
                     NIP. .........................
@@ -759,7 +795,7 @@ class DocumentGenerator
             </tr>
         </tbody>
     </table>
-</div>";
+</div>';
     }
 
     /**
@@ -767,61 +803,61 @@ class DocumentGenerator
      */
     public static function getDefaultSuratIzinTemplate(): string
     {
-        return "<div style=\"font-family: 'Bookman Old Style', serif; line-height: 1.5; color: #000;\">
-    <table style=\"width: 100%; border-collapse: collapse; border-bottom: 2px solid black; margin-bottom: 15px;\">
+        return '<div style="font-family: \'Bookman Old Style\', serif; line-height: 1.5; color: #000;">
+    <table style="width: 100%; border-collapse: collapse; border-bottom: 2px solid black; margin-bottom: 15px;">
         <tbody>
             <tr>
-                <td style=\"width: 18%; text-align: center; vertical-align: middle; padding-bottom: 5px;\">
-                    [LOGO KABUPATEN]
+                <td style="width: 18%; text-align: center; vertical-align: middle; padding-bottom: 5px;">
+                    ${LOGO_KABUPATEN}
                 </td>
-                <td style=\"width: 82%; text-align: center; vertical-align: middle; padding-bottom: 5px;\">
-                    <h3 style=\"margin: 0; font-size: 14pt; font-weight: bold; font-family: 'Bookman Old Style', serif; text-align: center;\">PEMERINTAH KABUPATEN BANJARNEGARA</h3>
-                    <h2 style=\"margin: 2px 0; font-size: 14pt; font-weight: bold; font-family: 'Bookman Old Style', serif; text-align: center;\">DINAS PENANAMAN MODAL DAN PELAYANAN TERPADU SATU PINTU</h2>
-                    <p style=\"margin: 0; font-size: 10pt; font-family: 'Bookman Old Style', serif; text-align: center;\">Jl. Letjend Suprapto No. 1, Banjarnegara, Jawa Tengah 53414</p>
+                <td style="width: 82%; text-align: center; vertical-align: middle; padding-bottom: 5px;">
+                    <h3 style="margin: 0; font-size: 14pt; font-weight: bold; font-family: \'Bookman Old Style\', serif; text-align: center;">PEMERINTAH KABUPATEN BANJARNEGARA</h3>
+                    <h2 style="margin: 2px 0; font-size: 14pt; font-weight: bold; font-family: \'Bookman Old Style\', serif; text-align: center;">DINAS PENANAMAN MODAL DAN PELAYANAN TERPADU SATU PINTU</h2>
+                    <p style="margin: 0; font-size: 10pt; font-family: \'Bookman Old Style\', serif; text-align: center;">Jl. Letjend Suprapto No. 1, Banjarnegara, Jawa Tengah 53414</p>
                 </td>
             </tr>
         </tbody>
     </table>
-    <div style=\"text-align: center; margin-bottom: 15px;\">
-        <h4 style=\"margin: 0; font-size: 11pt; font-weight: bold; text-decoration: underline; font-family: 'Bookman Old Style', serif;\">SURAT IZIN PENDIRIAN / OPERASIONAL</h4>
-        <p style=\"margin: 2px 0 0 0; font-size: 10pt; font-family: 'Bookman Old Style', serif;\">Nomor: [NOMOR SURAT]</p>
+    <div style="text-align: center; margin-bottom: 15px;">
+        <h4 style="margin: 0; font-size: 11pt; font-weight: bold; text-decoration: underline; font-family: \'Bookman Old Style\', serif;">SURAT IZIN PENDIRIAN / OPERASIONAL</h4>
+        <p style="margin: 2px 0 0 0; font-size: 10pt; font-family: \'Bookman Old Style\', serif;">Nomor: ${NOMOR_SURAT}</p>
     </div>
-    <p style=\"font-size: 10pt; text-align: justify; margin-bottom: 10px;\">Membaca surat permohonan dari <strong>[NAMA PEMOHON]</strong> tanggal [TANGGAL] dan berdasarkan Surat Rekomendasi Nomor: [NO REGISTRASI], dengan ini Kepala Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu Kabupaten Banjarnegara <strong>MEMBERIKAN IZIN</strong> kepada:</p>
-    <table style=\"width: 100%; font-size: 10pt; margin-bottom: 15px;\" border=\"0\">
+    <p style="font-size: 10pt; text-align: justify; margin-bottom: 10px;">Membaca surat permohonan dari <strong>${NAMA_PEMOHON}</strong> tanggal ${TANGGAL} dan berdasarkan Surat Rekomendasi Nomor: ${NO_REGISTRASI}, dengan ini Kepala Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu Kabupaten Banjarnegara <strong>MEMBERIKAN IZIN</strong> kepada:</p>
+    <table style="width: 100%; font-size: 10pt; margin-bottom: 15px;" border="0">
         <tbody>
             <tr>
-                <td style=\"width: 30%; padding: 2px 0;\">Nama Pemohon</td>
-                <td style=\"width: 2%; padding: 2px 0;\">:</td>
-                <td style=\"padding: 2px 0;\"><strong>[NAMA PEMOHON]</strong></td>
+                <td style="width: 30%; padding: 2px 0;">Nama Pemohon</td>
+                <td style="width: 2%; padding: 2px 0;">:</td>
+                <td style="padding: 2px 0;"><strong>${NAMA_PEMOHON}</strong></td>
             </tr>
             <tr>
-                <td style=\"padding: 2px 0;\">Alamat</td>
-                <td style=\"padding: 2px 0;\">:</td>
-                <td style=\"padding: 2px 0;\">[ALAMAT LENGKAP]</td>
+                <td style="padding: 2px 0;">Alamat</td>
+                <td style="padding: 2px 0;">:</td>
+                <td style="padding: 2px 0;">${ALAMAT_LENGKAP}</td>
             </tr>
             <tr>
-                <td style=\"padding: 2px 0;\">Jenis Izin</td>
-                <td style=\"padding: 2px 0;\">:</td>
-                <td style=\"padding: 2px 0;\">[NAMA IZIN]</td>
+                <td style="padding: 2px 0;">Jenis Izin</td>
+                <td style="padding: 2px 0;">:</td>
+                <td style="padding: 2px 0;">${NAMA_IZIN}</td>
             </tr>
             <tr>
-                <td style=\"padding: 2px 0;\">Masa Berlaku s/d</td>
-                <td style=\"padding: 2px 0;\">:</td>
-                <td style=\"padding: 2px 0;\"><strong>[MASA AKTIF]</strong></td>
+                <td style="padding: 2px 0;">Masa Berlaku s/d</td>
+                <td style="padding: 2px 0;">:</td>
+                <td style="padding: 2px 0;"><strong>${MASA_AKTIF}</strong></td>
             </tr>
         </tbody>
     </table>
-    <p style=\"font-size: 10pt; text-align: justify; margin-bottom: 20px;\">Keputusan izin ini berlaku sejak tanggal ditetapkan dengan ketentuan wajib memenuhi semua peraturan perundang-undangan yang berlaku. Apabila di kemudian hari terdapat kekeliruan dalam keputusan ini, akan diadakan perbaikan sebagaimana mestinya.</p>
-    <table style=\"width: 100%; font-size: 10pt;\">
+    <p style="font-size: 10pt; text-align: justify; margin-bottom: 20px;">Keputusan izin ini berlaku sejak tanggal ditetapkan dengan ketentuan wajib memenuhi semua peraturan perundang-undangan yang berlaku. Apabila di kemudian hari terdapat kekeliruan dalam keputusan ini, akan diadakan perbaikan sebagaimana mestinya.</p>
+    <table style="width: 100%; font-size: 10pt;">
         <tbody>
             <tr>
-                <td style=\"width: 55%;\"></td>
-                <td style=\"width: 45%; text-align: center;\">
+                <td style="width: 55%;"></td>
+                <td style="width: 45%; text-align: center;">
                     Ditetapkan di Banjarnegara<br />
-                    pada tanggal [TANGGAL]<br />
+                    pada tanggal ${TANGGAL}<br />
                     Kepala Dinas,<br />
                     <br />
-                    [GAMBAR TTE]<br />
+                    ${GAMBAR_TTE}<br />
                     <br />
                     <strong><u>Nama Kepala Dinas</u></strong><br />
                     NIP. .........................
@@ -829,6 +865,6 @@ class DocumentGenerator
             </tr>
         </tbody>
     </table>
-</div>";
+</div>';
     }
 }
