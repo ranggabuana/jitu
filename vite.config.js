@@ -32,7 +32,7 @@ export default defineConfig(({ command, mode }) => {
             build: {
                 outDir: 'public/build',
                 emptyOutDir: true,
-                manifest: true, // penting untuk Laravel
+                manifest: 'manifest.json', // penting untuk Laravel
             },
         }),
     };
