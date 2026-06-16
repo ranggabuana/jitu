@@ -133,6 +133,38 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex justify-end gap-2">
+                                    @if($app->file_izin_tte || $app->file_rekom_tte || !empty($app->file_rekom_multi_tte))
+                                    <div class="relative group inline-block text-left">
+                                        <button type="button" class="inline-flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors shadow-sm focus:outline-none">
+                                            <i class="mdi mdi-file-document-multiple"></i> Daftar Surat <i class="mdi mdi-chevron-down"></i>
+                                        </button>
+                                        
+                                        <!-- Dropdown Menu -->
+                                        <div class="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 flex flex-col p-1.5 gap-1.5 pointer-events-none group-hover:pointer-events-auto">
+                                            @if($app->file_izin_tte)
+                                                <a href="{{ asset($app->file_izin_tte) }}" target="_blank" class="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-400 px-3 py-2 rounded-md text-[10px] font-bold uppercase transition-colors">
+                                                    <i class="mdi mdi-certificate text-sm"></i> Izin TTE
+                                                </a>
+                                            @endif
+                                            
+                                            @if($app->perijinan->is_multi_opd && !empty($app->file_rekom_multi_tte))
+                                                @foreach($app->file_rekom_multi_tte as $opdId => $path)
+                                                    @php
+                                                        $opdName = \App\Models\Opd::find($opdId)->nama_opd ?? 'OPD';
+                                                    @endphp
+                                                    <a href="{{ asset($path) }}" target="_blank" class="flex items-center gap-2 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 text-green-700 dark:text-green-400 px-3 py-2 rounded-md text-[10px] font-bold uppercase transition-colors" title="Rekomendasi {{ $opdName }}">
+                                                        <i class="mdi mdi-file-check text-sm"></i> Rekom TTE ({{ \Illuminate\Support\Str::limit($opdName, 10) }})
+                                                    </a>
+                                                @endforeach
+                                            @elseif(!empty($app->file_rekom_tte))
+                                                <a href="{{ asset($app->file_rekom_tte) }}" target="_blank" class="flex items-center gap-2 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 text-green-700 dark:text-green-400 px-3 py-2 rounded-md text-[10px] font-bold uppercase transition-colors">
+                                                    <i class="mdi mdi-file-check text-sm"></i> Rekom TTE
+                                                </a>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    @endif
+                                    
                                     <a href="{{ route('data-perijinan.sla-report', $app->id) }}"
                                         class="inline-flex items-center gap-1 bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors">
                                         <i class="mdi mdi-timer-star"></i>
