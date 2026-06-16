@@ -133,14 +133,14 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex justify-end gap-2">
-                                    @if($app->file_izin_tte || $app->file_rekom_tte || !empty($app->file_rekom_multi_tte))
-                                    <div class="relative group inline-block text-left">
+                                    @if(!in_array(auth()->user()->role, ['fo', 'bo']) && ($app->file_izin_tte || $app->file_rekom_tte || !empty($app->file_rekom_multi_tte)))
+                                    <div class="relative group inline-block text-left z-50">
                                         <button type="button" class="inline-flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors shadow-sm focus:outline-none">
                                             <i class="mdi mdi-file-document-multiple"></i> Daftar Surat <i class="mdi mdi-chevron-down"></i>
                                         </button>
                                         
                                         <!-- Dropdown Menu -->
-                                        <div class="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 flex flex-col p-1.5 gap-1.5 pointer-events-none group-hover:pointer-events-auto">
+                                        <div class="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all flex flex-col p-1.5 gap-1.5 pointer-events-none group-hover:pointer-events-auto">
                                             @if($app->file_izin_tte)
                                                 <a href="{{ asset($app->file_izin_tte) }}" target="_blank" class="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-400 px-3 py-2 rounded-md text-[10px] font-bold uppercase transition-colors">
                                                     <i class="mdi mdi-certificate text-sm"></i> Izin TTE
