@@ -148,18 +148,27 @@
             const counterEl = document.getElementById('sla-counter');
             if (counterEl && counterEl.dataset.running === 'true') {
                 let initialSeconds = parseInt(counterEl.dataset.initial) || 0;
-                let sessionSeconds = 0;
-
+                let startTimeStr = counterEl.dataset.startTime; // ISO String from server
+                let startTime = startTimeStr ? new Date(startTimeStr).getTime() : null;
+                
                 setInterval(() => {
-                    sessionSeconds++;
-                    let totalSeconds = initialSeconds + sessionSeconds;
+                    let totalSeconds = initialSeconds;
+                    
+                    if (startTime) {
+                        let now = new Date().getTime();
+                        let sessionSeconds = Math.floor((now - startTime) / 1000);
+                        totalSeconds = initialSeconds + (sessionSeconds > 0 ? sessionSeconds : 0);
+                    }
                     
                     // Update display
                     counterEl.textContent = formatDuration(totalSeconds);
                     
                     // Update hidden inputs in all forms
+                    // We send ONLY the session increment to the backend
+                    // Or actually, let's calculate exact diff on backend too
+                    let diffFromInitial = totalSeconds - initialSeconds;
                     document.querySelectorAll('.elapsed-seconds-input').forEach(input => {
-                        input.value = sessionSeconds;
+                        input.value = diffFromInitial > 0 ? diffFromInitial : 0;
                     });
                 }, 1000);
             }
@@ -318,8 +327,9 @@
                     <span class="text-[9px] font-black {{ $labelColor }} uppercase tracking-widest">SLA {{ $isRunning ? 'Counter' : 'Record' }}</span>
                     <div class="flex items-center gap-2">
                         <i class="mdi {{ $isRunning ? 'mdi-timer-outline animate-pulse' : 'mdi-timer-off-outline' }} {{ $iconColor }}"></i>
-                        <span id="sla-counter" class="text-sm font-mono font-black {{ $textColor }}" 
-                            data-initial="{{ $initialSeconds }}" 
+                        <span id="sla-counter" class="text-sm font-mono font-black {{ $textColor }}"
+                            data-initial="{{ $initialSeconds }}"
+                            data-start-time="{{ $isRunning && $activeTask && $activeTask->sla_start_at ? $activeTask->sla_start_at->toIso8601String() : '' }}"
                             data-running="{{ $isRunning ? 'true' : 'false' }}">
                             {{ formatDuration($initialSeconds) }}
                         </span>

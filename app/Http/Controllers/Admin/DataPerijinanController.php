@@ -799,6 +799,40 @@ class DataPerijinanController extends Controller
             'validasiRecords.validator.opd'
         ])->findOrFail($id);
 
+        // Find the specific validation record for the current user
+        $userRole = auth()->user()->role;
+        $isParallelOpdTurn = ($application->perijinan->is_multi_opd && in_array($userRole, ['operator_opd', 'kepala_opd']));
+        $userAssignedRecord = null;
+        if ($isParallelOpdTurn) {
+            $userAssignedRecord = $application->validasiRecords->where('validationFlow.assigned_user_id', auth()->id())->where('status', 'pending')->first();
+        }
+        $cv = $application->validasiRecords->where('order', $application->current_step)->first();
+        $activeTask = ($isParallelOpdTurn && $userAssignedRecord) ? $userAssignedRecord : $cv;
+
+        // Initialize SLA start time if not set
+        if ($activeTask && $activeTask->status === 'pending' && !$activeTask->sla_start_at) {
+            // Check if this task is actually available for the user
+            $canVal = false;
+            if ($isParallelOpdTurn && $userAssignedRecord) {
+                // In parallel multi-opd, check if operator can start or kepala opd can start after operator approved
+                if ($userRole === 'operator_opd') {
+                    $canVal = true; 
+                } else if ($userRole === 'kepala_opd') {
+                    $myOperator = $application->validasiRecords->first(fn($vr) => $vr->validationFlow->role === 'operator_opd' && $vr->validationFlow->assignedUser->opd_id == auth()->user()->opd_id);
+                    $canVal = $myOperator && $myOperator->status === 'approved';
+                }
+            } else if ($cv && $cv->status === 'pending') {
+                // sequential task
+                if ($cv->validationFlow->role === $userRole && (in_array($userRole, ['verifikator', 'kadin']) || $cv->validationFlow->assigned_user_id === auth()->id())) {
+                    $canVal = true;
+                }
+            }
+
+            if ($canVal) {
+                $activeTask->update(['sla_start_at' => now()]);
+            }
+        }
+
         // Ensure documents are generated if missing
         if (!$application->file_pernyataan || !$application->file_permohonan || !$application->file_keabsahan || !$application->file_rekom || !$application->file_izin) {
             try {

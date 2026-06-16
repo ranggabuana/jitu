@@ -16,11 +16,13 @@ class DataPerijinanValidasi extends Model
         'status',
         'catatan',
         'validated_at',
+        'sla_start_at',
         'order',
     ];
 
     protected $casts = [
         'validated_at' => 'datetime',
+        'sla_start_at' => 'datetime',
     ];
 
     /**
