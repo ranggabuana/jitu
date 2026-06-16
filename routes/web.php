@@ -99,6 +99,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/backup/{type}/{filename}/download', [SettingsController::class, 'downloadBackup'])->name('backup.download');
         Route::delete('/backup/{type}/{filename}/delete', [SettingsController::class, 'deleteBackup'])->name('backup.delete');
         Route::get('/backup/{type}/list', [SettingsController::class, 'listBackups'])->name('backup.list');
+        Route::get('/log-tte', [App\Http\Controllers\Admin\EsignLogController::class, 'index'])->name('log-tte');
     });
 
     // OPD Routes (Admin Only)
@@ -187,6 +188,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/ditolak', [DataPerijinanController::class, 'ditolak'])->name('ditolak');
         Route::get('/ditolak/export', [DataPerijinanController::class, 'exportDitolak'])->name('ditolak.export');
         Route::get('/{id}', [DataPerijinanController::class, 'show'])->name('show');
+        Route::post('/{id}/verify-pdf', [DataPerijinanController::class, 'verifyPdf'])->name('verify-pdf');
+        Route::post('/{id}/apply-tte', [DataPerijinanController::class, 'applyTte'])->name('apply-tte');
         Route::put('/{id}/rekom-data', [DataPerijinanController::class, 'saveRekomData'])->name('rekom-data.save');
         Route::put('/{id}/izin-data', [DataPerijinanController::class, 'saveIzinData'])->name('izin-data.save');
         Route::get('/{id}/sla-report', [DataPerijinanController::class, 'slaReport'])->name('sla-report');

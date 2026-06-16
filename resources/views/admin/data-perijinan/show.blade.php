@@ -4,6 +4,9 @@
     @if (session('success'))
         <meta name="success-message" content="{{ session('success') }}">
     @endif
+    @if (session('error'))
+        <meta name="error-message" content="{{ session('error') }}">
+    @endif
 
     <!-- Header -->
     <div class="mb-6">
@@ -513,11 +516,33 @@
                                 </div>
                                 @if($opdFileRekom)
                                     <div class="flex gap-2">
-                                        <button onclick="openPdfPreview('{{ asset($opdFileRekom) }}?t={{ time() }}', 'Rekomendasi {{ $opd->nama_opd }}')" class="px-3 py-1.5 bg-purple-600 text-white rounded-lg text-[9px] font-black uppercase shadow-sm">Pratinjau PDF</button>
-                                        <a href="{{ route('data-perijinan.download-file', rawurlencode(str_replace('uploads/perijinan/', '', $opdFileRekom))) }}?t={{ time() }}" class="p-1.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-lg"><i class="mdi mdi-download text-sm"></i></a>
+                                        <button onclick="openPdfPreview('{{ asset($opdFileRekom) }}?t={{ time() }}', 'Draft Rekomendasi {{ $opd->nama_opd }}')" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[9px] font-black uppercase shadow-sm">Buka PDF</button>
                                     </div>
                                 @endif
                             </div>
+
+                            @php 
+                                $signedFile = $application->file_rekom_multi_tte[$opd->id] ?? null;
+                            @endphp
+
+                            @if($signedFile)
+                            <!-- Signed Document Card (New) -->
+                            <div class="px-5 py-4 border-t border-purple-100 dark:border-purple-900/50 bg-green-50/30 dark:bg-green-900/10 flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/40 flex items-center justify-center border border-green-200 dark:border-green-800"><i class="mdi mdi-file-check text-green-600 dark:text-green-400 text-lg"></i></div>
+                                    <div>
+                                        <h3 class="text-[11px] font-bold text-gray-800 dark:text-white">Surat Rekomendasi Resmi (TTE)</h3>
+                                        <p class="text-[9px] text-green-600 font-bold uppercase tracking-wider">Terbit</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2">
+                                    @if($isKepalaOpd || $isKadin || $isAdmin || $isVerifikator)
+                                        <button onclick="verifyEsignPdf('rekom', {{ $opd->id }})" class="px-3 py-1.5 bg-green-600 text-white rounded-lg text-[9px] font-black uppercase shadow-sm" title="Verifikasi TTE"><i class="mdi mdi-shield-check"></i> Cek Dokumen TTE</button>
+                                    @endif
+                                    <button onclick="openPdfPreview('{{ asset($signedFile) }}?t={{ time() }}', 'Surat Rekomendasi Resmi {{ $opd->nama_opd }}')" class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase shadow-sm">Buka PDF</button>
+                                </div>
+                            </div>
+                            @endif
 
                             @if($isMyOpd && $isOperatorOpd && $canEditRekom)
                             <div class="p-6">
@@ -685,11 +710,28 @@
                                     <div><h3 class="text-sm font-bold text-gray-800 dark:text-white">Draft Surat Rekomendasi</h3><p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Hasil Generate Otomatis</p></div>
                                 </div>
                                 <div class="flex gap-2">
-                                    <button onclick="openPdfPreview('{{ asset($application->file_rekom) }}?t={{ time() }}', 'Surat Rekomendasi')" class="px-4 py-2 bg-purple-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm">Pratinjau PDF</button>
-                                    <a href="{{ route('data-perijinan.download-file', rawurlencode(str_replace('uploads/perijinan/', '', $application->file_rekom))) }}?t={{ time() }}" class="p-2 bg-purple-50 dark:bg-purple-900/30 text-purple-700 border border-purple-200 rounded-xl"><i class="mdi mdi-download"></i></a>
+                                    <button onclick="openPdfPreview('{{ asset($application->file_rekom) }}?t={{ time() }}', 'Draft Surat Rekomendasi')" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm">Buka PDF</button>
                                 </div>
                             </div>
                         </div>
+
+                        @if($application->file_rekom_tte)
+                        <!-- Signed Document Card (Single OPD) -->
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-green-200 dark:border-green-900/30 overflow-hidden mb-6">
+                            <div class="px-5 py-4 border-b border-green-100 dark:border-green-900/50 bg-green-50/50 dark:bg-green-800/20 flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-green-100 dark:bg-green-900/40 flex items-center justify-center border border-green-200 dark:border-green-800"><i class="mdi mdi-file-check text-green-600 dark:text-green-400 text-xl"></i></div>
+                                    <div><h3 class="text-sm font-bold text-gray-800 dark:text-white">Surat Rekomendasi Resmi (TTE)</h3><p class="text-[10px] text-green-600 font-bold uppercase tracking-wider">Terbit</p></div>
+                                </div>
+                                <div class="flex gap-2">
+                                    @if($isKepalaOpd || $isKadin || $isAdmin || $isVerifikator)
+                                        <button onclick="verifyEsignPdf('rekom', null)" class="px-4 py-2 bg-green-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm" title="Verifikasi TTE"><i class="mdi mdi-shield-check"></i> Cek Dokumen TTE</button>
+                                    @endif
+                                    <button onclick="openPdfPreview('{{ asset($application->file_rekom_tte) }}?t={{ time() }}', 'Surat Rekomendasi Resmi')" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm">Buka PDF</button>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
                     @endif
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                         <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
@@ -850,11 +892,28 @@
                                 <div><h3 class="text-sm font-bold text-gray-800 dark:text-white">Draft Surat Izin / SK</h3><p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Hasil Generate Otomatis</p></div>
                             </div>
                             <div class="flex gap-2">
-                                <button onclick="openPdfPreview('{{ asset($application->file_izin) }}?t={{ time() }}', 'Dokumen Izin / SK')" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm">Pratinjau PDF</button>
-                                <a href="{{ route('data-perijinan.download-file', rawurlencode(str_replace('uploads/perijinan/', '', $application->file_izin))) }}?t={{ time() }}" class="p-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 border border-indigo-200 rounded-xl"><i class="mdi mdi-download"></i></a>
+                                <button onclick="openPdfPreview('{{ asset($application->file_izin) }}?t={{ time() }}', 'Draft Dokumen Izin / SK')" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm">Buka PDF</button>
                             </div>
                         </div>
                     </div>
+
+                    @if($application->file_izin_tte)
+                    <!-- Signed Document Card (Surat Izin) -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-indigo-200 dark:border-indigo-900/30 overflow-hidden mb-6">
+                        <div class="px-5 py-4 border-b border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/50 dark:bg-indigo-800/20 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center border border-indigo-200 dark:border-indigo-800"><i class="mdi mdi-certificate text-indigo-600 dark:text-indigo-400 text-xl"></i></div>
+                                <div><h3 class="text-sm font-bold text-gray-800 dark:text-white">Surat Izin / SK Resmi (TTE)</h3><p class="text-[10px] text-indigo-600 font-bold uppercase tracking-wider">Terbit</p></div>
+                            </div>
+                            <div class="flex gap-2">
+                                @if($isKadin || $isAdmin || $isVerifikator)
+                                    <button onclick="verifyEsignPdf('izin', null)" class="px-4 py-2 bg-green-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm" title="Verifikasi TTE"><i class="mdi mdi-shield-check"></i> Cek Dokumen TTE</button>
+                                @endif
+                                <button onclick="openPdfPreview('{{ asset($application->file_izin_tte) }}?t={{ time() }}', 'Surat Izin / SK Resmi')" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm">Buka PDF</button>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
                 @endif
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
@@ -1193,29 +1252,76 @@
                         <form id="validationForm" action="{{ route('data-perijinan.validate', $application->id) }}" method="POST">
                             @csrf <input type="hidden" name="action" id="validationAction" value="">
                             <input type="hidden" name="elapsed_seconds" class="elapsed-seconds-input" value="0">
+                            <input type="hidden" name="passphrase" id="passphrase_input" value="">
                             <textarea name="catatan" id="catatan" rows="3" class="w-full px-3 py-2 text-xs border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-xl mb-4 focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="Berikan catatan..."></textarea>
-                            <div class="grid grid-cols-2 gap-2">
-                                <button type="button" onclick="submitValidation('approved')" class="py-2.5 bg-green-600 text-white rounded-xl text-[9px] font-black uppercase">
-                                    {{ $isKadin ? 'Terbitkan Surat Izin' : 'Setujui' }}
-                                </button>
-                                <button type="button" onclick="submitValidation('rejected')" class="py-2.5 bg-red-600 text-white rounded-xl text-[9px] font-black uppercase">Tolak</button>
-                                <button type="button" onclick="submitValidation('revision')" class="col-span-2 py-2.5 bg-orange-500 text-white rounded-xl text-[9px] font-black uppercase mb-1">Perbaikan ke Pemohon</button>
-                                
-                                @if($isKadin)
-                                    <button type="button" onclick="submitValidation('return_to_verifikator')" class="col-span-2 py-2.5 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase">Kembalikan ke Verifikator</button>
+                            
+                            <div class="space-y-4">
+                                @if($isKadin || $isKepalaOpd)
+                                    @php
+                                        $isSigned = false;
+                                        if($isKepalaOpd) {
+                                            $isSigned = $application->perijinan->is_multi_opd ? !empty($application->file_rekom_multi_tte[auth()->user()->opd_id ?? 0]) : !empty($application->file_rekom_tte);
+                                        } else if($isKadin) {
+                                            $isSigned = !empty($application->file_izin_tte);
+                                        }
+                                    @endphp
+
+                                    <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800">
+                                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Langkah 1: Digital Signature</p>
+                                        @if($isSigned)
+                                            <div class="flex items-center gap-3 p-3 bg-green-100/50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
+                                                <i class="mdi mdi-check-decagram text-green-600 text-xl"></i>
+                                                <div>
+                                                    <p class="text-xs font-bold text-green-700 dark:text-green-400">Dokumen Telah di-TTE</p>
+                                                    <p class="text-[9px] text-green-600/70 uppercase font-black">Siap untuk disetujui</p>
+                                                </div>
+                                            </div>
+                                        @else
+                                            <button type="button" onclick="openEsignModal('{{ $isKepalaOpd ? 'rekom' : 'izin' }}')" class="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl text-[10px] font-black uppercase flex justify-center items-center gap-2 shadow-md transition-all active:scale-95">
+                                                <i class="mdi mdi-pen text-lg"></i> Berikan TTE Dokumen
+                                            </button>
+                                        @endif
+                                    </div>
+                                    
+                                    <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800">
+                                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Langkah 2: Keputusan Akhir</p>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <button type="button" onclick="submitValidation('approved')" 
+                                                class="py-2.5 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase disabled:opacity-50 disabled:cursor-not-allowed"
+                                                {{ !$isSigned ? 'disabled' : '' }}>
+                                                {{ $isKadin ? 'Setujui & Terbitkan Izin' : 'Setujui' }}
+                                            </button>
+                                            <button type="button" onclick="submitValidation('rejected')" class="py-2.5 bg-red-600 text-white rounded-xl text-[9px] font-black uppercase">Tolak</button>
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <button type="button" onclick="submitValidation('approved')" class="py-2.5 bg-green-600 text-white rounded-xl text-[9px] font-black uppercase">
+                                            {{ $isKadin ? 'Terbitkan Surat Izin' : 'Setujui' }}
+                                        </button>
+                                        <button type="button" onclick="submitValidation('rejected')" class="py-2.5 bg-red-600 text-white rounded-xl text-[9px] font-black uppercase">Tolak</button>
+                                    </div>
                                 @endif
 
-                                @if($isOperatorOpd)
-                                    <button type="button" onclick="submitValidation('return_to_bo')" class="col-span-2 py-2.5 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase">Kembalikan ke BO</button>
-                                @endif
-
-                                @if($isKepalaOpd)
-                                    <button type="button" onclick="submitValidation('return_to_operator_opd')" class="col-span-2 py-2.5 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase">Kembalikan ke Operator OPD</button>
-                                @endif
+                                <button type="button" onclick="submitValidation('revision')" class="w-full py-2.5 bg-orange-500 text-white rounded-xl text-[9px] font-black uppercase">Perbaikan ke Pemohon</button>
                                 
-                                @if($isVerifikator)
-                                    <button type="button" onclick="submitValidation('return_to_kepala_opd')" class="col-span-2 py-2.5 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase">Kembalikan ke Kepala OPD</button>
-                                @endif
+                                <div class="grid grid-cols-1 gap-2 mt-1">
+                                    @if($isKadin)
+                                        <button type="button" onclick="submitValidation('return_to_verifikator')" class="py-2.5 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase">Kembalikan ke Verifikator</button>
+                                    @endif
+
+                                    @if($isOperatorOpd)
+                                        <button type="button" onclick="submitValidation('return_to_bo')" class="py-2.5 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase">Kembalikan ke BO</button>
+                                    @endif
+
+                                    @if($isKepalaOpd)
+                                        <button type="button" onclick="submitValidation('return_to_operator_opd')" class="py-2.5 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase">Kembalikan ke Operator OPD</button>
+                                    @endif
+                                    
+                                    @if($isVerifikator)
+                                        <button type="button" onclick="submitValidation('return_to_kepala_opd')" class="py-2.5 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase">Kembalikan ke Kepala OPD</button>
+                                    @endif
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -1232,6 +1338,7 @@
 
     <!-- Modal: Data Formulir Global -->
     <div id="modal-form-data" class="fixed inset-0 z-[450] hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <!-- existing modal structure -->
         <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden animate-in fade-in zoom-in duration-200">
             <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50 dark:bg-gray-800/50">
                 <div class="flex items-center gap-3">
@@ -1301,8 +1408,103 @@
         </div>
     </div>
 
+    <!-- Modal: E-sign TTE -->
+    <div id="modal-esign" class="fixed inset-0 z-[600] hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50 dark:bg-gray-800/50">
+                <h3 class="text-base font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                    <i class="mdi mdi-shield-key-outline text-green-600"></i> Autentikasi TTE
+                </h3>
+                <button onclick="closeEsignModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><i class="mdi mdi-close text-xl"></i></button>
+            </div>
+            <div class="p-6">
+                <input type="hidden" id="esign_doc_type" value="">
+                <div class="mb-4">
+                    <p class="text-xs text-gray-600 dark:text-gray-400">Silakan masukkan passphrase sertifikat elektronik Anda untuk melakukan Tanda Tangan Elektronik (TTE) dokumen ini.</p>
+                </div>
+                <div class="relative">
+                    <input type="password" id="esign_passphrase" autocomplete="new-password" class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-green-500 outline-none transition-all pr-10 text-gray-800 dark:text-white" placeholder="Masukkan Passphrase...">
+                    <button type="button" onclick="togglePassphrase()" class="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
+                        <i id="icon-toggle-pass" class="mdi mdi-eye"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-3 bg-gray-50 dark:bg-gray-800/50">
+                <button type="button" onclick="closeEsignModal()" class="px-6 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-xl text-xs font-bold uppercase hover:bg-gray-300 transition-all">Batal</button>
+                <button type="button" onclick="submitEsignOnly()" class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-bold uppercase transition-all shadow-md flex items-center gap-2">
+                    <i class="mdi mdi-check"></i> Proses TTE
+                </button>
+            </div>
+        </div>
+    </div>
+
     @push('scripts')
     <script>
+        function openEsignModal(docType) {
+            document.getElementById('esign_doc_type').value = docType;
+            const m = document.getElementById('modal-esign');
+            m.classList.remove('hidden'); m.classList.add('flex'); document.body.style.overflow = 'hidden';
+            document.getElementById('esign_passphrase').value = '';
+            document.getElementById('esign_passphrase').focus();
+        }
+        function closeEsignModal() {
+            const m = document.getElementById('modal-esign');
+            m.classList.remove('flex'); m.classList.add('hidden'); document.body.style.overflow = 'auto';
+        }
+        function togglePassphrase() {
+            const input = document.getElementById('esign_passphrase');
+            const icon = document.getElementById('icon-toggle-pass');
+            if (input.type === 'password') {
+                input.type = 'text'; icon.classList.remove('mdi-eye'); icon.classList.add('mdi-eye-off');
+            } else {
+                input.type = 'password'; icon.classList.remove('mdi-eye-off'); icon.classList.add('mdi-eye');
+            }
+        }
+        
+        function submitEsignOnly() {
+            const pass = document.getElementById('esign_passphrase').value;
+            const docType = document.getElementById('esign_doc_type').value;
+            if (!pass) {
+                Swal.fire({ title: 'Perhatian', text: 'Passphrase TTE tidak boleh kosong!', icon: 'warning' });
+                return;
+            }
+            
+            Swal.fire({
+                title: 'Memproses TTE...',
+                text: 'Harap tunggu, sedang menghubungi server E-Sign...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            fetch('{{ route("data-perijinan.apply-tte", $application->id) }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ 
+                    passphrase: pass, 
+                    doc_type: docType, 
+                    _token: '{{ csrf_token() }}' 
+                })
+            })
+            .then(res => res.json())
+            .then(res => {
+                if (res.success) {
+                    Swal.fire({ title: 'Berhasil', text: res.message, icon: 'success' }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire('Gagal TTE', res.message || 'Terjadi kesalahan.', 'error');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                Swal.fire('Error', 'Gagal menghubungi server.', 'error');
+            });
+        }
+
+        function submitEsignValidation() {
+            // Deprecated - replaced by submitEsignOnly
+        }
+
         function openFormDataModal() {
             const m = document.getElementById('modal-form-data');
             m.classList.remove('hidden'); m.classList.add('flex'); document.body.style.overflow = 'hidden';
@@ -1313,7 +1515,77 @@
         }
         document.getElementById('modal-form-data').addEventListener('click', function(e) { if (e.target === this) closeFormDataModal(); });
 
+        function verifyEsignPdf(docType, opdId = null) {
+            Swal.fire({
+                title: 'Verifikasi PDF...',
+                text: 'Harap tunggu, sedang memeriksa keaslian dokumen ke server E-Sign...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            const data = {
+                doc_type: docType,
+                opd_id: opdId,
+                _token: '{{ csrf_token() }}'
+            };
+
+            fetch('{{ route("data-perijinan.verify-pdf", $application->id) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(res => res.json())
+            .then(res => {
+                console.log('TTE Verify Response:', res); // Debug log
+                if (res.error) {
+                    Swal.fire('Gagal Verifikasi', res.message || 'Terjadi kesalahan sistem.', 'error');
+                } else {
+                    const conclusion = (res.conclusion || '').toUpperCase();
+                    if (conclusion === 'NO_SIGNATURE') {
+                        Swal.fire('Informasi Verifikasi', res.description || 'Dokumen belum memiliki Tanda Tangan Elektronik.', 'info');
+                    } else if (conclusion === 'VALID_SIGNATURE' || conclusion === 'VALID' || conclusion === 'WARNING') {
+                        let html = '<div class="text-left text-xs space-y-2">';
+                        
+                        if (conclusion === 'WARNING') {
+                            html += '<p class="p-2 bg-amber-50 text-amber-700 border border-amber-100 rounded-lg"><strong>Status:</strong> ' + (res.description || 'Dokumen Valid (Sertifikat Demo/Tidak Terpercaya)') + '</p>';
+                        } else {
+                            html += '<p class="p-2 bg-green-50 text-green-700 border border-green-100 rounded-lg"><strong>Status:</strong> Dokumen Valid & TTE Terverifikasi</p>';
+                        }
+
+                        if (res.signatureInformations && res.signatureInformations.length > 0) {
+                            res.signatureInformations.forEach((sig, idx) => {
+                                html += '<div class="p-2 bg-gray-50 border rounded mt-2">';
+                                html += '<p><strong>Penanda Tangan:</strong> ' + (sig.signerName || '-') + '</p>';
+                                html += '<p><strong>Waktu TTE:</strong> ' + (sig.signatureDate || '-') + '</p>';
+                                html += '<p><strong>Alasan:</strong> ' + (sig.reason || '-') + '</p>';
+                                html += '</div>';
+                            });
+                        }
+                        html += '</div>';
+                        Swal.fire({ title: 'TTE Terverifikasi', html: html, icon: 'success' });
+                    } else {
+                        // Jika status lain, tampilkan pesan asli dari API agar jelas
+                        Swal.fire({
+                            title: 'Hasil Verifikasi: ' + (res.conclusion || 'Unknown'),
+                            text: res.description || 'Silahkan periksa detail dokumen Anda.',
+                            icon: conclusion.includes('VALID') ? 'success' : 'info'
+                        });
+                    }
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                Swal.fire('Error', 'Gagal menghubungi server.', 'error');
+            });
+        }
+
         function previewImage(url, title) { fetch(url).then(r => r.blob()).then(blob => { const img = document.getElementById('previewImageElement'); img.src = URL.createObjectURL(blob); document.getElementById('previewImageName').textContent = title; const m = document.getElementById('imagePreviewModal'); m.classList.remove('hidden'); m.classList.add('flex'); }); }
+
         function openPdfPreview(url, title) { document.getElementById('pdf-modal-title').textContent = title; document.getElementById('pdf-modal-iframe').src = url; const m = document.getElementById('modal-pdf-preview'); m.classList.remove('hidden'); m.classList.add('flex'); }
         function closePdfPreview() { document.getElementById('modal-pdf-preview').classList.add('hidden'); document.getElementById('pdf-modal-iframe').src = ''; }
         function submitValidation(action) { 

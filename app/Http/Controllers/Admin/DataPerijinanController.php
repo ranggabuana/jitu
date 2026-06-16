@@ -447,6 +447,7 @@ class DataPerijinanController extends Controller
         $request->validate([
             'action' => 'required|in:approved,rejected,revision,return_to_bo,return_to_operator_opd,return_to_kepala_opd,return_to_verifikator',
             'catatan' => 'nullable|string|max:1000',
+            'passphrase' => 'nullable|string',
         ]);
 
         $user = auth()->user();
@@ -767,7 +768,7 @@ class DataPerijinanController extends Controller
                   (($request->action === 'rejected') ? 'Pengajuan ditolak.' :
                   (($request->action === 'revision') ? 'Pengajuan berhasil dikembalikan kepada pemohon.' :
                   'Pengajuan berhasil dikembalikan ke tahap sebelumnya.'));
-            
+
             return redirect()->route('data-perijinan.show', $id)->with('success', $msg);
 
         } catch (\Exception $e) {
@@ -1720,6 +1721,155 @@ if (!empty($generatedDocs)) {
             \Log::error('Error regenerating documents manually: ' . $e->getMessage());
             return redirect()->back()
                 ->with('error', 'Gagal mengenerasi dokumen perijinan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Apply TTE (Digital Signature) to a document.
+     */
+    public function applyTte(Request $request, $id)
+    {
+        $request->validate([
+            'passphrase' => 'required|string',
+            'doc_type' => 'required|in:rekom,izin',
+        ]);
+
+        $user = auth()->user();
+        $application = DataPerijinan::findOrFail($id);
+        $isMultiOpd = $application->perijinan->is_multi_opd;
+
+        try {
+            $nik = $user->nip;
+            if (!$nik) {
+                throw new \Exception("NIK (NIP) Anda belum terdaftar di sistem. Silakan hubungi Admin.");
+            }
+
+            $ttelog = new \App\Models\EsignLog();
+            $ttelog->user_id = $user->id;
+            $ttelog->data_perijinan_id = $application->id;
+
+            if ($request->doc_type === 'rekom') {
+                if ($user->role !== 'kepala_opd') {
+                    abort(403, 'Hanya Kepala OPD yang dapat menandatangani Rekomendasi.');
+                }
+
+                $filePath = $isMultiOpd ? ($application->file_rekom_multi[$user->opd_id] ?? null) : $application->file_rekom;
+                if (!$filePath || !file_exists(public_path($filePath))) {
+                    throw new \Exception("Dokumen draft rekomendasi tidak ditemukan.");
+                }
+
+                // Process TTE
+                $signedPdfData = \App\Services\EsignService::signPdf($nik, $request->passphrase, public_path($filePath));
+
+                // Save to new signed file
+                $pathInfo = pathinfo($filePath);
+                $newFilename = $pathInfo['filename'] . '_signed_' . time() . '.' . $pathInfo['extension'];
+                $newFilePath = $pathInfo['dirname'] . '/' . $newFilename;
+
+                file_put_contents(public_path($newFilePath), $signedPdfData);
+
+                // Update DB path in the new TTE column
+                if ($isMultiOpd) {
+                    $multiData = $application->file_rekom_multi_tte ?? [];
+                    $multiData[$user->opd_id] = $newFilePath;
+                    $application->file_rekom_multi_tte = $multiData;
+                    $application->save();
+                } else {
+                    $application->file_rekom_tte = $newFilePath;
+                    $application->save();
+                }
+                $ttelog->document_type = 'rekomendasi';
+
+            } else if ($request->doc_type === 'izin') {
+                if ($user->role !== 'kadin') {
+                    abort(403, 'Hanya Kadin yang dapat menandatangani Surat Izin.');
+                }
+
+                $filePath = $application->file_izin;
+                if (!$filePath || !file_exists(public_path($filePath))) {
+                    throw new \Exception("Dokumen draft izin tidak ditemukan.");
+                }
+
+                // Process TTE
+                $signedPdfData = \App\Services\EsignService::signPdf($nik, $request->passphrase, public_path($filePath));
+
+                $pathInfo = pathinfo($filePath);
+                $newFilename = $pathInfo['filename'] . '_signed_' . time() . '.' . $pathInfo['extension'];
+                $newFilePath = $pathInfo['dirname'] . '/' . $newFilename;
+
+                file_put_contents(public_path($newFilePath), $signedPdfData);
+                $application->file_izin_tte = $newFilePath;
+                $application->save();
+
+                $ttelog->document_type = 'izin';
+            }
+
+            $ttelog->status = 'success';
+            $ttelog->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Proses TTE Berhasil. Dokumen resmi telah diterbitkan.'
+            ]);
+
+        } catch (\Exception $e) {
+            // Log failure
+            $ttelogFail = new \App\Models\EsignLog();
+            $ttelogFail->user_id = $user->id;
+            $ttelogFail->data_perijinan_id = $application->id;
+            $ttelogFail->document_type = $request->doc_type == 'rekom' ? 'rekomendasi' : 'izin';
+            $ttelogFail->status = 'failed';
+            $ttelogFail->error_message = substr($e->getMessage(), 0, 500);
+            $ttelogFail->save();
+
+            return response()->json([
+                'error' => true,
+                'message' => 'Gagal melakukan TTE: ' . $e->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
+     * Verify PDF endpoint
+     */
+    public function verifyPdf(Request $request, $id)
+    {
+        $request->validate([
+            'doc_type' => 'required|in:rekom,izin',
+            'opd_id' => 'nullable|integer'
+        ]);
+
+        try {
+            $application = DataPerijinan::findOrFail($id);
+            $filePath = null;
+
+            if ($request->doc_type === 'rekom') {
+                if ($application->perijinan->is_multi_opd && $request->opd_id) {
+                    $filePath = $application->file_rekom_multi[$request->opd_id] ?? null;
+                } else {
+                    $filePath = $application->file_rekom;
+                }
+            } else {
+                $filePath = $application->file_izin;
+            }
+
+            if (!$filePath || !file_exists(public_path($filePath))) {
+                return response()->json([
+                    'error' => true,
+                    'message' => 'Dokumen fisik tidak ditemukan di server.'
+                ]);
+            }
+
+            $result = \App\Services\EsignService::verifyPdf(public_path($filePath));
+            
+            return response()->json($result);
+
+        } catch (\Exception $e) {
+            \Log::error('PDF Verification failed: ' . $e->getMessage());
+            return response()->json([
+                'error' => true,
+                'message' => 'Terjadi kesalahan sistem saat memverifikasi PDF: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

@@ -42,4 +42,10 @@ return [
         'verify_ssl' => env('KSWP_API_VERIFY_SSL', true),
     ],
 
+    'esign' => [
+        'url' => env('ESIGN_API_URL', 'http://103.110.4.69/api/v2'),
+        'username' => env('ESIGN_USERNAME', 'jitu2026'),
+        'password' => env('ESIGN_PASSWORD', 'jitu2026'),
+    ],
+
 ];

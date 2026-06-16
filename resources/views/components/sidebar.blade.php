@@ -306,6 +306,11 @@
                         <i class="mdi mdi-circle text-[8px] mr-2 text-gray-500 dark:text-gray-400"></i>
                         <span>Log Aplikasi</span>
                     </a>
+                    <a href="{{ route('settings.log-tte') }}"
+                        class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors rounded-lg mx-2 my-1 flex items-center submenu-item hover:bg-gray-100 dark:hover:bg-gray-700 {{ request()->routeIs('settings.log-tte') ? 'active-menu' : '' }}">
+                        <i class="mdi mdi-circle text-[8px] mr-2 text-gray-500 dark:text-gray-400"></i>
+                        <span>Log TTE</span>
+                    </a>
                 </div>
             </div>
         @endif
