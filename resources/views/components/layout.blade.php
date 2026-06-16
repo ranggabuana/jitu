@@ -14,6 +14,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Material Design Icons -->
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css" rel="stylesheet">
+    @stack('styles')
     <script>
         // Default to light mode, only use dark mode if explicitly set by user
         const theme = localStorage.getItem('theme');

@@ -54,7 +54,7 @@
                 </button>
                 <form method="GET" action="{{ route('data-perijinan.dalam-proses') }}" class="flex items-center gap-2">
                     <select name="perijinan_id" onchange="this.form.submit()"
-                        class="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        class="select2-perijinan border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="">Semua Jenis</option>
                         @foreach($perijinanTypes as $type)
                             <option value="{{ $type->id }}" {{ request('perijinan_id') == $type->id ? 'selected' : '' }}>
@@ -234,43 +234,111 @@
                     Export
                 </button>
             </div>
-        </div>
-    </div>
-</x-layout>
+            </div>
+            </div>
 
-<script>
-    function openExportModal() {
-        document.getElementById('exportModal').classList.remove('hidden');
-        document.getElementById('exportModal').classList.add('flex');
-        document.getElementById('date_from').value = '';
-        document.getElementById('date_to').value = '';
-    }
+            @push('styles')
+            <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+            <style>
+            .select2-container--default .select2-selection--single {
+            height: 34px;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            display: flex;
+            align-items: center;
+            }
+            .dark .select2-container--default .select2-selection--single {
+            background-color: #374151;
+            border-color: #4b5563;
+            }
+            .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #111827;
+            padding-left: 12px;
+            padding-right: 20px;
+            }
+            .dark .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #e5e7eb;
+            }
+            .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 32px;
+            right: 5px;
+            }
+            .select2-dropdown {
+            border-color: #d1d5db;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            }
+            .dark .select2-dropdown {
+            background-color: #374151;
+            border-color: #4b5563;
+            }
+            .dark .select2-search__field {
+            background-color: #1f2937;
+            color: #e5e7eb;
+            border-color: #4b5563;
+            }
+            .dark .select2-results__option {
+            color: #e5e7eb;
+            }
+            .dark .select2-results__option[aria-selected=true] {
+            background-color: #4b5563;
+            }
+            .dark .select2-results__option--highlighted[aria-selected] {
+            background-color: #2563eb;
+            }
+            </style>
+            @endpush
 
-    function closeExportModal() {
-        document.getElementById('exportModal').classList.add('hidden');
-        document.getElementById('exportModal').classList.remove('flex');
-    }
+            @push('scripts')
+            <!-- jQuery is required for Select2 -->
+            <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+            <script>
+                $(document).ready(function() {
+            $('.select2-perijinan').select2({
+                placeholder: "Cari Jenis Perijinan...",
+                allowClear: true,
+                width: '200px'
+            }).on('change', function() {
+                this.form.submit();
+            });
+            });
 
-    function exportData() {
-        const dateFrom = document.getElementById('date_from').value;
-        const dateTo = document.getElementById('date_to').value;
-        const baseUrl = '{{ route("data-perijinan.dalam-proses.export") }}';
-        const url = new URL(baseUrl);
-        const currentParams = new URLSearchParams(window.location.search);
-        currentParams.forEach((value, key) => {
-            if (key !== 'page') url.searchParams.set(key, value);
-        });
-        if (dateFrom) url.searchParams.set('date_from', dateFrom);
-        if (dateTo) url.searchParams.set('date_to', dateTo);
-        window.location.href = url.toString();
-        closeExportModal();
-    }
+            function openExportModal() {
+            document.getElementById('exportModal').classList.remove('hidden');      
+            document.getElementById('exportModal').classList.add('flex');
+            document.getElementById('date_from').value = '';
+            document.getElementById('date_to').value = '';
+            }
 
-    document.getElementById('exportModal')?.addEventListener('click', function(e) {
-        if (e.target === this) closeExportModal();
-    });
+            function closeExportModal() {
+            document.getElementById('exportModal').classList.add('hidden');
+            document.getElementById('exportModal').classList.remove('flex');        
+            }
 
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeExportModal();
-    });
-</script>
+            function exportData() {
+            const dateFrom = document.getElementById('date_from').value;
+            const dateTo = document.getElementById('date_to').value;
+            const baseUrl = '{{ route("data-perijinan.dalam-proses.export") }}';    
+
+            const url = new URL(baseUrl);
+            const currentParams = new URLSearchParams(window.location.search);      
+            currentParams.forEach((value, key) => {
+                if (key !== 'page') url.searchParams.set(key, value);
+            });
+            if (dateFrom) url.searchParams.set('start_date', dateFrom);
+            if (dateTo) url.searchParams.set('end_date', dateTo);
+            window.location.href = url.toString();
+            closeExportModal();
+            }
+
+            document.getElementById('exportModal')?.addEventListener('click', function(e) {
+            if (e.target === this) closeExportModal();
+            });
+
+            document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeExportModal();
+            });
+            </script>
+            @endpush
+            </x-layout>
