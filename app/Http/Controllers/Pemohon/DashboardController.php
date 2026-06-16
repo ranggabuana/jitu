@@ -548,7 +548,7 @@ class DashboardController extends Controller
         $user = Auth::user();
 
         $data = DataPerijinan::with([
-            'perijinan',
+            'perijinan.activeFormFields',
             'validasiRecords.validationFlow.assignedUser',
             'validasiRecords.validator'
         ])

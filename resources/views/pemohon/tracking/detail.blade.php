@@ -23,8 +23,8 @@
         </div>
 
         <!-- Application Info -->
-        <div class="bg-white rounded-2xl shadow-sm border border-amber-200 p-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white rounded-2xl shadow-sm border border-amber-200 p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1">
                 <div>
                     <p class="text-sm text-gray-600 mb-1">Jenis Perizinan</p>
                     <p class="font-bold text-gray-800">{{ $data->perijinan->nama_perijinan }}</p>
@@ -37,6 +37,11 @@
                     <p class="text-sm text-gray-600 mb-1">Pemohon</p>
                     <p class="font-bold text-gray-800">{{ $data->user->name }}</p>
                 </div>
+            </div>
+            <div>
+                <button type="button" onclick="openGlobalFormModal()" class="w-full md:w-auto px-5 py-2.5 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-xl font-bold transition-colors border border-amber-200 shadow-sm flex items-center justify-center gap-2 text-sm whitespace-nowrap">
+                    <i class="fas fa-file-alt"></i> Lihat Isian Formulir
+                </button>
             </div>
         </div>
         
@@ -547,6 +552,94 @@
             });
         </script>
     @endif
+
+    <!-- Global Form Modal -->
+    <div id="globalFormModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in duration-300">
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-amber-600 to-amber-700 text-white p-6 flex items-center justify-between flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                        <i class="fas fa-file-alt text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold">Data Formulir</h3>
+                        <p class="text-sm text-amber-100">Informasi yang diisikan saat pengajuan</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeGlobalFormModal()" class="w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-8 overflow-y-auto custom-scrollbar flex-1 bg-gray-50 dark:bg-gray-800/50">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    @php
+                        $globalFields = $data->perijinan->activeFormFields ? $data->perijinan->activeFormFields->where('form_type', 'global')->sortBy('order') : collect();
+                    @endphp
+                    
+                    @forelse($globalFields as $field)
+                        <div class="space-y-1">
+                            <label class="text-[10px] text-gray-500 uppercase font-bold tracking-widest">{{ $field->label }}</label>
+                            <div class="p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                                @if($field->type === 'file')
+                                    @php 
+                                        $files = $data->form_files[$field->id] ?? [];
+                                        $filesArray = is_array($files) ? $files : [$files];
+                                        $filesArray = array_filter($filesArray);
+                                    @endphp
+                                    @if(count($filesArray) > 0)
+                                        <div class="flex flex-col gap-2">
+                                            @foreach($filesArray as $file)
+                                                <a href="{{ asset($file) }}" target="_blank" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-bold text-sm truncate">
+                                                    <i class="fas fa-file-download"></i> Buka Berkas
+                                                </a>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <p class="text-sm text-gray-400 italic">Tidak ada berkas diunggah</p>
+                                    @endif
+                                @else
+                                    <p class="text-sm font-bold text-gray-800 dark:text-gray-200">
+                                        @php 
+                                            $val = $data->form_data[$field->id] ?? '-';
+                                            if (is_array($val)) $val = implode(', ', $val);
+                                        @endphp
+                                        {{ $val ?: '-' }}
+                                    </p>
+                                @endif
+                            </div>
+                        </div>
+                    @empty
+                        <div class="col-span-full py-12 text-center">
+                            <i class="fas fa-file-excel text-4xl text-gray-300 mb-2"></i>
+                            <p class="text-sm text-gray-500 italic">Tidak ada isian formulir tambahan pada pengajuan ini.</p>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-6 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 flex justify-end flex-shrink-0">
+                <button type="button" onclick="closeGlobalFormModal()" class="px-6 py-2.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-xl hover:bg-gray-300 transition-all text-sm shadow-sm">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openGlobalFormModal() {
+            document.getElementById('globalFormModal').classList.remove('hidden');
+            document.getElementById('globalFormModal').classList.add('flex');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeGlobalFormModal() {
+            document.getElementById('globalFormModal').classList.add('hidden');
+            document.getElementById('globalFormModal').classList.remove('flex');
+            document.body.style.overflow = '';
+        }
+    </script>
 
     <!-- Footer -->
     <x-pemohon.footer></x-pemohon.footer>
