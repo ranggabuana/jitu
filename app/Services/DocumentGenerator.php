@@ -217,6 +217,15 @@ class DocumentGenerator
             $finalReplacements['${NOMOR_URUT}'] = $noUrut;
             $finalReplacements['${NOMOR_SURAT}'] = "{$kodePerijinan}/{$noUrut}/{$kodeOpd}/{$tahun}";
 
+            // Override ${GAMBAR_TTE} for specific OPD
+            if ($opd && $opd->gambar_tte && File::exists(public_path($opd->gambar_tte))) {
+                $imageData = base64_encode(File::get(public_path($opd->gambar_tte)));
+                $mime = File::mimeType(public_path($opd->gambar_tte));
+                $src = 'data:' . $mime . ';base64,' . $imageData;
+                $finalReplacements['${GAMBAR_TTE}'] = '<img src="' . $src . '" style="max-width: 150px; max-height: 150px;" alt="TTE OPD" />';
+                $finalReplacements['${_IMG_PATH_TTE}'] = $opd->gambar_tte; // For Word template
+            }
+
             $rawTemplate = $perijinan->template_surat_rekom ?? \App\Models\Setting::get('template_rekom');
             if (empty(trim(strip_tags($rawTemplate ?? '')))) {
                 $rawTemplate = self::getDefaultSuratRekomTemplate();
@@ -370,7 +379,8 @@ class DocumentGenerator
             }
 
             // Replace Gambar (TTE/Kop)
-            $gambarTte = \App\Models\Setting::get('gambar_tte');
+            // Use specific paths if provided in replacements (internal keys)
+            $gambarTte = $replacements['${_IMG_PATH_TTE}'] ?? \App\Models\Setting::get('gambar_tte');
             $logoKab = \App\Models\Setting::get('logo_kabupaten');
 
             // Handle Image Placeholders for both formats
