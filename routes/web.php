@@ -287,6 +287,7 @@ Route::post('/pengaduan/track', [FrontPengaduanController::class, 'track'])->nam
 
 // Track Perizinan (Front-end - Public)
 Route::post('/perizinan/track', [LandingPageController::class, 'trackPerizinan'])->name('front.perizinan.track')->middleware('throttle:10,1');
+Route::get('/perizinan/scan/{no_registrasi}', [LandingPageController::class, 'scanQr'])->name('front.perizinan.scan');
 
 // Regulasi page (Front-end - Public) - Use different path to avoid conflict with admin
 Route::get('/regulasi-public', [FrontRegulasiController::class, 'index'])->name('regulasi.public');

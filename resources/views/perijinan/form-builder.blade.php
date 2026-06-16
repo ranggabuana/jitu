@@ -585,7 +585,8 @@
                                         '${MASA_AKTIF}' => 'Masa Aktif Izin',
                                         '${LOGO_KABUPATEN}' => 'Logo Kabupaten (Header)',
                                         '${GAMBAR_TTE}' => 'Gambar TTE (Tanda Tangan Elektronik)',
-                                    ] as $code => $label)
+                                        '${QRCODE}' => 'QR Code (Scan untuk Verifikasi Izin)',
+                                        ] as $code => $label)
                                     <button type="button"
                                         onclick="insertPlaceholder('{{ $code }}')"
                                         title="{{ $label }}"

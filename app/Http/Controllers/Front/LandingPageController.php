@@ -106,4 +106,20 @@ class LandingPageController extends Controller
             ]
         ]);
     }
+
+    /**
+     * Scan QR Code to verify permit.
+     */
+    public function scanQr($no_registrasi)
+    {
+        $perizinan = DataPerijinan::with([
+            'user',
+            'perijinan',
+            'validasiRecords.validationFlow'
+        ])
+        ->where('no_registrasi', $no_registrasi)
+        ->firstOrFail();
+
+        return view('front.scan-result', compact('perizinan'));
+    }
 }

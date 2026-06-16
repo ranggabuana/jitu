@@ -129,6 +129,17 @@ class DocumentGenerator
             $logoKabHtml = '<img src="' . $src . '" style="max-height: 110px; width: auto;" alt="Logo Kabupaten" />';
         }
         $baseReplacements['${LOGO_KABUPATEN}'] = $logoKabHtml;
+
+        // 4.6. Add ${QRCODE} to replacements
+        $scanUrl = route('front.perizinan.scan', $application->no_registrasi);
+        try {
+            $qrCodeBase64 = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(150)->errorCorrection('H')->generate($scanUrl));
+            $qrHtml = '<img src="data:image/png;base64,' . $qrCodeBase64 . '" style="width: 100px; height: 100px;" alt="Scan QR Code" />';
+            $baseReplacements['${QRCODE}'] = $qrHtml;
+        } catch (\Exception $e) {
+            \Log::error('QR Code generation failed: ' . $e->getMessage());
+            $baseReplacements['${QRCODE}'] = '[Gagal Generate QR Code]';
+        }
         
         // 5. Build Applicant Data Map (Global Form)
         $applicantReplacements = [];
