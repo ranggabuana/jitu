@@ -215,8 +215,8 @@ class User extends Authenticatable
             'bo' => 'Back Office',
             'operator_opd' => 'Operator OPD',
             'kepala_opd' => 'Kepala OPD',
-            'verifikator' => 'Verifikator',
-            'kadin' => 'Kadin',
+            'verifikator' => 'Verifikator DPMPTSP',
+            'kadin' => 'Kadin DPMPTSP',
             'pemerintah' => 'Pemerintah',
         ];
         return $labels[$this->role] ?? $this->role;

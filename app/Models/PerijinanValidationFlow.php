@@ -83,8 +83,8 @@ class PerijinanValidationFlow extends Model
             'bo' => 'Back Office',
             'operator_opd' => 'Operator OPD',
             'kepala_opd' => 'Kepala OPD',
-            'verifikator' => 'Verifikator',
-            'kadin' => 'Kadin',
+            'verifikator' => 'Verifikator DPMPTSP',
+            'kadin' => 'Kadin DPMPTSP',
             'admin' => 'Admin',
         ];
         return $labels[$this->role] ?? $this->role;
