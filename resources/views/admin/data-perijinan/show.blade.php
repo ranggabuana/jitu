@@ -1103,8 +1103,8 @@
                             <!-- Masa Aktif Field (Above Save Button) -->
                             <div class="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700">
                                <div class="max-w-xs">
-                                   <label class="block text-[11px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-tighter mb-2">Masa Aktif Surat Izin</label>
-                                   <input type="date" name="masa_aktif" value="{{ $application->masa_aktif ? $application->masa_aktif->format('Y-m-d') : '' }}" 
+                                   <label class="block text-[11px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-tighter mb-2">Masa Aktif Surat Izin <span class="text-red-500">*</span></label>
+                                   <input type="date" name="masa_aktif" value="{{ $application->masa_aktif ? $application->masa_aktif->format('Y-m-d') : '' }}" required
                                        class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                                        {{ !$canEditIzin ? 'readonly disabled' : '' }}>
                                    <p class="text-[10px] text-gray-400 mt-2 italic">Atur batas waktu berlakunya surat izin.</p>
@@ -1306,10 +1306,29 @@
                                     </div>
                                 @else
                                     <div class="grid grid-cols-2 gap-2">
-                                        <button type="button" onclick="submitValidation('approved')" class="py-2.5 bg-green-600 text-white rounded-xl text-[9px] font-black uppercase">
-                                            {{ $isKadin ? 'Terbitkan Surat Izin' : 'Setujui' }}
+                                        @php
+                                            $isDraftGenerated = true;
+                                            if ($isOperatorOpd) {
+                                                if ($application->perijinan->is_multi_opd) {
+                                                    // Gunakan opd_id dari user yang sedang login
+                                                    $opdId = auth()->user()->opd_id;
+                                                    // Pastikan data rekomendasi sudah diisi dan disimpan
+                                                    $isDraftGenerated = !empty($application->rekom_data_multi[$opdId]) && !empty($application->file_rekom_multi[$opdId]);
+                                                } else {
+                                                    // Pastikan data rekomendasi sudah diisi dan disimpan
+                                                    $isDraftGenerated = !empty($application->rekom_data) && !empty($application->file_rekom);
+                                                }
+                                            } else if ($isVerifikator) {
+                                                // Pastikan data izin sudah diisi dan disimpan
+                                                $isDraftGenerated = !empty($application->izin_data) && !empty($application->file_izin);
+                                            }
+                                        @endphp
+                                        <button type="button" onclick="submitValidation('approved')" 
+                                            class="py-2.5 {{ $isDraftGenerated ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed opacity-50' }} text-white rounded-xl text-[9px] font-black uppercase transition-colors"
+                                            {{ !$isDraftGenerated ? 'disabled title="Harap lengkapi formulir dokumen '. ($isOperatorOpd ? 'rekomendasi' : 'izin') .' lalu Simpan & Generate Draft terlebih dahulu"' : '' }}>
+                                            Setujui
                                         </button>
-                                        <button type="button" onclick="submitValidation('rejected')" class="py-2.5 bg-red-600 text-white rounded-xl text-[9px] font-black uppercase">Tolak</button>
+                                        <button type="button" onclick="submitValidation('rejected')" class="py-2.5 bg-red-600 hover:bg-red-700 transition-colors text-white rounded-xl text-[9px] font-black uppercase">Tolak</button>
                                     </div>
                                 @endif
 
@@ -1492,6 +1511,7 @@
                 body: JSON.stringify({ 
                     passphrase: pass, 
                     doc_type: docType, 
+                    elapsed_seconds: document.querySelector('.elapsed-seconds-input') ? document.querySelector('.elapsed-seconds-input').value : 0,
                     _token: '{{ csrf_token() }}' 
                 })
             })

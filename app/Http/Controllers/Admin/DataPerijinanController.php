@@ -567,6 +567,7 @@ class DataPerijinanController extends Controller
             // Accumulate SLA Duration correctly
             if ($request->has('elapsed_seconds')) {
                 $myValidasi->increment('duration_seconds', intval($request->elapsed_seconds));
+                $updateData['sla_start_at'] = now(); // Reset timer anchor to prevent compounding
             }
             
             $isReturnAction = in_array($request->action, ['return_to_bo', 'return_to_operator_opd', 'return_to_kepala_opd', 'return_to_verifikator']);
@@ -974,10 +975,18 @@ class DataPerijinanController extends Controller
             
             // Accumulate SLA Duration correctly for the specific step assigned to this user
             if ($request->has('elapsed_seconds')) {
-                $targetRecord = $application->validasiRecords->where('validationFlow.assigned_user_id', $user->id)->where('status', 'pending')->first()
-                                ?? $application->validasiRecords->where('order', $application->current_step)->first();
+                $targetRecord = null;
+                $targetRecord = $application->validasiRecords->first(function($vr) use ($user) {
+                    return $vr->validationFlow && $vr->validationFlow->role === 'operator_opd' && $vr->validationFlow->assignedUser && $vr->validationFlow->assignedUser->opd_id === $user->opd_id && $vr->status === 'pending';
+                });
+                
+                if (!$targetRecord) {
+                    $targetRecord = $application->validasiRecords->where('order', $application->current_step)->where('status', 'pending')->first();
+                }
+                
                 if ($targetRecord) {
                     $targetRecord->increment('duration_seconds', intval($request->elapsed_seconds));
+                    $targetRecord->update(['sla_start_at' => now()]);
                 }
             }
 
@@ -1006,6 +1015,7 @@ class DataPerijinanController extends Controller
                                 ?? $application->validasiRecords->where('order', $application->current_step)->first();
                 if ($targetRecord) {
                     $targetRecord->increment('duration_seconds', intval($request->elapsed_seconds));
+                    $targetRecord->update(['sla_start_at' => now()]);
                 }
             }
 
@@ -1070,7 +1080,7 @@ class DataPerijinanController extends Controller
             $rules[$field->name] = $fieldRules;
         }
 
-        $rules['masa_aktif'] = 'nullable|date';
+        $rules['masa_aktif'] = 'required|date';
 
         $validated = $request->validate($rules);
         
@@ -1105,6 +1115,7 @@ class DataPerijinanController extends Controller
                             ?? $application->validasiRecords->where('order', $application->current_step)->first();
             if ($targetRecord) {
                 $targetRecord->increment('duration_seconds', intval($request->elapsed_seconds));
+                $targetRecord->update(['sla_start_at' => now()]);
             }
         }
 
@@ -1850,6 +1861,25 @@ if (!empty($generatedDocs)) {
 
             $ttelog->status = 'success';
             $ttelog->save();
+
+            // Accumulate SLA Duration correctly for the specific step assigned to this user
+            if ($request->has('elapsed_seconds')) {
+                $targetRecord = null;
+                if ($application->perijinan->is_multi_opd && in_array($user->role, ['operator_opd', 'kepala_opd'])) {
+                    $targetRecord = $application->validasiRecords->first(function($vr) use ($user) {
+                        return $vr->validationFlow && $vr->validationFlow->role === $user->role && $vr->validationFlow->assignedUser && $vr->validationFlow->assignedUser->opd_id === $user->opd_id && $vr->status === 'pending';
+                    });
+                }
+                
+                if (!$targetRecord) {
+                    $targetRecord = $application->validasiRecords->where('order', $application->current_step)->where('status', 'pending')->first();
+                }
+                
+                if ($targetRecord) {
+                    $targetRecord->increment('duration_seconds', intval($request->elapsed_seconds));
+                    $targetRecord->update(['sla_start_at' => now()]);
+                }
+            }
 
             return response()->json([
                 'success' => true,
