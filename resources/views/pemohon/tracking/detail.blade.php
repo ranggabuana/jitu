@@ -256,6 +256,32 @@
                                         </div>
                                     </div>
                                 @endif
+
+                                @php
+                                    $showTteDocument = false;
+                                    $tteDocumentUrl = null;
+                                    
+                                    if ($validatorRole === 'kepala_opd' && $validasi->status === 'approved') {
+                                        if ($data->perijinan->is_multi_opd) {
+                                            $opdId = $validasi->validationFlow->assignedUser->opd_id ?? null;
+                                            if ($opdId && !empty($data->file_rekom_multi_tte[$opdId])) {
+                                                $showTteDocument = true;
+                                                $tteDocumentUrl = asset($data->file_rekom_multi_tte[$opdId]);
+                                            }
+                                        } else if (!empty($data->file_rekom_tte)) {
+                                            $showTteDocument = true;
+                                            $tteDocumentUrl = asset($data->file_rekom_tte);
+                                        }
+                                    }
+                                @endphp
+
+                                @if ($showTteDocument)
+                                    <div class="mt-4">
+                                        <button onclick="openPdfModal('{{ $tteDocumentUrl }}')" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold transition-all w-full sm:w-auto justify-center">
+                                            <i class="fas fa-file-pdf text-indigo-500"></i> Lihat Surat Rekomendasi
+                                        </button>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     @endforeach
@@ -639,7 +665,45 @@
             document.getElementById('globalFormModal').classList.remove('flex');
             document.body.style.overflow = '';
         }
+
+        function openPdfModal(url) {
+            document.getElementById('pdfModal').classList.remove('hidden');
+            document.getElementById('pdfModal').classList.add('flex');
+            document.body.style.overflow = 'hidden';
+            // append #toolbar=0&navpanes=0 to hide download and print buttons in most standard pdf viewers
+            document.getElementById('pdfViewer').src = url + '#toolbar=0&navpanes=0&scrollbar=0';
+        }
+
+        function closePdfModal() {
+            document.getElementById('pdfModal').classList.add('hidden');
+            document.getElementById('pdfModal').classList.remove('flex');
+            document.body.style.overflow = '';
+            document.getElementById('pdfViewer').src = '';
+        }
     </script>
+
+    <!-- PDF Modal (Read Only) -->
+    <div id="pdfModal" class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4 sm:p-6">
+        <div class="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div class="p-4 sm:p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-file-pdf text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800 dark:text-white">Pratinjau Dokumen Rekomendasi</h3>
+                        <p class="text-xs text-gray-500">Mode Hanya Baca</p>
+                    </div>
+                </div>
+                <button onclick="closePdfModal()" class="w-10 h-10 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-gray-500 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="flex-1 bg-gray-100 dark:bg-gray-950 p-2 sm:p-4">
+                <iframe id="pdfViewer" src="" class="w-full h-full rounded-xl border border-gray-200 dark:border-gray-800" title="PDF Preview"></iframe>
+            </div>
+        </div>
+    </div>
 
     <!-- Footer -->
     <x-pemohon.footer></x-pemohon.footer>
