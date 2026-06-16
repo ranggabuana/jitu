@@ -737,6 +737,30 @@ class DataPerijinanController extends Controller
                         $record->save();
                     }
 
+                    // Clear previous TTE files if returning to draft creator
+                    if ($request->action === 'return_to_operator_opd' && $user->role === 'kepala_opd') {
+                        if ($application->perijinan->is_multi_opd) {
+                            $multiTte = $application->file_rekom_multi_tte ?? [];
+                            if (isset($multiTte[$user->opd_id])) {
+                                if (file_exists(public_path($multiTte[$user->opd_id]))) {
+                                    @unlink(public_path($multiTte[$user->opd_id]));
+                                }
+                                unset($multiTte[$user->opd_id]);
+                                $application->file_rekom_multi_tte = $multiTte;
+                            }
+                        } else {
+                            if ($application->file_rekom_tte && file_exists(public_path($application->file_rekom_tte))) {
+                                @unlink(public_path($application->file_rekom_tte));
+                            }
+                            $application->file_rekom_tte = null;
+                        }
+                    } elseif ($request->action === 'return_to_verifikator' && $user->role === 'kadin') {
+                        if ($application->file_izin_tte && file_exists(public_path($application->file_izin_tte))) {
+                            @unlink(public_path($application->file_izin_tte));
+                        }
+                        $application->file_izin_tte = null;
+                    }
+
                     // Update application state
                     $application->current_step = $targetOrder;
                     $application->status = 'in_progress';
