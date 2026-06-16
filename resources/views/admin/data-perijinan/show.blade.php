@@ -647,6 +647,9 @@
                                                 @else
                                                     <input type="text" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}">
                                                 @endif
+                                                @if($field->help_text)
+                                                    <p class="text-[10px] text-gray-400 italic mt-1">{{ $field->help_text }}</p>
+                                                @endif
                                             </div>
                                         @endforeach
                                     </div>
@@ -865,6 +868,9 @@
                                                 <input type="number" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }}>
                                             @else
                                                 <input type="text" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }}>
+                                            @endif
+                                            @if($field->help_text)
+                                                <p class="text-[10px] text-gray-400 italic mt-1">{{ $field->help_text }}</p>
                                             @endif
                                         </div>
                                     @endforeach
@@ -1096,7 +1102,10 @@
                                         @else
                                             <input type="text" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }}>
                                         @endif
-                                    </div>
+                                        @if($field->help_text)
+                                            <p class="text-[10px] text-gray-400 italic mt-1">{{ $field->help_text }}</p>
+                                        @endif
+                                        </div>
                                 @endforeach
                             </div>
 
