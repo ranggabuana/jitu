@@ -62,6 +62,26 @@
                             </option>
                         @endforeach
                     </select>
+
+                    <select name="step" onchange="this.form.submit()"
+                        class="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Semua Tahapan</option>
+                        @php
+                            $roles = [
+                                'fo' => 'Front Office',
+                                'bo' => 'Back Office',
+                                'operator_opd' => 'Operator OPD',
+                                'kepala_opd' => 'Kepala OPD',
+                                'verifikator' => 'Verifikator DPMPTSP',
+                                'kadin' => 'Kadin DPMPTSP'
+                            ];
+                        @endphp
+                        @foreach($roles as $key => $label)
+                            <option value="{{ $key }}" {{ request('step') == $key ? 'selected' : '' }}>
+                                {{ $label }}
+                            </option>
+                        @endforeach
+                    </select>
                 </form>
             </div>
 

@@ -99,6 +99,16 @@ class DataPerijinanController extends Controller
             $query->whereDate('created_at', '<=', $request->end_date);
         }
 
+        // Filter by current validation stage (role)
+        if ($request->filled('step')) {
+            $query->whereHas('validasiRecords', function($q) use ($request) {
+                $q->where('order', DB::raw('data_perijinan.current_step'))
+                  ->whereHas('validationFlow', function($q2) use ($request) {
+                      $q2->where('role', $request->step);
+                  });
+            });
+        }
+
         // Get only in-progress applications (not approved/completed, and not rejected)
         $query->whereNotIn('status', ['approved', 'completed', 'rejected', 'perbaikan']);
 
