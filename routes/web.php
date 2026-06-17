@@ -112,7 +112,6 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('perijinan', PerijinanController::class);
         Route::get('perijinan/{id}/form-builder', [PerijinanController::class, 'formBuilder'])->name('perijinan.form-builder');
         Route::put('perijinan/{id}/templates', [PerijinanController::class, 'updateTemplates'])->name('perijinan.templates.update');
-        Route::get('perijinan/{id}/download-template/{type}', [PerijinanController::class, 'downloadTemplate'])->name('perijinan.templates.download');
         Route::post('perijinan/{id}/form-field', [PerijinanController::class, 'storeFormField'])->name('perijinan.form-field.store');
         Route::put('perijinan/{id}/form-field/{fieldId}', [PerijinanController::class, 'updateFormField'])->name('perijinan.form-field.update');
         Route::delete('perijinan/{id}/form-field/{fieldId}', [PerijinanController::class, 'deleteFormField'])->name('perijinan.form-field.delete');
@@ -122,6 +121,11 @@ Route::middleware(['auth'])->group(function () {
         Route::put('perijinan/{id}/validation-flow/{flowId}', [PerijinanController::class, 'updateValidationFlow'])->name('perijinan.validation-flow.update');
         Route::delete('perijinan/{id}/validation-flow/{flowId}', [PerijinanController::class, 'deleteValidationFlow'])->name('perijinan.validation-flow.delete');
         Route::post('perijinan/{id}/validation-flow/reorder', [PerijinanController::class, 'reorderValidationFlows'])->name('perijinan.validation-flow.reorder');
+    });
+
+    // Template Download Route (Accessible by Admin, Operator OPD, Verifikator)
+    Route::middleware(['auth'])->group(function () {
+        Route::get('perijinan/{id}/download-template/{type}', [PerijinanController::class, 'downloadTemplate'])->name('perijinan.templates.download');
     });
 
     // Berita Routes (Admin Only)

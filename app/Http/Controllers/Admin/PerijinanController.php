@@ -857,6 +857,11 @@ class PerijinanController extends Controller
 
             // Handle file uploads
             if ($request->hasFile('file_template_rekom')) {
+                // Delete old file if exists
+                if ($perijinan->template_surat_rekom && file_exists(public_path($perijinan->template_surat_rekom))) {
+                    @unlink(public_path($perijinan->template_surat_rekom));
+                }
+
                 $file = $request->file('file_template_rekom');
                 $filename = 'template_rekom_' . $perijinan->id . '_' . time() . '.docx';
                 $uploadPath = public_path('uploads/templates');
@@ -868,6 +873,11 @@ class PerijinanController extends Controller
                 $updateData['template_surat_rekom'] = $path;
             }
             if ($request->hasFile('file_template_izin')) {
+                // Delete old file if exists
+                if ($perijinan->template_surat_izin && file_exists(public_path($perijinan->template_surat_izin))) {
+                    @unlink(public_path($perijinan->template_surat_izin));
+                }
+
                 $file = $request->file('file_template_izin');
                 $filename = 'template_izin_' . $perijinan->id . '_' . time() . '.docx';
                 $uploadPath = public_path('uploads/templates');
@@ -911,6 +921,11 @@ class PerijinanController extends Controller
                 if ($request->has('next_nomor_rekom')) $opdUpdateData['next_nomor_rekom'] = $request->next_nomor_rekom;
                 
                 if ($request->hasFile('file_template_rekom')) {
+                    // Delete old file if exists
+                    if ($opdConfig->template_surat_rekom && file_exists(public_path($opdConfig->template_surat_rekom))) {
+                        @unlink(public_path($opdConfig->template_surat_rekom));
+                    }
+
                     $file = $request->file('file_template_rekom');
                     $filename = 'template_rekom_' . $perijinan->id . '_opd_' . $user->opd_id . '_' . time() . '.docx';
                     $uploadPath = public_path('uploads/templates');
@@ -940,14 +955,19 @@ class PerijinanController extends Controller
                 if ($request->has('keterangan_izin')) $updateData['keterangan_izin'] = $request->keterangan_izin;
                 if ($request->has('next_nomor_izin')) $updateData['next_nomor_izin'] = $request->next_nomor_izin;
                 if ($request->hasFile('file_template_izin')) {
+                    // Delete old file if exists
+                    if ($perijinan->template_surat_izin && file_exists(public_path($perijinan->template_surat_izin))) {
+                        @unlink(public_path($perijinan->template_surat_izin));
+                    }
+
                     $file = $request->file('file_template_izin');
                     $filename = 'template_izin_' . $perijinan->id . '_' . time() . '.docx';
                     $uploadPath = public_path('uploads/templates');
-                if (!file_exists($uploadPath)) {
-                    mkdir($uploadPath, 0755, true);
-                }
-                $file->move($uploadPath, $filename);
-                $path = 'uploads/templates/' . $filename;
+                    if (!file_exists($uploadPath)) {
+                        mkdir($uploadPath, 0755, true);
+                    }
+                    $file->move($uploadPath, $filename);
+                    $path = 'uploads/templates/' . $filename;
                     $updateData['template_surat_izin'] = $path;
                 }
             }
@@ -990,18 +1010,39 @@ class PerijinanController extends Controller
         $filename = '';
 
         if ($type === 'rekom') {
-            // Check for OPD specific template first if it's an OPD user AND they aren't explicitly requesting the global one
-            if ($user->role === 'operator_opd' && $user->opd_id && !$request->has('force_global')) {
-                $opdConfig = PerijinanOpdConfig::where('perijinan_id', $id)->where('opd_id', $user->opd_id)->first();
+            $requestedOpdId = $request->input('opd_id');
+
+            // 1. Admin requesting a specific OPD's template
+            if ($user->isAdmin() && $requestedOpdId) {
+                $opdConfig = PerijinanOpdConfig::with('opd')->where('perijinan_id', $id)->where('opd_id', $requestedOpdId)->first();
                 if ($opdConfig && $opdConfig->template_surat_rekom) {
                     $path = $opdConfig->template_surat_rekom;
+                    $filename = 'Template_Rekomendasi_' . str_replace(' ', '_', $opdConfig->opd->nama_opd ?? 'OPD') . '.docx';
+                }
+            }
+            // 2. OPD User downloading their own template (unless forced global)
+            elseif ($user->role === 'operator_opd' && $user->opd_id) {
+                if ($request->has('force_global') && $request->input('force_global') == '1') {
+                    // Explicitly requesting the global admin template
+                    $path = $perijinan->template_surat_rekom;
+                    $filename = 'Template_Acuan_Admin_' . str_replace(' ', '_', $perijinan->nama_perijinan) . '.docx';
+                } else {
+                    // Requesting their own custom template
+                    $opdConfig = PerijinanOpdConfig::where('perijinan_id', $id)->where('opd_id', $user->opd_id)->first();
+                    if ($opdConfig && $opdConfig->template_surat_rekom) {
+                        $path = $opdConfig->template_surat_rekom;
+                        $filename = 'Template_Kustom_OPD_' . str_replace(' ', '_', $perijinan->nama_perijinan) . '.docx';
+                    }
                 }
             }
             
+            // Fallback to global if path is still empty
             if (empty($path)) {
                 $path = $perijinan->template_surat_rekom;
             }
-            $filename = 'Template_Rekomendasi_' . str_replace(' ', '_', $perijinan->nama_perijinan) . '.docx';
+            if (empty($filename)) {
+                $filename = 'Template_Rekomendasi_' . str_replace(' ', '_', $perijinan->nama_perijinan) . '.docx';
+            }
         } elseif ($type === 'izin') {
             $path = $perijinan->template_surat_izin;
             $filename = 'Template_Izin_' . str_replace(' ', '_', $perijinan->nama_perijinan) . '.docx';

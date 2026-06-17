@@ -764,7 +764,7 @@
                                                     <i class="mdi mdi-file-document-outline text-gray-400 mr-2 text-lg"></i> 
                                                     {{ basename($perijinan->template_surat_rekom) }}
                                                 </p>
-                                                <a href="{{ route('perijinan.templates.download', ['id' => $perijinan->id, 'type' => 'rekom', 'force_global' => 1]) }}" class="flex items-center gap-1.5 text-xs bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded transition-colors font-semibold">
+                                                <a href="{{ route('perijinan.templates.download', ['id' => $perijinan->id, 'type' => 'rekom', 'force_global' => 1, 't' => time()]) }}" class="flex items-center gap-1.5 text-xs bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded transition-colors font-semibold">
                                                     <i class="mdi mdi-download"></i> Unduh Acuan
                                                 </a>
                                             </div>
@@ -789,7 +789,7 @@
                                                     <i class="mdi mdi-check-decagram mr-2 text-lg"></i> 
                                                     {{ basename($opdConfig->template_surat_rekom) }}
                                                 </p>
-                                                <a href="{{ route('perijinan.templates.download', ['id' => $perijinan->id, 'type' => 'rekom']) }}" class="flex items-center gap-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded transition-colors font-semibold shadow-sm">
+                                                <a href="{{ route('perijinan.templates.download', ['id' => $perijinan->id, 'type' => 'rekom', 't' => time()]) }}" class="flex items-center gap-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded transition-colors font-semibold shadow-sm">
                                                     <i class="mdi mdi-download"></i> Unduh Kustom
                                                 </a>
                                             </div>
