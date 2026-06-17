@@ -226,7 +226,21 @@ class DocumentGenerator
                 $finalReplacements['${_IMG_PATH_TTE}'] = $opd->gambar_tte; // For Word template
             }
 
-            $rawTemplate = $perijinan->template_surat_rekom ?? \App\Models\Setting::get('template_rekom');
+            // Fetch Template (OPD Specific > Perijinan > Setting)
+            $rawTemplate = null;
+            if ($opd) {
+                $opdConfig = PerijinanOpdConfig::where('perijinan_id', $perijinan->id)
+                    ->where('opd_id', $opd->id)
+                    ->first();
+                if ($opdConfig && $opdConfig->template_surat_rekom) {
+                    $rawTemplate = $opdConfig->template_surat_rekom;
+                }
+            }
+            
+            if (!$rawTemplate) {
+                $rawTemplate = $perijinan->template_surat_rekom ?? \App\Models\Setting::get('template_rekom');
+            }
+
             if (empty(trim(strip_tags($rawTemplate ?? '')))) {
                 $rawTemplate = self::getDefaultSuratRekomTemplate();
             }
@@ -882,6 +896,14 @@ class DocumentGenerator
                     <br />
                     <strong><u>Nama Kepala Dinas</u></strong><br />
                     NIP. .........................
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>';
+    }
+}
+              NIP. .........................
                 </td>
             </tr>
         </tbody>

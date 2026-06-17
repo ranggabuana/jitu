@@ -99,4 +99,12 @@ class Perijinan extends Model
     {
         return $this->hasMany(DataPerijinan::class, 'perijinan_id');
     }
+
+    /**
+     * Get all OPD configurations for this perijinan.
+     */
+    public function opdConfigs(): HasMany
+    {
+        return $this->hasMany(PerijinanOpdConfig::class, 'perijinan_id');
+    }
 }

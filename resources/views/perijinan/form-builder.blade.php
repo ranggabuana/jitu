@@ -422,6 +422,12 @@
                                                     <i class="mdi mdi-asterisk"></i> Wajib diisi
                                                 </span>
                                             @endif
+                                            @if ($field->opd_id)
+                                                <span
+                                                    class="bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-xs px-2 py-1 rounded-md font-bold uppercase tracking-tighter">
+                                                    <i class="mdi mdi-office-building"></i> {{ $field->opd->kode_opd ?? 'OPD' }}
+                                                </span>
+                                            @endif
                                             @if ($field->is_active)
                                                 <span
                                                     class="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-xs px-2 py-1 rounded-md font-medium">
@@ -467,23 +473,32 @@
 
                                     <!-- Actions -->
                                     <div class="flex items-center gap-2">
-                                        <button onclick="editField({{ $field->id }}, {{ json_encode($field) }})"
-                                            class="text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 p-2 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
-                                            title="Edit">
-                                            <i class="mdi mdi-pencil"></i>
-                                        </button>
-                                        <form
-                                            action="{{ route('perijinan.form-field.delete', [$perijinan->id, $field->id]) }}"
-                                            method="POST" class="delete-form inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="button"
-                                                class="text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors btn-delete"
-                                                data-action="{{ route('perijinan.form-field.delete', [$perijinan->id, $field->id]) }}"
-                                                title="Hapus">
-                                                <i class="mdi mdi-delete"></i>
+                                        @php
+                                            $canManageField = auth()->user()->isAdmin() || 
+                                                             (auth()->user()->isOperatorOpd() && $field->opd_id === auth()->user()->opd_id) ||
+                                                             (auth()->user()->isVerifikator() && $field->form_type === 'izin');
+                                        @endphp
+                                        @if($canManageField)
+                                            <button onclick="editField({{ $field->id }}, {{ json_encode($field) }})"
+                                                class="text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 p-2 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+                                                title="Edit">
+                                                <i class="mdi mdi-pencil"></i>
                                             </button>
-                                        </form>
+                                            <form
+                                                action="{{ route('perijinan.form-field.delete', [$perijinan->id, $field->id]) }}"
+                                                method="POST" class="delete-form inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="button"
+                                                    class="text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors btn-delete"
+                                                    data-action="{{ route('perijinan.form-field.delete', [$perijinan->id, $field->id]) }}"
+                                                    title="Hapus">
+                                                    <i class="mdi mdi-delete"></i>
+                                                </button>
+                                            </form>
+                                        @else
+                                            <span class="text-[10px] text-gray-400 italic px-2">Hanya Lihat</span>
+                                        @endif
                                     </div>
                                 </div>
                                 </div>
@@ -501,6 +516,45 @@
                                 <p class="text-sm text-gray-500 dark:text-gray-500 mt-1">Tambahkan field pertama Anda
                                 menggunakan form di samping</p>
                                 </div>
+                                @endif
+
+                                <!-- OPD Field Customization Status (Admin Only) -->
+                                @if(auth()->user()->isAdmin())
+                                    @php
+                                        $involvedOpds = $perijinan->activeValidationFlows
+                                            ->whereIn('role', ['operator_opd', 'kepala_opd'])
+                                            ->pluck('assignedUser.opd')
+                                            ->filter()
+                                            ->unique('id');
+                                    @endphp
+                                    @if($involvedOpds->count() > 0)
+                                        <div id="opd-field-status" class="hidden px-6 py-4 bg-indigo-50/50 dark:bg-indigo-900/20 border-t border-gray-100 dark:border-gray-700 mt-4 rounded-b-xl">
+                                            <div class="flex items-center gap-2 mb-3">
+                                                <i class="mdi mdi-office-building text-indigo-500 text-lg"></i>
+                                                <span class="text-xs font-bold text-gray-800 dark:text-gray-200">Status Kustomisasi Field per OPD</span>
+                                            </div>
+                                            <div class="flex flex-col gap-2">
+                                                @foreach($involvedOpds as $opd)
+                                                    @php 
+                                                        $count = $perijinan->formFields()->where('opd_id', $opd->id)->count(); 
+                                                        $hasCustom = $count > 0;
+                                                    @endphp
+                                                    <div class="flex items-center justify-between bg-white dark:bg-gray-800 px-3 py-2 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm">
+                                                        <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ $opd->nama_opd }}</span>
+                                                        @if($hasCustom)
+                                                            <span class="inline-flex items-center gap-1 text-[10px] font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-md">
+                                                                {{ $count }} Field Kustom
+                                                            </span>
+                                                        @else
+                                                            <span class="inline-flex items-center gap-1 text-[10px] font-medium text-gray-400 italic">
+                                                                Default Admin
+                                                            </span>
+                                                        @endif
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endif
                                 @endif
                                 </div>
                                 </div>
@@ -654,31 +708,126 @@
                     </div>
 
                     <div class="p-6">
+                        <!-- OPD Template Customization Status (Admin Only) -->
+                        @if(auth()->user()->isAdmin())
+                            @php
+                                // Ensure $involvedOpds is available (re-calculate if needed, or it's from the top @php block)
+                                $involvedOpds = $perijinan->activeValidationFlows
+                                    ->whereIn('role', ['operator_opd', 'kepala_opd'])
+                                    ->pluck('assignedUser.opd')
+                                    ->filter()
+                                    ->unique('id');
+                            @endphp
+                            @if($involvedOpds->count() > 0)
+                                <div id="opd-template-status" class="hidden mb-6">
+                                    <label class="block text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-3">Kustomisasi Template per OPD</label>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        @foreach($involvedOpds as $opd)
+                                            @php
+                                                $config = $perijinan->opdConfigs->where('opd_id', $opd->id)->first();
+                                                $hasCustomTemplate = $config && $config->template_surat_rekom;
+                                            @endphp
+                                            <div class="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-800">
+                                                <div class="flex flex-col">
+                                                    <span class="text-xs font-bold text-gray-800 dark:text-white">{{ $opd->nama_opd }}</span>
+                                                    <span class="text-[9px] text-gray-500">{{ $opd->kode_opd }}</span>
+                                                </div>
+                                                @if($hasCustomTemplate)
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[9px] font-black uppercase">Kustom</span>
+                                                        <a href="{{ route('perijinan.templates.download', ['id' => $perijinan->id, 'type' => 'rekom', 'opd_id' => $opd->id]) }}" class="text-gray-400 hover:text-indigo-600 transition-colors">
+                                                            <i class="mdi mdi-download text-base"></i>
+                                                        </a>
+                                                    </div>
+                                                @else
+                                                    <span class="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 text-[9px] font-bold uppercase">Default Admin</span>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                        @endif
+
                         @if(auth()->user()->isAdmin() || auth()->user()->isOperatorOpd())
                             <div id="tpl-rekom-container" class="hidden">
-                                <div class="mb-4">
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Upload Template Surat Rekomendasi (.docx)
-                                    </label>
-                                    <input type="file" name="file_template_rekom" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
-                                           class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200">
-                                    @if($perijinan->template_surat_rekom && Str::endsWith($perijinan->template_surat_rekom, '.docx'))
-                                        <div class="mt-2 flex items-center justify-between bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
-                                            <p class="text-sm text-green-700 dark:text-green-400 font-medium">
-                                                <i class="mdi mdi-check-circle mr-1"></i> File template aktif: {{ basename($perijinan->template_surat_rekom) }}
-                                            </p>
-                                            <a href="{{ route('perijinan.templates.download', ['id' => $perijinan->id, 'type' => 'rekom']) }}" class="flex items-center gap-1.5 text-xs bg-white dark:bg-gray-800 border border-green-300 dark:border-green-700 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-800 px-3 py-1.5 rounded transition-colors shadow-sm font-semibold">
-                                                <i class="mdi mdi-download"></i> Unduh Template
-                                            </a>
-                                        </div>
-                                    @endif
-                                    <p class="mt-2 text-xs text-gray-500">
-                                        <i class="mdi mdi-information"></i> Buat surat menggunakan Microsoft Word, gunakan variabel dengan format <code>${NAMA_VARIABEL}</code>, lalu unggah ke sini.
-                                    </p>
+                                
+                                @if(auth()->user()->isOperatorOpd())
+                                    <!-- Bagian 1: Template Admin (Read Only) -->
+                                    <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700">
+                                        <label class="block text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">
+                                            Template Acuan (Dari Admin)
+                                        </label>
+                                        @if($perijinan->template_surat_rekom && Str::endsWith($perijinan->template_surat_rekom, '.docx'))
+                                            <div class="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 shadow-sm">
+                                                <p class="text-sm text-gray-700 dark:text-gray-300 font-medium flex items-center">
+                                                    <i class="mdi mdi-file-document-outline text-gray-400 mr-2 text-lg"></i> 
+                                                    {{ basename($perijinan->template_surat_rekom) }}
+                                                </p>
+                                                <a href="{{ route('perijinan.templates.download', ['id' => $perijinan->id, 'type' => 'rekom', 'force_global' => 1]) }}" class="flex items-center gap-1.5 text-xs bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded transition-colors font-semibold">
+                                                    <i class="mdi mdi-download"></i> Unduh Acuan
+                                                </a>
+                                            </div>
+                                        @else
+                                            <p class="text-sm text-gray-500 italic">Admin belum mengunggah template acuan.</p>
+                                        @endif
+                                    </div>
+
+                                    <!-- Bagian 2: Template Kustom OPD -->
+                                    <div class="mb-4 p-4 bg-indigo-50/30 dark:bg-indigo-900/10 rounded-xl border border-indigo-100 dark:border-indigo-900/30">
+                                        <label class="block text-sm font-bold text-indigo-900 dark:text-indigo-100 mb-1">
+                                            Template Kustom OPD Anda
+                                        </label>
+                                        <p class="text-xs text-indigo-600/80 dark:text-indigo-400/80 mb-3">Unggah file .docx di sini jika OPD Anda memiliki format surat rekomendasi yang berbeda dengan acuan Admin.</p>
+                                        
+                                        <input type="file" name="file_template_rekom" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
+                                               class="w-full px-4 py-2 border border-indigo-200 dark:border-indigo-800 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200 mb-3 focus:ring-indigo-500 focus:border-indigo-500">
+                                        
+                                        @if(isset($opdConfig) && $opdConfig->template_surat_rekom)
+                                            <div class="flex items-center justify-between bg-indigo-100 dark:bg-indigo-900/40 border border-indigo-200 dark:border-indigo-800 rounded-lg p-3">
+                                                <p class="text-sm text-indigo-700 dark:text-indigo-400 font-bold flex items-center">
+                                                    <i class="mdi mdi-check-decagram mr-2 text-lg"></i> 
+                                                    {{ basename($opdConfig->template_surat_rekom) }}
+                                                </p>
+                                                <a href="{{ route('perijinan.templates.download', ['id' => $perijinan->id, 'type' => 'rekom']) }}" class="flex items-center gap-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded transition-colors font-semibold shadow-sm">
+                                                    <i class="mdi mdi-download"></i> Unduh Kustom
+                                                </a>
+                                            </div>
+                                        @else
+                                            <div class="flex items-center gap-2 text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 p-2 rounded-lg border border-orange-100 dark:border-orange-900/30">
+                                                <i class="mdi mdi-information"></i> Saat ini menggunakan template acuan dari Admin.
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                @else
+                                    <!-- Tampilan untuk Admin -->
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Upload Template Surat Rekomendasi (.docx) (Global/Acuan)
+                                        </label>
+                                        <input type="file" name="file_template_rekom" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
+                                               class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200">
+                                        
+                                        @if($perijinan->template_surat_rekom && Str::endsWith($perijinan->template_surat_rekom, '.docx'))
+                                            <div class="mt-2 flex items-center justify-between bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                                                <p class="text-sm text-green-700 dark:text-green-400 font-medium">
+                                                    <i class="mdi mdi-check-circle mr-1"></i> File template aktif: {{ basename($perijinan->template_surat_rekom) }}
+                                                </p>
+                                                <a href="{{ route('perijinan.templates.download', ['id' => $perijinan->id, 'type' => 'rekom']) }}" class="flex items-center gap-1.5 text-xs bg-white dark:bg-gray-800 border border-green-300 dark:border-green-700 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-800 px-3 py-1.5 rounded transition-colors shadow-sm font-semibold">
+                                                    <i class="mdi mdi-download"></i> Unduh Template
+                                                </a>
+                                            </div>
+                                        @endif
+                                        <p class="mt-2 text-xs text-gray-500">
+                                            <i class="mdi mdi-information"></i> Buat surat menggunakan Microsoft Word, gunakan variabel dengan format <code>${NAMA_VARIABEL}</code>, lalu unggah ke sini.
+                                        </p>
+                                    </div>
+                                @endif
                                 </div>
-                            </div>
-                        @endif
-                        @if(auth()->user()->isAdmin() || auth()->user()->role === 'verifikator')
+                                @endif
+
+                                @if(auth()->user()->isAdmin() || auth()->user()->role === 'verifikator')
                             <div id="tpl-izin-container" class="hidden">
                                 <div class="mb-4">
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -1139,6 +1288,8 @@
             // 7. Toggle Template Editor and Sequence Config
             const templateContainer = document.getElementById('template-editor-container');
             const sequenceContainer = document.getElementById('sequence-config-container');
+            const opdFieldStatus = document.getElementById('opd-field-status');
+            const opdTemplateStatus = document.getElementById('opd-template-status');
             const rekomNumConfig = document.getElementById('rekom-number-config');
             const izinNumConfig = document.getElementById('izin-number-config');
             const editorRekom = document.getElementById('tpl-rekom-container');
@@ -1153,6 +1304,8 @@
             if (tabId === 'rekom') {
                 if (templateContainer) templateContainer.classList.remove('hidden');
                 if (sequenceContainer) sequenceContainer.classList.remove('hidden');
+                if (opdFieldStatus) opdFieldStatus.classList.remove('hidden');
+                if (opdTemplateStatus) opdTemplateStatus.classList.remove('hidden');
                 if (rekomNumConfig) rekomNumConfig.classList.remove('hidden');
                 if (izinNumConfig) izinNumConfig.classList.add('hidden');
                 if (editorRekom) editorRekom.classList.remove('hidden');

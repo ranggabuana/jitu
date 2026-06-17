@@ -205,7 +205,14 @@
         $isKadin = $userRole === 'kadin';
         $isMultiOpd = $application->perijinan->is_multi_opd;
 
-        $rekomFields = $application->perijinan->formFields->where('form_type', 'rekom')->where('is_active', true)->sortBy('order');
+        $rekomFieldsQuery = $application->perijinan->formFields()->where('form_type', 'rekom')->where('is_active', true);
+        if (auth()->user()->role === 'operator_opd' && auth()->user()->opd_id) {
+            $rekomFieldsQuery->where(function($q) {
+                $q->where('opd_id', auth()->user()->opd_id)->orWhereNull('opd_id');
+            });
+        }
+        $rekomFields = $rekomFieldsQuery->orderBy('order')->get();
+        
         $izinFields = $application->perijinan->formFields->where('form_type', 'izin')->where('is_active', true)->sortBy('order');
 
         // Validation flow variables

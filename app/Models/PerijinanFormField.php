@@ -11,6 +11,7 @@ class PerijinanFormField extends Model
 
     protected $fillable = [
         'perijinan_id',
+        'opd_id',
         'form_type',
         'label',
         'name',
@@ -38,5 +39,13 @@ class PerijinanFormField extends Model
     public function perijinan(): BelongsTo
     {
         return $this->belongsTo(Perijinan::class);
+    }
+
+    /**
+     * Get the OPD that owns the form field.
+     */
+    public function opd(): BelongsTo
+    {
+        return $this->belongsTo(Opd::class);
     }
 }

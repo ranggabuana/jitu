@@ -953,7 +953,15 @@ class DataPerijinanController extends Controller
             }
         }
         
-        $rekomFields = $perijinan->activeFormFields->where('form_type', 'rekom');
+        $rekomFieldsQuery = $perijinan->activeFormFields()->where('form_type', 'rekom');
+        
+        // Filter fields by OPD if operator
+        if ($user->role === 'operator_opd' && $user->opd_id) {
+            $rekomFieldsQuery->where(function($q) use ($user) {
+                $q->where('opd_id', $user->opd_id)->orWhereNull('opd_id');
+            });
+        }
+        $rekomFields = $rekomFieldsQuery->get();
             
         $rules = [];
         foreach ($rekomFields as $field) {

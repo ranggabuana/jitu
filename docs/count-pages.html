@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html><head><title>Page Counter</title></head>
+<body>
+<h2>Page Mapper</h2>
+<div id="results"></div>
+<script>
+async function countPages() {
+    // Load both HTML files, render them in iframes, and find page breaks
+    const files = [
+        { name: 'ADMIN', url: 'manual-book-admin.html' },
+        { name: 'PEMOHON', url: 'manual-book-pemohon.html' }
+    ];
+    
+    const results = document.getElementById('results');
+    
+    for (const file of files) {
+        const resp = await fetch(file.url);
+        const html = await resp.text();
+        
+        // Parse and find page-break elements
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // Count page-break elements
+        const pageBreaks = doc.querySelectorAll('.page-break');
+        let output = `<h3>${file.name} (${file.url})</h3>`;
+        output += `<p>Total page-break sections: ${pageBreaks.length + 1}</p>`; // +1 for cover
+        output += '<table border="1" cellpadding="5"><tr><th>#</th><th>ID</th><th>Heading</th><th>Estimated Page</th></tr>';
+        
+        // Cover page is page 1
+        const coverPage = doc.querySelector('.cover-page');
+        output += `<tr><td>0</td><td>cover</td><td>Cover Page</td><td>1</td></tr>`;
+        
+        let currentPage = 2; // After cover
+        pageBreaks.forEach((el, i) => {
+            const id = el.id || el.querySelector('[id]')?.id || '-';
+            const h1 = el.querySelector('h1');
+            const h2s = el.querySelectorAll('h2[id], h2.section-subtitle');
+            let heading = h1 ? h1.textContent.trim() : 'No heading';
+            
+            // Estimate multi-page sections based on content length
+            const textLen = el.textContent.length;
+            const imgs = el.querySelectorAll('img');
+            const tables = el.querySelectorAll('table');
+            
+            // Rough estimate: ~3000 chars per page, each image ~0.5 page, each table ~0.3 page
+            let estimatedPages = Math.ceil((textLen / 2800) + (imgs.length * 0.5) + (tables.length * 0.2));
+            if (estimatedPages < 1) estimatedPages = 1;
+            
+            output += `<tr><td>${i+1}</td><td>${id}</td><td>${heading}</td><td>${currentPage}</td></tr>`;
+            
+            // Sub-sections
+            h2s.forEach(h2 => {
+                const subId = h2.id || '-';
+                const subTitle = h2.textContent.trim();
+                if (subId !== '-') {
+                    output += `<tr><td></td><td>${subId}</td><td style="padding-left:20px">↳ ${subTitle}</td><td></td></tr>`;
+                }
+            });
+            
+            currentPage += estimatedPages;
+        });
+        
+        output += '</table>';
+        output += `<p><strong>Estimated total pages: ${currentPage - 1}</strong></p>`;
+        results.innerHTML += output + '<hr>';
+    }
+}
+countPages();
+</script>
+</body>
+</html>

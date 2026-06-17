@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Models\Perijinan;
 use App\Models\PerijinanFormField;
 use App\Models\PerijinanValidationFlow;
+use App\Models\PerijinanOpdConfig;
 use App\Models\User;
 use App\Models\Opd;
 use App\Models\ActivityLog;
@@ -152,8 +153,27 @@ class PerijinanController extends Controller
             return redirect()->route('perijinan.index')->with('error', 'Anda tidak memiliki akses ke form builder perijinan ini.');
         }
 
-        $perijinan = Perijinan::with('formFields')->findOrFail($id);
-        return view('perijinan.form-builder', compact('perijinan'));
+        $perijinan = Perijinan::with(['formFields' => function($q) use ($user) {
+            $q->with('opd');
+            // If operator OPD, only show their fields or global fields as reference
+            if ($user->role === 'operator_opd') {
+                $q->where(function($query) use ($user) {
+                    $query->where('opd_id', $user->opd_id)
+                          ->orWhereNull('opd_id');
+                });
+            }
+        }, 'opdConfigs.opd', 'activeValidationFlows.assignedUser.opd'])->findOrFail($id);
+
+        // Fetch OPD config if user is operator_opd
+        $opdConfig = null;
+        if ($user->role === 'operator_opd' && $user->opd_id) {
+            $opdConfig = PerijinanOpdConfig::firstOrCreate([
+                'perijinan_id' => $id,
+                'opd_id' => $user->opd_id
+            ]);
+        }
+
+        return view('perijinan.form-builder', compact('perijinan', 'opdConfig'));
     }
 
     /**
@@ -162,14 +182,23 @@ class PerijinanController extends Controller
     public function previewTemplate(Request $request, string $id)
     {
         $perijinan = Perijinan::findOrFail($id);
+        $user = auth()->user();
         $templateType = $request->input('template_type', 'rekom'); // 'rekom' or 'izin'
         $htmlContent = $request->input('template_content', '');
+
+        // Fetch OPD config if needed
+        $opdConfig = null;
+        if ($templateType === 'rekom' && $user->role === 'operator_opd' && $user->opd_id) {
+            $opdConfig = PerijinanOpdConfig::where('perijinan_id', $id)
+                ->where('opd_id', $user->opd_id)
+                ->first();
+        }
 
         // Use real values from request (unsaved) or database (saved)
         if ($templateType === 'izin') {
             $realNumber = $request->input('next_nomor_izin') ?? $perijinan->next_nomor_izin ?? 1;
         } else {
-            $realNumber = $request->input('next_nomor_rekom') ?? $perijinan->next_nomor_rekom ?? 1;
+            $realNumber = $request->input('next_nomor_rekom') ?? $opdConfig->next_nomor_rekom ?? $perijinan->next_nomor_rekom ?? 1;
         }
 
         // Dummy Data Replacements
@@ -221,6 +250,12 @@ class PerijinanController extends Controller
 
         // [GAMBAR TTE]
         $gambarTte = \App\Models\Setting::get('gambar_tte');
+        
+        // If operator OPD, use their OPD's TTE if available
+        if ($user->role === 'operator_opd' && $user->opd_id && $user->opd && $user->opd->gambar_tte) {
+            $gambarTte = $user->opd->gambar_tte;
+        }
+
         $tteHtml = '<div style="width: 100px; height: 100px; border: 1px dashed #ccc; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; color: #999;">[QR CODE TTE]</div>';
         if ($gambarTte && \Illuminate\Support\Facades\File::exists(public_path($gambarTte))) {
             $imageData = base64_encode(\Illuminate\Support\Facades\File::get(public_path($gambarTte)));
@@ -238,14 +273,33 @@ class PerijinanController extends Controller
         $replacements['[LOGO KABUPATEN]'] = $logoHtml;
 
         // Add dynamic form field placeholders
-        $formFields = $perijinan->activeFormFields()->where('form_type', $templateType)->get();
+        $formFieldsQuery = $perijinan->formFields()->where('is_active', true)->where('form_type', $templateType);
+        
+        // If it's rekom and we have OPD context, filter by OPD
+        if ($templateType === 'rekom' && $user->role === 'operator_opd' && $user->opd_id) {
+            $formFieldsQuery->where('opd_id', $user->opd_id);
+        } else {
+            // Default/Admin fields
+            $formFieldsQuery->whereNull('opd_id');
+        }
+
+        $formFields = $formFieldsQuery->get();
         foreach ($formFields as $field) {
             $placeholder = '[' . strtoupper($field->name) . ']';
             $replacements[$placeholder] = 'DUMMY_' . strtoupper($field->name);
         }
 
         // Global form fields also available
-        $globalFields = $perijinan->activeFormFields()->where('form_type', 'global')->get();
+        $globalFieldsQuery = $perijinan->activeFormFields()->where('form_type', 'global');
+        if ($user->role === 'operator_opd' && $user->opd_id) {
+            $globalFieldsQuery->where(function($q) use ($user) {
+                $q->where('opd_id', $user->opd_id)->orWhereNull('opd_id');
+            });
+        } else {
+            $globalFieldsQuery->whereNull('opd_id');
+        }
+        
+        $globalFields = $globalFieldsQuery->get();
         foreach ($globalFields as $field) {
             $placeholder = '[' . strtoupper($field->name) . ']';
             if (!isset($replacements[$placeholder])) {
@@ -280,10 +334,14 @@ class PerijinanController extends Controller
 
         // Access Control: Role based field restrictions
         if ($user->role === 'operator_opd') {
-            if ($request->input('form_type') !== 'rekom') {
-                return redirect()->back()->with('error', 'Anda hanya memiliki akses untuk mengelola field Formulir Rekomendasi.');
+            if ($field->form_type !== 'rekom') {
+                return redirect()->back()->with('error', 'Anda hanya memiliki akses untuk memperbarui field Formulir Rekomendasi.');
+            }
+            if ($field->opd_id !== $user->opd_id) {
+                return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk memperbarui field ini.');
             }
         } elseif ($user->role === 'verifikator') {
+
             if ($request->input('form_type') !== 'izin') {
                 return redirect()->back()->with('error', 'Anda hanya memiliki akses untuk mengelola field Formulir Izin.');
             }
@@ -415,6 +473,9 @@ class PerijinanController extends Controller
         if ($user->role === 'operator_opd') {
             if ($field->form_type !== 'rekom') {
                 return redirect()->back()->with('error', 'Anda hanya memiliki akses untuk menghapus field Formulir Rekomendasi.');
+            }
+            if ($field->opd_id !== $user->opd_id) {
+                return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk menghapus field ini.');
             }
         } elseif ($user->role === 'verifikator') {
             if ($field->form_type !== 'izin') {
@@ -837,20 +898,42 @@ class PerijinanController extends Controller
             }
 
             // Assign allowed data
-            if ($user->role === 'operator_opd') {
-                if ($request->has('template_surat_rekom')) $updateData['template_surat_rekom'] = $request->template_surat_rekom;
-                if ($request->has('keterangan_rekom')) $updateData['keterangan_rekom'] = $request->keterangan_rekom;
-                if ($request->has('next_nomor_rekom')) $updateData['next_nomor_rekom'] = $request->next_nomor_rekom;
+            if ($user->role === 'operator_opd' && $user->opd_id) {
+                // Fetch/Create OPD config
+                $opdConfig = PerijinanOpdConfig::firstOrCreate([
+                    'perijinan_id' => $perijinan->id,
+                    'opd_id' => $user->opd_id
+                ]);
+
+                $opdUpdateData = [];
+                if ($request->has('template_surat_rekom')) $opdUpdateData['template_surat_rekom'] = $request->template_surat_rekom;
+                if ($request->has('keterangan_rekom')) $opdUpdateData['keterangan_rekom'] = $request->keterangan_rekom;
+                if ($request->has('next_nomor_rekom')) $opdUpdateData['next_nomor_rekom'] = $request->next_nomor_rekom;
+                
                 if ($request->hasFile('file_template_rekom')) {
                     $file = $request->file('file_template_rekom');
-                    $filename = 'template_rekom_' . $perijinan->id . '_' . time() . '.docx';
+                    $filename = 'template_rekom_' . $perijinan->id . '_opd_' . $user->opd_id . '_' . time() . '.docx';
                     $uploadPath = public_path('uploads/templates');
-                if (!file_exists($uploadPath)) {
-                    mkdir($uploadPath, 0755, true);
+                    if (!file_exists($uploadPath)) {
+                        mkdir($uploadPath, 0755, true);
+                    }
+                    $file->move($uploadPath, $filename);
+                    $path = 'uploads/templates/' . $filename;
+                    $opdUpdateData['template_surat_rekom'] = $path;
                 }
-                $file->move($uploadPath, $filename);
-                $path = 'uploads/templates/' . $filename;
-                    $updateData['template_surat_rekom'] = $path;
+
+                if (!empty($opdUpdateData)) {
+                    $opdConfig->update($opdUpdateData);
+                    
+                    ActivityLog::log(
+                        'Memperbarui template rekom OPD',
+                        $perijinan,
+                        'updated',
+                        ['opd_id' => $user->opd_id, 'data' => $opdUpdateData],
+                        'perijinan_opd'
+                    );
+
+                    return back()->with('success', 'Template rekomendasi OPD berhasil diperbarui.')->with('active_tab', 'rekom');
                 }
             } elseif ($user->role === 'verifikator') {
                 if ($request->has('template_surat_izin')) $updateData['template_surat_izin'] = $request->template_surat_izin;
@@ -891,7 +974,7 @@ class PerijinanController extends Controller
     /**
      * Download the uploaded template document.
      */
-    public function downloadTemplate(string $id, string $type)
+    public function downloadTemplate(Request $request, string $id, string $type)
     {
         $perijinan = Perijinan::findOrFail($id);
         $user = auth()->user();
@@ -907,7 +990,17 @@ class PerijinanController extends Controller
         $filename = '';
 
         if ($type === 'rekom') {
-            $path = $perijinan->template_surat_rekom;
+            // Check for OPD specific template first if it's an OPD user AND they aren't explicitly requesting the global one
+            if ($user->role === 'operator_opd' && $user->opd_id && !$request->has('force_global')) {
+                $opdConfig = PerijinanOpdConfig::where('perijinan_id', $id)->where('opd_id', $user->opd_id)->first();
+                if ($opdConfig && $opdConfig->template_surat_rekom) {
+                    $path = $opdConfig->template_surat_rekom;
+                }
+            }
+            
+            if (empty($path)) {
+                $path = $perijinan->template_surat_rekom;
+            }
             $filename = 'Template_Rekomendasi_' . str_replace(' ', '_', $perijinan->nama_perijinan) . '.docx';
         } elseif ($type === 'izin') {
             $path = $perijinan->template_surat_izin;
