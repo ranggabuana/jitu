@@ -1230,7 +1230,7 @@
 
             @if ($canVal)
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50"><h3 class="font-black text-gray-800 dark:text-white text-xs uppercase tracking-widest flex items-center gap-2"><i class="mdi mdi-shield-check text-blue-500"></i> Tindakan Validasi</h3></div>
+<div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50"><h3 class="font-black text-gray-800 dark:text-white text-xs uppercase tracking-widest flex items-center gap-2"><i class="mdi mdi-shield-check text-blue-500"></i> Tindakan Validasi</h3></div>
                     <div class="p-5">
                         <form id="validationForm" action="{{ route('data-perijinan.validate', $application->id) }}" method="POST">
                             @csrf <input type="hidden" name="action" id="validationAction" value="">
@@ -1238,6 +1238,22 @@
                             <input type="hidden" name="passphrase" id="passphrase_input" value="">
                             <textarea name="catatan" id="catatan" rows="3" class="w-full px-3 py-2 text-xs border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-xl mb-4 focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="Berikan catatan..."></textarea>
                             
+                            @if($isVerifikator && $application->perijinan->is_multi_opd)
+                                <select name="target_opd_id" id="target_opd_id" class="hidden">
+                                    <option value="">-- Pilih Kepala OPD --</option>
+                                    @php
+                                        $involvedOpds = $application->validasiRecords
+                                            ->filter(fn($v) => $v->validationFlow && $v->validationFlow->role === 'kepala_opd')
+                                            ->map(fn($v) => $v->validationFlow->assignedUser->opd ?? null)
+                                            ->filter()
+                                            ->unique('id');
+                                    @endphp
+                                    @foreach($involvedOpds as $opd)
+                                        <option value="{{ $opd->id }}">{{ $opd->nama_opd }}</option>
+                                    @endforeach
+                                </select>
+                            @endif
+
                             <div class="space-y-4">
                                 @if($isKadin || $isKepalaOpd)
                                     @php
@@ -1305,7 +1321,9 @@
                                     </div>
                                 @endif
 
-                                <button type="button" onclick="submitValidation('revision')" class="w-full py-2.5 bg-orange-500 text-white rounded-xl text-[9px] font-black uppercase">Perbaikan ke Pemohon</button>
+                                @if(!$isVerifikator && !$isKadin)
+                                    <button type="button" onclick="submitValidation('revision')" class="w-full py-2.5 bg-orange-500 text-white rounded-xl text-[9px] font-black uppercase">Perbaikan ke Pemohon</button>
+                                @endif
                                 
                                 <div class="grid grid-cols-1 gap-2 mt-1">
                                     @if($isKadin)
@@ -1321,7 +1339,7 @@
                                     @endif
                                     
                                     @if($isVerifikator)
-                                        <button type="button" onclick="submitValidation('return_to_kepala_opd')" class="py-2.5 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase">Kembalikan ke Kepala OPD</button>
+                                        <button type="button" onclick="handleReturnKepalaOpd()" class="py-2.5 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase">Kembalikan ke Kepala OPD</button>
                                     @endif
                                 </div>
                             </div>
@@ -1436,6 +1454,54 @@
                 <button type="button" onclick="submitEsignOnly()" class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-bold uppercase transition-all shadow-md flex items-center gap-2">
                     <i class="mdi mdi-check"></i> Proses TTE
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Pilih Kepala OPD Tujuan Pengembalian -->
+    <div id="modal-return-kepala-opd" class="fixed inset-0 z-[450] hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50 dark:bg-gray-800/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center border border-blue-200 dark:border-blue-800">
+                        <i class="mdi mdi-office-building text-blue-600 dark:text-blue-400 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-gray-800 dark:text-white">Pilih Kepala OPD</h3>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Tujuan Pengembalian Validasi</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeReturnKepalaOpdModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+                    <i class="mdi mdi-close text-2xl"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-4">
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-widest">Kepala OPD</label>
+                    <select id="modal_target_opd_id" class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-800 dark:text-white">
+                        <option value="">-- Pilih Kepala OPD --</option>
+                        @php
+                            $involvedOpds = $application->validasiRecords
+                                ->filter(fn($v) => $v->validationFlow && $v->validationFlow->role === 'kepala_opd')
+                                ->map(fn($v) => $v->validationFlow->assignedUser->opd ?? null)
+                                ->filter()
+                                ->unique('id');
+                        @endphp
+                        @foreach($involvedOpds as $opd)
+                            <option value="{{ $opd->id }}">{{ $opd->nama_opd }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <p class="text-[11px] text-gray-500 leading-relaxed italic">
+                    <i class="mdi mdi-information-outline mr-0.5"></i>
+                    Pengembalian validasi akan mereset persetujuan Kepala OPD yang dipilih, serta menghapus draft TTE rekomendasi dari OPD tersebut.
+                </p>
+            </div>
+
+            <div class="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-3">
+                <button type="button" onclick="closeReturnKepalaOpdModal()" class="px-5 py-2.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-xl text-xs font-bold transition-all">Batal</button>
+                <button type="button" onclick="confirmReturnKepalaOpd()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all">Lanjutkan</button>
             </div>
         </div>
     </div>
@@ -1600,13 +1666,26 @@
         function closePdfPreview() { document.getElementById('modal-pdf-preview').classList.add('hidden'); document.getElementById('pdf-modal-iframe').src = ''; }
         function submitValidation(action) { 
             const isKadin = {{ $isKadin ? 'true' : 'false' }};
+            const isVerifikator = {{ $isVerifikator ? 'true' : 'false' }};
+            const isMultiOpd = {{ $application->perijinan->is_multi_opd ? 'true' : 'false' }};
+
+            let targetOpdLabel = '';
+            if (action === 'return_to_kepala_opd' && isVerifikator && isMultiOpd) {
+                const selectEl = document.getElementById('target_opd_id');
+                if (selectEl && !selectEl.value) {
+                    Swal.fire('Perhatian', 'Harap pilih Kepala OPD tujuan terlebih dahulu.', 'warning');
+                    return;
+                }
+                targetOpdLabel = ' (' + selectEl.options[selectEl.selectedIndex].text + ')';
+            }
+
             const texts = { 
                 'approved': isKadin ? 'MENERBITKAN SURAT IZIN' : 'MENYETUJUI', 
                 'rejected': 'MENOLAK', 
                 'revision': 'MEMINTA PERBAIKAN KE PEMOHON', 
                 'return_to_bo': 'MENGEMBALIKAN KE BACK OFFICE (BO)',
                 'return_to_operator_opd': 'MENGEMBALIKAN KE OPERATOR OPD',
-                'return_to_kepala_opd': 'MENGEMBALIKAN KE KEPALA OPD',
+                'return_to_kepala_opd': 'MENGEMBALIKAN KE KEPALA OPD' + targetOpdLabel,
                 'return_to_verifikator': 'MENGEMBALIKAN KE VERIFIKATOR'
             }; 
             const colors = {
@@ -1630,6 +1709,50 @@
                     document.getElementById('validationForm').submit(); 
                 } 
             }); 
+        }
+
+        function handleReturnKepalaOpd() {
+            const isMultiOpd = {{ $application->perijinan->is_multi_opd ? 'true' : 'false' }};
+            if (isMultiOpd) {
+                openReturnKepalaOpdModal();
+            } else {
+                submitValidation('return_to_kepala_opd');
+            }
+        }
+
+        function openReturnKepalaOpdModal() {
+            const m = document.getElementById('modal-return-kepala-opd');
+            if (m) {
+                m.classList.remove('hidden');
+                m.classList.add('flex');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeReturnKepalaOpdModal() {
+            const m = document.getElementById('modal-return-kepala-opd');
+            if (m) {
+                m.classList.remove('flex');
+                m.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        function confirmReturnKepalaOpd() {
+            const modalSelect = document.getElementById('modal_target_opd_id');
+            const mainSelect = document.getElementById('target_opd_id');
+            
+            if (modalSelect && !modalSelect.value) {
+                Swal.fire('Perhatian', 'Harap pilih Kepala OPD tujuan terlebih dahulu.', 'warning');
+                return;
+            }
+            
+            if (mainSelect) {
+                mainSelect.value = modalSelect.value;
+            }
+            
+            closeReturnKepalaOpdModal();
+            submitValidation('return_to_kepala_opd');
         }
     </script>
     @endpush

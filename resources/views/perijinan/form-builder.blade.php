@@ -1339,6 +1339,8 @@
             } else if (tabId === 'izin') {
                 if (templateContainer) templateContainer.classList.remove('hidden');
                 if (sequenceContainer) sequenceContainer.classList.remove('hidden');
+                if (opdFieldStatus) opdFieldStatus.classList.add('hidden');
+                if (opdTemplateStatus) opdTemplateStatus.classList.add('hidden');
                 if (rekomNumConfig) rekomNumConfig.classList.add('hidden');
                 if (izinNumConfig) izinNumConfig.classList.remove('hidden');
                 if (editorRekom) editorRekom.classList.add('hidden');
@@ -1358,6 +1360,8 @@
             } else {
                 if (templateContainer) templateContainer.classList.add('hidden');
                 if (sequenceContainer) sequenceContainer.classList.add('hidden');
+                if (opdFieldStatus) opdFieldStatus.classList.add('hidden');
+                if (opdTemplateStatus) opdTemplateStatus.classList.add('hidden');
             }
         }
 

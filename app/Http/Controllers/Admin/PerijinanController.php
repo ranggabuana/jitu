@@ -257,18 +257,32 @@ class PerijinanController extends Controller
         }
 
         $tteHtml = '<div style="width: 100px; height: 100px; border: 1px dashed #ccc; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; color: #999;">[QR CODE TTE]</div>';
-        if ($gambarTte && \Illuminate\Support\Facades\File::exists(public_path($gambarTte))) {
-            $imageData = base64_encode(\Illuminate\Support\Facades\File::get(public_path($gambarTte)));
-            $tteHtml = '<img src="data:image/png;base64,' . $imageData . '" style="width: 100px; height: 100px; object-fit: contain;">';
+        if ($gambarTte) {
+            $ttePath = public_path($gambarTte);
+            if (!\Illuminate\Support\Facades\File::exists($ttePath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($gambarTte)) {
+                $ttePath = \Illuminate\Support\Facades\Storage::disk('public')->path($gambarTte);
+            }
+            if (\Illuminate\Support\Facades\File::exists($ttePath)) {
+                $imageData = base64_encode(\Illuminate\Support\Facades\File::get($ttePath));
+                $mime = \Illuminate\Support\Facades\File::mimeType($ttePath);
+                $tteHtml = '<img src="data:' . $mime . ';base64,' . $imageData . '" style="width: 100px; height: 100px; object-fit: contain;">';
+            }
         }
         $replacements['[GAMBAR TTE]'] = $tteHtml;
 
         // [LOGO KABUPATEN]
         $logoKab = \App\Models\Setting::get('logo_kabupaten');
         $logoHtml = '<div style="width: 80px; height: 100px; border: 1px dashed #ccc; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; color: #999;">[LOGO KAB]</div>';
-        if ($logoKab && \Illuminate\Support\Facades\File::exists(public_path($logoKab))) {
-            $imageData = base64_encode(\Illuminate\Support\Facades\File::get(public_path($logoKab)));
-            $logoHtml = '<img src="data:image/png;base64,' . $imageData . '" style="width: 80px; height: auto; object-fit: contain;">';
+        if ($logoKab) {
+            $logoPath = public_path($logoKab);
+            if (!\Illuminate\Support\Facades\File::exists($logoPath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($logoKab)) {
+                $logoPath = \Illuminate\Support\Facades\Storage::disk('public')->path($logoKab);
+            }
+            if (\Illuminate\Support\Facades\File::exists($logoPath)) {
+                $imageData = base64_encode(\Illuminate\Support\Facades\File::get($logoPath));
+                $mime = \Illuminate\Support\Facades\File::mimeType($logoPath);
+                $logoHtml = '<img src="data:' . $mime . ';base64,' . $imageData . '" style="width: 80px; height: auto; object-fit: contain;">';
+            }
         }
         $replacements['[LOGO KABUPATEN]'] = $logoHtml;
 

@@ -107,8 +107,8 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('opd', OpdController::class);
     });
 
-    // Perijinan Routes (Admin Only)
-    Route::middleware(['admin.role', 'role:admin'])->group(function () {
+    // Perijinan Routes (Accessible by Admin and OPD)
+    Route::middleware(['admin.role', 'role:admin,operator_opd,kepala_opd'])->group(function () {
         Route::resource('perijinan', PerijinanController::class);
         Route::get('perijinan/{id}/form-builder', [PerijinanController::class, 'formBuilder'])->name('perijinan.form-builder');
         Route::put('perijinan/{id}/templates', [PerijinanController::class, 'updateTemplates'])->name('perijinan.templates.update');

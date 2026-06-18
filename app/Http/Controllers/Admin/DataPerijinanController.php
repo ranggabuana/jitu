@@ -458,6 +458,7 @@ class DataPerijinanController extends Controller
             'action' => 'required|in:approved,rejected,revision,return_to_bo,return_to_operator_opd,return_to_kepala_opd,return_to_verifikator',
             'catatan' => 'nullable|string|max:1000',
             'passphrase' => 'nullable|string',
+            'target_opd_id' => 'nullable|exists:opd,id',
         ]);
 
         $user = auth()->user();
@@ -555,6 +556,11 @@ class DataPerijinanController extends Controller
             // Check if already validated (failsafe)
             if ($myValidasi->status !== 'pending') {
                 return redirect()->back()->with('error', 'Tahap validasi ini sudah diselesaikan.');
+            }
+
+            // Enforce role restriction for revision action
+            if ($request->action === 'revision' && in_array($userRole, ['verifikator', 'kadin'])) {
+                return redirect()->back()->with('error', 'Verifikator dan Kadin tidak diperbolehkan meminta perbaikan ke pemohon.');
             }
 
             // Update validation status
@@ -697,13 +703,26 @@ class DataPerijinanController extends Controller
                     $roleLabel = 'Verifikator';
                 }
 
+                $isMultiOpd = $application->perijinan->is_multi_opd;
+                $userOpdId = $user->opd_id;
+
                 // Find the target record in the validation steps
-                $targetRecord = $application->validasiRecords()
+                $targetRecordQuery = $application->validasiRecords()
                     ->whereHas('validationFlow', function($q) use ($targetRole) {
                         $q->where('role', $targetRole);
-                    })
-                    ->orderBy('order', 'asc')
-                    ->first();
+                    });
+
+                if ($isMultiOpd && $targetRole === 'kepala_opd' && $request->filled('target_opd_id')) {
+                    $targetRecordQuery->whereHas('validationFlow.assignedUser', function($q) use ($request) {
+                        $q->where('opd_id', $request->target_opd_id);
+                    });
+                } elseif ($isMultiOpd && $userOpdId && in_array($targetRole, ['operator_opd', 'kepala_opd'])) {
+                    $targetRecordQuery->whereHas('validationFlow.assignedUser', function($q) use ($userOpdId) {
+                        $q->where('opd_id', $userOpdId);
+                    });
+                }
+
+                $targetRecord = $targetRecordQuery->orderBy('order', 'asc')->first();
                 
                 if ($targetRecord) {
                     $targetOrder = $targetRecord->order;
@@ -719,10 +738,32 @@ class DataPerijinanController extends Controller
                         'catatan' => $request->catatan,
                     ]);
 
-                    // Reset all records from targetOrder onwards using Eloquent to trigger any possible events
-                    $recordsToReset = $application->validasiRecords()
-                        ->where('order', '>=', $targetOrder)
-                        ->get();
+                    // Reset records from targetOrder onwards
+                    $recordsQuery = $application->validasiRecords()->where('order', '>=', $targetOrder);
+
+                    // If multi OPD, only reset records belonging to the targeted OPD or non-OPD roles (verifikator/kadin)
+                    if ($isMultiOpd && $targetRole === 'kepala_opd' && $request->filled('target_opd_id')) {
+                        $targetOpdId = $request->target_opd_id;
+                        $recordsQuery->where(function($query) use ($targetOpdId) {
+                            $query->whereHas('validationFlow.assignedUser', function($q) use ($targetOpdId) {
+                                $q->where('opd_id', $targetOpdId);
+                            })
+                            ->orWhereHas('validationFlow', function($q) {
+                                $q->whereNotIn('role', ['operator_opd', 'kepala_opd']);
+                            });
+                        });
+                    } elseif ($isMultiOpd && $userOpdId && in_array($targetRole, ['operator_opd', 'kepala_opd'])) {
+                        $recordsQuery->where(function($query) use ($userOpdId) {
+                            $query->whereHas('validationFlow.assignedUser', function($q) use ($userOpdId) {
+                                $q->where('opd_id', $userOpdId);
+                            })
+                            ->orWhereHas('validationFlow', function($q) {
+                                $q->whereNotIn('role', ['operator_opd', 'kepala_opd']);
+                            });
+                        });
+                    }
+
+                    $recordsToReset = $recordsQuery->get();
 
                     foreach ($recordsToReset as $record) {
                         $record->status = 'pending';
@@ -735,34 +776,46 @@ class DataPerijinanController extends Controller
                         }
                         
                         $record->save();
-                    }
 
-                    // Clear previous TTE files if returning to draft creator
-                    if ($request->action === 'return_to_operator_opd' && $user->role === 'kepala_opd') {
-                        if ($application->perijinan->is_multi_opd) {
-                            $multiTte = $application->file_rekom_multi_tte ?? [];
-                            if (isset($multiTte[$user->opd_id])) {
-                                if (file_exists(public_path($multiTte[$user->opd_id]))) {
-                                    @unlink(public_path($multiTte[$user->opd_id]));
+                        // Clear TTE files automatically when their steps are reset
+                        if ($record->validationFlow) {
+                            if ($record->validationFlow->role === 'kepala_opd') {
+                                $opdId = $record->validationFlow->assignedUser->opd_id ?? null;
+                                if ($isMultiOpd && $opdId) {
+                                    $multiTte = $application->file_rekom_multi_tte ?? [];
+                                    if (isset($multiTte[$opdId])) {
+                                        if (file_exists(public_path($multiTte[$opdId]))) {
+                                            @unlink(public_path($multiTte[$opdId]));
+                                        }
+                                        unset($multiTte[$opdId]);
+                                        $application->file_rekom_multi_tte = $multiTte;
+                                    }
+                                } else {
+                                    if ($application->file_rekom_tte && file_exists(public_path($application->file_rekom_tte))) {
+                                        @unlink(public_path($application->file_rekom_tte));
+                                    }
+                                    $application->file_rekom_tte = null;
                                 }
-                                unset($multiTte[$user->opd_id]);
-                                $application->file_rekom_multi_tte = $multiTte;
+                            } elseif ($record->validationFlow->role === 'kadin') {
+                                if ($application->file_izin_tte && file_exists(public_path($application->file_izin_tte))) {
+                                    @unlink(public_path($application->file_izin_tte));
+                                }
+                                $application->file_izin_tte = null;
                             }
-                        } else {
-                            if ($application->file_rekom_tte && file_exists(public_path($application->file_rekom_tte))) {
-                                @unlink(public_path($application->file_rekom_tte));
-                            }
-                            $application->file_rekom_tte = null;
                         }
-                    } elseif ($request->action === 'return_to_verifikator' && $user->role === 'kadin') {
-                        if ($application->file_izin_tte && file_exists(public_path($application->file_izin_tte))) {
-                            @unlink(public_path($application->file_izin_tte));
-                        }
-                        $application->file_izin_tte = null;
                     }
 
-                    // Update application state
-                    $application->current_step = $targetOrder;
+                    // Update application state to the first pending step
+                    $firstPendingRecord = $application->validasiRecords()
+                        ->where('status', 'pending')
+                        ->orderBy('order', 'asc')
+                        ->first();
+
+                    if ($firstPendingRecord) {
+                        $application->current_step = $firstPendingRecord->order;
+                    } else {
+                        $application->current_step = $targetOrder;
+                    }
                     $application->status = 'in_progress';
                     $application->save();
                     

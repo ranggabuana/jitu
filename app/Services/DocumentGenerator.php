@@ -113,21 +113,33 @@ class DocumentGenerator
         // 4.5. Add ${GAMBAR_TTE} and ${LOGO_KABUPATEN} to replacements
         $gambarTte = \App\Models\Setting::get('gambar_tte');
         $tteHtml = '';
-        if ($gambarTte && File::exists(public_path($gambarTte))) {
-            $imageData = base64_encode(File::get(public_path($gambarTte)));
-            $mime = File::mimeType(public_path($gambarTte));
-            $src = 'data:' . $mime . ';base64,' . $imageData;
-            $tteHtml = '<img src="' . $src . '" style="max-width: 150px; max-height: 150px;" alt="TTE" />';
+        if ($gambarTte) {
+            $ttePath = public_path($gambarTte);
+            if (!File::exists($ttePath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($gambarTte)) {
+                $ttePath = \Illuminate\Support\Facades\Storage::disk('public')->path($gambarTte);
+            }
+            if (File::exists($ttePath)) {
+                $imageData = base64_encode(File::get($ttePath));
+                $mime = File::mimeType($ttePath);
+                $src = 'data:' . $mime . ';base64,' . $imageData;
+                $tteHtml = '<img src="' . $src . '" style="max-width: 150px; max-height: 150px;" alt="TTE" />';
+            }
         }
         $baseReplacements['${GAMBAR_TTE}'] = $tteHtml;
 
         $logoKabupaten = \App\Models\Setting::get('logo_kabupaten');
         $logoKabHtml = '';
-        if ($logoKabupaten && File::exists(public_path($logoKabupaten))) {
-            $imageData = base64_encode(File::get(public_path($logoKabupaten)));
-            $mime = File::mimeType(public_path($logoKabupaten));
-            $src = 'data:' . $mime . ';base64,' . $imageData;
-            $logoKabHtml = '<img src="' . $src . '" style="max-height: 110px; width: auto;" alt="Logo Kabupaten" />';
+        if ($logoKabupaten) {
+            $logoPath = public_path($logoKabupaten);
+            if (!File::exists($logoPath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($logoKabupaten)) {
+                $logoPath = \Illuminate\Support\Facades\Storage::disk('public')->path($logoKabupaten);
+            }
+            if (File::exists($logoPath)) {
+                $imageData = base64_encode(File::get($logoPath));
+                $mime = File::mimeType($logoPath);
+                $src = 'data:' . $mime . ';base64,' . $imageData;
+                $logoKabHtml = '<img src="' . $src . '" style="max-height: 110px; width: auto;" alt="Logo Kabupaten" />';
+            }
         }
         $baseReplacements['${LOGO_KABUPATEN}'] = $logoKabHtml;
 
@@ -183,8 +195,24 @@ class DocumentGenerator
             }
         } else {
             // Single OPD: Just standard rekom
+            $opd = null;
+            $flowWithOpd = $perijinan->activeValidationFlows()
+                ->whereIn('role', ['operator_opd', 'kepala_opd'])
+                ->whereNotNull('assigned_user_id')
+                ->with('assignedUser.opd')
+                ->get()
+                ->pluck('assignedUser.opd')
+                ->filter()
+                ->first();
+            if ($flowWithOpd) {
+                $opd = $flowWithOpd;
+            }
+            if (!$opd && auth()->check() && auth()->user()->role === 'operator_opd' && auth()->user()->opd) {
+                $opd = auth()->user()->opd;
+            }
+
             $rekomList[] = [
-                'opd' => null,
+                'opd' => $opd,
                 'data' => $application->rekom_data ?? [],
                 'filename' => 'Surat_Rekomendasi_' . $safeNoRegistrasi,
             ];
@@ -217,12 +245,18 @@ class DocumentGenerator
             $finalReplacements['${NOMOR_SURAT}'] = "{$kodePerijinan}/{$noUrut}/{$kodeOpd}/{$tahun}";
 
             // Override ${GAMBAR_TTE} for specific OPD
-            if ($opd && $opd->gambar_tte && File::exists(public_path($opd->gambar_tte))) {
-                $imageData = base64_encode(File::get(public_path($opd->gambar_tte)));
-                $mime = File::mimeType(public_path($opd->gambar_tte));
-                $src = 'data:' . $mime . ';base64,' . $imageData;
-                $finalReplacements['${GAMBAR_TTE}'] = '<img src="' . $src . '" style="max-width: 150px; max-height: 150px;" alt="TTE OPD" />';
-                $finalReplacements['${_IMG_PATH_TTE}'] = $opd->gambar_tte; // For Word template
+            if ($opd && $opd->gambar_tte) {
+                $opdTtePath = public_path($opd->gambar_tte);
+                if (!File::exists($opdTtePath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($opd->gambar_tte)) {
+                    $opdTtePath = \Illuminate\Support\Facades\Storage::disk('public')->path($opd->gambar_tte);
+                }
+                if (File::exists($opdTtePath)) {
+                    $imageData = base64_encode(File::get($opdTtePath));
+                    $mime = File::mimeType($opdTtePath);
+                    $src = 'data:' . $mime . ';base64,' . $imageData;
+                    $finalReplacements['${GAMBAR_TTE}'] = '<img src="' . $src . '" style="max-width: 150px; max-height: 150px;" alt="TTE OPD" />';
+                    $finalReplacements['${_IMG_PATH_TTE}'] = $opd->gambar_tte; // For Word template
+                }
             }
 
             // Fetch Template (OPD Specific > Perijinan > Setting)
@@ -395,11 +429,22 @@ class DocumentGenerator
             $gambarTte = $replacements['${_IMG_PATH_TTE}'] ?? \App\Models\Setting::get('gambar_tte');
             $logoKab = \App\Models\Setting::get('logo_kabupaten');
 
-            // Handle Image Placeholders for both formats
-            foreach (['GAMBAR TTE' => $gambarTte, 'LOGO KABUPATEN' => $logoKab] as $macro => $path) {
-                if ($path && File::exists(public_path($path))) {
+            // Handle Image Placeholders for both formats (spaces and underscores)
+            $macros = [
+                'GAMBAR TTE' => $gambarTte,
+                'GAMBAR_TTE' => $gambarTte,
+                'LOGO KABUPATEN' => $logoKab,
+                'LOGO_KABUPATEN' => $logoKab,
+            ];
+            foreach ($macros as $macro => $path) {
+                $actualPath = $path ? public_path($path) : null;
+                if ($path && !File::exists($actualPath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+                    $actualPath = \Illuminate\Support\Facades\Storage::disk('public')->path($path);
+                }
+
+                if ($path && $actualPath && File::exists($actualPath)) {
                     $imgConfig = [
-                        'path' => public_path($path),
+                        'path' => $actualPath,
                         'width' => ($macro === 'GAMBAR TTE' ? 100 : 80), 
                         'height' => 100, 
                         'ratio' => false
