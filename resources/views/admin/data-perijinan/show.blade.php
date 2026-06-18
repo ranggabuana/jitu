@@ -380,49 +380,6 @@
                     </div>
                 </div>
 
-                <!-- Card: Lampiran File -->
-                @if ($application->form_files && count($application->form_files) > 0)
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                        <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center border border-purple-200 dark:border-purple-800">
-                                    <i class="mdi mdi-paperclip text-purple-600 dark:text-purple-400 text-xl"></i>
-                                </div>
-                                <div>
-                                    <h2 class="font-bold text-gray-800 dark:text-white text-base">Lampiran Berkas</h2>
-                                    <p class="text-gray-500 text-[10px] uppercase font-bold mt-0.5 tracking-wider">{{ collect($application->form_files)->flatten()->count() }} Berkas Terlampir</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="p-5">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                @foreach ($application->form_files as $fieldId => $files)
-                                    @php $field = $application->perijinan->activeFormFields->firstWhere('id', $fieldId); $fieldName = $field ? $field->label : 'Field #' . $fieldId; $filesArray = is_array($files) ? $files : [$files]; @endphp
-                                    @foreach ($filesArray as $file)
-                                        @if ($file)
-                                            @php $isImage = in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png', 'gif', 'webp']); $isPdf = strtolower(pathinfo($file, PATHINFO_EXTENSION)) === 'pdf'; @endphp
-                                            <div class="group flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-blue-400 transition-all bg-white dark:bg-gray-900/50">
-                                                <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 {{ $isImage ? 'bg-green-100 text-green-600' : ($isPdf ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600') }}">
-                                                    <i class="mdi {{ $isImage ? 'mdi-image' : ($isPdf ? 'mdi-file-pdf-box' : 'mdi-file') }} text-xl"></i>
-                                                </div>
-                                                <div class="flex-1 min-w-0">
-                                                    <p class="text-xs font-bold text-gray-800 dark:text-white truncate">{{ basename($file) }}</p>
-                                                    <p class="text-[10px] text-gray-500 uppercase font-bold">{{ $fieldName }}</p>
-                                                </div>
-                                                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    @php $rp = str_replace('uploads/perijinan/', '', $file); $pv = route('data-perijinan.download-file', ['filepath' => $rp, 'preview' => 1]); @endphp
-                                                    @if ($isImage || $isPdf) <button onclick="{{ $isImage ? 'previewImage' : 'openPdfPreview' }}('{{ $pv }}', '{{ basename($file) }}')" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"><i class="mdi mdi-eye"></i></button> @endif
-                                                    <a href="{{ route('data-perijinan.download-file', $rp) }}" class="p-1.5 text-green-600 hover:bg-green-50 rounded-lg"><i class="mdi mdi-download"></i></a>
-                                                </div>
-                                            </div>
-                                        @endif
-                                    @endforeach
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
-                @endif
-
                 <!-- Card: Dokumen Surat Pengajuan -->
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
