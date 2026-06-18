@@ -72,7 +72,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Settings Routes (Admin Only)
-    Route::middleware(['auth', 'admin.role'])->prefix('settings')->name('settings.')->group(function () {
+    Route::middleware(['auth', 'admin.role', 'role:admin'])->prefix('settings')->name('settings.')->group(function () {
         Route::get('/application', [ApplicationSettingsController::class, 'index'])->name('application');
         Route::put('/application', [ApplicationSettingsController::class, 'update'])->name('application.update');
         Route::post('/application/preview-template', [ApplicationSettingsController::class, 'previewTemplate'])->name('application.preview-template');
@@ -103,12 +103,12 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // OPD Routes (Admin Only)
-    Route::middleware(['admin.role'])->group(function () {
+    Route::middleware(['admin.role', 'role:admin'])->group(function () {
         Route::resource('opd', OpdController::class);
     });
 
     // Perijinan Routes (Admin Only)
-    Route::middleware(['admin.role'])->group(function () {
+    Route::middleware(['admin.role', 'role:admin'])->group(function () {
         Route::resource('perijinan', PerijinanController::class);
         Route::get('perijinan/{id}/form-builder', [PerijinanController::class, 'formBuilder'])->name('perijinan.form-builder');
         Route::put('perijinan/{id}/templates', [PerijinanController::class, 'updateTemplates'])->name('perijinan.templates.update');
@@ -129,13 +129,13 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Berita Routes (Admin Only)
-    Route::middleware(['admin.role'])->group(function () {
+    Route::middleware(['admin.role', 'role:admin'])->group(function () {
         Route::resource('berita', BeritaController::class);
         Route::post('berita/{id}/toggle-slider', [BeritaController::class, 'toggleSlider'])->name('berita.toggle-slider');
     });
 
     // Regulasi Routes (Admin Only)
-    Route::middleware(['admin.role'])->group(function () {
+    Route::middleware(['admin.role', 'role:admin'])->group(function () {
         // Jenis Regulasi
         Route::resource('jenis-regulasi', JenisRegulasiController::class);
         
@@ -146,13 +146,13 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Panduan Routes (Admin Only)
-    Route::middleware(['admin.role'])->group(function () {
+    Route::middleware(['admin.role', 'role:admin'])->group(function () {
         Route::resource('panduan', PanduanController::class);
         Route::get('panduan/{id}/preview', [PanduanController::class, 'preview'])->name('panduan.preview');
     });
 
     // SKM Routes (Admin Only)
-    Route::middleware(['admin.role'])->prefix('skm')->name('skm.')->group(function () {
+    Route::middleware(['admin.role', 'role:admin'])->prefix('skm')->name('skm.')->group(function () {
         // Data SKM (Pertanyaan)
         Route::resource('data', DataSkmController::class);
 
@@ -163,13 +163,13 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Pengguna Routes (Admin Only)
-    Route::middleware(['admin.role'])->prefix('pengguna')->name('pengguna.')->group(function () {
+    Route::middleware(['admin.role', 'role:admin'])->prefix('pengguna')->name('pengguna.')->group(function () {
         Route::resource('data', PenggunaController::class);
         Route::patch('/data/{user}/status', [PenggunaController::class, 'updateStatus'])->name('data.update-status');
     });
 
     // Data Pemerintah Routes (Admin Only)
-    Route::middleware(['admin.role'])->prefix('pemerintah')->name('pemerintah.')->group(function () {
+    Route::middleware(['admin.role', 'role:admin'])->prefix('pemerintah')->name('pemerintah.')->group(function () {
         Route::get('/', [\App\Http\Controllers\PemerintahController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\PemerintahController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\PemerintahController::class, 'store'])->name('store');
