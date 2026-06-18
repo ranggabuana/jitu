@@ -1742,13 +1742,19 @@ class DataPerijinanController extends Controller
         // Get the full path relative to public folder
         $relativePath = 'uploads/perijinan/' . ltrim($filepath, '/');
         $path = public_path($relativePath);
+        
+        // Fallback for hosting environments using unique public folder mappings
+        if (!file_exists($path)) {
+            $path = base_path('public/' . $relativePath);
+        }
 
         // Debug logging
-        \Log::info('File access attempt', [
-            'filepath' => $filepath,
-            'relativePath' => $relativePath,
-            'fullPath' => $path,
-            'preview' => $request->has('preview')
+        \Log::info('File access attempt details:', [
+            'filepath_input' => $filepath,
+            'resolved_relative' => $relativePath,
+            'computed_public_path' => $path,
+            'file_exists_status' => file_exists($path) ? 'YES' : 'NO',
+            'base_path' => base_path()
         ]);
 
         // Verify the file exists
