@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Perijinan;
 use App\Models\DataPerijinan;
+use App\Models\PerijinanOpdConfig;
 use App\Models\User;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -145,12 +146,11 @@ class DocumentGenerator
         $applicantReplacements = [];
         if (!empty($application->form_data) && is_array($application->form_data)) {
             foreach ($application->form_data as $fieldId => $value) {
-                if (!is_array($value)) {
-                    $applicantReplacements['${' . strtoupper(str_replace(' ', '_', $fieldId)) . '}'] = $value;
-                    $field = $perijinan->activeFormFields->firstWhere('id', $fieldId);
-                    if ($field) {
-                        $applicantReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $value;
-                    }
+                $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
+                $applicantReplacements['${' . strtoupper(str_replace(' ', '_', $fieldId)) . '}'] = $valStr;
+                $field = $perijinan->activeFormFields->firstWhere('id', $fieldId);
+                if ($field) {
+                    $applicantReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $valStr;
                 }
             }
         }
@@ -199,12 +199,11 @@ class DocumentGenerator
 
             $rekomReplacements = [];
             foreach ($rekomData as $key => $value) {
-                if (!is_array($value)) {
-                    $rekomReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $value;
-                    $field = $perijinan->activeFormFields->where('form_type', 'rekom')->firstWhere('name', $key);
-                    if ($field) {
-                        $rekomReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $value;
-                    }
+                $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
+                $rekomReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $valStr;
+                $field = $perijinan->activeFormFields->where('form_type', 'rekom')->firstWhere('name', $key);
+                if ($field) {
+                    $rekomReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $valStr;
                 }
             }
 
@@ -274,12 +273,11 @@ class DocumentGenerator
             if ($type === 'izin') {
                 if (!empty($application->izin_data) && is_array($application->izin_data)) {
                     foreach ($application->izin_data as $key => $value) {
-                        if (!is_array($value)) {
-                            $dataReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $value;
-                            $field = $perijinan->activeFormFields->where('form_type', 'izin')->firstWhere('name', $key);
-                            if ($field) {
-                                $dataReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $value;
-                            }
+                        $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
+                        $dataReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $valStr;
+                        $field = $perijinan->activeFormFields->where('form_type', 'izin')->firstWhere('name', $key);
+                        if ($field) {
+                            $dataReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $valStr;
                         }
                     }
                 }
@@ -408,8 +406,8 @@ class DocumentGenerator
                     ];
 
                     try {
-                        // Replace ${IMAGE_VAR}
-                        $templateProcessor->setMacroChars('${', '}');
+                        // Replace [IMAGE_VAR]
+                        $templateProcessor->setMacroChars('[', ']');
                         $templateProcessor->setImageValue($macro, $imgConfig);
 
                         // Replace ${IMAGE_VAR}
@@ -430,7 +428,7 @@ class DocumentGenerator
             $templateProcessor->saveAs($tempDocxPath);
 
             $librePath = env('LIBREOFFICE_PATH', 'libreoffice');
-            $profilePath = storage_path('app/libreoffice_profile');
+            $profilePath = storage_path('app/libreoffice_profile_' . uniqid());
             
             if (!File::exists($profilePath)) {
                 File::makeDirectory($profilePath, 0755, true);
@@ -446,6 +444,11 @@ class DocumentGenerator
             }
             
             exec($command . ' 2>&1', $output, $returnVar);
+
+            // Clean up unique profile path
+            if (File::exists($profilePath)) {
+                File::deleteDirectory($profilePath);
+            }
 
             if ($returnVar === 0) {
                 @unlink($tempDocxPath);
@@ -483,7 +486,7 @@ class DocumentGenerator
                 $nameLower = strtolower($field->name);
                 if (str_contains($labelLower, 'pekerjaan') || str_contains($nameLower, 'pekerjaan')) {
                     if (!empty($value)) {
-                        return $value;
+                        return is_array($value) ? implode(', ', $value) : (string)$value;
                     }
                 }
             }
@@ -896,14 +899,6 @@ class DocumentGenerator
                     <br />
                     <strong><u>Nama Kepala Dinas</u></strong><br />
                     NIP. .........................
-                </td>
-            </tr>
-        </tbody>
-    </table>
-</div>';
-    }
-}
-              NIP. .........................
                 </td>
             </tr>
         </tbody>
