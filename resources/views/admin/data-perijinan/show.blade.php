@@ -399,7 +399,7 @@
                                 @foreach ($application->form_files as $fieldId => $files)
                                     @php $field = $application->perijinan->activeFormFields->firstWhere('id', $fieldId); $fieldName = $field ? $field->label : 'Field #' . $fieldId; $filesArray = is_array($files) ? $files : [$files]; @endphp
                                     @foreach ($filesArray as $file)
-                                        @if ($file && file_exists(public_path($file)))
+                                        @if ($file)
                                             @php $isImage = in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png', 'gif', 'webp']); $isPdf = strtolower(pathinfo($file, PATHINFO_EXTENSION)) === 'pdf'; @endphp
                                             <div class="group flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-blue-400 transition-all bg-white dark:bg-gray-900/50">
                                                 <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 {{ $isImage ? 'bg-green-100 text-green-600' : ($isPdf ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600') }}">
