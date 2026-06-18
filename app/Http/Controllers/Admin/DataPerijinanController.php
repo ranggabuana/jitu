@@ -1715,8 +1715,8 @@ class DataPerijinanController extends Controller
     {
         $user = auth()->user();
 
-        // Decode URL-encoded path - double decode to handle browser and rawurlencode differences
-        $filepath = urldecode(urldecode($filepath));
+        // Decode URL-encoded path naturally
+        $filepath = urldecode($filepath);
         
         // Security: Prevent directory traversal attacks
         $filepath = str_replace('..', '', $filepath);

@@ -410,9 +410,9 @@
                                                     <p class="text-[10px] text-gray-500 uppercase font-bold">{{ $fieldName }}</p>
                                                 </div>
                                                 <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    @php $rp = str_replace('uploads/perijinan/', '', $file); $pv = route('data-perijinan.download-file', ['filepath' => rawurlencode($rp), 'preview' => 1]); @endphp
+                                                    @php $rp = str_replace('uploads/perijinan/', '', $file); $pv = route('data-perijinan.download-file', ['filepath' => $rp, 'preview' => 1]); @endphp
                                                     @if ($isImage || $isPdf) <button onclick="{{ $isImage ? 'previewImage' : 'openPdfPreview' }}('{{ $pv }}', '{{ basename($file) }}')" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"><i class="mdi mdi-eye"></i></button> @endif
-                                                    <a href="{{ route('data-perijinan.download-file', rawurlencode($rp)) }}" class="p-1.5 text-green-600 hover:bg-green-50 rounded-lg"><i class="mdi mdi-download"></i></a>
+                                                    <a href="{{ route('data-perijinan.download-file', $rp) }}" class="p-1.5 text-green-600 hover:bg-green-50 rounded-lg"><i class="mdi mdi-download"></i></a>
                                                 </div>
                                             </div>
                                         @endif
@@ -464,7 +464,7 @@
                                             </div>
                                             <div class="flex items-center gap-2 mt-auto">
                                                 <button onclick="openPdfPreview('{{ asset($doc['file']) }}', '{{ $doc['label'] }}')" class="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold uppercase tracking-wider">Pratinjau</button>
-                                                <a href="{{ route('data-perijinan.download-file', rawurlencode($rp)) }}" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-gray-600 transition-colors"><i class="mdi mdi-download"></i></a>
+                                                <a href="{{ route('data-perijinan.download-file', $rp) }}" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-gray-600 transition-colors"><i class="mdi mdi-download"></i></a>
                                             </div>
                                         </div>
                                     </div>
@@ -1630,7 +1630,14 @@
             });
         }
 
-        function previewImage(url, title) { fetch(url).then(r => r.blob()).then(blob => { const img = document.getElementById('previewImageElement'); img.src = URL.createObjectURL(blob); document.getElementById('previewImageName').textContent = title; const m = document.getElementById('imagePreviewModal'); m.classList.remove('hidden'); m.classList.add('flex'); }); }
+        function previewImage(url, title) { 
+            const img = document.getElementById('previewImageElement'); 
+            img.src = url; 
+            document.getElementById('previewImageName').textContent = title; 
+            const m = document.getElementById('imagePreviewModal'); 
+            m.classList.remove('hidden'); 
+            m.classList.add('flex'); 
+        }
 
         function openPdfPreview(url, title) { document.getElementById('pdf-modal-title').textContent = title; document.getElementById('pdf-modal-iframe').src = url; const m = document.getElementById('modal-pdf-preview'); m.classList.remove('hidden'); m.classList.add('flex'); }
         function closePdfPreview() { document.getElementById('modal-pdf-preview').classList.add('hidden'); document.getElementById('pdf-modal-iframe').src = ''; }
