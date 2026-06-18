@@ -1715,8 +1715,8 @@ class DataPerijinanController extends Controller
     {
         $user = auth()->user();
 
-        // Decode URL-encoded path
-        $filepath = urldecode($filepath);
+        // Decode URL-encoded path - double decode to handle browser and rawurlencode differences
+        $filepath = urldecode(urldecode($filepath));
         
         // Security: Prevent directory traversal attacks
         $filepath = str_replace('..', '', $filepath);
@@ -1740,7 +1740,7 @@ class DataPerijinanController extends Controller
         }
 
         // Get the full path relative to public folder
-        $relativePath = 'uploads/perijinan/' . $filepath;
+        $relativePath = 'uploads/perijinan/' . ltrim($filepath, '/');
         $path = public_path($relativePath);
 
         // Debug logging
@@ -1751,26 +1751,22 @@ class DataPerijinanController extends Controller
             'preview' => $request->has('preview')
         ]);
 
-        // Verify the file exists and is within the expected directory
-        $realPath = realpath($path);
-        $publicPath = realpath(public_path('uploads/perijinan'));
-        
-        if ($realPath && $publicPath && strpos($realPath, $publicPath) === 0 && file_exists($path)) {
+        // Verify the file exists
+        if (file_exists($path)) {
+            // For images/PDFs in preview mode, return as inline stream
             if ($request->has('preview')) {
                 return response()->file($path);
             }
             return response()->download($path);
         }
 
-        \Log::error('File not found or invalid path', [
+        \Log::error('File not found', [
             'filepath' => $filepath,
-            'path' => $path,
-            'realPath' => $realPath,
-            'publicPath' => $publicPath
+            'path' => $path
         ]);
 
         return redirect()->back()
-            ->with('error', 'File tidak ditemukan.');
+            ->with('error', 'File tidak ditemukan di server.');
     }
 
     /**
