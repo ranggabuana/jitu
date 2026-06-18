@@ -334,11 +334,8 @@ class PerijinanController extends Controller
 
         // Access Control: Role based field restrictions
         if ($user->role === 'operator_opd') {
-            if ($field->form_type !== 'rekom') {
-                return redirect()->back()->with('error', 'Anda hanya memiliki akses untuk memperbarui field Formulir Rekomendasi.');
-            }
-            if ($field->opd_id !== $user->opd_id) {
-                return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk memperbarui field ini.');
+            if ($request->input('form_type') !== 'rekom') {
+                return redirect()->back()->with('error', 'Anda hanya memiliki akses untuk mengelola field Formulir Rekomendasi.');
             }
         } elseif ($user->role === 'verifikator') {
 
@@ -366,7 +363,13 @@ class PerijinanController extends Controller
         $validated['form_type'] = $validated['form_type'] ?? 'global';
         $validated['is_required'] = $request->has('is_required');
         $validated['is_active'] = $request->has('is_active');
-        $validated['order'] = $request->input('order', $perijinan->formFields()->where('form_type', $validated['form_type'])->count() + 1);
+
+        // If operator OPD, associate with their OPD
+        if ($user->role === 'operator_opd' && $user->opd_id) {
+            $validated['opd_id'] = $user->opd_id;
+        }
+
+        $validated['order'] = $request->input('order', $perijinan->formFields()->where('form_type', $validated['form_type'])->max('order') + 1);
 
         // Encode options as JSON if it's an array
         if (isset($validated['options']) && is_array($validated['options'])) {
@@ -407,6 +410,9 @@ class PerijinanController extends Controller
         if ($user->role === 'operator_opd') {
             if ($field->form_type !== 'rekom' || $request->input('form_type') !== 'rekom') {
                 return redirect()->back()->with('error', 'Anda hanya memiliki akses untuk mengelola field Formulir Rekomendasi.');
+            }
+            if ($field->opd_id !== $user->opd_id) {
+                return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk memperbarui field ini.');
             }
         } elseif ($user->role === 'verifikator') {
             if ($field->form_type !== 'izin' || $request->input('form_type') !== 'izin') {

@@ -536,19 +536,33 @@
                                             <div class="flex flex-col gap-2">
                                                 @foreach($involvedOpds as $opd)
                                                     @php 
-                                                        $count = $perijinan->formFields()->where('opd_id', $opd->id)->count(); 
+                                                        $opdCustomFields = $perijinan->formFields()->where('opd_id', $opd->id)->get();
+                                                        $count = $opdCustomFields->count(); 
                                                         $hasCustom = $count > 0;
                                                     @endphp
-                                                    <div class="flex items-center justify-between bg-white dark:bg-gray-800 px-3 py-2 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm">
-                                                        <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ $opd->nama_opd }}</span>
+                                                    <div class="flex flex-col bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+                                                        <div class="flex items-center justify-between px-3 py-2 border-b border-gray-50 dark:border-gray-700/50 bg-gray-50/30 dark:bg-gray-900/20">
+                                                            <span class="text-xs font-bold text-gray-700 dark:text-gray-300">{{ $opd->nama_opd }}</span>
+                                                            @if($hasCustom)
+                                                                <span class="inline-flex items-center gap-1 text-[10px] font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-md">
+                                                                    {{ $count }} Field Kustom
+                                                                </span>
+                                                            @else
+                                                                <span class="inline-flex items-center gap-1 text-[10px] font-medium text-gray-400 italic">
+                                                                    Default Admin
+                                                                </span>
+                                                            @endif
+                                                        </div>
                                                         @if($hasCustom)
-                                                            <span class="inline-flex items-center gap-1 text-[10px] font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-md">
-                                                                {{ $count }} Field Kustom
-                                                            </span>
-                                                        @else
-                                                            <span class="inline-flex items-center gap-1 text-[10px] font-medium text-gray-400 italic">
-                                                                Default Admin
-                                                            </span>
+                                                            <div class="px-3 py-2">
+                                                                <div class="flex flex-wrap gap-1.5">
+                                                                    @foreach($opdCustomFields as $f)
+                                                                        <span class="text-[9px] px-1.5 py-0.5 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded border border-gray-100 dark:border-gray-600 font-medium">
+                                                                            {{ $f->label }}
+                                                                        </span>
+                                                                    @endforeach
+                                                                </div>
+                                                            </div>
                                                         @endif
                                                     </div>
                                                 @endforeach
