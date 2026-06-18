@@ -353,15 +353,62 @@ class DashboardController extends Controller
                 $field = $perijinan->activeFormFields->firstWhere('id', $fieldId);
 
                 if ($field) {
+                    $allowedTypes = $field->file_types ?: 'pdf,doc,docx,jpg,jpeg,png';
+                    $maxSize = $field->max_file_size ? ($field->max_file_size * 1024) : 10240; // in KB
+
                     foreach ((array) $files as $index => $file) {
-                        $ruleKey = "form_fields.$fieldId.$index";
-                        $rules = ['file', 'mimes:pdf,doc,docx,jpg,jpeg,png', 'max:10240'];
+                        $ruleKey = "form_files.$fieldId.$index";
+                        $rules = ['file', "mimes:{$allowedTypes}", "max:{$maxSize}"];
                         $validationRules[$ruleKey] = $rules;
+                        
+                        $validationMessages["{$ruleKey}.mimes"] = "Format file {$field->label} harus berupa: {$allowedTypes}.";
+                        $validationMessages["{$ruleKey}.max"] = "Ukuran file {$field->label} maksimal " . ($field->max_file_size ?: 10) . " MB.";
                     }
                 }
             }
         }
 
+        // ===============================
+        // 🔹 VALIDASI EXISTING FILES (DOKUMEN SAYA)
+        // ===============================
+        if (!empty($existingFiles)) {
+            foreach ($existingFiles as $fieldId => $userDokumenId) {
+                if ($userDokumenId) {
+                    $field = $perijinan->activeFormFields->firstWhere('id', $fieldId);
+                    if ($field) {
+                        $userDoc = \App\Models\UserDokumen::find($userDokumenId);
+                        if ($userDoc) {
+                            $originalPath = public_path($userDoc->file_path);
+                            if (file_exists($originalPath)) {
+                                $extension = strtolower(pathinfo($originalPath, PATHINFO_EXTENSION));
+                                $allowedTypesStr = strtolower($field->file_types ?: 'pdf,doc,docx,jpg,jpeg,png');
+                                $allowedTypes = array_map('trim', explode(',', $allowedTypesStr));
+                                
+                                if (!in_array($extension, $allowedTypes)) {
+                                    $fieldKey = "existing_files.{$fieldId}";
+                                    // Use a closure or standard rules to trigger validation error
+                                    $validationRules[$fieldKey] = [
+                                        function ($attribute, $value, $fail) use ($field, $allowedTypesStr) {
+                                            $fail("Format file pada dokumen saya untuk berkas '{$field->label}' tidak sesuai. Harus berupa: {$allowedTypesStr}.");
+                                        }
+                                    ];
+                                }
+
+                                $fileSizeInKb = filesize($originalPath) / 1024;
+                                $maxMB = ($field->max_file_size ?: 10);
+                                $maxSize = $maxMB * 1024;
+                                if ($fileSizeInKb > $maxSize) {
+                                    $fieldKey = "existing_files.{$fieldId}";
+                                    $validationRules[$fieldKey][] = function ($attribute, $value, $fail) use ($field, $maxMB) {
+                                        $fail("Ukuran berkas pada dokumen saya untuk '{$field->label}' melebihi batas maksimal {$maxMB} MB.");
+                                    };
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         $request->validate($validationRules, $validationMessages);
 
@@ -689,6 +736,72 @@ class DashboardController extends Controller
         $validatedData = $request->validate($validationRules, $validationMessages);
 
         \Log::info('Validation passed', $validatedData);
+
+        // ===============================
+        // 🔹 VALIDASI FILE UNTUK UPDATE PENGAJUAN
+        // ===============================
+        if ($formFiles) {
+            foreach ($formFiles as $fieldId => $files) {
+                $field = $perijinan->activeFormFields->firstWhere('id', $fieldId);
+                if ($field) {
+                    $allowedTypes = $field->file_types ?: 'pdf,doc,docx,jpg,jpeg,png';
+                    $maxSize = $field->max_file_size ? ($field->max_file_size * 1024) : 10240; // in KB
+
+                    foreach ((array) $files as $index => $file) {
+                        if ($file) {
+                            $ruleKey = "form_fields_files.$fieldId.$index";
+                            $rules = ['file', "mimes:{$allowedTypes}", "max:{$maxSize}"];
+                            $validationRules[$ruleKey] = $rules;
+                            
+                            $validationMessages["{$ruleKey}.mimes"] = "Format file {$field->label} harus berupa: {$allowedTypes}.";
+                            $validationMessages["{$ruleKey}.max"] = "Ukuran file {$field->label} maksimal " . ($field->max_file_size ?: 10) . " MB.";
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!empty($existingFiles)) {
+            foreach ($existingFiles as $fieldId => $userDokumenId) {
+                if ($userDokumenId) {
+                    $field = $perijinan->activeFormFields->firstWhere('id', $fieldId);
+                    if ($field) {
+                        $userDoc = \App\Models\UserDokumen::find($userDokumenId);
+                        if ($userDoc) {
+                            $originalPath = public_path($userDoc->file_path);
+                            if (file_exists($originalPath)) {
+                                $extension = strtolower(pathinfo($originalPath, PATHINFO_EXTENSION));
+                                $allowedTypesStr = strtolower($field->file_types ?: 'pdf,doc,docx,jpg,jpeg,png');
+                                $allowedTypes = array_map('trim', explode(',', $allowedTypesStr));
+                                
+                                if (!in_array($extension, $allowedTypes)) {
+                                    $fieldKey = "existing_files.{$fieldId}";
+                                    $validationRules[$fieldKey] = [
+                                        function ($attribute, $value, $fail) use ($field, $allowedTypesStr) {
+                                            $fail("Format file pada dokumen saya untuk berkas '{$field->label}' tidak sesuai. Harus berupa: {$allowedTypesStr}.");
+                                        }
+                                    ];
+                                }
+
+                                $fileSizeInKb = filesize($originalPath) / 1024;
+                                $maxMB = ($field->max_file_size ?: 10);
+                                $maxSize = $maxMB * 1024;
+                                if ($fileSizeInKb > $maxSize) {
+                                    $fieldKey = "existing_files.{$fieldId}";
+                                    $validationRules[$fieldKey][] = function ($attribute, $value, $fail) use ($field, $maxMB) {
+                                        $fail("Ukuran berkas pada dokumen saya untuk '{$field->label}' melebihi batas maksimal {$maxMB} MB.");
+                                    };
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!empty($validationRules)) {
+            $request->validate(array_filter($validationRules), $validationMessages);
+        }
 
         // ===============================
         // 🔹 UPLOAD FILES & EXISTING FILES
