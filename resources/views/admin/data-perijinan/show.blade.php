@@ -571,10 +571,15 @@
                                                             <option value="{{ $opt }}" {{ $val == $opt ? 'selected' : '' }}>{{ $opt }}</option>
                                                         @endforeach
                                                     </select>
-                                                @elseif($field->type === 'file')
+                                                @elseif($field->type === 'pas_foto' || $field->type === 'file')
                                                     <div class="space-y-2">
-                                                        <input type="file" name="{{ $field->name }}" class="{{ $cls }}">
+                                                        <input type="file" name="{{ $field->name }}" class="{{ $cls }}" accept="{{ $field->type === 'pas_foto' ? '.jpg,.jpeg,.png' : '*' }}">
                                                         @if($val)
+                                                            @if($field->type === 'pas_foto')
+                                                                <div class="mb-2">
+                                                                    <img src="{{ asset($val) }}" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" class="rounded border shadow-sm" alt="Pas Foto" />
+                                                                </div>
+                                                            @endif
                                                             <div class="flex items-center gap-2 mt-2 p-2 bg-purple-50 dark:bg-purple-900/30 rounded-lg border border-purple-100 dark:border-purple-800">
                                                                 <i class="mdi mdi-file-check text-purple-600"></i>
                                                                 <a href="{{ asset($val) }}" target="_blank" class="text-xs font-bold text-purple-700 dark:text-purple-300 hover:underline truncate">Lihat File Terupload</a>
@@ -630,13 +635,18 @@
                                             <label class="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">{{ $field->label }}</label>
                                             <p class="text-xs font-semibold text-gray-700 dark:text-gray-200">
                                                 @php $v = $opdRekomData[$field->name] ?? '-'; @endphp
-                                                @if($field->type === 'file' && $v !== '-')
+                                                @if(($field->type === 'file' || $field->type === 'pas_foto') && $v !== '-')
+                                                    @if($field->type === 'pas_foto')
+                                                        <div class="mb-2">
+                                                            <img src="{{ asset($v) }}" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" class="rounded border shadow-sm" alt="Pas Foto" />
+                                                        </div>
+                                                    @endif
                                                     <a href="{{ asset($v) }}" target="_blank" class="text-blue-600 hover:underline">Buka Berkas</a>
                                                 @else
                                                     {{ $v }}
                                                 @endif
                                             </p>
-                                            @if($field->type === 'file')
+                                            @if($field->type === 'file' || $field->type === 'pas_foto')
                                                 @php
                                                     $matchingGlobalField = $application->perijinan->activeFormFields
                                                         ->where('form_type', 'global')
@@ -792,10 +802,15 @@
                                                         <option value="{{ $opt }}" {{ $val == $opt ? 'selected' : '' }}>{{ $opt }}</option>
                                                     @endforeach
                                                 </select>
-                                            @elseif($field->type === 'file')
+                                            @elseif($field->type === 'file' || $field->type === 'pas_foto')
                                                 <div class="space-y-2">
-                                                    <input type="file" name="{{ $field->name }}" class="{{ $cls }}" {{ $ro }}>
+                                                    <input type="file" name="{{ $field->name }}" class="{{ $cls }}" {{ $ro }} accept="{{ $field->type === 'pas_foto' ? '.jpg,.jpeg,.png' : '*' }}">
                                                     @if($val)
+                                                        @if($field->type === 'pas_foto')
+                                                            <div class="mb-2">
+                                                                <img src="{{ asset($val) }}" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" class="rounded border shadow-sm" alt="Pas Foto" />
+                                                            </div>
+                                                        @endif
                                                         <div class="flex items-center gap-2 mt-2 p-2 bg-purple-50 dark:bg-purple-900/30 rounded-lg border border-purple-100 dark:border-purple-800">
                                                             <i class="mdi mdi-file-check text-purple-600"></i>
                                                             <a href="{{ asset($val) }}" target="_blank" class="text-xs font-bold text-purple-700 dark:text-purple-300 hover:underline truncate">Lihat File Terupload</a>
@@ -1006,10 +1021,15 @@
                                                     <option value="{{ $opt }}" {{ $val == $opt ? 'selected' : '' }}>{{ $opt }}</option>
                                                 @endforeach
                                             </select>
-                                        @elseif($field->type === 'file')
+                                        @elseif($field->type === 'file' || $field->type === 'pas_foto')
                                             <div class="space-y-2">
-                                                <input type="file" name="{{ $field->name }}" class="{{ $cls }}" {{ $ro }}>
+                                                <input type="file" name="{{ $field->name }}" class="{{ $cls }}" {{ $ro }} accept="{{ $field->type === 'pas_foto' ? '.jpg,.jpeg,.png' : '*' }}">
                                                 @if($val)
+                                                    @if($field->type === 'pas_foto')
+                                                        <div class="mb-2">
+                                                            <img src="{{ asset($val) }}" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" class="rounded border shadow-sm" alt="Pas Foto" />
+                                                        </div>
+                                                    @endif
                                                     <div class="flex items-center gap-2 mt-2 p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg border border-indigo-100 dark:border-indigo-800">
                                                         <i class="mdi mdi-file-check text-indigo-600"></i>
                                                         <a href="{{ asset($val) }}" target="_blank" class="text-xs font-bold text-indigo-700 dark:text-indigo-300 hover:underline truncate">Lihat File Terupload</a>
@@ -1384,7 +1404,7 @@
                         <div class="space-y-1">
                             <label class="text-[10px] text-gray-400 uppercase font-black tracking-widest">{{ $field->label }}</label>
                             <div class="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700">
-                                @if($field->type === 'file')
+                                @if($field->type === 'file' || $field->type === 'pas_foto')
                                     @php 
                                         $files = $application->form_files[$field->id] ?? [];
                                         $filesArray = is_array($files) ? $files : [$files];
@@ -1393,6 +1413,11 @@
                                     @if(count($filesArray) > 0)
                                         <div class="flex flex-col gap-2">
                                             @foreach($filesArray as $file)
+                                                @if($field->type === 'pas_foto')
+                                                    <div class="mb-2">
+                                                        <img src="{{ asset($file) }}" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" class="rounded border shadow-sm" alt="Pas Foto" />
+                                                    </div>
+                                                @endif
                                                 <a href="{{ asset($file) }}" target="_blank" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-bold text-xs truncate">
                                                     <i class="mdi mdi-file-download-outline text-base"></i>
                                                     Buka Berkas

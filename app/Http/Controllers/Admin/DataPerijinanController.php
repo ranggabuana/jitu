@@ -1025,6 +1025,7 @@ class DataPerijinanController extends Controller
             if ($field->type === 'email') $fieldRules[] = 'email';
             if ($field->type === 'number') $fieldRules[] = 'numeric';
             if ($field->type === 'file') $fieldRules[] = 'file|max:5120';
+            if ($field->type === 'pas_foto') $fieldRules[] = 'file|mimes:jpeg,jpg,png|max:5120';
             $rules[$field->name] = $fieldRules;
         }
 
@@ -1045,7 +1046,7 @@ class DataPerijinanController extends Controller
             $currentData = $multiData[$opdId] ?? [];
 
             foreach ($rekomFields as $field) {
-                if ($field->type === 'file' && $request->hasFile($field->name)) {
+                if (($field->type === 'file' || $field->type === 'pas_foto') && $request->hasFile($field->name)) {
                     $file = $request->file($field->name);
                     $filename = 'rekom_' . $opdId . '_' . $field->name . '_' . time() . '.' . $file->getClientOriginalExtension();
                     $path = 'uploads/perijinan/' . $application->perijinan_id;
@@ -1083,7 +1084,7 @@ class DataPerijinanController extends Controller
             // Standard Single OPD Logic
             $rekomData = $application->rekom_data ?? [];
             foreach ($rekomFields as $field) {
-                if ($field->type === 'file' && $request->hasFile($field->name)) {
+                if (($field->type === 'file' || $field->type === 'pas_foto') && $request->hasFile($field->name)) {
                     $file = $request->file($field->name);
                     $filename = 'rekom_' . $field->name . '_' . time() . '.' . $file->getClientOriginalExtension();
                     $path = 'uploads/perijinan/' . $application->perijinan_id;
@@ -1164,6 +1165,7 @@ class DataPerijinanController extends Controller
             if ($field->type === 'email') $fieldRules[] = 'email';
             if ($field->type === 'number') $fieldRules[] = 'numeric';
             if ($field->type === 'file') $fieldRules[] = 'file|max:5120';
+            if ($field->type === 'pas_foto') $fieldRules[] = 'file|mimes:jpeg,jpg,png|max:5120';
             
             $rules[$field->name] = $fieldRules;
         }
@@ -1175,7 +1177,7 @@ class DataPerijinanController extends Controller
         $izinData = $application->izin_data ?? [];
 
         foreach ($izinFields as $field) {
-            if ($field->type === 'file' && $request->hasFile($field->name)) {
+            if (($field->type === 'file' || $field->type === 'pas_foto') && $request->hasFile($field->name)) {
                 $file = $request->file($field->name);
                 if ($file->isValid()) {
                     $filename = 'izin_' . $field->name . '_' . time() . '.' . $file->getClientOriginalExtension();

@@ -309,7 +309,7 @@ class DashboardController extends Controller
 
             $fieldKey = 'form_fields.' . $field->id;
 
-            if ($field->type !== 'file') {
+            if ($field->type !== 'file' && $field->type !== 'pas_foto') {
 
                 $rules = [];
 
@@ -339,7 +339,7 @@ class DashboardController extends Controller
         $existingFiles = $request->input('existing_files', []);
 
         foreach ($perijinan->activeFormFields as $field) {
-            if ($field->type === 'file' && $field->is_required) {
+            if (($field->type === 'file' || $field->type === 'pas_foto') && $field->is_required) {
                 // If it's required but NOT in uploaded files and NOT in existing files, throw error
                 if (empty($formFiles[$field->id]) && empty($existingFiles[$field->id])) {
                     $validationRules["form_files.{$field->id}"] = 'required';
@@ -353,7 +353,7 @@ class DashboardController extends Controller
                 $field = $perijinan->activeFormFields->firstWhere('id', $fieldId);
 
                 if ($field) {
-                    $allowedTypes = $field->file_types ?: 'pdf,doc,docx,jpg,jpeg,png';
+                    $allowedTypes = $field->file_types ?: ($field->type === 'pas_foto' ? 'jpg,jpeg,png' : 'pdf,doc,docx,jpg,jpeg,png');
                     $maxSize = $field->max_file_size ? ($field->max_file_size * 1024) : 10240; // in KB
 
                     foreach ((array) $files as $index => $file) {
@@ -694,7 +694,7 @@ class DashboardController extends Controller
         foreach ($perijinan->activeFormFields as $field) {
             $fieldKey = 'form_fields.' . $field->id;
 
-            if ($field->type !== 'file') {
+            if ($field->type !== 'file' && $field->type !== 'pas_foto') {
                 $rules = [];
 
                 // Check if field has value in request
@@ -741,11 +741,12 @@ class DashboardController extends Controller
         // ===============================
         // 🔹 VALIDASI FILE UNTUK UPDATE PENGAJUAN
         // ===============================
+        $formFiles = $request->file('form_fields');
         if ($formFiles) {
             foreach ($formFiles as $fieldId => $files) {
                 $field = $perijinan->activeFormFields->firstWhere('id', $fieldId);
                 if ($field) {
-                    $allowedTypes = $field->file_types ?: 'pdf,doc,docx,jpg,jpeg,png';
+                    $allowedTypes = $field->file_types ?: ($field->type === 'pas_foto' ? 'jpg,jpeg,png' : 'pdf,doc,docx,jpg,jpeg,png');
                     $maxSize = $field->max_file_size ? ($field->max_file_size * 1024) : 10240; // in KB
 
                     foreach ((array) $files as $index => $file) {

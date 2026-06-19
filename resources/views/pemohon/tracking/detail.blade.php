@@ -618,7 +618,7 @@
                         <div class="space-y-1">
                             <label class="text-[10px] text-gray-500 uppercase font-bold tracking-widest">{{ $field->label }}</label>
                             <div class="p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
-                                @if($field->type === 'file')
+                                @if($field->type === 'file' || $field->type === 'pas_foto')
                                     @php 
                                         $files = $data->form_files[$field->id] ?? [];
                                         $filesArray = is_array($files) ? $files : [$files];
@@ -627,6 +627,11 @@
                                     @if(count($filesArray) > 0)
                                         <div class="flex flex-col gap-2">
                                             @foreach($filesArray as $file)
+                                                @if($field->type === 'pas_foto')
+                                                    <div class="mb-2">
+                                                        <img src="{{ asset($file) }}" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" class="rounded border shadow-sm" alt="Pas Foto" />
+                                                    </div>
+                                                @endif
                                                 <a href="{{ asset($file) }}" target="_blank" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-bold text-sm truncate">
                                                     <i class="fas fa-file-download"></i> Buka Berkas
                                                 </a>

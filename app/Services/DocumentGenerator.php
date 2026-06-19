@@ -200,6 +200,38 @@ class DocumentGenerator
             }
         }
 
+        // Add pas_foto field replacements
+        if ($perijinan->activeFormFields) {
+            foreach ($perijinan->activeFormFields->where('form_type', 'global') as $field) {
+                if ($field->type === 'pas_foto') {
+                    $files = $application->form_files[$field->id] ?? null;
+                    $file = is_array($files) ? ($files[0] ?? null) : $files;
+                    
+                    if ($file) {
+                        $absolutePath = public_path($file);
+                        if (!File::exists($absolutePath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($file)) {
+                            $absolutePath = \Illuminate\Support\Facades\Storage::disk('public')->path($file);
+                        }
+                        if (File::exists($absolutePath)) {
+                            $imageData = base64_encode(File::get($absolutePath));
+                            $mime = File::mimeType($absolutePath);
+                            $src = 'data:' . $mime . ';base64,' . $imageData;
+                            $htmlImg = '<img src="' . $src . '" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" alt="Pas Foto" />';
+                            
+                            $applicantReplacements['${' . strtoupper(str_replace(' ', '_', $field->name)) . '}'] = $htmlImg;
+                            $applicantReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $htmlImg;
+                            $applicantReplacements['${' . strtoupper(str_replace(' ', '_', $field->id)) . '}'] = $htmlImg;
+                            $applicantReplacements['${_IMG_VAL_' . strtoupper(str_replace(' ', '_', $field->name)) . '}'] = $absolutePath;
+                            $applicantReplacements['${_IMG_VAL_' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $absolutePath;
+                        }
+                    } else {
+                        $applicantReplacements['${' . strtoupper(str_replace(' ', '_', $field->name)) . '}'] = '';
+                        $applicantReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = '';
+                    }
+                }
+            }
+        }
+
         // 6. Handle Recommendation Documents (The Complex Part)
         $rekomList = [];
         if ($perijinan->is_multi_opd) {
@@ -260,11 +292,45 @@ class DocumentGenerator
 
             $rekomReplacements = [];
             foreach ($rekomData as $key => $value) {
-                $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
-                $rekomReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $valStr;
                 $field = $perijinan->activeFormFields->where('form_type', 'rekom')->firstWhere('name', $key);
-                if ($field) {
-                    $rekomReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $valStr;
+                if ($field && $field->type === 'pas_foto') {
+                    if ($value) {
+                        $absolutePath = public_path($value);
+                        if (!File::exists($absolutePath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($value)) {
+                            $absolutePath = \Illuminate\Support\Facades\Storage::disk('public')->path($value);
+                        }
+                        if (File::exists($absolutePath)) {
+                            $imageData = base64_encode(File::get($absolutePath));
+                            $mime = File::mimeType($absolutePath);
+                            $src = 'data:' . $mime . ';base64,' . $imageData;
+                            $htmlImg = '<img src="' . $src . '" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" alt="Pas Foto" />';
+                            
+                            $rekomReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $htmlImg;
+                            if ($field) {
+                                $rekomReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $htmlImg;
+                            }
+                            $rekomReplacements['${_IMG_VAL_' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $absolutePath;
+                            if ($field) {
+                                $rekomReplacements['${_IMG_VAL_' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $absolutePath;
+                            }
+                        } else {
+                            $rekomReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = '';
+                            if ($field) {
+                                $rekomReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = '';
+                            }
+                        }
+                    } else {
+                        $rekomReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = '';
+                        if ($field) {
+                            $rekomReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = '';
+                        }
+                    }
+                } else {
+                    $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
+                    $rekomReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $valStr;
+                    if ($field) {
+                        $rekomReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $valStr;
+                    }
                 }
             }
 
@@ -340,11 +406,45 @@ class DocumentGenerator
             if ($type === 'izin') {
                 if (!empty($application->izin_data) && is_array($application->izin_data)) {
                     foreach ($application->izin_data as $key => $value) {
-                        $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
-                        $dataReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $valStr;
                         $field = $perijinan->activeFormFields->where('form_type', 'izin')->firstWhere('name', $key);
-                        if ($field) {
-                            $dataReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $valStr;
+                        if ($field && $field->type === 'pas_foto') {
+                            if ($value) {
+                                $absolutePath = public_path($value);
+                                if (!File::exists($absolutePath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($value)) {
+                                    $absolutePath = \Illuminate\Support\Facades\Storage::disk('public')->path($value);
+                                }
+                                if (File::exists($absolutePath)) {
+                                    $imageData = base64_encode(File::get($absolutePath));
+                                    $mime = File::mimeType($absolutePath);
+                                    $src = 'data:' . $mime . ';base64,' . $imageData;
+                                    $htmlImg = '<img src="' . $src . '" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" alt="Pas Foto" />';
+                                    
+                                    $dataReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $htmlImg;
+                                    if ($field) {
+                                        $dataReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $htmlImg;
+                                    }
+                                    $dataReplacements['${_IMG_VAL_' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $absolutePath;
+                                    if ($field) {
+                                        $dataReplacements['${_IMG_VAL_' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $absolutePath;
+                                    }
+                                } else {
+                                    $dataReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = '';
+                                    if ($field) {
+                                        $dataReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = '';
+                                    }
+                                }
+                            } else {
+                                $dataReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = '';
+                                if ($field) {
+                                    $dataReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = '';
+                                }
+                            }
+                        } else {
+                            $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
+                            $dataReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $valStr;
+                            if ($field) {
+                                $dataReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $valStr;
+                            }
                         }
                     }
                 }
@@ -512,6 +612,36 @@ class DocumentGenerator
                         $templateProcessor->setMacroChars('${', '}');
                         $templateProcessor->setValue($macro, '');
                     } catch (\Exception $e) {}
+                }
+            }
+
+            // Handle dynamic pas_foto image replacements
+            foreach ($replacements as $key => $path) {
+                if (str_contains($key, '_IMG_VAL_')) {
+                    $cleanMacro = str_replace(['[', ']', '${', '}', '_IMG_VAL_'], '', $key);
+                    if ($path && File::exists($path)) {
+                        $imgConfig = [
+                            'path' => $path,
+                            'width' => 105,   // ~2.79 cm at 96 DPI
+                            'height' => 144,  // ~3.81 cm at 96 DPI
+                            'ratio' => false  // Forces aspect ratio to 3x4 portrait
+                        ];
+                        try {
+                            $templateProcessor->setMacroChars('[', ']');
+                            $templateProcessor->setImageValue($cleanMacro, $imgConfig);
+                            $templateProcessor->setMacroChars('${', '}');
+                            $templateProcessor->setImageValue($cleanMacro, $imgConfig);
+                        } catch (\Exception $e) {
+                            \Log::error("Failed to replace dynamic word image {$cleanMacro}: " . $e->getMessage());
+                        }
+                    } else {
+                        try {
+                            $templateProcessor->setMacroChars('[', ']');
+                            $templateProcessor->setValue($cleanMacro, '');
+                            $templateProcessor->setMacroChars('${', '}');
+                            $templateProcessor->setValue($cleanMacro, '');
+                        } catch (\Exception $e) {}
+                    }
                 }
             }
 

@@ -227,7 +227,7 @@
                                             <p class="mt-1 text-xs text-gray-500">{{ $field->help_text }}</p>
                                         @endif
                                     </div>
-                                @elseif ($field->type === 'file')
+                                @elseif ($field->type === 'file' || $field->type === 'pas_foto')
                                     <div class="p-5 border-2 border-amber-100 rounded-2xl bg-amber-50/30">
                                         <label class="block text-sm font-bold text-gray-800 mb-3">
                                             {{ $field->label }}
@@ -243,7 +243,7 @@
                                                 onclick="document.getElementById('file_{{ $field->id }}').click()">
                                                 <input type="file" name="form_files[{{ $field->id }}][]"
                                                     id="file_{{ $field->id }}"
-                                                    accept="{{ $field->file_types ?? '*' }}"
+                                                    accept="{{ $field->file_types ? implode(',', array_map(fn($t) => '.' . trim($t), explode(',', $field->file_types))) : ($field->type === 'pas_foto' ? '.jpg,.jpeg,.png' : '*') }}"
                                                     style="position: absolute; left: -9999px; opacity: 0;"
                                                     multiple
                                                     onchange="previewFiles(this, {{ $field->id }})">

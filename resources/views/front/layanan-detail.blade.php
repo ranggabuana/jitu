@@ -308,7 +308,7 @@
                                     class="flex items-start gap-3 p-4 rounded-xl border border-gray-100 hover:border-orange-300 hover:bg-orange-50/50 transition-all">
                                     <div
                                         class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                        @if ($field->type === 'file')
+                                        @if ($field->type === 'file' || $field->type === 'pas_foto')
                                             <i class="fas fa-file-upload text-orange-600"></i>
                                         @elseif($field->type === 'textarea')
                                             <i class="fas fa-paragraph text-orange-600"></i>
