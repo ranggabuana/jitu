@@ -71,6 +71,7 @@ class DocumentGenerator
             '${OPD_USER}' => $user->opd->nama_opd ?? '-',
             '${NAMA_IZIN}' => $perijinan->nama_perijinan ?? '-',
             '${TANGGAL}' => self::formatDateIndonesian($application->created_at ?? now()),
+            '${TANGGAL_HARI_INI}' => self::formatDateIndonesian($application->created_at ?? now()),
             '${NO_REGISTRASI}' => $application->no_registrasi ?? '-',
             '${MASA_AKTIF}' => $application->masa_aktif ? self::formatDateIndonesian($application->masa_aktif) : '-',
         ];

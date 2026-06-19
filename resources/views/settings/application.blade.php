@@ -495,7 +495,7 @@
                                 <div class="flex flex-wrap gap-2">
                                     @foreach([
                                         '${NAMA_IZIN}' => 'Jenis Izin',
-                                        '${TANGGAL}' => 'Tanggal Hari Ini (Lengkap)',
+                                        '${TANGGAL_HARI_INI}' => 'Tanggal Hari Ini (Lengkap)',
                                         '${NO_REGISTRASI}' => 'Nomor Registrasi Permohonan',
                                         '${NOMOR_SURAT}' => 'Nomor Surat Lengkap (Format: KODE/NO/OPD/TAHUN)',
                                         '${MASA_AKTIF}' => 'Masa Aktif Izin',
@@ -926,7 +926,7 @@
             '${STATUS_PEMOHON}': 'Perseorangan',
             '${ROLE}': 'Pemohon',
             '${NAMA_IZIN}': '<span style="background:#ede9fe;color:#5b21b6;padding:0 4px;border-radius:3px;font-weight:bold;">Izin Apotek</span>',
-            '${TANGGAL}': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">Banjarnegara, 20 Mei 2026</span>',
+            '${TANGGAL_HARI_INI}': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">Banjarnegara, 20 Mei 2026</span>',
             '${NO_REGISTRASI}': '<span style="background:#fef3c7;color:#92400e;padding:0 4px;border-radius:3px;font-weight:bold;">REG-2026-0520-001</span>',
         };
 

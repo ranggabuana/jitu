@@ -211,6 +211,7 @@ class PerijinanController extends Controller
             '[PEKERJAAN]' => 'Wiraswasta',
             '[NAMA IZIN]' => $perijinan->nama_perijinan,
             '[TANGGAL]' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
+            '[TANGGAL_HARI_INI]' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
             '[NO REGISTRASI]' => 'REG-' . date('Ymd') . '-12345',
             '[NOMOR URUT]' => $realNumber,
         ];

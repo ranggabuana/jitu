@@ -649,7 +649,7 @@
                                 <div class="flex flex-wrap gap-2">
                                     @foreach([
                                         '${NAMA_IZIN}' => 'Jenis Izin',
-                                        '${TANGGAL}' => 'Tanggal Hari Ini (Lengkap)',
+                                        '${TANGGAL_HARI_INI}' => 'Tanggal Hari Ini (Lengkap)',
                                         '${NO_REGISTRASI}' => 'Nomor Registrasi Permohonan',
                                         '${NOMOR_SURAT}' => 'Nomor Surat Lengkap (Format: KODE/NO/OPD/TAHUN)',
                                         '${MASA_AKTIF}' => 'Masa Aktif Izin',

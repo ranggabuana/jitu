@@ -303,6 +303,7 @@ class ApplicationSettingsController extends Controller
             '[PEKERJAAN]' => 'Wiraswasta',
             '[NAMA IZIN]' => 'Izin Apotek',
             '[TANGGAL]' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
+            '[TANGGAL_HARI_INI]' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
             '[NO REGISTRASI]' => 'REG-' . date('Ymd') . '-001',
         ];
 
