@@ -130,13 +130,13 @@
                                     </div>
 
                                 {{-- File --}}
-                                @elseif($field->type === 'file' || $field->type === 'pas_foto')
+                                @elseif($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar')
                                     @php
                                         $acceptAttr = '';
                                         if ($field->file_types) {
                                             $types = array_map(fn($t) => '.' . trim($t), explode(',', $field->file_types));
                                             $acceptAttr = 'accept="' . implode(',', $types) . '"';
-                                        } elseif ($field->type === 'pas_foto') {
+                                        } elseif ($field->type === 'pas_foto' || $field->type === 'gambar') {
                                             $acceptAttr = 'accept=".jpg,.jpeg,.png"';
                                         }
                                     @endphp

@@ -200,10 +200,10 @@ class DocumentGenerator
             }
         }
 
-        // Add pas_foto field replacements
+        // Add pas_foto and gambar field replacements
         if ($perijinan->activeFormFields) {
             foreach ($perijinan->activeFormFields->where('form_type', 'global') as $field) {
-                if ($field->type === 'pas_foto') {
+                if ($field->type === 'pas_foto' || $field->type === 'gambar') {
                     $files = $application->form_files[$field->id] ?? null;
                     $file = is_array($files) ? ($files[0] ?? null) : $files;
                     
@@ -216,13 +216,20 @@ class DocumentGenerator
                             $imageData = base64_encode(File::get($absolutePath));
                             $mime = File::mimeType($absolutePath);
                             $src = 'data:' . $mime . ';base64,' . $imageData;
-                            $htmlImg = '<img src="' . $src . '" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" alt="Pas Foto" />';
+                            
+                            if ($field->type === 'pas_foto') {
+                                $htmlImg = '<img src="' . $src . '" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" alt="Pas Foto" />';
+                                $imgValType = 'PASFOTO_';
+                            } else {
+                                $htmlImg = '<img src="' . $src . '" style="max-width: 100%; max-height: 250px; width: auto; height: auto; object-fit: contain;" alt="Gambar" />';
+                                $imgValType = 'GAMBAR_';
+                            }
                             
                             $applicantReplacements['${' . strtoupper(str_replace(' ', '_', $field->name)) . '}'] = $htmlImg;
                             $applicantReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $htmlImg;
                             $applicantReplacements['${' . strtoupper(str_replace(' ', '_', $field->id)) . '}'] = $htmlImg;
-                            $applicantReplacements['${_IMG_VAL_' . strtoupper(str_replace(' ', '_', $field->name)) . '}'] = $absolutePath;
-                            $applicantReplacements['${_IMG_VAL_' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $absolutePath;
+                            $applicantReplacements['${_IMG_VAL_' . $imgValType . strtoupper(str_replace(' ', '_', $field->name)) . '}'] = $absolutePath;
+                            $applicantReplacements['${_IMG_VAL_' . $imgValType . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $absolutePath;
                         }
                     } else {
                         $applicantReplacements['${' . strtoupper(str_replace(' ', '_', $field->name)) . '}'] = '';
@@ -293,7 +300,7 @@ class DocumentGenerator
             $rekomReplacements = [];
             foreach ($rekomData as $key => $value) {
                 $field = $perijinan->activeFormFields->where('form_type', 'rekom')->firstWhere('name', $key);
-                if ($field && $field->type === 'pas_foto') {
+                if ($field && ($field->type === 'pas_foto' || $field->type === 'gambar')) {
                     if ($value) {
                         $absolutePath = public_path($value);
                         if (!File::exists($absolutePath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($value)) {
@@ -303,15 +310,22 @@ class DocumentGenerator
                             $imageData = base64_encode(File::get($absolutePath));
                             $mime = File::mimeType($absolutePath);
                             $src = 'data:' . $mime . ';base64,' . $imageData;
-                            $htmlImg = '<img src="' . $src . '" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" alt="Pas Foto" />';
+                            
+                            if ($field->type === 'pas_foto') {
+                                $htmlImg = '<img src="' . $src . '" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" alt="Pas Foto" />';
+                                $imgValType = 'PASFOTO_';
+                            } else {
+                                $htmlImg = '<img src="' . $src . '" style="max-width: 100%; max-height: 250px; width: auto; height: auto; object-fit: contain;" alt="Gambar" />';
+                                $imgValType = 'GAMBAR_';
+                            }
                             
                             $rekomReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $htmlImg;
                             if ($field) {
                                 $rekomReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $htmlImg;
                             }
-                            $rekomReplacements['${_IMG_VAL_' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $absolutePath;
+                            $rekomReplacements['${_IMG_VAL_' . $imgValType . strtoupper(str_replace(' ', '_', $key)) . '}'] = $absolutePath;
                             if ($field) {
-                                $rekomReplacements['${_IMG_VAL_' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $absolutePath;
+                                $rekomReplacements['${_IMG_VAL_' . $imgValType . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $absolutePath;
                             }
                         } else {
                             $rekomReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = '';
@@ -407,7 +421,7 @@ class DocumentGenerator
                 if (!empty($application->izin_data) && is_array($application->izin_data)) {
                     foreach ($application->izin_data as $key => $value) {
                         $field = $perijinan->activeFormFields->where('form_type', 'izin')->firstWhere('name', $key);
-                        if ($field && $field->type === 'pas_foto') {
+                        if ($field && ($field->type === 'pas_foto' || $field->type === 'gambar')) {
                             if ($value) {
                                 $absolutePath = public_path($value);
                                 if (!File::exists($absolutePath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($value)) {
@@ -417,15 +431,22 @@ class DocumentGenerator
                                     $imageData = base64_encode(File::get($absolutePath));
                                     $mime = File::mimeType($absolutePath);
                                     $src = 'data:' . $mime . ';base64,' . $imageData;
-                                    $htmlImg = '<img src="' . $src . '" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" alt="Pas Foto" />';
+                                    
+                                    if ($field->type === 'pas_foto') {
+                                        $htmlImg = '<img src="' . $src . '" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" alt="Pas Foto" />';
+                                        $imgValType = 'PASFOTO_';
+                                    } else {
+                                        $htmlImg = '<img src="' . $src . '" style="max-width: 100%; max-height: 250px; width: auto; height: auto; object-fit: contain;" alt="Gambar" />';
+                                        $imgValType = 'GAMBAR_';
+                                    }
                                     
                                     $dataReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $htmlImg;
                                     if ($field) {
                                         $dataReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $htmlImg;
                                     }
-                                    $dataReplacements['${_IMG_VAL_' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $absolutePath;
+                                    $dataReplacements['${_IMG_VAL_' . $imgValType . strtoupper(str_replace(' ', '_', $key)) . '}'] = $absolutePath;
                                     if ($field) {
-                                        $dataReplacements['${_IMG_VAL_' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $absolutePath;
+                                        $dataReplacements['${_IMG_VAL_' . $imgValType . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $absolutePath;
                                     }
                                 } else {
                                     $dataReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = '';
@@ -615,17 +636,30 @@ class DocumentGenerator
                 }
             }
 
-            // Handle dynamic pas_foto image replacements
+            // Handle dynamic image replacements (pas_foto and gambar)
             foreach ($replacements as $key => $path) {
                 if (str_contains($key, '_IMG_VAL_')) {
-                    $cleanMacro = str_replace(['[', ']', '${', '}', '_IMG_VAL_'], '', $key);
-                    if ($path && File::exists($path)) {
+                    $isGambar = str_contains($key, '_IMG_VAL_GAMBAR_');
+                    
+                    if ($isGambar) {
+                        $cleanMacro = str_replace(['[', ']', '${', '}', '_IMG_VAL_GAMBAR_'], '', $key);
+                        $imgConfig = [
+                            'path' => $path,
+                            'width' => 350,   // Max width bounding box
+                            'height' => 250,  // Max height bounding box
+                            'ratio' => true   // Conserves original aspect ratio
+                        ];
+                    } else {
+                        $cleanMacro = str_replace(['[', ']', '${', '}', '_IMG_VAL_PASFOTO_', '_IMG_VAL_'], '', $key);
                         $imgConfig = [
                             'path' => $path,
                             'width' => 105,   // ~2.79 cm at 96 DPI
                             'height' => 144,  // ~3.81 cm at 96 DPI
                             'ratio' => false  // Forces aspect ratio to 3x4 portrait
                         ];
+                    }
+                    
+                    if ($path && File::exists($path)) {
                         try {
                             $templateProcessor->setMacroChars('[', ']');
                             $templateProcessor->setImageValue($cleanMacro, $imgConfig);

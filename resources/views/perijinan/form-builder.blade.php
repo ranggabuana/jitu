@@ -248,6 +248,7 @@
                             <option value="checkbox">Checkbox</option>
                             <option value="file">File Upload</option>
                             <option value="pas_foto">Pas Foto (3x4)</option>
+                            <option value="gambar">Gambar (Dokumentasi/Bebas)</option>
                         </select>
                     </div>
 
@@ -453,7 +454,7 @@
                                                 <i class="mdi mdi-shape-outline"></i>
                                                 {{ $field->type }}
                                             </span>
-                                            @if($field->type === 'file' || $field->type === 'pas_foto')
+                                            @if($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar')
                                                 @if($field->file_types)
                                                     <span
                                                         class="flex items-center gap-1.5 bg-orange-50 dark:bg-orange-900/20 px-2.5 py-1 rounded-md text-orange-600 dark:text-orange-400">
@@ -936,6 +937,7 @@
                         <option value="checkbox">Checkbox</option>
                         <option value="file">File Upload</option>
                         <option value="pas_foto">Pas Foto (3x4)</option>
+                        <option value="gambar">Gambar (Dokumentasi/Bebas)</option>
                     </select>
                 </div>
 
@@ -1085,7 +1087,7 @@
             const optionsContainer = document.getElementById('options_container');
             const fileConfigContainer = document.getElementById('file_config_container');
             const needsOptions = ['select', 'radio', 'checkbox'].includes(type);
-            const needsFileConfig = type === 'file' || type === 'pas_foto';
+            const needsFileConfig = type === 'file' || type === 'pas_foto' || type === 'gambar';
             
             optionsContainer.classList.toggle('hidden', !needsOptions);
             fileConfigContainer.classList.toggle('hidden', !needsFileConfig);
@@ -1106,7 +1108,7 @@
             const optionsContainer = document.getElementById('edit_options_container');
             const editFileConfigContainer = document.getElementById('edit_file_config_container');
             const needsOptions = ['select', 'radio', 'checkbox'].includes(type);
-            const needsFileConfig = type === 'file' || type === 'pas_foto';
+            const needsFileConfig = type === 'file' || type === 'pas_foto' || type === 'gambar';
             
             optionsContainer.classList.toggle('hidden', !needsOptions);
             editFileConfigContainer.classList.toggle('hidden', !needsFileConfig);

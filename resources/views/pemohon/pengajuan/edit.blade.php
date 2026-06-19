@@ -89,7 +89,7 @@
                                     <span class="text-red-500">*</span>
                                 @endif
                             </span>
-                            @if($field->type === 'file' || $field->type === 'pas_foto')
+                            @if($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar')
                                 <button type="button" onclick="openDokumenModal({{ $field->id }})" class="text-xs bg-purple-100 text-purple-700 hover:bg-purple-200 px-3 py-1 rounded-full transition-colors flex items-center gap-1 font-semibold">
                                     <i class="mdi mdi-folder-account"></i> Dokumen Saya
                                 </button>
@@ -101,7 +101,7 @@
                                 class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 @error('form_fields.'.$field->id) 'border-red-500' @enderror"
                                 placeholder="Masukkan {{ strtolower($field->label) }}">{{ old('form_fields.'.$field->id, $fieldValue) }}</textarea>
 
-                        @elseif($field->type === 'file' || $field->type === 'pas_foto')
+                        @elseif($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar')
                             <div class="p-5 border-2 border-orange-100 rounded-2xl bg-orange-50/30 space-y-4">
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <!-- Option 1: Upload from Device -->
@@ -109,7 +109,7 @@
                                         onclick="document.getElementById('file_{{ $field->id }}').click()">
                                         <input type="file" name="form_fields[{{ $field->id }}][]" id="file_{{ $field->id }}" multiple
                                             style="position: absolute; left: -9999px; opacity: 0;"
-                                            accept="{{ $field->file_types ? implode(',', array_map(fn($t) => '.' . trim($t), explode(',', $field->file_types))) : ($field->type === 'pas_foto' ? '.jpg,.jpeg,.png' : ($field->accepted_formats ?? '*')) }}">
+                                            accept="{{ $field->file_types ? implode(',', array_map(fn($t) => '.' . trim($t), explode(',', $field->file_types))) : (($field->type === 'pas_foto' || $field->type === 'gambar') ? '.jpg,.jpeg,.png' : ($field->accepted_formats ?? '*')) }}">
                                         <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-orange-100 group-hover:text-orange-600 transition-colors text-gray-400">
                                             <i class="fas fa-cloud-upload-alt text-lg"></i>
                                         </div>

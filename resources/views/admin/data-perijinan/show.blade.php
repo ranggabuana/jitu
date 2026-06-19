@@ -571,13 +571,17 @@
                                                             <option value="{{ $opt }}" {{ $val == $opt ? 'selected' : '' }}>{{ $opt }}</option>
                                                         @endforeach
                                                     </select>
-                                                @elseif($field->type === 'pas_foto' || $field->type === 'file')
+                                                @elseif($field->type === 'pas_foto' || $field->type === 'file' || $field->type === 'gambar')
                                                     <div class="space-y-2">
-                                                        <input type="file" name="{{ $field->name }}" class="{{ $cls }}" accept="{{ $field->type === 'pas_foto' ? '.jpg,.jpeg,.png' : '*' }}">
+                                                        <input type="file" name="{{ $field->name }}" class="{{ $cls }}" accept="{{ ($field->type === 'pas_foto' || $field->type === 'gambar') ? '.jpg,.jpeg,.png' : '*' }}">
                                                         @if($val)
                                                             @if($field->type === 'pas_foto')
                                                                 <div class="mb-2">
                                                                     <img src="{{ asset($val) }}" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" class="rounded border shadow-sm" alt="Pas Foto" />
+                                                                </div>
+                                                            @elseif($field->type === 'gambar')
+                                                                <div class="mb-2">
+                                                                    <img src="{{ asset($val) }}" style="max-width: 300px; max-height: 200px; object-fit: contain;" class="rounded border shadow-sm" alt="Gambar" />
                                                                 </div>
                                                             @endif
                                                             <div class="flex items-center gap-2 mt-2 p-2 bg-purple-50 dark:bg-purple-900/30 rounded-lg border border-purple-100 dark:border-purple-800">
@@ -635,10 +639,14 @@
                                             <label class="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">{{ $field->label }}</label>
                                             <p class="text-xs font-semibold text-gray-700 dark:text-gray-200">
                                                 @php $v = $opdRekomData[$field->name] ?? '-'; @endphp
-                                                @if(($field->type === 'file' || $field->type === 'pas_foto') && $v !== '-')
+                                                @if(($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar') && $v !== '-')
                                                     @if($field->type === 'pas_foto')
                                                         <div class="mb-2">
                                                             <img src="{{ asset($v) }}" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" class="rounded border shadow-sm" alt="Pas Foto" />
+                                                        </div>
+                                                    @elseif($field->type === 'gambar')
+                                                        <div class="mb-2">
+                                                            <img src="{{ asset($v) }}" style="max-width: 300px; max-height: 200px; object-fit: contain;" class="rounded border shadow-sm" alt="Gambar" />
                                                         </div>
                                                     @endif
                                                     <a href="{{ asset($v) }}" target="_blank" class="text-blue-600 hover:underline">Buka Berkas</a>
@@ -646,7 +654,7 @@
                                                     {{ $v }}
                                                 @endif
                                             </p>
-                                            @if($field->type === 'file' || $field->type === 'pas_foto')
+                                            @if($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar')
                                                 @php
                                                     $matchingGlobalField = $application->perijinan->activeFormFields
                                                         ->where('form_type', 'global')
@@ -802,13 +810,17 @@
                                                         <option value="{{ $opt }}" {{ $val == $opt ? 'selected' : '' }}>{{ $opt }}</option>
                                                     @endforeach
                                                 </select>
-                                            @elseif($field->type === 'file' || $field->type === 'pas_foto')
+                                            @elseif($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar')
                                                 <div class="space-y-2">
-                                                    <input type="file" name="{{ $field->name }}" class="{{ $cls }}" {{ $ro }} accept="{{ $field->type === 'pas_foto' ? '.jpg,.jpeg,.png' : '*' }}">
+                                                    <input type="file" name="{{ $field->name }}" class="{{ $cls }}" {{ $ro }} accept="{{ ($field->type === 'pas_foto' || $field->type === 'gambar') ? '.jpg,.jpeg,.png' : '*' }}">
                                                     @if($val)
                                                         @if($field->type === 'pas_foto')
                                                             <div class="mb-2">
                                                                 <img src="{{ asset($val) }}" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" class="rounded border shadow-sm" alt="Pas Foto" />
+                                                            </div>
+                                                        @elseif($field->type === 'gambar')
+                                                            <div class="mb-2">
+                                                                <img src="{{ asset($val) }}" style="max-width: 300px; max-height: 200px; object-fit: contain;" class="rounded border shadow-sm" alt="Gambar" />
                                                             </div>
                                                         @endif
                                                         <div class="flex items-center gap-2 mt-2 p-2 bg-purple-50 dark:bg-purple-900/30 rounded-lg border border-purple-100 dark:border-purple-800">
@@ -1021,13 +1033,17 @@
                                                     <option value="{{ $opt }}" {{ $val == $opt ? 'selected' : '' }}>{{ $opt }}</option>
                                                 @endforeach
                                             </select>
-                                        @elseif($field->type === 'file' || $field->type === 'pas_foto')
+                                        @elseif($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar')
                                             <div class="space-y-2">
-                                                <input type="file" name="{{ $field->name }}" class="{{ $cls }}" {{ $ro }} accept="{{ $field->type === 'pas_foto' ? '.jpg,.jpeg,.png' : '*' }}">
+                                                <input type="file" name="{{ $field->name }}" class="{{ $cls }}" {{ $ro }} accept="{{ ($field->type === 'pas_foto' || $field->type === 'gambar') ? '.jpg,.jpeg,.png' : '*' }}">
                                                 @if($val)
                                                     @if($field->type === 'pas_foto')
                                                         <div class="mb-2">
                                                             <img src="{{ asset($val) }}" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" class="rounded border shadow-sm" alt="Pas Foto" />
+                                                        </div>
+                                                    @elseif($field->type === 'gambar')
+                                                        <div class="mb-2">
+                                                            <img src="{{ asset($val) }}" style="max-width: 300px; max-height: 200px; object-fit: contain;" class="rounded border shadow-sm" alt="Gambar" />
                                                         </div>
                                                     @endif
                                                     <div class="flex items-center gap-2 mt-2 p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg border border-indigo-100 dark:border-indigo-800">
@@ -1404,7 +1420,7 @@
                         <div class="space-y-1">
                             <label class="text-[10px] text-gray-400 uppercase font-black tracking-widest">{{ $field->label }}</label>
                             <div class="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700">
-                                @if($field->type === 'file' || $field->type === 'pas_foto')
+                                @if($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar')
                                     @php 
                                         $files = $application->form_files[$field->id] ?? [];
                                         $filesArray = is_array($files) ? $files : [$files];
@@ -1416,6 +1432,10 @@
                                                 @if($field->type === 'pas_foto')
                                                     <div class="mb-2">
                                                         <img src="{{ asset($file) }}" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" class="rounded border shadow-sm" alt="Pas Foto" />
+                                                    </div>
+                                                @elseif($field->type === 'gambar')
+                                                    <div class="mb-2">
+                                                        <img src="{{ asset($file) }}" style="max-width: 300px; max-height: 200px; object-fit: contain;" class="rounded border shadow-sm" alt="Gambar" />
                                                     </div>
                                                 @endif
                                                 <a href="{{ asset($file) }}" target="_blank" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-bold text-xs truncate">
