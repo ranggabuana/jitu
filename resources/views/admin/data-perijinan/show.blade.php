@@ -1492,11 +1492,25 @@
                                             } else if ($isVerifikator) {
                                                 // Pastikan data izin sudah diisi dan disimpan
                                                 $isDraftGenerated = !empty($application->izin_data) && !empty($application->file_izin);
+                                            } else if ($isBo && $application->perijinan->has_bo_form && $boFields->count() > 0) {
+                                                // Pastikan data BO sudah diisi dan disimpan
+                                                $isDraftGenerated = !empty($application->bo_data);
+                                            }
+
+                                            $disabledTitle = '';
+                                            if (!$isDraftGenerated) {
+                                                if ($isBo) {
+                                                    $disabledTitle = 'Harap lengkapi dan simpan Formulir Khusus BO terlebih dahulu';
+                                                } elseif ($isOperatorOpd) {
+                                                    $disabledTitle = 'Harap lengkapi formulir dokumen rekomendasi lalu Simpan & Generate Draft terlebih dahulu';
+                                                } else {
+                                                    $disabledTitle = 'Harap lengkapi formulir dokumen izin lalu Simpan & Generate Draft terlebih dahulu';
+                                                }
                                             }
                                         @endphp
                                         <button type="button" onclick="submitValidation('approved')" 
                                             class="py-2.5 {{ $isDraftGenerated ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed opacity-50' }} text-white rounded-xl text-[9px] font-black uppercase transition-colors"
-                                            {{ !$isDraftGenerated ? 'disabled title="Harap lengkapi formulir dokumen '. ($isOperatorOpd ? 'rekomendasi' : 'izin') .' lalu Simpan & Generate Draft terlebih dahulu"' : '' }}>
+                                            {{ !$isDraftGenerated ? 'disabled title="'.$disabledTitle.'"' : '' }}>
                                             Setujui
                                         </button>
                                         <button type="button" onclick="submitValidation('rejected')" class="py-2.5 bg-red-600 hover:bg-red-700 transition-colors text-white rounded-xl text-[9px] font-black uppercase">Tolak</button>
