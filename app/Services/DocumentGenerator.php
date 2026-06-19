@@ -162,9 +162,13 @@ class DocumentGenerator
         $applicantReplacements = [];
         if (!empty($application->form_data) && is_array($application->form_data)) {
             foreach ($application->form_data as $fieldId => $value) {
-                $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
-                $applicantReplacements['${' . strtoupper(str_replace(' ', '_', $fieldId)) . '}'] = $valStr;
                 $field = $perijinan->activeFormFields->firstWhere('id', $fieldId);
+                if ($field && $field->type === 'date' && !empty($value)) {
+                    $valStr = self::formatDateIndonesian($value);
+                } else {
+                    $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
+                }
+                $applicantReplacements['${' . strtoupper(str_replace(' ', '_', $fieldId)) . '}'] = $valStr;
                 if ($field) {
                     $applicantReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $valStr;
                 }
@@ -255,7 +259,11 @@ class DocumentGenerator
                         }
                     }
                 } else {
-                    $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
+                    if ($field && $field->type === 'date' && !empty($value)) {
+                        $valStr = self::formatDateIndonesian($value);
+                    } else {
+                        $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
+                    }
                     $boReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $valStr;
                     if ($field) {
                         $boReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $valStr;
@@ -395,7 +403,11 @@ class DocumentGenerator
                         }
                     }
                 } else {
-                    $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
+                    if ($field && $field->type === 'date' && !empty($value)) {
+                        $valStr = self::formatDateIndonesian($value);
+                    } else {
+                        $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
+                    }
                     $rekomReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $valStr;
                     if ($field) {
                         $rekomReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $valStr;
@@ -522,7 +534,11 @@ class DocumentGenerator
                                 }
                             }
                         } else {
-                            $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
+                            if ($field && $field->type === 'date' && !empty($value)) {
+                                $valStr = self::formatDateIndonesian($value);
+                            } else {
+                                $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
+                            }
                             $dataReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $valStr;
                             if ($field) {
                                 $dataReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $valStr;
@@ -899,7 +915,11 @@ class DocumentGenerator
         }
 
         if (is_string($date)) {
-            $date = Carbon::parse($date);
+            try {
+                $date = Carbon::parse($date);
+            } catch (\Exception $e) {
+                return $date;
+            }
         }
 
         $months = [
@@ -917,7 +937,10 @@ class DocumentGenerator
             12 => 'Desember'
         ];
 
-        return $date->format('j') . ' ' . $months[$date->format('n')] . ' ' . $date->format('Y');
+        $monthNum = (int)$date->format('n');
+        $monthName = $months[$monthNum] ?? $date->format('F');
+
+        return $date->format('j') . ' ' . $monthName . ' ' . $date->format('Y');
     }
 
     /**
