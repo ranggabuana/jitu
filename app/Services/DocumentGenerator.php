@@ -145,10 +145,43 @@ class DocumentGenerator
 
         // 4.6. Add ${QRCODE} to replacements
         $scanUrl = route('front.perizinan.scan', $application->no_registrasi);
+        $tempQrPath = null;
         try {
-            $qrCodeBase64 = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(150)->errorCorrection('H')->generate($scanUrl));
-            $qrHtml = '<img src="data:image/png;base64,' . $qrCodeBase64 . '" style="width: 100px; height: 100px;" alt="Scan QR Code" />';
+            $qrCode = \BaconQrCode\Encoder\Encoder::encode($scanUrl, \BaconQrCode\Common\ErrorCorrectionLevel::H());
+            $matrix = $qrCode->getMatrix();
+            $width = $matrix->getWidth();
+            $height = $matrix->getHeight();
+            $margin = 4;
+            $moduleSize = 6;
+            
+            $imgWidth = ($width + 2 * $margin) * $moduleSize;
+            $imgHeight = ($height + 2 * $margin) * $moduleSize;
+            
+            $image = imagecreatetruecolor($imgWidth, $imgHeight);
+            $white = imagecolorallocate($image, 255, 255, 255);
+            $black = imagecolorallocate($image, 0, 0, 0);
+            imagefill($image, 0, 0, $white);
+            
+            for ($y = 0; $y < $height; $y++) {
+                for ($x = 0; $x < $width; $x++) {
+                    if ($matrix->get($x, $y) === 1) {
+                        $x1 = ($x + $margin) * $moduleSize;
+                        $y1 = ($y + $margin) * $moduleSize;
+                        $x2 = $x1 + $moduleSize - 1;
+                        $y2 = $y1 + $moduleSize - 1;
+                        imagefilledrectangle($image, $x1, $y1, $x2, $y2, $black);
+                    }
+                }
+            }
+            
+            $tempQrPath = storage_path('app/temp_qr_' . md5($application->no_registrasi) . '.png');
+            imagepng($image, $tempQrPath);
+            imagedestroy($image);
+            
+            $qrCodeBase64 = base64_encode(File::get($tempQrPath));
+            $qrHtml = '<img src="data:image/png;base64,' . $qrCodeBase64 . '" style="width: 60px; height: 60px;" alt="Scan QR Code" />';
             $baseReplacements['${QRCODE}'] = $qrHtml;
+            $baseReplacements['${_IMG_PATH_QRCODE}'] = $tempQrPath; // Pass the local file path to generateFromWord
         } catch (\Exception $e) {
             \Log::error('QR Code generation failed: ' . $e->getMessage());
             $baseReplacements['${QRCODE}'] = '[Gagal Generate QR Code]';
@@ -336,6 +369,10 @@ class DocumentGenerator
             $generatedPaths['file_' . $type] = $path;
         }
 
+        if ($tempQrPath && File::exists($tempQrPath)) {
+            @unlink($tempQrPath);
+        }
+
         return $generatedPaths;
     }
 
@@ -428,6 +465,7 @@ class DocumentGenerator
             // Use specific paths if provided in replacements (internal keys)
             $gambarTte = $replacements['${_IMG_PATH_TTE}'] ?? \App\Models\Setting::get('gambar_tte');
             $logoKab = \App\Models\Setting::get('logo_kabupaten');
+            $qrCode = $replacements['${_IMG_PATH_QRCODE}'] ?? null;
 
             // Handle Image Placeholders for both formats (spaces and underscores)
             $macros = [
@@ -435,19 +473,26 @@ class DocumentGenerator
                 'GAMBAR_TTE' => $gambarTte,
                 'LOGO KABUPATEN' => $logoKab,
                 'LOGO_KABUPATEN' => $logoKab,
+                'QRCODE' => $qrCode,
+                'QR_CODE' => $qrCode,
             ];
             foreach ($macros as $macro => $path) {
-                $actualPath = $path ? public_path($path) : null;
-                if ($path && !File::exists($actualPath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
-                    $actualPath = \Illuminate\Support\Facades\Storage::disk('public')->path($path);
+                if ($path && (strpos($path, '/') === 0 || strpos($path, ':\\') !== false || strpos($path, ':/') !== false)) {
+                    $actualPath = $path;
+                } else {
+                    $actualPath = $path ? public_path($path) : null;
+                    if ($path && !File::exists($actualPath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+                        $actualPath = \Illuminate\Support\Facades\Storage::disk('public')->path($path);
+                    }
                 }
 
                 if ($path && $actualPath && File::exists($actualPath)) {
                     $isTte = ($macro === 'GAMBAR TTE' || $macro === 'GAMBAR_TTE');
+                    $isQr = ($macro === 'QRCODE' || $macro === 'QR_CODE');
                     $imgConfig = [
                         'path' => $actualPath,
-                        'width' => $isTte ? 250 : 80, 
-                        'height' => $isTte ? 95 : 100, 
+                        'width' => $isTte ? 250 : ($isQr ? 60 : 80), 
+                        'height' => $isTte ? 95 : ($isQr ? 60 : 100), 
                         'ratio' => true
                     ];
 
