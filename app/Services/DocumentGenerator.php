@@ -240,6 +240,60 @@ class DocumentGenerator
             }
         }
 
+        // 5.5. Build BO Data Map (BO Form)
+        $boReplacements = [];
+        if ($perijinan->has_bo_form && !empty($application->bo_data) && is_array($application->bo_data)) {
+            foreach ($application->bo_data as $key => $value) {
+                $field = $perijinan->activeFormFields->where('form_type', 'bo')->firstWhere('name', $key);
+                if ($field && ($field->type === 'pas_foto' || $field->type === 'gambar')) {
+                    if ($value) {
+                        $absolutePath = public_path($value);
+                        if (!File::exists($absolutePath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($value)) {
+                            $absolutePath = \Illuminate\Support\Facades\Storage::disk('public')->path($value);
+                        }
+                        if (File::exists($absolutePath)) {
+                            $imageData = base64_encode(File::get($absolutePath));
+                            $mime = File::mimeType($absolutePath);
+                            $src = 'data:' . $mime . ';base64,' . $imageData;
+                            
+                            if ($field->type === 'pas_foto') {
+                                $htmlImg = '<img src="' . $src . '" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" alt="Pas Foto" />';
+                                $imgValType = 'PASFOTO_';
+                            } else {
+                                $htmlImg = '<img src="' . $src . '" style="max-width: 100%; max-height: 250px; width: auto; height: auto; object-fit: contain;" alt="Gambar" />';
+                                $imgValType = 'GAMBAR_';
+                            }
+                            
+                            $boReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $htmlImg;
+                            if ($field) {
+                                $boReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $htmlImg;
+                            }
+                            $boReplacements['${_IMG_VAL_' . $imgValType . strtoupper(str_replace(' ', '_', $key)) . '}'] = $absolutePath;
+                            if ($field) {
+                                $boReplacements['${_IMG_VAL_' . $imgValType . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $absolutePath;
+                            }
+                        } else {
+                            $boReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = '';
+                            if ($field) {
+                                $boReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = '';
+                            }
+                        }
+                    } else {
+                        $boReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = '';
+                        if ($field) {
+                            $boReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = '';
+                        }
+                    }
+                } else {
+                    $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
+                    $boReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $valStr;
+                    if ($field) {
+                        $boReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $valStr;
+                    }
+                }
+            }
+        }
+
         // 6. Handle Recommendation Documents (The Complex Part)
         $rekomList = [];
         if ($perijinan->is_multi_opd) {
@@ -349,7 +403,7 @@ class DocumentGenerator
                 }
             }
 
-            $finalReplacements = array_merge($baseReplacements, $applicantReplacements, $rekomReplacements);
+            $finalReplacements = array_merge($baseReplacements, $applicantReplacements, $boReplacements, $rekomReplacements);
             $kodePerijinan = $perijinan->kode_perijinan ?? 'PER';
             $noUrut = $application->no_rekom ?? $perijinan->next_nomor_rekom ?? '-';
             $kodeOpd = $opd ? ($opd->kode_opd ?? 'OPD') : ($application->no_rekom_kode ?? 'OPD');
@@ -472,7 +526,7 @@ class DocumentGenerator
                 }
             }
 
-            $finalReplacements = array_merge($baseReplacements, $applicantReplacements, $dataReplacements);
+            $finalReplacements = array_merge($baseReplacements, $applicantReplacements, $boReplacements, $dataReplacements);
             
             if ($type === 'izin') {
                 $kodePerijinan = $perijinan->kode_perijinan ?? 'PER';

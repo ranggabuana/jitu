@@ -196,6 +196,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{id}/apply-tte', [DataPerijinanController::class, 'applyTte'])->name('apply-tte');
         Route::put('/{id}/rekom-data', [DataPerijinanController::class, 'saveRekomData'])->name('rekom-data.save');
         Route::put('/{id}/izin-data', [DataPerijinanController::class, 'saveIzinData'])->name('izin-data.save');
+        Route::put('/{id}/bo-data', [DataPerijinanController::class, 'saveBoData'])->name('bo-data.save');
         Route::get('/{id}/sla-report', [DataPerijinanController::class, 'slaReport'])->name('sla-report');
         Route::post('/{id}/validate', [DataPerijinanController::class, 'processValidation'])->name('validate');
         Route::patch('/{id}/status', [DataPerijinanController::class, 'updateStatus'])->name('update-status');

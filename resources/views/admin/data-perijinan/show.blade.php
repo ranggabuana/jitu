@@ -277,11 +277,20 @@
         $isIzinTurn = ($cv && $cv->validationFlow->assigned_user_id === auth()->id() && $cv->validationFlow->role === 'verifikator');
         $canEditIzin = ($isVerifikator || $isAdmin) && $isIzinTurn && !in_array($application->status, ['approved', 'rejected', 'perbaikan']);
 
+        // Strict sequential editing logic for BO Form
+        $isBoTurn = ($cv && $cv->validationFlow->assigned_user_id === auth()->id() && $cv->validationFlow->role === 'bo');
+        $canEditBo = ($isBo || $isAdmin) && $isBoTurn && !in_array($application->status, ['approved', 'rejected', 'perbaikan']);
+
         // Admin can always edit if not finished
         if ($isAdmin && !in_array($application->status, ['approved', 'rejected'])) {
             $canEditRekom = true;
             $canEditIzin = true;
+            $canEditBo = true;
         }
+
+        $boFields = $application->perijinan->has_bo_form
+            ? $application->perijinan->formFields()->where('form_type', 'bo')->where('is_active', true)->orderBy('order')->get()
+            : collect([]);
 
         // Tab visibility logic
         $showRekomTab = ($isOperatorOpd || $isKepalaOpd || $isAdmin || $isVerifikator || $isKadin);
@@ -379,6 +388,143 @@
                         </button>
                     </div>
                 </div>
+
+                @if($application->perijinan->has_bo_form && ($canEditBo || !empty($application->bo_data)))
+                <!-- Card: Form Khusus BO -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-emerald-200 dark:border-emerald-900/30 overflow-hidden mb-6">
+                    <div class="px-5 py-4 border-b border-emerald-100 dark:border-emerald-900/50 bg-emerald-50/50 dark:bg-emerald-800/10 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center border border-emerald-200 dark:border-emerald-800">
+                                <i class="mdi mdi-account-cog text-emerald-600 dark:text-emerald-400 text-xl"></i>
+                            </div>
+                            <div>
+                                <h2 class="font-bold text-gray-800 dark:text-white text-base">Form Khusus BO</h2>
+                                <p class="text-gray-500 text-[10px] uppercase font-bold mt-0.5 tracking-wider">Formulir Khusus Back Office (BO)</p>
+                            </div>
+                        </div>
+                        @if(!$canEditBo)
+                            <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-[10px] font-bold rounded-full uppercase border dark:border-gray-600">Hanya Baca</span>
+                        @endif
+                    </div>
+                    <div class="p-5">
+                        @if($canEditBo)
+                            <div class="mb-6 p-4 bg-emerald-50 dark:bg-emerald-900/20 border-l-4 border-emerald-500 rounded-r-xl flex flex-col gap-1">
+                                <div class="flex gap-3">
+                                    <i class="mdi mdi-information-outline text-emerald-600 text-xl mt-0.5"></i>
+                                    <div class="flex-1">
+                                        <p class="text-xs text-emerald-700 dark:text-emerald-300 leading-relaxed">Lengkapi data formulir khusus BO berikut ini.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
+                        <form action="{{ route('data-perijinan.bo-data.save', $application->id) }}" method="POST" enctype="multipart/form-data">
+                            @csrf @method('PUT')
+                            <input type="hidden" name="elapsed_seconds" class="elapsed-seconds-input" value="0">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                @foreach($boFields as $field)
+                                    <div class="space-y-2">
+                                        <label class="block text-[11px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-tighter">{{ $field->label }} @if($field->is_required)<span class="text-red-500">*</span>@endif</label>
+                                        @php 
+                                            $val = $application->bo_data[$field->name] ?? null; 
+                                            $isAlreadySaved = array_key_exists($field->name, $application->bo_data ?? []);
+
+                                            // Auto-fill from global form ONLY if never saved before
+                                            if (!$isAlreadySaved && $field->type !== 'file') {
+                                                $matchingGlobalField = $application->perijinan->activeFormFields
+                                                    ->where('form_type', 'global')
+                                                    ->where('name', $field->name)
+                                                    ->first() ?? $application->perijinan->activeFormFields
+                                                    ->where('form_type', 'global')
+                                                    ->filter(function($f) use ($field) {
+                                                        return strtolower($f->label) === strtolower($field->label);
+                                                    })->first();
+
+                                                if ($matchingGlobalField) {
+                                                    $val = $application->form_data[$matchingGlobalField->id] ?? '';
+                                                    if (is_array($val)) $val = implode(', ', $val);
+                                                }
+                                            }
+
+                                            $val = $val ?? '';
+                                            $ro = !$canEditBo ? 'readonly disabled' : ''; 
+                                            $cls = "w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all"; 
+                                        @endphp
+
+                                        @if($field->type === 'textarea')
+                                            <textarea name="{{ $field->name }}" class="{{ $cls }} min-h-[120px]" {{ $ro }}>{{ $val }}</textarea>
+                                        @elseif($field->type === 'select')
+                                            <select name="{{ $field->name }}" class="{{ $cls }}" {{ $ro }}>
+                                                <option value="">-- Pilih --</option>
+                                                @foreach($field->options ?? [] as $opt)
+                                                    <option value="{{ $opt }}" {{ $val == $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                                                @endforeach
+                                            </select>
+                                        @elseif($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar')
+                                            <div class="space-y-2">
+                                                <input type="file" name="{{ $field->name }}" class="{{ $cls }}" {{ $ro }} accept="{{ ($field->type === 'pas_foto' || $field->type === 'gambar') ? '.jpg,.jpeg,.png' : '*' }}">
+                                                @if($val)
+                                                    @if($field->type === 'pas_foto')
+                                                        <div class="mb-2 mt-2">
+                                                            <img src="{{ asset($val) }}" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" class="rounded border shadow-sm" alt="Pas Foto" />
+                                                        </div>
+                                                    @elseif($field->type === 'gambar')
+                                                        <div class="mb-2 mt-2">
+                                                            <img src="{{ asset($val) }}" style="max-width: 300px; max-height: 200px; object-fit: contain;" class="rounded border shadow-sm" alt="Gambar" />
+                                                        </div>
+                                                    @endif
+                                                    <div class="flex items-center gap-2 mt-2 p-2 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg border border-emerald-100 dark:border-emerald-800">
+                                                        <i class="mdi mdi-file-check text-emerald-600"></i>
+                                                        <a href="{{ asset($val) }}" target="_blank" class="text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:underline truncate">Lihat File Terupload</a>
+                                                    </div>
+                                                @endif
+
+                                                @php
+                                                    $matchingGlobalField = $application->perijinan->activeFormFields
+                                                        ->where('form_type', 'global')
+                                                        ->where('name', $field->name)
+                                                        ->first() ?? $application->perijinan->activeFormFields
+                                                        ->where('form_type', 'global')
+                                                        ->filter(function($f) use ($field) {
+                                                            return strtolower($f->label) === strtolower($field->label);
+                                                        })->first();
+                                                    
+                                                    $globalFile = null;
+                                                    if ($matchingGlobalField) {
+                                                        $globalFiles = $application->form_files[$matchingGlobalField->id] ?? [];
+                                                        $globalFile = is_array($globalFiles) ? ($globalFiles[0] ?? null) : $globalFiles;
+                                                    }
+                                                @endphp
+                                                @if($globalFile && $globalFile !== $val)
+                                                    <div class="flex items-center gap-2 mt-1 p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800/50">
+                                                        <i class="mdi mdi-information-outline text-amber-600 text-sm"></i>
+                                                        <span class="text-[10px] text-amber-700 dark:text-amber-400 font-bold">Referensi Pemohon:</span>
+                                                        <a href="{{ asset($globalFile) }}" target="_blank" class="text-[10px] font-bold text-blue-600 hover:underline truncate">Buka Berkas Pemohon</a>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        @elseif($field->type === 'date')
+                                            <input type="date" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }}>
+                                        @elseif($field->type === 'number')
+                                            <input type="number" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }}>
+                                        @else
+                                            <input type="text" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }}>
+                                        @endif
+                                        @if($field->help_text)
+                                            <p class="text-[10px] text-gray-400 italic mt-1">{{ $field->help_text }}</p>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+                            @if($canEditBo)
+                                <div class="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700 flex justify-end">
+                                    <button type="submit" class="px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg flex items-center gap-3 active:scale-95"><i class="mdi mdi-content-save-check text-lg"></i> SIMPAN DATA BO</button>
+                                </div>
+                            @endif
+                        </form>
+                    </div>
+                </div>
+                @endif
 
                 <!-- Card: Dokumen Surat Pengajuan -->
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">

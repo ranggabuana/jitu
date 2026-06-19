@@ -95,6 +95,19 @@
                 </p>
             </div>
 
+            <div class="mb-6 bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800">
+                <div class="flex items-center">
+                    <input id="has_bo_form" name="has_bo_form" type="checkbox" value="1" {{ old('has_bo_form', $perijinan->has_bo_form) ? 'checked' : '' }}
+                        class="w-5 h-5 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 dark:focus:ring-emerald-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                    <label for="has_bo_form" class="ml-3 text-sm font-bold text-emerald-800 dark:text-emerald-300">
+                        Form Khusus BO
+                    </label>
+                </div>
+                <p class="mt-2 text-xs text-emerald-600 dark:text-emerald-400 ml-8 leading-relaxed">
+                    <i class="mdi mdi-information-outline mr-1"></i> Jika aktif, Back Office (BO) dapat mengisi formulir khusus saat melakukan tahapan validasi.
+                </p>
+            </div>
+
             <div class="mb-6">
                 <label for="opsi_perpanjangan" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Opsi Perpanjangan

@@ -87,6 +87,7 @@ class PerijinanController extends Controller
         $request->validate([
             'nama_perijinan' => 'required|string|max:255',
             'is_multi_opd' => 'nullable|boolean',
+            'has_bo_form' => 'nullable|boolean',
             'opsi_perpanjangan' => 'nullable|in:setelah_habis,sebelum_habis,keduanya',
             'dasar_hukum' => 'required|string',
             'persyaratan' => 'required|string',
@@ -98,6 +99,7 @@ class PerijinanController extends Controller
 
         $data = $request->all();
         $data['is_multi_opd'] = $request->has('is_multi_opd');
+        $data['has_bo_form'] = $request->has('has_bo_form');
 
         // Handle gambar_alur upload
         if ($request->hasFile('gambar_alur')) {
@@ -346,21 +348,23 @@ class PerijinanController extends Controller
     {
         $perijinan = Perijinan::findOrFail($id);
         $user = auth()->user();
-
         // Access Control: Role based field restrictions
         if ($user->role === 'operator_opd') {
             if ($request->input('form_type') !== 'rekom') {
                 return redirect()->back()->with('error', 'Anda hanya memiliki akses untuk mengelola field Formulir Rekomendasi.');
             }
         } elseif ($user->role === 'verifikator') {
-
             if ($request->input('form_type') !== 'izin') {
                 return redirect()->back()->with('error', 'Anda hanya memiliki akses untuk mengelola field Formulir Izin.');
+            }
+        } elseif ($user->role === 'bo') {
+            if ($request->input('form_type') !== 'bo') {
+                return redirect()->back()->with('error', 'Anda hanya memiliki akses untuk mengelola field Formulir BO.');
             }
         }
 
         $validated = $request->validate([
-            'form_type' => 'nullable|in:global,rekom,izin',
+            'form_type' => 'nullable|in:global,rekom,izin,bo',
             'label' => 'required|string|max:255',
             'name' => 'required|string|max:255',
             'type' => 'required|in:text,textarea,number,date,email,phone,select,radio,checkbox,file,pas_foto,gambar',
@@ -420,7 +424,6 @@ class PerijinanController extends Controller
         $perijinan = Perijinan::findOrFail($perijinanId);
         $field = PerijinanFormField::where('perijinan_id', $perijinan->id)->findOrFail($fieldId);
         $user = auth()->user();
-
         // Access Control: Role based field restrictions
         if ($user->role === 'operator_opd') {
             if ($field->form_type !== 'rekom' || $request->input('form_type') !== 'rekom') {
@@ -433,10 +436,14 @@ class PerijinanController extends Controller
             if ($field->form_type !== 'izin' || $request->input('form_type') !== 'izin') {
                 return redirect()->back()->with('error', 'Anda hanya memiliki akses untuk mengelola field Formulir Izin.');
             }
+        } elseif ($user->role === 'bo') {
+            if ($field->form_type !== 'bo' || $request->input('form_type') !== 'bo') {
+                return redirect()->back()->with('error', 'Anda hanya memiliki akses untuk mengelola field Formulir BO.');
+            }
         }
 
         $validated = $request->validate([
-            'form_type' => 'nullable|in:global,rekom,izin',
+            'form_type' => 'nullable|in:global,rekom,izin,bo',
             'label' => 'required|string|max:255',
             'name' => 'required|string|max:255',
             'type' => 'required|in:text,textarea,number,date,email,phone,select,radio,checkbox,file,pas_foto,gambar',
@@ -757,6 +764,7 @@ class PerijinanController extends Controller
             'kode_perijinan' => 'nullable|string|max:50|unique:perijinan,kode_perijinan,' . $id,
             'nama_perijinan' => 'required|string|max:255',
             'is_multi_opd' => 'nullable|boolean',
+            'has_bo_form' => 'nullable|boolean',
             'opsi_perpanjangan' => 'nullable|in:setelah_habis,sebelum_habis,keduanya',
             'dasar_hukum' => 'required|string',
             'persyaratan' => 'required|string',
@@ -768,6 +776,7 @@ class PerijinanController extends Controller
 
         $data = $request->all();
         $data['is_multi_opd'] = $request->has('is_multi_opd');
+        $data['has_bo_form'] = $request->has('has_bo_form');
 
         // Handle gambar_alur upload
         if ($request->hasFile('gambar_alur')) {

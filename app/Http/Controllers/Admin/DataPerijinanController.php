@@ -1225,6 +1225,93 @@ class DataPerijinanController extends Controller
     }
 
     /**
+     * Save Back Office (BO) special form data.
+     */
+    public function saveBoData(Request $request, $id)
+    {
+        $user = auth()->user();
+        if ($user->role !== 'bo' && $user->role !== 'admin') {
+            abort(403, 'Hanya Back Office (BO) atau Admin yang dapat mengisi data BO.');
+        }
+
+        $application = DataPerijinan::with(['perijinan.activeFormFields', 'validasiRecords.validationFlow'])->findOrFail($id);
+        
+        // Strict check: current step must belong to this user if not admin
+        if (!$user->isAdmin()) {
+            $cv = $application->validasiRecords->where('order', $application->current_step)->first();
+            if (!$cv || !$cv->validationFlow || $cv->validationFlow->assigned_user_id !== $user->id) {
+                return redirect()->back()->with('error', 'Gagal menyimpan. Anda belum dapat mengisi data pada tahap ini (sedang tahapan ' . ($cv->validationFlow->role_label ?? 'Lainnya') . ').');
+            }
+        }
+        
+        $boFields = $application->perijinan->activeFormFields
+            ->where('form_type', 'bo');
+            
+        $rules = [];
+        foreach ($boFields as $field) {
+            // Force all fields to be nullable in the official forms to prevent blockers
+            $fieldRules = ['nullable'];
+            
+            if ($field->type === 'email') $fieldRules[] = 'email';
+            if ($field->type === 'number') $fieldRules[] = 'numeric';
+            if ($field->type === 'file') $fieldRules[] = 'file|max:5120';
+            if ($field->type === 'pas_foto' || $field->type === 'gambar') $fieldRules[] = 'file|mimes:jpeg,jpg,png|max:5120';
+            
+            $rules[$field->name] = $fieldRules;
+        }
+
+        $validated = $request->validate($rules);
+        
+        $boData = $application->bo_data ?? [];
+
+        foreach ($boFields as $field) {
+            if (($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar') && $request->hasFile($field->name)) {
+                $file = $request->file($field->name);
+                if ($file->isValid()) {
+                    $filename = 'bo_' . $field->name . '_' . time() . '.' . $file->getClientOriginalExtension();
+                    $path = 'uploads/perijinan/' . $application->perijinan_id;
+                    $file->move(public_path($path), $filename);
+                    $boData[$field->name] = $path . '/' . $filename;
+                }
+            } else {
+                if (array_key_exists($field->name, $validated)) {
+                    $boData[$field->name] = $validated[$field->name];
+                }
+            }
+        }
+
+        $application = DataPerijinan::with(['perijinan.activeFormFields', 'validasiRecords.validationFlow'])->findOrFail($id);
+        
+        $application->forceFill([
+            'bo_data' => $boData,
+        ])->save();
+
+        // Accumulate SLA Duration correctly for the specific step assigned to this user
+        if ($request->has('elapsed_seconds')) {
+            $targetRecord = $application->validasiRecords->where('validationFlow.assigned_user_id', $user->id)->where('status', 'pending')->first()
+                            ?? $application->validasiRecords->where('order', $application->current_step)->first();
+            if ($targetRecord) {
+                $targetRecord->increment('duration_seconds', intval($request->elapsed_seconds));
+                $targetRecord->update(['sla_start_at' => now()]);
+            }
+        }
+
+        // Reload to ensure everything is fresh for document generation
+        $application->load(['perijinan.activeFormFields', 'user']);
+
+        try {
+            $generatedDocs = \App\Services\DocumentGenerator::generateDocuments($application);
+            if (!empty($generatedDocs)) {
+                $application->update($generatedDocs);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to regenerate documents after saving bo data: ' . $e->getMessage());
+        }
+
+        return redirect()->back()->with('success', 'Data BO Form berhasil disimpan.');
+    }
+
+    /**
      * Update status of an application.
      */
     public function updateStatus(Request $request, $id)

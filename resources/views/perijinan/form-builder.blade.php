@@ -73,6 +73,14 @@
                     </button>
                 </li>
                 @endif
+                @if($perijinan->has_bo_form && (auth()->user()->isAdmin() || auth()->user()->isBo()))
+                <li class="mr-2">
+                    <button onclick="switchTab('bo')" id="tab-btn-bo" class="tab-btn inline-flex items-center justify-center p-4 border-b-2 rounded-t-lg group {{ auth()->user()->isAdmin() ? 'border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300' : 'text-indigo-600 border-indigo-600 dark:text-indigo-500 dark:border-indigo-500' }}">
+                        <i id="tab-icon-bo" class="mdi mdi-account-cog mr-2 text-lg {{ auth()->user()->isAdmin() ? 'text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300' : 'text-indigo-600 dark:text-indigo-500' }}"></i>
+                        BO Form
+                    </button>
+                </li>
+                @endif
             </ul>
         </div>
 
@@ -382,6 +390,9 @@
                                 @if(auth()->user()->isAdmin() || auth()->user()->isVerifikator())
                                     <span class="text-gray-500 dark:text-gray-400 font-normal tab-count hidden" id="count-izin">({{ $perijinan->formFields->where('form_type', 'izin') ->count() }})</span>
                                 @endif
+                                @if($perijinan->has_bo_form && (auth()->user()->isAdmin() || auth()->user()->isBo()))
+                                    <span class="text-gray-500 dark:text-gray-400 font-normal tab-count hidden" id="count-bo">({{ $perijinan->formFields->where('form_type', 'bo')->count() }})</span>
+                                @endif
                             </h2>
                             <p class="text-xs text-gray-500 dark:text-gray-400">Urutkan field dengan drag & drop</p>
                         </div>
@@ -389,13 +400,14 @@
                 </div>
 
                 @if ($perijinan->formFields->count() > 0)
-                    @foreach(['global', 'rekom', 'izin'] as $type)
+                    @foreach(['global', 'rekom', 'izin', 'bo'] as $type)
+                        @if($type === 'bo' && !$perijinan->has_bo_form) @continue @endif
                         @php
                             $canSeeType = auth()->user()->isAdmin() || 
                                           ($type === 'rekom' && auth()->user()->isOperatorOpd()) ||
-                                          ($type === 'izin' && auth()->user()->isVerifikator());
+                                          ($type === 'izin' && auth()->user()->isVerifikator()) ||
+                                          ($type === 'bo' && auth()->user()->isBo());
                         @endphp
-                        @if($canSeeType)
                         <div id="fields_list_{{ $type }}" class="fields-container divide-y divide-gray-100 dark:divide-gray-700 {{ $type === (auth()->user()->isOperatorOpd() ? 'rekom' : (auth()->user()->isVerifikator() ? 'izin' : 'global')) ? '' : 'hidden' }}">
                             @foreach ($perijinan->formFields->where('form_type', $type === 'global' ? null : $type)->union($perijinan->formFields->where('form_type', $type)) as $field)
                                 <div class="field-item p-5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
@@ -506,7 +518,6 @@
                                 </div>
                                 @endforeach
                                 </div>
-                                @endif
                                 @endforeach
                                 @else
                                 <div class="p-12 text-center">
@@ -702,7 +713,6 @@
                                     @endforelse
                                 </div>
                             </div>
-
                             <!-- Variabel Khusus Izin -->
                             <div class="dynamic-var-section hidden" id="var-section-izin">
                                 <span class="text-[10px] uppercase tracking-wider font-bold text-indigo-800 dark:text-indigo-300 block mb-2">Variabel Khusus Izin Form:</span>
@@ -720,8 +730,27 @@
                                     @endforelse
                                 </div>
                             </div>
-                        </div>
-                    </div>
+
+                            <!-- Variabel Khusus BO -->
+                            @if($perijinan->has_bo_form)
+                            <div class="dynamic-var-section hidden" id="var-section-bo">
+                                <span class="text-[10px] uppercase tracking-wider font-bold text-emerald-800 dark:text-emerald-300 block mb-2">Variabel Form Khusus BO:</span>
+                                <div class="flex flex-wrap gap-2">
+                                    @forelse($perijinan->formFields->where('form_type', 'bo') as $field)
+                                        @php $varName = strtoupper(str_replace(' ', '_', $field->label)); @endphp
+                                        <button type="button"
+                                            onclick="insertPlaceholder('{{ '${' . $varName . '}' }}')"
+                                            title="{{ $field->label }}"
+                                            class="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-700 hover:border-emerald-600 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold transition-all shadow-sm">
+                                            <i class="mdi mdi-plus text-xs"></i>{{ '${' . $varName . '}' }}
+                                        </button>
+                                    @empty
+                                        <span class="text-xs text-gray-400 italic">Belum ada field di BO Form</span>
+                                    @endforelse
+                                </div>
+                            </div>
+                            @endif
+                        </div>                    </div>
 
                     <div class="p-6">
                         <!-- OPD Template Customization Status (Admin Only) -->
@@ -1281,9 +1310,8 @@
                 activeIcon.classList.remove('text-gray-400', 'group-hover:text-gray-500', 'dark:text-gray-500', 'dark:group-hover:text-gray-300');
                 activeIcon.classList.add('text-indigo-600', 'dark:text-indigo-500');
             }
-
             // 3. Update Subtitle and List Title
-            const titles = { 'global': 'Global Form', 'rekom': 'Rekom Form', 'izin': 'Izin Form' };
+            const titles = { 'global': 'Global Form', 'rekom': 'Rekom Form', 'izin': 'Izin Form', 'bo': 'BO Form' };
             const subtitleEl = document.getElementById('add-field-subtitle');
             if (subtitleEl) subtitleEl.textContent = `Tambah field baru ke ${titles[tabId]}`;
             const listTitleEl = document.getElementById('daftar-field-tab-name');
@@ -1318,6 +1346,7 @@
             const varSectionGlobal = document.getElementById('var-section-global');
             const varSectionRekom = document.getElementById('var-section-rekom');
             const varSectionIzin = document.getElementById('var-section-izin');
+            const varSectionBo = document.getElementById('var-section-bo');
 
             if (tabId === 'rekom') {
                 if (templateContainer) templateContainer.classList.remove('hidden');
@@ -1336,10 +1365,11 @@
                 const configHeaderSubtitle = document.getElementById('config-header-subtitle');
                 if (configHeaderSubtitle) configHeaderSubtitle.textContent = 'Atur nomor urut dan panduan pengisian untuk Surat Rekomendasi';
                 
-                // Show Global + Rekom variables
+                // Show Global + Rekom variables + BO variables
                 if (varSectionGlobal) varSectionGlobal.classList.remove('hidden');
                 if (varSectionRekom) varSectionRekom.classList.remove('hidden');
                 if (varSectionIzin) varSectionIzin.classList.add('hidden');
+                if (varSectionBo) varSectionBo.classList.remove('hidden');
             } else if (tabId === 'izin') {
                 if (templateContainer) templateContainer.classList.remove('hidden');
                 if (sequenceContainer) sequenceContainer.classList.remove('hidden');
@@ -1357,17 +1387,24 @@
                 const configHeaderSubtitle = document.getElementById('config-header-subtitle');
                 if (configHeaderSubtitle) configHeaderSubtitle.textContent = 'Atur nomor urut dan panduan pengisian untuk Surat Izin';
                 
-                // Show Global + Izin variables
+                // Show Global + Izin variables + BO variables
                 if (varSectionGlobal) varSectionGlobal.classList.remove('hidden');
                 if (varSectionRekom) varSectionRekom.classList.add('hidden');
                 if (varSectionIzin) varSectionIzin.classList.remove('hidden');
+                if (varSectionBo) varSectionBo.classList.remove('hidden');
+            } else if (tabId === 'bo') {
+                if (templateContainer) templateContainer.classList.add('hidden');
+                if (sequenceContainer) sequenceContainer.classList.add('hidden');
+                if (opdFieldStatus) opdFieldStatus.classList.add('hidden');
+                if (opdTemplateStatus) opdTemplateStatus.classList.add('hidden');
+                if (varSectionBo) varSectionBo.classList.add('hidden');
             } else {
                 if (templateContainer) templateContainer.classList.add('hidden');
                 if (sequenceContainer) sequenceContainer.classList.add('hidden');
                 if (opdFieldStatus) opdFieldStatus.classList.add('hidden');
                 if (opdTemplateStatus) opdTemplateStatus.classList.add('hidden');
-            }
-        }
+                if (varSectionBo) varSectionBo.classList.add('hidden');
+            }        }
 
         function togglePlaceholderGuide() {
             const guide = document.getElementById('placeholder-guide');
