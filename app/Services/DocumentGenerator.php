@@ -122,7 +122,7 @@ class DocumentGenerator
                 $imageData = base64_encode(File::get($ttePath));
                 $mime = File::mimeType($ttePath);
                 $src = 'data:' . $mime . ';base64,' . $imageData;
-                $tteHtml = '<img src="' . $src . '" style="max-width: 150px; max-height: 150px;" alt="TTE" />';
+                $tteHtml = '<img src="' . $src . '" style="width: 250px; height: auto; max-height: 95px;" alt="TTE" />';
             }
         }
         $baseReplacements['${GAMBAR_TTE}'] = $tteHtml;
@@ -254,7 +254,7 @@ class DocumentGenerator
                     $imageData = base64_encode(File::get($opdTtePath));
                     $mime = File::mimeType($opdTtePath);
                     $src = 'data:' . $mime . ';base64,' . $imageData;
-                    $finalReplacements['${GAMBAR_TTE}'] = '<img src="' . $src . '" style="max-width: 150px; max-height: 150px;" alt="TTE OPD" />';
+                    $finalReplacements['${GAMBAR_TTE}'] = '<img src="' . $src . '" style="width: 250px; height: auto; max-height: 95px;" alt="TTE OPD" />';
                     $finalReplacements['${_IMG_PATH_TTE}'] = $opd->gambar_tte; // For Word template
                 }
             }
@@ -443,11 +443,12 @@ class DocumentGenerator
                 }
 
                 if ($path && $actualPath && File::exists($actualPath)) {
+                    $isTte = ($macro === 'GAMBAR TTE' || $macro === 'GAMBAR_TTE');
                     $imgConfig = [
                         'path' => $actualPath,
-                        'width' => ($macro === 'GAMBAR TTE' ? 100 : 80), 
-                        'height' => 100, 
-                        'ratio' => false
+                        'width' => $isTte ? 250 : 80, 
+                        'height' => $isTte ? 95 : 100, 
+                        'ratio' => true
                     ];
 
                     try {

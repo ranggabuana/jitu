@@ -525,6 +525,7 @@ class DashboardController extends Controller
                     'file_permohonan' => $generatedDocs['file_permohonan'] ?? null,
                     'file_keabsahan' => $generatedDocs['file_keabsahan'] ?? null,
                     'file_rekom' => $generatedDocs['file_rekom'] ?? null,
+                    'file_rekom_multi' => $generatedDocs['file_rekom_multi'] ?? null,
                     'file_izin' => $generatedDocs['file_izin'] ?? null,
                 ]);
             } catch (\Exception $docEx) {
@@ -941,6 +942,7 @@ class DashboardController extends Controller
                 'file_permohonan' => $generatedDocs['file_permohonan'] ?? null,
                 'file_keabsahan' => $generatedDocs['file_keabsahan'] ?? null,
                 'file_rekom' => $generatedDocs['file_rekom'] ?? null,
+                'file_rekom_multi' => $generatedDocs['file_rekom_multi'] ?? null,
                 'file_izin' => $generatedDocs['file_izin'] ?? null,
             ]);
         } catch (\Exception $docEx) {

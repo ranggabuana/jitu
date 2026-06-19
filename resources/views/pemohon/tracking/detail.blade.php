@@ -180,6 +180,15 @@
                                         <i class="fas fa-clock mr-1"></i>
                                         Divalidasi pada {{ $validasi->validated_at->format('d M Y, H:i') }} WIB
                                     </p>
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        <i class="fas fa-hourglass-half mr-1"></i>
+                                        Waktu Proses (SLA): <span class="font-semibold text-amber-700">{{ formatDuration($validasi->duration_seconds ?? 0) }}</span>
+                                    </p>
+                                @elseif ($validasi->duration_seconds > 0)
+                                    <p class="text-xs text-gray-500 mt-2">
+                                        <i class="fas fa-hourglass-half mr-1"></i>
+                                        Waktu Proses Terakumulasi (SLA): <span class="font-semibold text-amber-700">{{ formatDuration($validasi->duration_seconds) }}</span>
+                                    </p>
                                 @endif
 
                                 @php

@@ -938,6 +938,9 @@ class DataPerijinanController extends Controller
                 if (!$application->file_rekom && isset($generatedDocs['file_rekom'])) {
                     $updateData['file_rekom'] = $generatedDocs['file_rekom'];
                 }
+                if (isset($generatedDocs['file_rekom_multi'])) {
+                    $updateData['file_rekom_multi'] = $generatedDocs['file_rekom_multi'];
+                }
                 if (!$application->file_izin && isset($generatedDocs['file_izin'])) {
                     $updateData['file_izin'] = $generatedDocs['file_izin'];
                 }
@@ -1837,15 +1840,16 @@ class DataPerijinanController extends Controller
 
         try {
             $generatedDocs = \App\Services\DocumentGenerator::generateDocuments($application);
-if (!empty($generatedDocs)) {
-    $application->update([
-        'file_pernyataan' => $generatedDocs['file_pernyataan'] ?? null,
-        'file_permohonan' => $generatedDocs['file_permohonan'] ?? null,
-        'file_keabsahan' => $generatedDocs['file_keabsahan'] ?? null,
-        'file_rekom' => $generatedDocs['file_rekom'] ?? null,
-        'file_izin' => $generatedDocs['file_izin'] ?? null,
-    ]);
-}
+            if (!empty($generatedDocs)) {
+                $application->update([
+                    'file_pernyataan' => $generatedDocs['file_pernyataan'] ?? null,
+                    'file_permohonan' => $generatedDocs['file_permohonan'] ?? null,
+                    'file_keabsahan' => $generatedDocs['file_keabsahan'] ?? null,
+                    'file_rekom' => $generatedDocs['file_rekom'] ?? null,
+                    'file_rekom_multi' => $generatedDocs['file_rekom_multi'] ?? $application->file_rekom_multi,
+                    'file_izin' => $generatedDocs['file_izin'] ?? null,
+                ]);
+            }
             // Log activity
             ActivityLog::log(
                 'Mengenerasi ulang dokumen perijinan',
