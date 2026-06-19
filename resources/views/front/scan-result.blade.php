@@ -1,4 +1,32 @@
 <x-front-layout>
+    @php
+        $targetOpd = null;
+        $isMulti = $perizinan->perijinan->is_multi_opd;
+        
+        if ($isMulti) {
+            if (!empty($opdId)) {
+                $targetRecord = $perizinan->validasiRecords->first(function($v) use ($opdId) {
+                    return $v->validationFlow && 
+                           $v->validationFlow->assignedUser && 
+                           $v->validationFlow->assignedUser->opd_id == $opdId;
+                });
+                if ($targetRecord && $targetRecord->validationFlow->assignedUser->opd) {
+                    $targetOpd = $targetRecord->validationFlow->assignedUser->opd;
+                }
+            }
+        } else {
+            $targetRecord = $perizinan->validasiRecords->first(function($v) {
+                return $v->validationFlow && 
+                       in_array($v->validationFlow->role, ['operator_opd', 'kepala_opd']) &&
+                       $v->validationFlow->assignedUser && 
+                       $v->validationFlow->assignedUser->opd;
+            });
+            if ($targetRecord && $targetRecord->validationFlow->assignedUser->opd) {
+                $targetOpd = $targetRecord->validationFlow->assignedUser->opd;
+            }
+        }
+    @endphp
+
     <div class="py-12 bg-gray-50 min-h-screen">
         <div class="container mx-auto px-4 max-w-2xl">
             <!-- Header Card -->
@@ -30,6 +58,35 @@
                                 <i class="fas fa-clock"></i> Dalam Proses Validasi
                             </span>
                         @endif
+                    </div>
+
+                    <!-- Scanned Document Verification Card -->
+                    <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100 mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div class="flex items-center gap-4 text-left w-full">
+                            <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white {{ $documentStatus === 'Resmi (TTE)' ? 'bg-green-600' : 'bg-red-500' }}">
+                                @if($type === 'rekom')
+                                    <i class="fas fa-file-alt text-xl"></i>
+                                @else
+                                    <i class="fas fa-file-signature text-xl"></i>
+                                @endif
+                            </div>
+                            <div>
+                                <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest">Jenis Dokumen</h3>
+                                <p class="text-lg font-black text-gray-800">{{ $documentType }}</p>
+                                @if($type === 'rekom' && $targetOpd)
+                                    <p class="text-xs font-bold text-blue-600 dark:text-blue-400 mt-0.5">Rekomendasi dari: {{ $targetOpd->nama_opd }}</p>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="w-full md:w-auto text-center md:text-right">
+                            <span class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-black uppercase tracking-wider border {{ $documentStatus === 'Resmi (TTE)' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200' }}">
+                                @if($documentStatus === 'Resmi (TTE)')
+                                    <i class="fas fa-check-double"></i> Resmi (TTE)
+                                @else
+                                    <i class="fas fa-exclamation-triangle"></i> Draft Dokumen
+                                @endif
+                            </span>
+                        </div>
                     </div>
 
                     <div class="space-y-6">
@@ -74,47 +131,66 @@
                             </h3>
                             
                             <div class="space-y-3">
-                                @php
-                                    $kadinValidasi = $perizinan->validasiRecords->filter(fn($v) => $v->validationFlow && $v->validationFlow->role === 'kadin')->first();
-                                    $signedByKadin = ($kadinValidasi && $kadinValidasi->status === 'approved' && !empty($perizinan->file_izin_tte));
-                                @endphp
+                                @if(empty($type) || $type === 'izin')
+                                    @php
+                                        $signedByKadin = ($documentStatus === 'Resmi (TTE)') && !empty($perizinan->file_izin_tte);
+                                    @endphp
 
-                                <div class="flex items-center justify-between p-4 rounded-2xl border {{ $signedByKadin ? 'bg-indigo-50 border-indigo-100 text-indigo-800' : 'bg-gray-50 border-gray-200 text-gray-400' }}">
-                                    <div class="flex items-center gap-3">
-                                        <i class="fas {{ $signedByKadin ? 'fa-check-double' : 'fa-minus-circle' }} text-xl"></i>
-                                        <div>
-                                            <p class="text-xs font-black uppercase tracking-tight">Kadin DPMPTSP</p>
-                                            <p class="text-[10px] font-medium opacity-80">{{ $signedByKadin ? 'Telah Ditandatangani Elektronik' : 'Belum/Tidak Ada TTE' }}</p>
+                                    <div class="flex items-center justify-between p-4 rounded-2xl border {{ $signedByKadin ? 'bg-indigo-50 border-indigo-100 text-indigo-800' : 'bg-gray-50 border-gray-200 text-gray-400' }}">
+                                        <div class="flex items-center gap-3">
+                                            <i class="fas {{ $signedByKadin ? 'fa-check-double' : 'fa-minus-circle' }} text-xl"></i>
+                                            <div>
+                                                <p class="text-xs font-black uppercase tracking-tight">Kadin DPMPTSP</p>
+                                                <p class="text-[10px] font-medium opacity-80">{{ $signedByKadin ? 'Telah Ditandatangani Elektronik' : 'Belum/Tidak Ada TTE' }}</p>
+                                            </div>
                                         </div>
+                                        @if($signedByKadin)
+                                            <i class="fas fa-shield-check text-2xl opacity-40"></i>
+                                        @endif
                                     </div>
-                                    @if($signedByKadin)
-                                        <i class="fas fa-shield-check text-2xl opacity-40"></i>
-                                    @endif
-                                </div>
+                                @endif
 
-                                @php
-                                    $opdValidasiCount = $perizinan->validasiRecords->filter(fn($v) => $v->validationFlow && $v->validationFlow->role === 'kepala_opd' && $v->status === 'approved')->count();
-                                    $isMulti = $perizinan->perijinan->is_multi_opd;
-                                @endphp
+                                @if(empty($type) || $type === 'rekom')
+                                    @php
+                                        if ($isMulti) {
+                                            if (!empty($opdId)) {
+                                                $opdSigned = !empty($perizinan->file_rekom_multi_tte[$opdId]);
+                                            } else {
+                                                $opdSignedCount = is_array($perizinan->file_rekom_multi_tte) ? count(array_filter($perizinan->file_rekom_multi_tte)) : 0;
+                                                $opdSigned = $opdSignedCount > 0;
+                                            }
+                                        } else {
+                                            $opdSigned = !empty($perizinan->file_rekom_tte);
+                                        }
 
-                                <div class="flex items-center justify-between p-4 rounded-2xl border {{ $opdValidasiCount > 0 ? 'bg-green-50 border-green-100 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-400' }}">
-                                    <div class="flex items-center gap-3">
-                                        <i class="fas {{ $opdValidasiCount > 0 ? 'fa-check-double' : 'fa-minus-circle' }} text-xl"></i>
-                                        <div>
-                                            <p class="text-xs font-black uppercase tracking-tight">Kepala OPD Teknis</p>
-                                            <p class="text-[10px] font-medium opacity-80">
-                                                @if($opdValidasiCount > 0)
-                                                    Telah Ditandatangani ({{ $opdValidasiCount }} OPD)
-                                                @else
-                                                    Belum/Tidak Ada TTE
-                                                @endif
-                                            </p>
+                                        $signedByOpd = ($documentStatus === 'Resmi (TTE)') && $opdSigned;
+                                    @endphp
+
+                                    <div class="flex items-center justify-between p-4 rounded-2xl border {{ $signedByOpd ? 'bg-green-50 border-green-100 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-400' }}">
+                                        <div class="flex items-center gap-3">
+                                            <i class="fas {{ $signedByOpd ? 'fa-check-double' : 'fa-minus-circle' }} text-xl"></i>
+                                            <div>
+                                                <p class="text-xs font-black uppercase tracking-tight">
+                                                    {{ $targetOpd ? 'Kepala ' . $targetOpd->nama_opd : 'Kepala OPD Teknis' }}
+                                                </p>
+                                                <p class="text-[10px] font-medium opacity-80">
+                                                    @if($signedByOpd)
+                                                        @if($isMulti && empty($opdId))
+                                                            Telah Ditandatangani ({{ is_array($perizinan->file_rekom_multi_tte) ? count(array_filter($perizinan->file_rekom_multi_tte)) : 0 }} OPD)
+                                                        @else
+                                                            Telah Ditandatangani Elektronik
+                                                        @endif
+                                                    @else
+                                                        Belum/Tidak Ada TTE
+                                                    @endif
+                                                </p>
+                                            </div>
                                         </div>
+                                        @if($signedByOpd)
+                                            <i class="fas fa-shield-check text-2xl opacity-40"></i>
+                                        @endif
                                     </div>
-                                    @if($opdValidasiCount > 0)
-                                        <i class="fas fa-shield-check text-2xl opacity-40"></i>
-                                    @endif
-                                </div>
+                                @endif
                             </div>
                         </div>
                     </div>

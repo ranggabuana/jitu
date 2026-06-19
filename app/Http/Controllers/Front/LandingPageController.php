@@ -115,11 +115,43 @@ class LandingPageController extends Controller
         $perizinan = DataPerijinan::with([
             'user',
             'perijinan',
-            'validasiRecords.validationFlow'
+            'validasiRecords.validationFlow.assignedUser.opd'
         ])
         ->where('no_registrasi', $no_registrasi)
         ->firstOrFail();
 
-        return view('front.scan-result', compact('perizinan'));
+        $type = request('type');
+        $opdId = request('opd_id');
+        $isDraftParam = request('is_draft');
+
+        $documentType = 'Dokumen Elektronik';
+        $documentStatus = 'Draft';
+
+        if ($type === 'rekom') {
+            $documentType = 'Surat Rekomendasi';
+        } elseif ($type === 'izin') {
+            $documentType = 'Surat Izin';
+        } else {
+            $documentType = 'Surat Izin';
+        }
+
+        if ($isDraftParam == 1) {
+            $documentStatus = 'Draft';
+        } else {
+            if ($type === 'rekom') {
+                if ($perizinan->perijinan->is_multi_opd && $opdId) {
+                    $documentStatus = !empty($perizinan->file_rekom_multi_tte[$opdId]) ? 'Resmi (TTE)' : 'Draft';
+                } else {
+                    $documentStatus = !empty($perizinan->file_rekom_tte) ? 'Resmi (TTE)' : 'Draft';
+                }
+            } elseif ($type === 'izin') {
+                $documentStatus = !empty($perizinan->file_izin_tte) ? 'Resmi (TTE)' : 'Draft';
+            } else {
+                // Default fallback if type is not specified (old QR codes)
+                $documentStatus = !empty($perizinan->file_izin_tte) ? 'Resmi (TTE)' : 'Draft';
+            }
+        }
+
+        return view('front.scan-result', compact('perizinan', 'documentType', 'documentStatus', 'type', 'opdId'));
     }
 }

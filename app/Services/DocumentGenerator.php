@@ -18,8 +18,9 @@ class DocumentGenerator
      * @param DataPerijinan $application
      * @return array Array of paths for [pernyataan, permohonan, keabsahan]
      */
-    public static function generateDocuments(DataPerijinan $application, $targetOpdId = null): array
+    public static function generateDocuments(DataPerijinan $application, $targetOpdId = null, bool $forceOfficial = false): array
     {
+        $tempFilesToDelete = [];
         $perijinan = $application->perijinan;
         $user = $application->user;
 
@@ -144,47 +145,16 @@ class DocumentGenerator
         }
         $baseReplacements['${LOGO_KABUPATEN}'] = $logoKabHtml;
 
-        // 4.6. Add ${QRCODE} to replacements
+        // 4.6. Add ${QRCODE} to replacements (default/fallback is black)
         $scanUrl = route('front.perizinan.scan', $application->no_registrasi);
-        $tempQrPath = null;
-        try {
-            $qrCode = \BaconQrCode\Encoder\Encoder::encode($scanUrl, \BaconQrCode\Common\ErrorCorrectionLevel::H());
-            $matrix = $qrCode->getMatrix();
-            $width = $matrix->getWidth();
-            $height = $matrix->getHeight();
-            $margin = 4;
-            $moduleSize = 6;
-            
-            $imgWidth = ($width + 2 * $margin) * $moduleSize;
-            $imgHeight = ($height + 2 * $margin) * $moduleSize;
-            
-            $image = imagecreatetruecolor($imgWidth, $imgHeight);
-            $white = imagecolorallocate($image, 255, 255, 255);
-            $black = imagecolorallocate($image, 0, 0, 0);
-            imagefill($image, 0, 0, $white);
-            
-            for ($y = 0; $y < $height; $y++) {
-                for ($x = 0; $x < $width; $x++) {
-                    if ($matrix->get($x, $y) === 1) {
-                        $x1 = ($x + $margin) * $moduleSize;
-                        $y1 = ($y + $margin) * $moduleSize;
-                        $x2 = $x1 + $moduleSize - 1;
-                        $y2 = $y1 + $moduleSize - 1;
-                        imagefilledrectangle($image, $x1, $y1, $x2, $y2, $black);
-                    }
-                }
-            }
-            
-            $tempQrPath = storage_path('app/temp_qr_' . md5($application->no_registrasi) . '.png');
-            imagepng($image, $tempQrPath);
-            imagedestroy($image);
-            
+        $tempQrPath = self::generateQrCodeFile($scanUrl, false);
+        if ($tempQrPath && File::exists($tempQrPath)) {
+            $tempFilesToDelete[] = $tempQrPath;
             $qrCodeBase64 = base64_encode(File::get($tempQrPath));
             $qrHtml = '<img src="data:image/png;base64,' . $qrCodeBase64 . '" style="width: 60px; height: 60px;" alt="Scan QR Code" />';
             $baseReplacements['${QRCODE}'] = $qrHtml;
-            $baseReplacements['${_IMG_PATH_QRCODE}'] = $tempQrPath; // Pass the local file path to generateFromWord
-        } catch (\Exception $e) {
-            \Log::error('QR Code generation failed: ' . $e->getMessage());
+            $baseReplacements['${_IMG_PATH_QRCODE}'] = $tempQrPath;
+        } else {
             $baseReplacements['${QRCODE}'] = '[Gagal Generate QR Code]';
         }
         
@@ -352,6 +322,36 @@ class DocumentGenerator
             $rekomData = $rekomItem['data'];
             $filename = $rekomItem['filename'];
 
+            $isRekomDraft = true;
+            if ($forceOfficial) {
+                $isRekomDraft = false;
+            } else {
+                if ($perijinan->is_multi_opd && $opd) {
+                    $isRekomDraft = empty($application->file_rekom_multi_tte[$opd->id]);
+                } else {
+                    $isRekomDraft = empty($application->file_rekom_tte);
+                }
+            }
+
+            $rekomScanParams = [
+                'no_registrasi' => $application->no_registrasi,
+                'type' => 'rekom',
+                'opd_id' => $opd ? $opd->id : null
+            ];
+            if ($isRekomDraft) {
+                $rekomScanParams['is_draft'] = 1;
+            }
+            $rekomScanUrl = route('front.perizinan.scan', $rekomScanParams);
+            $rekomQrPath = self::generateQrCodeFile($rekomScanUrl, $isRekomDraft);
+            $rekomQrHtml = '';
+            if ($rekomQrPath && File::exists($rekomQrPath)) {
+                $tempFilesToDelete[] = $rekomQrPath;
+                $rekomQrBase64 = base64_encode(File::get($rekomQrPath));
+                $rekomQrHtml = '<img src="data:image/png;base64,' . $rekomQrBase64 . '" style="width: 60px; height: 60px;" alt="Scan QR Code" />';
+            } else {
+                $rekomQrHtml = '[Gagal Generate QR Code]';
+            }
+
             $rekomReplacements = [];
             foreach ($rekomData as $key => $value) {
                 $field = $perijinan->activeFormFields->where('form_type', 'rekom')->firstWhere('name', $key);
@@ -404,6 +404,12 @@ class DocumentGenerator
             }
 
             $finalReplacements = array_merge($baseReplacements, $applicantReplacements, $boReplacements, $rekomReplacements);
+            
+            // Override QR code replacements for Rekomendasi
+            $finalReplacements['${QRCODE}'] = $rekomQrHtml;
+            if ($rekomQrPath) {
+                $finalReplacements['${_IMG_PATH_QRCODE}'] = $rekomQrPath;
+            }
             $kodePerijinan = $perijinan->kode_perijinan ?? 'PER';
             $noUrut = $application->no_rekom ?? $perijinan->next_nomor_rekom ?? '-';
             $kodeOpd = $opd ? ($opd->kode_opd ?? 'OPD') : ($application->no_rekom_kode ?? 'OPD');
@@ -529,6 +535,30 @@ class DocumentGenerator
             $finalReplacements = array_merge($baseReplacements, $applicantReplacements, $boReplacements, $dataReplacements);
             
             if ($type === 'izin') {
+                $isIzinDraft = $forceOfficial ? false : empty($application->file_izin_tte);
+                $izinScanParams = [
+                    'no_registrasi' => $application->no_registrasi,
+                    'type' => 'izin'
+                ];
+                if ($isIzinDraft) {
+                    $izinScanParams['is_draft'] = 1;
+                }
+                $izinScanUrl = route('front.perizinan.scan', $izinScanParams);
+                $izinQrPath = self::generateQrCodeFile($izinScanUrl, $isIzinDraft);
+                $izinQrHtml = '';
+                if ($izinQrPath && File::exists($izinQrPath)) {
+                    $tempFilesToDelete[] = $izinQrPath;
+                    $izinQrBase64 = base64_encode(File::get($izinQrPath));
+                    $izinQrHtml = '<img src="data:image/png;base64,' . $izinQrBase64 . '" style="width: 60px; height: 60px;" alt="Scan QR Code" />';
+                } else {
+                    $izinQrHtml = '[Gagal Generate QR Code]';
+                }
+
+                $finalReplacements['${QRCODE}'] = $izinQrHtml;
+                if ($izinQrPath) {
+                    $finalReplacements['${_IMG_PATH_QRCODE}'] = $izinQrPath;
+                }
+
                 $kodePerijinan = $perijinan->kode_perijinan ?? 'PER';
                 $noUrut = $application->no_izin ?? $perijinan->next_nomor_izin ?? '-';
                 $kodeOpd = $application->no_izin_kode ?? 'DPMPTSP';
@@ -545,8 +575,10 @@ class DocumentGenerator
             $generatedPaths['file_' . $type] = $path;
         }
 
-        if ($tempQrPath && File::exists($tempQrPath)) {
-            @unlink($tempQrPath);
+        foreach ($tempFilesToDelete as $tempFile) {
+            if ($tempFile && File::exists($tempFile)) {
+                @unlink($tempFile);
+            }
         }
 
         return $generatedPaths;
@@ -770,6 +802,58 @@ class DocumentGenerator
 
         } catch (\Exception $e) {
             \Log::error("Error Generate Word: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Helper to generate QR code image.
+     *
+     * @param string $url
+     * @param bool $isDraft
+     * @return string|null Path to temporary QR code image
+     */
+    private static function generateQrCodeFile(string $url, bool $isDraft): ?string
+    {
+        try {
+            $qrCode = \BaconQrCode\Encoder\Encoder::encode($url, \BaconQrCode\Common\ErrorCorrectionLevel::H());
+            $matrix = $qrCode->getMatrix();
+            $width = $matrix->getWidth();
+            $height = $matrix->getHeight();
+            $margin = 4;
+            $moduleSize = 6;
+            
+            $imgWidth = ($width + 2 * $margin) * $moduleSize;
+            $imgHeight = ($height + 2 * $margin) * $moduleSize;
+            
+            $image = imagecreatetruecolor($imgWidth, $imgHeight);
+            $white = imagecolorallocate($image, 255, 255, 255);
+            if ($isDraft) {
+                $fgColor = imagecolorallocate($image, 239, 68, 68); // Red
+            } else {
+                $fgColor = imagecolorallocate($image, 0, 0, 0); // Black
+            }
+            imagefill($image, 0, 0, $white);
+            
+            for ($y = 0; $y < $height; $y++) {
+                for ($x = 0; $x < $width; $x++) {
+                    if ($matrix->get($x, $y) === 1) {
+                        $x1 = ($x + $margin) * $moduleSize;
+                        $y1 = ($y + $margin) * $moduleSize;
+                        $x2 = $x1 + $moduleSize - 1;
+                        $y2 = $y1 + $moduleSize - 1;
+                        imagefilledrectangle($image, $x1, $y1, $x2, $y2, $fgColor);
+                    }
+                }
+            }
+            
+            $tempPath = storage_path('app/temp_qr_' . md5($url) . '_' . ($isDraft ? 'draft' : 'official') . '_' . uniqid() . '.png');
+            imagepng($image, $tempPath);
+            imagedestroy($image);
+            
+            return $tempPath;
+        } catch (\Exception $e) {
+            \Log::error('QR Code generation helper failed: ' . $e->getMessage());
             return null;
         }
     }

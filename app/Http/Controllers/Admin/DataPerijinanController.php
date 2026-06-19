@@ -1988,6 +1988,24 @@ class DataPerijinanController extends Controller
                     abort(403, 'Hanya Kepala OPD yang dapat menandatangani Rekomendasi.');
                 }
 
+                // Force regenerate document with official black QR code before TTE signing
+                try {
+                    $generatedDocs = \App\Services\DocumentGenerator::generateDocuments($application, $isMultiOpd ? $user->opd_id : null, true);
+                    if ($isMultiOpd) {
+                        if (isset($generatedDocs['file_rekom_multi'])) {
+                            $application->file_rekom_multi = $generatedDocs['file_rekom_multi'];
+                            $application->save();
+                        }
+                    } else {
+                        if (isset($generatedDocs['file_rekom'])) {
+                            $application->file_rekom = $generatedDocs['file_rekom'];
+                            $application->save();
+                        }
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Gagal meregenerasi rekom sebelum TTE: ' . $e->getMessage());
+                }
+
                 $filePath = $isMultiOpd ? ($application->file_rekom_multi[$user->opd_id] ?? null) : $application->file_rekom;
                 if (!$filePath || !file_exists(public_path($filePath))) {
                     throw new \Exception("Dokumen draft rekomendasi tidak ditemukan.");
@@ -2018,6 +2036,17 @@ class DataPerijinanController extends Controller
             } else if ($request->doc_type === 'izin') {
                 if ($user->role !== 'kadin') {
                     abort(403, 'Hanya Kadin yang dapat menandatangani Surat Izin.');
+                }
+
+                // Force regenerate document with official black QR code before TTE signing
+                try {
+                    $generatedDocs = \App\Services\DocumentGenerator::generateDocuments($application, null, true);
+                    if (isset($generatedDocs['file_izin'])) {
+                        $application->file_izin = $generatedDocs['file_izin'];
+                        $application->save();
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Gagal meregenerasi izin sebelum TTE: ' . $e->getMessage());
                 }
 
                 $filePath = $application->file_izin;
