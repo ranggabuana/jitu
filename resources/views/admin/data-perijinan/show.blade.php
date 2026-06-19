@@ -1648,7 +1648,7 @@
                     <p class="text-xs text-gray-600 dark:text-gray-400">Silakan masukkan passphrase sertifikat elektronik Anda untuk melakukan Tanda Tangan Elektronik (TTE) dokumen ini.</p>
                 </div>
                 <div class="relative">
-                    <input type="password" id="esign_passphrase" autocomplete="new-password" class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-green-500 outline-none transition-all pr-10 text-gray-800 dark:text-white" placeholder="Masukkan Passphrase...">
+                    <input type="text" id="esign_passphrase" autocomplete="off" style="-webkit-text-security: disc;" class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-green-500 outline-none transition-all pr-10 text-gray-800 dark:text-white" placeholder="Masukkan Passphrase...">
                     <button type="button" onclick="togglePassphrase()" class="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
                         <i id="icon-toggle-pass" class="mdi mdi-eye"></i>
                     </button>
@@ -1717,8 +1717,16 @@
             document.getElementById('esign_doc_type').value = docType;
             const m = document.getElementById('modal-esign');
             m.classList.remove('hidden'); m.classList.add('flex'); document.body.style.overflow = 'hidden';
-            document.getElementById('esign_passphrase').value = '';
-            document.getElementById('esign_passphrase').focus();
+            
+            const input = document.getElementById('esign_passphrase');
+            input.value = '';
+            input.style.webkitTextSecurity = 'disc';
+            
+            const icon = document.getElementById('icon-toggle-pass');
+            icon.classList.remove('mdi-eye-off');
+            icon.classList.add('mdi-eye');
+            
+            input.focus();
         }
         function closeEsignModal() {
             const m = document.getElementById('modal-esign');
@@ -1727,10 +1735,14 @@
         function togglePassphrase() {
             const input = document.getElementById('esign_passphrase');
             const icon = document.getElementById('icon-toggle-pass');
-            if (input.type === 'password') {
-                input.type = 'text'; icon.classList.remove('mdi-eye'); icon.classList.add('mdi-eye-off');
+            if (input.style.webkitTextSecurity === 'none') {
+                input.style.webkitTextSecurity = 'disc';
+                icon.classList.remove('mdi-eye-off');
+                icon.classList.add('mdi-eye');
             } else {
-                input.type = 'password'; icon.classList.remove('mdi-eye-off'); icon.classList.add('mdi-eye');
+                input.style.webkitTextSecurity = 'none';
+                icon.classList.remove('mdi-eye');
+                icon.classList.add('mdi-eye-off');
             }
         }
         
