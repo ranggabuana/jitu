@@ -122,7 +122,7 @@ class DocumentGenerator
                 $imageData = base64_encode(File::get($ttePath));
                 $mime = File::mimeType($ttePath);
                 $src = 'data:' . $mime . ';base64,' . $imageData;
-                $tteHtml = '<img src="' . $src . '" style="width: 250px; height: auto; max-height: 95px;" alt="TTE" />';
+                $tteHtml = '<img src="' . $src . '" style="max-width: 250px; max-height: 95px; width: auto; height: auto;" alt="TTE" />';
             }
         }
         $baseReplacements['${GAMBAR_TTE}'] = $tteHtml;
@@ -254,7 +254,7 @@ class DocumentGenerator
                     $imageData = base64_encode(File::get($opdTtePath));
                     $mime = File::mimeType($opdTtePath);
                     $src = 'data:' . $mime . ';base64,' . $imageData;
-                    $finalReplacements['${GAMBAR_TTE}'] = '<img src="' . $src . '" style="width: 250px; height: auto; max-height: 95px;" alt="TTE OPD" />';
+                    $finalReplacements['${GAMBAR_TTE}'] = '<img src="' . $src . '" style="max-width: 250px; max-height: 95px; width: auto; height: auto;" alt="TTE OPD" />';
                     $finalReplacements['${_IMG_PATH_TTE}'] = $opd->gambar_tte; // For Word template
                 }
             }
