@@ -330,15 +330,9 @@ class DocumentGenerator
             $rekomData = $rekomItem['data'];
             $filename = $rekomItem['filename'];
 
-            $isRekomDraft = true;
-            if ($forceOfficial) {
-                $isRekomDraft = false;
-            } else {
-                if ($perijinan->is_multi_opd && $opd) {
-                    $isRekomDraft = empty($application->file_rekom_multi_tte[$opd->id]);
-                } else {
-                    $isRekomDraft = empty($application->file_rekom_tte);
-                }
+            $isRekomDraft = !$forceOfficial;
+            if ($isRekomDraft) {
+                $filename .= '_Draft';
             }
 
             $rekomScanParams = [
@@ -550,8 +544,12 @@ class DocumentGenerator
 
             $finalReplacements = array_merge($baseReplacements, $applicantReplacements, $boReplacements, $dataReplacements);
             
+            $filename = $config['filename'];
             if ($type === 'izin') {
-                $isIzinDraft = $forceOfficial ? false : empty($application->file_izin_tte);
+                $isIzinDraft = !$forceOfficial;
+                if ($isIzinDraft) {
+                    $filename .= '_Draft';
+                }
                 $izinScanParams = [
                     'no_registrasi' => $application->no_registrasi,
                     'type' => 'izin'
@@ -584,9 +582,9 @@ class DocumentGenerator
             }
 
             if (Str::endsWith($rawTemplate, '.docx')) {
-                $path = self::generateFromWord($rawTemplate, $finalReplacements, $config['filename'], $folderPath, $absoluteFolder);
+                $path = self::generateFromWord($rawTemplate, $finalReplacements, $filename, $folderPath, $absoluteFolder);
             } else {
-                $path = self::renderAndSave($rawTemplate, $finalReplacements, $config['filename'], $folderPath, $absoluteFolder, $application->no_registrasi);
+                $path = self::renderAndSave($rawTemplate, $finalReplacements, $filename, $folderPath, $absoluteFolder, $application->no_registrasi);
             }
             $generatedPaths['file_' . $type] = $path;
         }
