@@ -456,8 +456,23 @@
                                         @elseif($field->type === 'select')
                                             <select name="{{ $field->name }}" class="{{ $cls }}" {{ $ro }}>
                                                 <option value="">-- Pilih --</option>
-                                                @foreach($field->options ?? [] as $opt)
-                                                    <option value="{{ $opt }}" {{ $val == $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                                                @php
+                                                    $options = $field->options ?? [];
+                                                    if ($val !== '' && $val !== null) {
+                                                        $existsCaseInsensitive = false;
+                                                        foreach ($options as $opt) {
+                                                            if (strtolower($opt) === strtolower($val)) {
+                                                                $existsCaseInsensitive = true;
+                                                                break;
+                                                            }
+                                                        }
+                                                        if (!$existsCaseInsensitive) {
+                                                            $options[] = $val;
+                                                        }
+                                                    }
+                                                @endphp
+                                                @foreach($options as $opt)
+                                                    <option value="{{ $opt }}" {{ strtolower($val) == strtolower($opt) ? 'selected' : '' }}>{{ $opt }}</option>
                                                 @endforeach
                                             </select>
                                         @elseif($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar')
@@ -709,12 +724,27 @@
                                                 @endphp
 
                                                 @if($field->type === 'textarea')
-                                                    <textarea name="{{ $field->name }}" class="{{ $cls }} min-h-[120px]">{{ $val }}</textarea>
+                                                    <textarea name="{{ $field->name }}" {{ $ro }} class="{{ $cls }} min-h-[120px]">{{ $val }}</textarea>
                                                 @elseif($field->type === 'select')
-                                                    <select name="{{ $field->name }}" class="{{ $cls }}">
+                                                    <select name="{{ $field->name }}" class="{{ $cls }}" {{ $ro }}>
                                                         <option value="">-- Pilih --</option>
-                                                        @foreach($field->options ?? [] as $opt)
-                                                            <option value="{{ $opt }}" {{ $val == $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                                                        @php
+                                                            $options = $field->options ?? [];
+                                                            if ($val !== '' && $val !== null) {
+                                                                $existsCaseInsensitive = false;
+                                                                foreach ($options as $opt) {
+                                                                    if (strtolower($opt) === strtolower($val)) {
+                                                                        $existsCaseInsensitive = true;
+                                                                        break;
+                                                                    }
+                                                                }
+                                                                if (!$existsCaseInsensitive) {
+                                                                    $options[] = $val;
+                                                                }
+                                                            }
+                                                        @endphp
+                                                        @foreach($options as $opt)
+                                                            <option value="{{ $opt }}" {{ strtolower($val) == strtolower($opt) ? 'selected' : '' }}>{{ $opt }}</option>
                                                         @endforeach
                                                     </select>
                                                 @elseif($field->type === 'pas_foto' || $field->type === 'file' || $field->type === 'gambar')
@@ -952,8 +982,23 @@
                                             @elseif($field->type === 'select')
                                                 <select name="{{ $field->name }}" class="{{ $cls }}" {{ $ro }}>
                                                     <option value="">-- Pilih --</option>
-                                                    @foreach($field->options ?? [] as $opt)
-                                                        <option value="{{ $opt }}" {{ $val == $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                                                    @php
+                                                        $options = $field->options ?? [];
+                                                        if ($val !== '' && $val !== null) {
+                                                            $existsCaseInsensitive = false;
+                                                            foreach ($options as $opt) {
+                                                                if (strtolower($opt) === strtolower($val)) {
+                                                                    $existsCaseInsensitive = true;
+                                                                    break;
+                                                                }
+                                                            }
+                                                            if (!$existsCaseInsensitive) {
+                                                                $options[] = $val;
+                                                            }
+                                                        }
+                                                    @endphp
+                                                    @foreach($options as $opt)
+                                                        <option value="{{ $opt }}" {{ strtolower($val) == strtolower($opt) ? 'selected' : '' }}>{{ $opt }}</option>
                                                     @endforeach
                                                 </select>
                                             @elseif($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar')
@@ -1175,8 +1220,23 @@
                                         @elseif($field->type === 'select')
                                             <select name="{{ $field->name }}" class="{{ $cls }}" {{ $ro }}>
                                                 <option value="">-- Pilih --</option>
-                                                @foreach($field->options ?? [] as $opt)
-                                                    <option value="{{ $opt }}" {{ $val == $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                                                @php
+                                                    $options = $field->options ?? [];
+                                                    if ($val !== '' && $val !== null) {
+                                                        $existsCaseInsensitive = false;
+                                                        foreach ($options as $opt) {
+                                                            if (strtolower($opt) === strtolower($val)) {
+                                                                $existsCaseInsensitive = true;
+                                                                break;
+                                                            }
+                                                        }
+                                                        if (!$existsCaseInsensitive) {
+                                                            $options[] = $val;
+                                                        }
+                                                    }
+                                                @endphp
+                                                @foreach($options as $opt)
+                                                    <option value="{{ $opt }}" {{ strtolower($val) == strtolower($opt) ? 'selected' : '' }}>{{ $opt }}</option>
                                                 @endforeach
                                             </select>
                                         @elseif($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar')

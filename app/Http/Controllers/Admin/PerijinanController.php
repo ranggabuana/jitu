@@ -378,6 +378,10 @@ class PerijinanController extends Controller
             'max_file_size' => 'nullable|integer|min:1',
         ]);
 
+        if (!empty($validated['file_types'])) {
+            $validated['file_types'] = implode(',', array_map('trim', explode(',', $validated['file_types'])));
+        }
+
         $validated['perijinan_id'] = $perijinan->id;
         $validated['form_type'] = $validated['form_type'] ?? 'global';
         $validated['is_required'] = $request->has('is_required');
@@ -456,6 +460,10 @@ class PerijinanController extends Controller
             'file_types' => 'nullable|string|max:255',
             'max_file_size' => 'nullable|integer|min:1',
         ]);
+
+        if (!empty($validated['file_types'])) {
+            $validated['file_types'] = implode(',', array_map('trim', explode(',', $validated['file_types'])));
+        }
 
         $validated['is_required'] = $request->has('is_required');
         $validated['is_active'] = $request->has('is_active');

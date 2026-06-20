@@ -353,7 +353,9 @@ class DashboardController extends Controller
                 $field = $perijinan->activeFormFields->firstWhere('id', $fieldId);
 
                 if ($field) {
-                    $allowedTypes = $field->file_types ?: (($field->type === 'pas_foto' || $field->type === 'gambar') ? 'jpg,jpeg,png' : 'pdf,doc,docx,jpg,jpeg,png');
+                    $allowedTypes = $field->file_types 
+                        ? implode(',', array_map('trim', explode(',', $field->file_types))) 
+                        : (($field->type === 'pas_foto' || $field->type === 'gambar') ? 'jpg,jpeg,png' : 'pdf,doc,docx,jpg,jpeg,png');
                     $maxSize = $field->max_file_size ? ($field->max_file_size * 1024) : 10240; // in KB
 
                     foreach ((array) $files as $index => $file) {
@@ -746,7 +748,9 @@ class DashboardController extends Controller
             foreach ($formFiles as $fieldId => $files) {
                 $field = $perijinan->activeFormFields->firstWhere('id', $fieldId);
                 if ($field) {
-                    $allowedTypes = $field->file_types ?: (($field->type === 'pas_foto' || $field->type === 'gambar') ? 'jpg,jpeg,png' : 'pdf,doc,docx,jpg,jpeg,png');
+                    $allowedTypes = $field->file_types 
+                        ? implode(',', array_map('trim', explode(',', $field->file_types))) 
+                        : (($field->type === 'pas_foto' || $field->type === 'gambar') ? 'jpg,jpeg,png' : 'pdf,doc,docx,jpg,jpeg,png');
                     $maxSize = $field->max_file_size ? ($field->max_file_size * 1024) : 10240; // in KB
 
                     foreach ((array) $files as $index => $file) {
