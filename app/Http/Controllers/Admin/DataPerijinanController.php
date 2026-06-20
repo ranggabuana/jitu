@@ -1009,10 +1009,19 @@ class DataPerijinanController extends Controller
             }
         }
         
+        $opdId = null;
+        if ($perijinan->is_multi_opd) {
+            $opdId = $user->role === 'operator_opd' ? $user->opd_id : ($request->opd_id ?? 0);
+        }
+
         $rekomFieldsQuery = $perijinan->activeFormFields()->where('form_type', 'rekom');
         
-        // Filter fields by OPD if operator
-        if ($user->role === 'operator_opd' && $user->opd_id) {
+        // Filter fields by OPD if operator or if multi OPD request
+        if ($perijinan->is_multi_opd && $opdId) {
+            $rekomFieldsQuery->where(function($q) use ($opdId) {
+                $q->where('opd_id', $opdId)->orWhereNull('opd_id');
+            });
+        } elseif ($user->role === 'operator_opd' && $user->opd_id) {
             $rekomFieldsQuery->where(function($q) use ($user) {
                 $q->where('opd_id', $user->opd_id)->orWhereNull('opd_id');
             });
@@ -1031,21 +1040,12 @@ class DataPerijinanController extends Controller
 
         $validated = $request->validate($rules);
         
-        // Handle Multi-OPD Isolation
         if ($perijinan->is_multi_opd) {
-            $opdId = $user->opd_id;
-            if (!$opdId && $user->isAdmin()) {
-                // Admin might need to select which OPD if they are filling it? 
-                // For now, let's assume they pick the first one or we need an opd_id in request.
-                // But usually Admin just supervises. If Admin edits, they might need to specify.
-                // Let's use a fallback if Admin doesn't have opd_id.
-                $opdId = $request->opd_id ?? 0; 
-            }
 
             $multiData = $application->rekom_data_multi ?? [];
             $currentData = $multiData[$opdId] ?? [];
 
-            foreach ($rekomFields as $field) {
+                        foreach ($rekomFields as $field) {
                 if (($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar') && $request->hasFile($field->name)) {
                     $file = $request->file($field->name);
                     $filename = 'rekom_' . $opdId . '_' . $field->name . '_' . time() . '.' . $file->getClientOriginalExtension();
@@ -1055,6 +1055,45 @@ class DataPerijinanController extends Controller
                 } else {
                     if (array_key_exists($field->name, $validated)) {
                         $currentData[$field->name] = $validated[$field->name];
+                    } else {
+                        $isAlreadySaved = array_key_exists($field->name, $currentData);
+                        if (!$isAlreadySaved) {
+                            $val = null;
+                            if ($perijinan->has_bo_form) {
+                                $matchingBoField = $perijinan->activeFormFields
+                                    ->where('form_type', 'bo')
+                                    ->where('name', $field->name)
+                                    ->first() ?? $perijinan->activeFormFields
+                                    ->where('form_type', 'bo')
+                                    ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                                    ->first();
+
+                                if ($matchingBoField) {
+                                    $val = $application->bo_data[$matchingBoField->name] ?? null;
+                                }
+                            } else {
+                                $matchingGlobalField = $perijinan->activeFormFields
+                                    ->where('form_type', 'global')
+                                    ->where('name', $field->name)
+                                    ->first() ?? $perijinan->activeFormFields
+                                    ->where('form_type', 'global')
+                                    ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                                    ->first();
+
+                                if ($matchingGlobalField) {
+                                    if ($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar') {
+                                        $globalFiles = $application->form_files[$matchingGlobalField->id] ?? [];
+                                        $val = is_array($globalFiles) ? ($globalFiles[0] ?? null) : $globalFiles;
+                                    } else {
+                                        $val = $application->form_data[$matchingGlobalField->id] ?? '';
+                                        if (is_array($val)) $val = implode(', ', $val);
+                                    }
+                                }
+                            }
+                            if ($val !== null) {
+                                $currentData[$field->name] = $val;
+                            }
+                        }
                     }
                 }
             }
@@ -1083,7 +1122,7 @@ class DataPerijinanController extends Controller
         } else {
             // Standard Single OPD Logic
             $rekomData = $application->rekom_data ?? [];
-            foreach ($rekomFields as $field) {
+                        foreach ($rekomFields as $field) {
                 if (($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar') && $request->hasFile($field->name)) {
                     $file = $request->file($field->name);
                     $filename = 'rekom_' . $field->name . '_' . time() . '.' . $file->getClientOriginalExtension();
@@ -1093,6 +1132,45 @@ class DataPerijinanController extends Controller
                 } else {
                     if (array_key_exists($field->name, $validated)) {
                         $rekomData[$field->name] = $validated[$field->name];
+                    } else {
+                        $isAlreadySaved = array_key_exists($field->name, $rekomData);
+                        if (!$isAlreadySaved) {
+                            $val = null;
+                            if ($perijinan->has_bo_form) {
+                                $matchingBoField = $perijinan->activeFormFields
+                                    ->where('form_type', 'bo')
+                                    ->where('name', $field->name)
+                                    ->first() ?? $perijinan->activeFormFields
+                                    ->where('form_type', 'bo')
+                                    ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                                    ->first();
+
+                                if ($matchingBoField) {
+                                    $val = $application->bo_data[$matchingBoField->name] ?? null;
+                                }
+                            } else {
+                                $matchingGlobalField = $perijinan->activeFormFields
+                                    ->where('form_type', 'global')
+                                    ->where('name', $field->name)
+                                    ->first() ?? $perijinan->activeFormFields
+                                    ->where('form_type', 'global')
+                                    ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                                    ->first();
+
+                                if ($matchingGlobalField) {
+                                    if ($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar') {
+                                        $globalFiles = $application->form_files[$matchingGlobalField->id] ?? [];
+                                        $val = is_array($globalFiles) ? ($globalFiles[0] ?? null) : $globalFiles;
+                                    } else {
+                                        $val = $application->form_data[$matchingGlobalField->id] ?? '';
+                                        if (is_array($val)) $val = implode(', ', $val);
+                                    }
+                                }
+                            }
+                            if ($val !== null) {
+                                $rekomData[$field->name] = $val;
+                            }
+                        }
                     }
                 }
             }
@@ -1264,7 +1342,7 @@ class DataPerijinanController extends Controller
         
         $boData = $application->bo_data ?? [];
 
-        foreach ($boFields as $field) {
+                foreach ($boFields as $field) {
             if (($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar') && $request->hasFile($field->name)) {
                 $file = $request->file($field->name);
                 if ($file->isValid()) {
@@ -1276,6 +1354,30 @@ class DataPerijinanController extends Controller
             } else {
                 if (array_key_exists($field->name, $validated)) {
                     $boData[$field->name] = $validated[$field->name];
+                } else {
+                    $isAlreadySaved = array_key_exists($field->name, $boData);
+                    if (!$isAlreadySaved) {
+                        $matchingGlobalField = $application->perijinan->activeFormFields
+                            ->where('form_type', 'global')
+                            ->where('name', $field->name)
+                            ->first() ?? $application->perijinan->activeFormFields
+                            ->where('form_type', 'global')
+                            ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                            ->first();
+
+                        if ($matchingGlobalField) {
+                            if ($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar') {
+                                $globalFiles = $application->form_files[$matchingGlobalField->id] ?? [];
+                                $val = is_array($globalFiles) ? ($globalFiles[0] ?? null) : $globalFiles;
+                            } else {
+                                $val = $application->form_data[$matchingGlobalField->id] ?? '';
+                                if (is_array($val)) $val = implode(', ', $val);
+                            }
+                            if ($val !== null) {
+                                $boData[$field->name] = $val;
+                            }
+                        }
+                    }
                 }
             }
         }

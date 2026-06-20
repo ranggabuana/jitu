@@ -426,11 +426,11 @@
                                     <div class="space-y-2">
                                         <label class="block text-[11px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-tighter">{{ $field->label }} @if($field->is_required)<span class="text-red-500">*</span>@endif</label>
                                         @php 
-                                            $val = $application->bo_data[$field->name] ?? null; 
+                                                                                        $val = $application->bo_data[$field->name] ?? null; 
                                             $isAlreadySaved = array_key_exists($field->name, $application->bo_data ?? []);
 
                                             // Auto-fill from global form ONLY if never saved before
-                                            if (!$isAlreadySaved && $field->type !== 'file') {
+                                            if (!$isAlreadySaved) {
                                                 $matchingGlobalField = $application->perijinan->activeFormFields
                                                     ->where('form_type', 'global')
                                                     ->where('name', $field->name)
@@ -441,8 +441,13 @@
                                                     })->first();
 
                                                 if ($matchingGlobalField) {
-                                                    $val = $application->form_data[$matchingGlobalField->id] ?? '';
-                                                    if (is_array($val)) $val = implode(', ', $val);
+                                                    if ($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar') {
+                                                        $globalFiles = $application->form_files[$matchingGlobalField->id] ?? [];
+                                                        $val = is_array($globalFiles) ? ($globalFiles[0] ?? null) : $globalFiles;
+                                                    } else {
+                                                        $val = $application->form_data[$matchingGlobalField->id] ?? '';
+                                                        if (is_array($val)) $val = implode(', ', $val);
+                                                    }
                                                 }
                                             }
 
@@ -697,25 +702,44 @@
                                     <input type="hidden" name="opd_id" value="{{ $opd->id }}">
                                     <input type="hidden" name="elapsed_seconds" class="elapsed-seconds-input" value="0">
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        @foreach($rekomFields as $field)
+                                        @foreach($rekomFields->filter(fn($f) => $f->opd_id == $opd->id || $f->opd_id === null) as $field)
                                             <div class="space-y-2">
                                                 <label class="block text-[11px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-tighter">{{ $field->label }} @if($field->is_required)<span class="text-red-500">*</span>@endif</label>
                                                 @php 
                                                     $val = $opdRekomData[$field->name] ?? null; 
                                                     $isAlreadySaved = array_key_exists($field->name, $opdRekomData);
 
-                                                    if (!$isAlreadySaved && $field->type !== 'file') {
-                                                        $matchingGlobalField = $application->perijinan->activeFormFields
-                                                            ->where('form_type', 'global')
-                                                            ->where('name', $field->name)
-                                                            ->first() ?? $application->perijinan->activeFormFields
-                                                            ->where('form_type', 'global')
-                                                            ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
-                                                            ->first();
+                                                    if (!$isAlreadySaved) {
+                                                        if ($application->perijinan->has_bo_form) {
+                                                            $matchingBoField = $application->perijinan->activeFormFields
+                                                                ->where('form_type', 'bo')
+                                                                ->where('name', $field->name)
+                                                                ->first() ?? $application->perijinan->activeFormFields
+                                                                ->where('form_type', 'bo')
+                                                                ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                                                                ->first();
 
-                                                        if ($matchingGlobalField) {
-                                                            $val = $application->form_data[$matchingGlobalField->id] ?? '';
-                                                            if (is_array($val)) $val = implode(', ', $val);
+                                                            if ($matchingBoField) {
+                                                                $val = $application->bo_data[$matchingBoField->name] ?? null;
+                                                            }
+                                                        } else {
+                                                            $matchingGlobalField = $application->perijinan->activeFormFields
+                                                                ->where('form_type', 'global')
+                                                                ->where('name', $field->name)
+                                                                ->first() ?? $application->perijinan->activeFormFields
+                                                                ->where('form_type', 'global')
+                                                                ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                                                                ->first();
+
+                                                            if ($matchingGlobalField) {
+                                                                if ($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar') {
+                                                                    $globalFiles = $application->form_files[$matchingGlobalField->id] ?? [];
+                                                                    $val = is_array($globalFiles) ? ($globalFiles[0] ?? null) : $globalFiles;
+                                                                } else {
+                                                                    $val = $application->form_data[$matchingGlobalField->id] ?? '';
+                                                                    if (is_array($val)) $val = implode(', ', $val);
+                                                                }
+                                                            }
                                                         }
                                                     }
 
@@ -810,7 +834,7 @@
                             @else
                             <div class="p-6 bg-gray-50/50 dark:bg-gray-900/20">
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    @foreach($rekomFields as $field)
+                                    @foreach($rekomFields->filter(fn($f) => $f->opd_id == $opd->id || $f->opd_id === null) as $field)
                                         <div class="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700">
                                             <label class="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">{{ $field->label }}</label>
                                             <p class="text-xs font-semibold text-gray-700 dark:text-gray-200">
@@ -952,23 +976,40 @@
                                         <div class="space-y-2">
                                             <label class="block text-[11px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-tighter">{{ $field->label }} @if($field->is_required)<span class="text-red-500">*</span>@endif</label>
                                             @php 
-                                                $val = $application->rekom_data[$field->name] ?? null; 
+                                                                                                $val = $application->rekom_data[$field->name] ?? null; 
                                                 $isAlreadySaved = array_key_exists($field->name, $application->rekom_data ?? []);
 
-                                                // Auto-fill from global form ONLY if never saved before
-                                                if (!$isAlreadySaved && $field->type !== 'file') {
-                                                    $matchingGlobalField = $application->perijinan->activeFormFields
-                                                        ->where('form_type', 'global')
-                                                        ->where('name', $field->name)
-                                                        ->first() ?? $application->perijinan->activeFormFields
-                                                        ->where('form_type', 'global')
-                                                        ->filter(function($f) use ($field) {
-                                                            return strtolower($f->label) === strtolower($field->label);
-                                                        })->first();
+                                                if (!$isAlreadySaved) {
+                                                    if ($application->perijinan->has_bo_form) {
+                                                        $matchingBoField = $application->perijinan->activeFormFields
+                                                            ->where('form_type', 'bo')
+                                                            ->where('name', $field->name)
+                                                            ->first() ?? $application->perijinan->activeFormFields
+                                                            ->where('form_type', 'bo')
+                                                            ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                                                            ->first();
 
-                                                    if ($matchingGlobalField) {
-                                                        $val = $application->form_data[$matchingGlobalField->id] ?? '';
-                                                        if (is_array($val)) $val = implode(', ', $val);
+                                                        if ($matchingBoField) {
+                                                            $val = $application->bo_data[$matchingBoField->name] ?? null;
+                                                        }
+                                                    } else {
+                                                        $matchingGlobalField = $application->perijinan->activeFormFields
+                                                            ->where('form_type', 'global')
+                                                            ->where('name', $field->name)
+                                                            ->first() ?? $application->perijinan->activeFormFields
+                                                            ->where('form_type', 'global')
+                                                            ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                                                            ->first();
+
+                                                        if ($matchingGlobalField) {
+                                                            if ($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar') {
+                                                                $globalFiles = $application->form_files[$matchingGlobalField->id] ?? [];
+                                                                $val = is_array($globalFiles) ? ($globalFiles[0] ?? null) : $globalFiles;
+                                                            } else {
+                                                                $val = $application->form_data[$matchingGlobalField->id] ?? '';
+                                                                if (is_array($val)) $val = implode(', ', $val);
+                                                            }
+                                                        }
                                                     }
                                                 }
 

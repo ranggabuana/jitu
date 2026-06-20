@@ -57,6 +57,14 @@
                         </button>
                     </li>
                 @endif
+                @if($perijinan->has_bo_form && (auth()->user()->isAdmin() || auth()->user()->isBo()))
+                <li class="mr-2">
+                    <button onclick="switchTab('bo')" id="tab-btn-bo" class="tab-btn inline-flex items-center justify-center p-4 border-b-2 rounded-t-lg group {{ auth()->user()->isAdmin() ? 'border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300' : 'text-indigo-600 border-indigo-600 dark:text-indigo-500 dark:border-indigo-500' }}">
+                        <i id="tab-icon-bo" class="mdi mdi-account-cog mr-2 text-lg {{ auth()->user()->isAdmin() ? 'text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300' : 'text-indigo-600 dark:text-indigo-500' }}"></i>
+                        BO Form
+                    </button>
+                </li>
+                @endif
                 @if(auth()->user()->isAdmin() || auth()->user()->isOperatorOpd())
                 <li class="mr-2">
                     <button onclick="switchTab('rekom')" id="tab-btn-rekom" class="tab-btn inline-flex items-center justify-center p-4 border-b-2 rounded-t-lg group {{ auth()->user()->isAdmin() ? 'border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300' : 'text-indigo-600 border-indigo-600 dark:text-indigo-500 dark:border-indigo-500' }}">
@@ -70,14 +78,6 @@
                     <button onclick="switchTab('izin')" id="tab-btn-izin" class="tab-btn inline-flex items-center justify-center p-4 border-b-2 rounded-t-lg group {{ auth()->user()->isAdmin() ? 'border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300' : 'text-indigo-600 border-indigo-600 dark:text-indigo-500 dark:border-indigo-500' }}">
                         <i id="tab-icon-izin" class="mdi mdi-file-certificate-outline mr-2 text-lg {{ auth()->user()->isAdmin() ? 'text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300' : 'text-indigo-600 dark:text-indigo-500' }}"></i>
                         Izin Form
-                    </button>
-                </li>
-                @endif
-                @if($perijinan->has_bo_form && (auth()->user()->isAdmin() || auth()->user()->isBo()))
-                <li class="mr-2">
-                    <button onclick="switchTab('bo')" id="tab-btn-bo" class="tab-btn inline-flex items-center justify-center p-4 border-b-2 rounded-t-lg group {{ auth()->user()->isAdmin() ? 'border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300' : 'text-indigo-600 border-indigo-600 dark:text-indigo-500 dark:border-indigo-500' }}">
-                        <i id="tab-icon-bo" class="mdi mdi-account-cog mr-2 text-lg {{ auth()->user()->isAdmin() ? 'text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300' : 'text-indigo-600 dark:text-indigo-500' }}"></i>
-                        BO Form
                     </button>
                 </li>
                 @endif
