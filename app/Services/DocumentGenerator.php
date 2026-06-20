@@ -151,7 +151,7 @@ class DocumentGenerator
         if ($tempQrPath && File::exists($tempQrPath)) {
             $tempFilesToDelete[] = $tempQrPath;
             $qrCodeBase64 = base64_encode(File::get($tempQrPath));
-            $qrHtml = '<img src="data:image/png;base64,' . $qrCodeBase64 . '" style="width: 60px; height: 60px;" alt="Scan QR Code" />';
+            $qrHtml = '<img src="data:image/png;base64,' . $qrCodeBase64 . '" style="width: 2cm; height: 2cm;" alt="Scan QR Code" />';
             $baseReplacements['${QRCODE}'] = $qrHtml;
             $baseReplacements['${_IMG_PATH_QRCODE}'] = $tempQrPath;
         } else {
@@ -349,7 +349,7 @@ class DocumentGenerator
             if ($rekomQrPath && File::exists($rekomQrPath)) {
                 $tempFilesToDelete[] = $rekomQrPath;
                 $rekomQrBase64 = base64_encode(File::get($rekomQrPath));
-                $rekomQrHtml = '<img src="data:image/png;base64,' . $rekomQrBase64 . '" style="width: 60px; height: 60px;" alt="Scan QR Code" />';
+                $rekomQrHtml = '<img src="data:image/png;base64,' . $rekomQrBase64 . '" style="width: 2cm; height: 2cm;" alt="Scan QR Code" />';
             } else {
                 $rekomQrHtml = '[Gagal Generate QR Code]';
             }
@@ -563,7 +563,7 @@ class DocumentGenerator
                 if ($izinQrPath && File::exists($izinQrPath)) {
                     $tempFilesToDelete[] = $izinQrPath;
                     $izinQrBase64 = base64_encode(File::get($izinQrPath));
-                    $izinQrHtml = '<img src="data:image/png;base64,' . $izinQrBase64 . '" style="width: 60px; height: 60px;" alt="Scan QR Code" />';
+                    $izinQrHtml = '<img src="data:image/png;base64,' . $izinQrBase64 . '" style="width: 2cm; height: 2cm;" alt="Scan QR Code" />';
                 } else {
                     $izinQrHtml = '[Gagal Generate QR Code]';
                 }
