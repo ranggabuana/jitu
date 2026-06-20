@@ -46,7 +46,7 @@
         </div>
         
         <!-- Dokumen Izin Download Section -->
-        @if($data->status === 'approved' && $data->file_izin)
+        @if($data->status === 'approved' && ($data->file_izin_tte || $data->file_izin))
             @if($data->isSkmFilled())
                 <div class="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-6 shadow-sm flex items-center justify-between flex-wrap gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
                     <div class="flex items-center gap-4">
@@ -58,7 +58,7 @@
                             <p class="text-sm text-emerald-600">Pengajuan Anda telah disetujui. Silakan unduh dokumen izin Anda di bawah ini.</p>
                         </div>
                     </div>
-                    <a href="{{ asset($data->file_izin) }}" target="_blank" download class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-all transform hover:-translate-y-1">
+                    <a href="{{ asset($data->file_izin_tte ?: $data->file_izin) }}" target="_blank" download class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-all transform hover:-translate-y-1">
                         <i class="fas fa-download"></i> Unduh Dokumen Izin
                     </a>
                 </div>
