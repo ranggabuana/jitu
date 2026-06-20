@@ -389,6 +389,58 @@
                     </div>
                 </div>
 
+
+                <!-- Card: Dokumen Surat Pengajuan -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center border border-blue-200 dark:border-blue-800">
+                                <i class="mdi mdi-file-document-multiple text-blue-600 dark:text-blue-400 text-xl"></i>
+                            </div>
+                            <div>
+                                <h2 class="font-bold text-gray-800 dark:text-white text-base">Dokumen Surat Pengajuan</h2>
+                                <p class="text-gray-500 text-[10px] uppercase font-bold mt-0.5 tracking-wider">Digenerate otomatis dari data pemohon</p>
+                            </div>
+                        </div>
+                        @if(!$isFo && !$isBo)
+                        <form action="{{ route('data-perijinan.regenerate-documents', $application->id) }}" method="POST" onsubmit="return confirm('Lanjutkan?');">
+                            @csrf <button type="submit" class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded-lg text-[10px] font-bold uppercase transition-all"><i class="mdi mdi-sync text-sm"></i> Update</button>
+                        </form>
+                        @endif
+                    </div>
+                    <div class="p-5">
+                        @php
+                            $basicDocs = [
+                                ['label' => 'Surat Pernyataan', 'desc' => 'Pernyataan kebenaran data', 'icon' => 'mdi-file-certificate-outline', 'file' => $application->file_pernyataan],
+                                ['label' => 'Surat Permohonan', 'desc' => 'Permohonan resmi instansi', 'icon' => 'mdi-file-send-outline', 'file' => $application->file_permohonan],
+                                ['label' => 'Surat Keabsahan', 'desc' => 'Pernyataan keabsahan dokumen', 'icon' => 'mdi-file-check-outline', 'file' => $application->file_keabsahan],
+                            ];
+                        @endphp
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            @foreach($basicDocs as $doc)
+                                @if($doc['file'])
+                                    @php $rp = str_replace('uploads/perijinan/', '', $doc['file']); @endphp
+                                    <div class="rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/30 overflow-hidden flex flex-col transition-all hover:shadow-md">
+                                        <div class="p-4 flex-1">
+                                            <div class="flex items-start gap-3 mb-3">
+                                                <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center border border-blue-200 dark:border-blue-800 flex-shrink-0"><i class="mdi {{ $doc['icon'] }} text-xl text-blue-600"></i></div>
+                                                <div class="flex-1 min-w-0">
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black text-white bg-blue-500 mb-1 uppercase">PDF</span>
+                                                    <h4 class="text-xs font-bold text-gray-800 dark:text-white leading-tight truncate">{{ $doc['label'] }}</h4>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center gap-2 mt-auto">
+                                                <button onclick="openPdfPreview('{{ asset($doc['file']) }}', '{{ $doc['label'] }}')" class="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold uppercase tracking-wider">Pratinjau</button>
+                                                <a href="{{ route('data-perijinan.download-file', $rp) }}" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-gray-600 transition-colors"><i class="mdi mdi-download"></i></a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
                 @if($application->perijinan->has_bo_form && ($canEditBo || !empty($application->bo_data)))
                 <!-- Card: Form Khusus BO -->
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-emerald-200 dark:border-emerald-900/30 overflow-hidden mb-6">
@@ -545,57 +597,6 @@
                     </div>
                 </div>
                 @endif
-
-                <!-- Card: Dokumen Surat Pengajuan -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center border border-blue-200 dark:border-blue-800">
-                                <i class="mdi mdi-file-document-multiple text-blue-600 dark:text-blue-400 text-xl"></i>
-                            </div>
-                            <div>
-                                <h2 class="font-bold text-gray-800 dark:text-white text-base">Dokumen Surat Pengajuan</h2>
-                                <p class="text-gray-500 text-[10px] uppercase font-bold mt-0.5 tracking-wider">Digenerate otomatis dari data pemohon</p>
-                            </div>
-                        </div>
-                        @if(!$isFo && !$isBo)
-                        <form action="{{ route('data-perijinan.regenerate-documents', $application->id) }}" method="POST" onsubmit="return confirm('Lanjutkan?');">
-                            @csrf <button type="submit" class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded-lg text-[10px] font-bold uppercase transition-all"><i class="mdi mdi-sync text-sm"></i> Update</button>
-                        </form>
-                        @endif
-                    </div>
-                    <div class="p-5">
-                        @php
-                            $basicDocs = [
-                                ['label' => 'Surat Pernyataan', 'desc' => 'Pernyataan kebenaran data', 'icon' => 'mdi-file-certificate-outline', 'file' => $application->file_pernyataan],
-                                ['label' => 'Surat Permohonan', 'desc' => 'Permohonan resmi instansi', 'icon' => 'mdi-file-send-outline', 'file' => $application->file_permohonan],
-                                ['label' => 'Surat Keabsahan', 'desc' => 'Pernyataan keabsahan dokumen', 'icon' => 'mdi-file-check-outline', 'file' => $application->file_keabsahan],
-                            ];
-                        @endphp
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            @foreach($basicDocs as $doc)
-                                @if($doc['file'])
-                                    @php $rp = str_replace('uploads/perijinan/', '', $doc['file']); @endphp
-                                    <div class="rounded-2xl border border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/30 overflow-hidden flex flex-col transition-all hover:shadow-md">
-                                        <div class="p-4 flex-1">
-                                            <div class="flex items-start gap-3 mb-3">
-                                                <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center border border-blue-200 dark:border-blue-800 flex-shrink-0"><i class="mdi {{ $doc['icon'] }} text-xl text-blue-600"></i></div>
-                                                <div class="flex-1 min-w-0">
-                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black text-white bg-blue-500 mb-1 uppercase">PDF</span>
-                                                    <h4 class="text-xs font-bold text-gray-800 dark:text-white leading-tight truncate">{{ $doc['label'] }}</h4>
-                                                </div>
-                                            </div>
-                                            <div class="flex items-center gap-2 mt-auto">
-                                                <button onclick="openPdfPreview('{{ asset($doc['file']) }}', '{{ $doc['label'] }}')" class="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold uppercase tracking-wider">Pratinjau</button>
-                                                <a href="{{ route('data-perijinan.download-file', $rp) }}" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-gray-600 transition-colors"><i class="mdi mdi-download"></i></a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-                            @endforeach
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- TAB 2: DOKUMEN REKOMENDASI -->
