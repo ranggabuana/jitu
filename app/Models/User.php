@@ -218,8 +218,9 @@ class User extends Authenticatable
             'verifikator' => 'Verifikator DPMPTSP',
             'kadin' => 'Kadin DPMPTSP',
             'pemerintah' => 'Pemerintah',
+            'pemohon' => 'Pemohon',
         ];
-        return $labels[$this->role] ?? $this->role;
+        return $labels[$this->role] ?? (string)$this->role;
     }
 
     /**
@@ -253,8 +254,8 @@ class User extends Authenticatable
      */
     public function canAccessDataPerijinan(): bool
     {
-        // Pemohon cannot access data perijinan
-        if ($this->role === 'pemohon') {
+        // Pemohon & Pemerintah cannot access data perijinan
+        if ($this->role === 'pemohon' || $this->role === 'pemerintah') {
             return false;
         }
 

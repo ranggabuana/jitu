@@ -34,8 +34,8 @@ class AdminRole
 
         // Check if user has allowed role
         if (!in_array(Auth::user()->role, $allowedRoles)) {
-            // Redirect pemohon to their own dashboard
-            if (Auth::user()->role === 'pemohon') {
+            // Redirect pemohon and pemerintah to their own dashboard
+            if (Auth::user()->role === 'pemohon' || Auth::user()->role === 'pemerintah') {
                 return redirect()->route('pemohon.dashboard')
                     ->with('error', 'Akses ditolak. Anda dialihkan ke dashboard pemohon.');
             }

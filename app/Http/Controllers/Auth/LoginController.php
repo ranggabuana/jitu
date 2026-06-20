@@ -135,7 +135,7 @@ class LoginController extends Controller
         $request->session()->flash('success', 'Login berhasil! Selamat datang, ' . $user->name . '.');
 
         // Redirect based on role
-        if ($user->role === 'pemohon') {
+        if ($user->role === 'pemohon' || $user->role === 'pemerintah') {
             return redirect()->intended(route('pemohon.dashboard'));
         }
 

@@ -63,6 +63,28 @@
 
     <x-pemohon.bottom-nav />
 
+    @if (session('success'))
+        <script>
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil',
+                text: "{{ session('success') }}",
+                confirmButtonColor: '#78350f',
+            });
+        </script>
+    @endif
+
+    @if (session('error'))
+        <script>
+            Swal.fire({
+                icon: 'error',
+                title: 'Akses Ditolak',
+                text: "{{ session('error') }}",
+                confirmButtonColor: '#78350f',
+            });
+        </script>
+    @endif
+
     @stack('scripts')
 </body>
 

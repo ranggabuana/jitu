@@ -54,6 +54,17 @@
                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                                     <i class="fas fa-home mr-2"></i> Beranda
                                 </a>
+                                @if (in_array(auth()->user()->role, ['pemohon', 'pemerintah']))
+                                    <a href="{{ route('pemohon.dashboard') }}"
+                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <i class="fas fa-tachometer-alt mr-2"></i> Dashboard Pemohon
+                                    </a>
+                                @else
+                                    <a href="{{ url('/dashboard') }}"
+                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <i class="fas fa-tachometer-alt mr-2"></i> Dashboard Admin
+                                    </a>
+                                @endif
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
                                     <button type="submit"

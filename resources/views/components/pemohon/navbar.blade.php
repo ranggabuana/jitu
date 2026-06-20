@@ -6,7 +6,7 @@
                     class="w-8 h-8 object-contain">
                 <div class="leading-tight">
                     <span class="font-bold text-xl text-amber-900">JITU</span>
-                    <p class="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Pemohon</p>
+                    <p class="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">{{ auth()->user()->role_label }}</p>
                 </div>
             </div>
             <div class="flex items-center gap-6">
@@ -34,7 +34,7 @@
                             class="w-9 h-9 rounded-full border border-amber-200" alt="{{ auth()->user()->name }}">
                         <div class="text-right leading-tight hidden sm:block">
                             <p class="text-sm font-bold text-gray-800">{{ auth()->user()->name }}</p>
-                            <p class="text-xs text-gray-400">NIK: {{ auth()->user()->nip ?? '-' }}</p>
+                            <p class="text-xs text-gray-400">{{ auth()->user()->role === 'pemerintah' ? 'NIP' : 'NIK' }}: {{ auth()->user()->nip ?? '-' }}</p>
                         </div>
                         <i class="fas fa-chevron-down text-xs text-gray-400 hidden sm:block"></i>
                     </button>
