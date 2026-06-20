@@ -1033,8 +1033,15 @@ class DataPerijinanController extends Controller
             $fieldRules = ['nullable'];
             if ($field->type === 'email') $fieldRules[] = 'email';
             if ($field->type === 'number') $fieldRules[] = 'numeric';
-            if ($field->type === 'file') $fieldRules[] = 'file|max:5120';
-            if ($field->type === 'pas_foto' || $field->type === 'gambar') $fieldRules[] = 'file|mimes:jpeg,jpg,png|max:5120';
+            if ($field->type === 'file') {
+                $fieldRules[] = 'file';
+                $fieldRules[] = 'max:5120';
+            }
+            if ($field->type === 'pas_foto' || $field->type === 'gambar') {
+                $fieldRules[] = 'file';
+                $fieldRules[] = 'mimes:jpeg,jpg,png';
+                $fieldRules[] = 'max:5120';
+            }
             $rules[$field->name] = $fieldRules;
         }
 
@@ -1242,8 +1249,15 @@ class DataPerijinanController extends Controller
             
             if ($field->type === 'email') $fieldRules[] = 'email';
             if ($field->type === 'number') $fieldRules[] = 'numeric';
-            if ($field->type === 'file') $fieldRules[] = 'file|max:5120';
-            if ($field->type === 'pas_foto' || $field->type === 'gambar') $fieldRules[] = 'file|mimes:jpeg,jpg,png|max:5120';
+            if ($field->type === 'file') {
+                $fieldRules[] = 'file';
+                $fieldRules[] = 'max:5120';
+            }
+            if ($field->type === 'pas_foto' || $field->type === 'gambar') {
+                $fieldRules[] = 'file';
+                $fieldRules[] = 'mimes:jpeg,jpg,png';
+                $fieldRules[] = 'max:5120';
+            }
             
             $rules[$field->name] = $fieldRules;
         }
@@ -1332,8 +1346,15 @@ class DataPerijinanController extends Controller
             
             if ($field->type === 'email') $fieldRules[] = 'email';
             if ($field->type === 'number') $fieldRules[] = 'numeric';
-            if ($field->type === 'file') $fieldRules[] = 'file|max:5120';
-            if ($field->type === 'pas_foto' || $field->type === 'gambar') $fieldRules[] = 'file|mimes:jpeg,jpg,png|max:5120';
+            if ($field->type === 'file') {
+                $fieldRules[] = 'file';
+                $fieldRules[] = 'max:5120';
+            }
+            if ($field->type === 'pas_foto' || $field->type === 'gambar') {
+                $fieldRules[] = 'file';
+                $fieldRules[] = 'mimes:jpeg,jpg,png';
+                $fieldRules[] = 'max:5120';
+            }
             
             $rules[$field->name] = $fieldRules;
         }
