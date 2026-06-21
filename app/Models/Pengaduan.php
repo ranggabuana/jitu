@@ -52,26 +52,17 @@ class Pengaduan extends Model
 
     /**
      * Generate unique complaint number.
-     * Format: PENG-YYYYMMDD-XXXXX
+     * Format: PENG-YYYYMMDD-[5-char random alphanumeric]
      */
     private static function generateNoPengaduan()
     {
-        $date = now()->format('Ymd');
-        $prefix = 'PENG-' . $date . '-';
+        do {
+            $date = now()->format('Ymd');
+            $random = strtoupper(Str::random(5));
+            $noPengaduan = 'PENG-' . $date . '-' . $random;
+        } while (static::where('no_pengaduan', $noPengaduan)->exists());
         
-        // Get the last complaint number for today
-        $lastPengaduan = static::where('no_pengaduan', 'like', $prefix . '%')
-            ->orderBy('id', 'desc')
-            ->first();
-        
-        if ($lastPengaduan) {
-            $lastNumber = (int) substr($lastPengaduan->no_pengaduan, -5);
-            $newNumber = str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT);
-        } else {
-            $newNumber = '00001';
-        }
-        
-        return $prefix . $newNumber;
+        return $noPengaduan;
     }
 
     /**
