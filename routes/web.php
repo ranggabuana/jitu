@@ -100,6 +100,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/backup/{type}/{filename}/delete', [SettingsController::class, 'deleteBackup'])->name('backup.delete');
         Route::get('/backup/{type}/list', [SettingsController::class, 'listBackups'])->name('backup.list');
         Route::get('/log-tte', [App\Http\Controllers\Admin\EsignLogController::class, 'index'])->name('log-tte');
+        Route::get('/log-tte/export', [App\Http\Controllers\Admin\EsignLogController::class, 'export'])->name('log-tte.export');
     });
 
     // OPD Routes (Admin Only)
