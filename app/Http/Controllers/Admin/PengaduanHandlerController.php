@@ -22,7 +22,7 @@ class PengaduanHandlerController extends Controller
         }
 
         $handlers = PengaduanHandler::getActiveHandlers();
-        $users = User::where('role', '!=', 'admin')
+        $users = User::whereNotIn('role', ['admin', 'pemohon', 'pemerintah'])
             ->where('status', 'aktif')
             ->orderBy('name')
             ->get();
