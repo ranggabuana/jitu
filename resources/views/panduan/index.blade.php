@@ -134,16 +134,17 @@
                                         title="Edit">
                                         <i class="mdi mdi-pencil"></i>
                                     </a>
-                                    <form action="{{ route('panduan.destroy', $item->id) }}" method="POST"
-                                        class="delete-form inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                            class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                                            title="Hapus">
-                                            <i class="mdi mdi-delete"></i>
-                                        </button>
-                                    </form>
+                                     <form action="{{ route('panduan.destroy', $item->id) }}" method="POST"
+                                         class="delete-form inline">
+                                         @csrf
+                                         @method('DELETE')
+                                         <button type="button"
+                                             class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 btn-delete"
+                                             data-action="{{ route('panduan.destroy', $item->id) }}"
+                                             title="Hapus">
+                                             <i class="mdi mdi-delete"></i>
+                                         </button>
+                                     </form>
                                 </div>
                             </td>
                         </tr>
