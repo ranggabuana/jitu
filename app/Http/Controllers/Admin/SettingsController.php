@@ -303,7 +303,7 @@ class SettingsController extends Controller
 
             // Build command
             $command = sprintf(
-                '"%s" --host=%s --port=%s --user=%s --password=%s %s > %s 2>&1',
+                '%s --host=%s --port=%s --user=%s --password=%s %s > %s 2>&1',
                 escapeshellarg($mysqldumpPath),
                 escapeshellarg($dbHost),
                 escapeshellarg($dbPort),
@@ -331,6 +331,11 @@ class SettingsController extends Controller
                 return redirect()->back()
                     ->with('success', 'Backup database berhasil! File: ' . $filename);
             } else {
+                // Delete the failed/empty file so it doesn't show up in history
+                if (file_exists($path)) {
+                    unlink($path);
+                }
+
                 $errorMsg = $returnCode !== 0 ? 'Kode error: ' . $returnCode : 'File kosong';
                 $outputMsg = !empty($output) ? ' Output: ' . implode(' ', $output) : '';
                 
@@ -433,8 +438,8 @@ class SettingsController extends Controller
             $dbPath = $backupDir . '/' . $dbFilename;
             
             $command = sprintf(
-                '"%s" --host=%s --port=%s --user=%s --password=%s %s > %s',
-                $mysqldumpPath,
+                '%s --host=%s --port=%s --user=%s --password=%s %s > %s',
+                escapeshellarg($mysqldumpPath),
                 escapeshellarg($dbHost),
                 escapeshellarg($dbPort),
                 escapeshellarg($dbUser),
@@ -445,7 +450,10 @@ class SettingsController extends Controller
             
             exec($command, $output, $returnCode);
             
-            if ($returnCode !== 0 || filesize($dbPath) === 0) {
+            if ($returnCode !== 0 || !file_exists($dbPath) || filesize($dbPath) === 0) {
+                if (file_exists($dbPath)) {
+                    unlink($dbPath);
+                }
                 return redirect()->back()
                     ->with('error', 'Backup database gagal.');
             }
