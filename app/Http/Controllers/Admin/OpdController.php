@@ -66,16 +66,24 @@ class OpdController extends Controller
     {
         $request->validate([
             'nama_opd' => 'required|string|max:255',
+            'kode_opd' => 'nullable|string|max:100',
+            'gambar_tte' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
-        $opd = Opd::create($request->all());
+        $data = $request->all();
+
+        if ($request->hasFile('gambar_tte')) {
+            $data['gambar_tte'] = $request->file('gambar_tte')->store('opd/tte', 'public');
+        }
+
+        $opd = Opd::create($data);
 
         // Log activity
         ActivityLog::log(
             'Menambah OPD baru',
             $opd,
             'created',
-            ['data' => $request->all()],
+            ['data' => $data],
             'opd'
         );
 
