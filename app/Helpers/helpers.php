@@ -135,6 +135,32 @@ if (!function_exists('maskName')) {
     }
 }
 
+if (!function_exists('maskEmail')) {
+    /**
+     * Mask email for privacy (e.g., "john.doe@example.com" -> "j******e@example.com")
+     *
+     * @param string|null $email
+     * @return string
+     */
+    function maskEmail(?string $email): string
+    {
+        if (!$email) return '-';
+        $parts = explode('@', $email);
+        if (count($parts) < 2) return $email;
+        
+        $name = $parts[0];
+        $domain = $parts[1];
+        
+        if (strlen($name) <= 2) {
+            $maskedName = str_repeat('*', strlen($name));
+        } else {
+            $maskedName = substr($name, 0, 1) . str_repeat('*', strlen($name) - 2) . substr($name, -1);
+        }
+        
+        return $maskedName . '@' . $domain;
+    }
+}
+
 if (!function_exists('formatDuration')) {
     /**
      * Format duration in seconds to human readable string
