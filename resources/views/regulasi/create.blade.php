@@ -68,8 +68,8 @@
                 </label>
                 <input type="file" name="file_regulasi" id="file_regulasi"
                     class="w-full border border-gray-300 dark:border-gray-600 rounded-md px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 @error('file_regulasi') border-red-500 @enderror"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar" required>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Format: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, ZIP, RAR (Max: 10MB)</p>
+                    accept=".pdf" required>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Format: PDF (Max: 10MB)</p>
                 @error('file_regulasi')
                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                 @enderror

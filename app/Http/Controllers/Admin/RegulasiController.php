@@ -62,7 +62,7 @@ class RegulasiController extends Controller
         $request->validate([
             'nama_regulasi' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:regulasi,slug',
-            'file_regulasi' => 'required|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,rar|max:10240',
+            'file_regulasi' => 'required|file|mimes:pdf|max:10240',
             'deskripsi' => 'nullable|string',
             'status' => 'required|in:aktif,tidak_aktif',
             'jenis_regulasi_id' => 'required|exists:jenis_regulasi,id',
@@ -150,7 +150,7 @@ class RegulasiController extends Controller
         $request->validate([
             'nama_regulasi' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:regulasi,slug,' . $id,
-            'file_regulasi' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,rar|max:10240',
+            'file_regulasi' => 'nullable|file|mimes:pdf|max:10240',
             'deskripsi' => 'nullable|string',
             'status' => 'required|in:aktif,tidak_aktif',
             'jenis_regulasi_id' => 'required|exists:jenis_regulasi,id',
