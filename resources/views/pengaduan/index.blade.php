@@ -229,8 +229,9 @@
                                         class="delete-form inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit"
-                                            class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                                        <button type="button"
+                                            class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 btn-delete"
+                                            data-action="{{ route('admin.pengaduan.destroy', $item->id) }}"
                                             title="Hapus">
                                             <i class="mdi mdi-delete"></i>
                                         </button>
