@@ -195,6 +195,7 @@
                 $defaultApproved = 'Kabar baik! Permohonan izin Anda dengan nomor registrasi {{registrationNumber}} untuk jenis {{permitName}} telah resmi disetujui. Silakan login ke dashboard dan mengisi Survei Kepuasan Masyarakat (SKM) untuk mengunduh dokumen izin Anda.';
                 $defaultRejected = 'Mohon maaf, permohonan izin Anda dengan nomor registrasi {{registrationNumber}} untuk jenis {{permitName}} ditolak dikarenakan hal berikut: {{notes}}';
                 $defaultReturned = 'Terdapat berkas yang perlu Anda perbaiki pada permohonan izin dengan nomor registrasi {{registrationNumber}} ({{permitName}}). Berikut catatan perbaikan dari petugas: {{notes}}. Mohon segera lengkapi agar proses dapat dilanjutkan.';
+                $defaultComplaint = 'Halo {{userName}}, pengaduan Anda dengan rincian berikut: "{{complaintDetail}}" kini memiliki status baru: "{{complaintStatus}}". Berikut tanggapan/catatan dari petugas: "{{complaintResponse}}". Terima kasih.';
             @endphp
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <!-- Left Side: Forms (8/12) -->
@@ -395,6 +396,46 @@
                                 </div>
                             </div>
 
+                            <!-- Template: Perubahan Status Pengaduan -->
+                            <div
+                                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                <div
+                                    class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-700/30 flex justify-between items-center">
+                                    <h2
+                                        class="text-base font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                                        <i class="mdi mdi-comment-alert-outline text-blue-500"></i>
+                                        Email Perubahan Status Pengaduan
+                                    </h2>
+                                    <button type="button" onclick="previewEmail('complaint_status_changed')" class="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 border border-blue-200">
+                                        <i class="mdi mdi-eye"></i> Preview
+                                    </button>
+                                </div>
+                                <div class="p-6 space-y-4">
+                                    <div>
+                                        <label
+                                            class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Subjek
+                                            Email</label>
+                                        <input type="text" name="complaint_status_changed_subject" id="complaint_status_changed_subject"
+                                            value="{{ old('complaint_status_changed_subject', $templateSettings['complaint_status_changed_subject'] ?? 'Pemberitahuan: Status Pengaduan Anda Telah Diperbarui') }}"
+                                            class="form-input">
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Isi
+                                            Pesan (Body)</label>
+                                        <textarea name="complaint_status_changed_content" id="complaint_status_changed_content" rows="6" class="form-input resize-none">{{ old('complaint_status_changed_content', $templateSettings['complaint_status_changed_content'] ?? $defaultComplaint) }}</textarea>
+                                        <!-- Quick Variables -->
+                                        <div class="mt-3 flex flex-wrap gap-2">
+                                            <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-[10px] font-bold rounded text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600">@{{ userName }}</span>
+                                            <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-[10px] font-bold rounded text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600">@{{ registrationNumber }}</span>
+                                            <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-[10px] font-bold rounded text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600">@{{ complaintDetail }}</span>
+                                            <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-[10px] font-bold rounded text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600">@{{ complaintStatus }}</span>
+                                            <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-[10px] font-bold rounded text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600">@{{ complaintResponse }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="flex justify-end pt-2">
                                 <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold transition-all flex items-center gap-2">
                                     <i class="mdi mdi-content-save-all"></i> Simpan Semua Template
@@ -461,6 +502,30 @@
                                         class="text-blue-600 dark:text-blue-400 font-bold text-sm">@{{ notes }}</code>
                                     <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">Berubah menjadi
                                         <strong>Catatan</strong> dari validator.
+                                    </p>
+                                </div>
+                                <div
+                                    class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-100 dark:border-gray-700">
+                                    <code
+                                        class="text-blue-600 dark:text-blue-400 font-bold text-sm">@{{ complaintDetail }}</code>
+                                    <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">Berubah menjadi
+                                        <strong>Isi Detail Pengaduan</strong> yang dilaporkan.
+                                    </p>
+                                </div>
+                                <div
+                                    class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-100 dark:border-gray-700">
+                                    <code
+                                        class="text-blue-600 dark:text-blue-400 font-bold text-sm">@{{ complaintStatus }}</code>
+                                    <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">Berubah menjadi
+                                        <strong>Status Pengaduan Terbaru</strong>.
+                                    </p>
+                                </div>
+                                <div
+                                    class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-100 dark:border-gray-700">
+                                    <code
+                                        class="text-blue-600 dark:text-blue-400 font-bold text-sm">@{{ complaintResponse }}</code>
+                                    <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">Berubah menjadi
+                                        <strong>Respon / Catatan Tanggapan</strong> dari petugas.
                                     </p>
                                 </div>
                             </div>

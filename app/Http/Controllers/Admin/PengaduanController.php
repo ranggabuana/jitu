@@ -142,6 +142,15 @@ class PengaduanController extends Controller
 
         $pengaduan->update($data);
 
+        // Send email notification if email is provided in the complaint form
+        if ($pengaduan->email) {
+            \App\Services\EmailService::send(
+                $pengaduan->email,
+                $pengaduan->nama ?? 'Pengadu',
+                new \App\Mail\ComplaintStatusNotification($pengaduan)
+            );
+        }
+
         // Log activity with detailed changes
         try {
             $logId = ActivityLog::log(

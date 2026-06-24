@@ -50,6 +50,8 @@ class EmailSettingsController extends Controller
             'permit_rejected_content' => 'required_if:type,templates|string',
             'permit_returned_subject' => 'required_if:type,templates|string|max:255',
             'permit_returned_content' => 'required_if:type,templates|string',
+            'complaint_status_changed_subject' => 'required_if:type,templates|string|max:255',
+            'complaint_status_changed_content' => 'required_if:type,templates|string',
         ]);
 
         $type = $request->input('type', 'smtp');
@@ -65,6 +67,7 @@ class EmailSettingsController extends Controller
                 'permit_approved_subject', 'permit_approved_content',
                 'permit_rejected_subject', 'permit_rejected_content',
                 'permit_returned_subject', 'permit_returned_content',
+                'complaint_status_changed_subject', 'complaint_status_changed_content',
             ];
             $group = 'email_templates';
             $logMsg = 'Mengupdate template isi email';
@@ -134,7 +137,7 @@ class EmailSettingsController extends Controller
     public function preview(Request $request)
     {
         $request->validate([
-            'type' => 'required|string|in:forgot_password,account_activated,permit_approved,permit_rejected,permit_returned',
+            'type' => 'required|string|in:forgot_password,account_activated,permit_approved,permit_rejected,permit_returned,complaint_status_changed',
             'content' => 'required|string',
         ]);
 
@@ -146,10 +149,21 @@ class EmailSettingsController extends Controller
         $permitName = 'Izin Mendirikan Bangunan (IMB)';
         $notes = 'Data KTP kurang jelas, mohon upload ulang pindaian asli.';
 
+        // Complaint specific placeholders
+        $complaintDetail = 'Lampu penerangan jalan di Jalan Pemuda mati sejak 3 hari yang lalu.';
+        $complaintStatus = 'Dalam Proses';
+        $complaintResponse = 'Petugas teknis akan segera meluncur ke lokasi untuk perbaikan malam ini.';
+
         // Replace placeholders
         $bodyContent = str_replace(
-            ['{{userName}}', '{{appName}}', '{{registrationNumber}}', '{{permitName}}', '{{notes}}'],
-            [$userName, $appName, $regNo, $permitName, $notes],
+            [
+                '{{userName}}', '{{appName}}', '{{registrationNumber}}', '{{permitName}}', '{{notes}}',
+                '{{complaintDetail}}', '{{complaintStatus}}', '{{complaintResponse}}'
+            ],
+            [
+                $userName, $appName, $regNo, $permitName, $notes,
+                $complaintDetail, $complaintStatus, $complaintResponse
+            ],
             $content
         );
 
@@ -167,6 +181,17 @@ class EmailSettingsController extends Controller
                 'loginUrl' => 'javascript:void(0)',
                 'appName' => $appName,
                 'bodyContent' => $bodyContent,
+            ]);
+        } elseif ($type === 'complaint_status_changed') {
+            return view('emails.complaint-status', [
+                'userName' => $userName,
+                'appName' => $appName,
+                'bodyContent' => $bodyContent,
+                'status' => 'proses',
+                'noPengaduan' => 'PENG-' . date('Ymd') . '-A1B2C',
+                'complaintDetail' => $complaintDetail,
+                'complaintStatus' => $complaintStatus,
+                'complaintResponse' => $complaintResponse,
             ]);
         } else {
             // New template types use a generic view
