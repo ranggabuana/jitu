@@ -124,7 +124,7 @@ class DocumentGenerator
                 $imageData = base64_encode(File::get($ttePath));
                 $mime = File::mimeType($ttePath);
                 $src = 'data:' . $mime . ';base64,' . $imageData;
-                $tteHtml = '<img src="' . $src . '" style="max-width: 250px; max-height: 95px; width: auto; height: auto;" alt="TTE" />';
+                $tteHtml = '<img src="' . $src . '" style="width: 5.5cm; height: 2.5cm;" alt="TTE" />';
             }
         }
         $baseReplacements['${GAMBAR_TTE}'] = $tteHtml;
@@ -434,7 +434,7 @@ class DocumentGenerator
                     $imageData = base64_encode(File::get($opdTtePath));
                     $mime = File::mimeType($opdTtePath);
                     $src = 'data:' . $mime . ';base64,' . $imageData;
-                    $finalReplacements['${GAMBAR_TTE}'] = '<img src="' . $src . '" style="max-width: 250px; max-height: 95px; width: auto; height: auto;" alt="TTE OPD" />';
+                    $finalReplacements['${GAMBAR_TTE}'] = '<img src="' . $src . '" style="width: 5.5cm; height: 2.5cm;" alt="TTE OPD" />';
                     $finalReplacements['${_IMG_PATH_TTE}'] = $opd->gambar_tte; // For Word template
                 }
             }
@@ -713,9 +713,9 @@ class DocumentGenerator
                     $isQr = ($macro === 'QRCODE' || $macro === 'QR_CODE');
                     $imgConfig = [
                         'path' => $actualPath,
-                        'width' => $isTte ? 250 : ($isQr ? 60 : 80), 
-                        'height' => $isTte ? 95 : ($isQr ? 60 : 100), 
-                        'ratio' => true
+                        'width' => $isTte ? 208 : ($isQr ? 60 : 80), // 5.5cm in pixels (approx 208px @96dpi)
+                        'height' => $isTte ? 94 : ($isQr ? 60 : 100), // 2.5cm in pixels (approx 94px @96dpi)
+                        'ratio' => $isTte ? false : true // Force exact size for TTE
                     ];
 
                     try {
