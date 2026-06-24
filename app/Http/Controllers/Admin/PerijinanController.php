@@ -88,6 +88,7 @@ class PerijinanController extends Controller
             'nama_perijinan' => 'required|string|max:255',
             'is_multi_opd' => 'nullable|boolean',
             'has_bo_form' => 'nullable|boolean',
+            'validasi_tanpa_opd' => 'nullable|boolean',
             'opsi_perpanjangan' => 'nullable|in:setelah_habis,sebelum_habis,keduanya',
             'dasar_hukum' => 'required|string',
             'persyaratan' => 'required|string',
@@ -100,6 +101,11 @@ class PerijinanController extends Controller
         $data = $request->all();
         $data['is_multi_opd'] = $request->has('is_multi_opd');
         $data['has_bo_form'] = $request->has('has_bo_form');
+        $data['validasi_tanpa_opd'] = $request->has('validasi_tanpa_opd');
+
+        if ($data['validasi_tanpa_opd']) {
+            $data['is_multi_opd'] = false;
+        }
 
         // Handle gambar_alur upload
         if ($request->hasFile('gambar_alur')) {
@@ -588,6 +594,10 @@ class PerijinanController extends Controller
             'validationFlows.assignedUser'
         ])->findOrFail($id);
         $availableRoles = PerijinanValidationFlow::getAvailableRoles();
+        if ($perijinan->validasi_tanpa_opd) {
+            unset($availableRoles['operator_opd']);
+            unset($availableRoles['kepala_opd']);
+        }
         $foUsers = PerijinanValidationFlow::getUsersByRole('fo');
         $boUsers = PerijinanValidationFlow::getUsersByRole('bo');
         $operatorOpdUsers = PerijinanValidationFlow::getUsersByRole('operator_opd');
@@ -616,6 +626,10 @@ class PerijinanController extends Controller
             return redirect()->route('perijinan.index')->with('error', 'Hanya Admin yang dapat mengelola alur validasi.');
         }
         $perijinan = Perijinan::findOrFail($id);
+
+        if ($perijinan->validasi_tanpa_opd && in_array($request->role, ['operator_opd', 'kepala_opd'])) {
+            return redirect()->back()->with('error', 'Perizinan ini diset validasi tanpa OPD, tidak dapat menambahkan role Operator OPD atau Kepala OPD.');
+        }
 
         $validated = $request->validate([
             'role' => 'required|string|in:fo,bo,operator_opd,kepala_opd,verifikator,kadin',
@@ -653,6 +667,16 @@ class PerijinanController extends Controller
         }
         $perijinan = Perijinan::findOrFail($perijinanId);
         $flow = PerijinanValidationFlow::where('perijinan_id', $perijinan->id)->findOrFail($flowId);
+
+        if ($perijinan->validasi_tanpa_opd && in_array($request->role, ['operator_opd', 'kepala_opd'])) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Perizinan ini diset validasi tanpa OPD, tidak dapat memperbarui role ke Operator OPD atau Kepala OPD.'
+                ], 422);
+            }
+            return redirect()->back()->with('error', 'Perizinan ini diset validasi tanpa OPD, tidak dapat memperbarui role ke Operator OPD atau Kepala OPD.');
+        }
 
         $validated = $request->validate([
             'role' => 'required|string|in:fo,bo,operator_opd,kepala_opd,verifikator,kadin',
@@ -773,6 +797,7 @@ class PerijinanController extends Controller
             'nama_perijinan' => 'required|string|max:255',
             'is_multi_opd' => 'nullable|boolean',
             'has_bo_form' => 'nullable|boolean',
+            'validasi_tanpa_opd' => 'nullable|boolean',
             'opsi_perpanjangan' => 'nullable|in:setelah_habis,sebelum_habis,keduanya',
             'dasar_hukum' => 'required|string',
             'persyaratan' => 'required|string',
@@ -785,6 +810,11 @@ class PerijinanController extends Controller
         $data = $request->all();
         $data['is_multi_opd'] = $request->has('is_multi_opd');
         $data['has_bo_form'] = $request->has('has_bo_form');
+        $data['validasi_tanpa_opd'] = $request->has('validasi_tanpa_opd');
+
+        if ($data['validasi_tanpa_opd']) {
+            $data['is_multi_opd'] = false;
+        }
 
         // Handle gambar_alur upload
         if ($request->hasFile('gambar_alur')) {
@@ -806,6 +836,10 @@ class PerijinanController extends Controller
         }
 
         $perijinan->update($data);
+
+        if ($perijinan->validasi_tanpa_opd) {
+            $perijinan->validationFlows()->whereIn('role', ['operator_opd', 'kepala_opd'])->delete();
+        }
 
         // Log activity
         ActivityLog::log(

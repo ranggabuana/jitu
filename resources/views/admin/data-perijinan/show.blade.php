@@ -1209,35 +1209,39 @@
                                             $isAlreadySaved = array_key_exists($field->name, $application->izin_data ?? []);
                                             
                                             if (!$isAlreadySaved) {
-                                                if ($application->perijinan->is_multi_opd) {
-                                                    // Multi-OPD: Default from Global form
-                                                    $matchingGlobalField = $application->perijinan->activeFormFields
-                                                        ->where('form_type', 'global')
-                                                        ->where('name', $field->name)
-                                                        ->first() ?? $application->perijinan->activeFormFields
-                                                        ->where('form_type', 'global')
-                                                        ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
-                                                        ->first();
-
-                                                    if ($matchingGlobalField) {
-                                                        $val = $application->form_data[$matchingGlobalField->id] ?? '';
-                                                        if (is_array($val)) $val = implode(', ', $val);
+                                                if ($application->perijinan->validasi_tanpa_opd) {
+                                                    if ($application->perijinan->has_bo_form) {
+                                                        // Default from form khusus bo (bo_data)
+                                                        $matchingBoField = $application->perijinan->activeFormFields
+                                                            ->where('form_type', 'bo')
+                                                            ->where('name', $field->name)
+                                                            ->first() ?? $application->perijinan->activeFormFields
+                                                            ->where('form_type', 'bo')
+                                                            ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                                                            ->first();
+                                                        
+                                                        if ($matchingBoField && !empty($application->bo_data[$matchingBoField->name])) {
+                                                            $val = $application->bo_data[$matchingBoField->name];
+                                                        }
+                                                    }
+                                                    
+                                                    // Fallback/Default to global form
+                                                    if (empty($val)) {
+                                                        $matchingGlobalField = $application->perijinan->activeFormFields
+                                                            ->where('form_type', 'global')
+                                                            ->where('name', $field->name)
+                                                            ->first() ?? $application->perijinan->activeFormFields
+                                                            ->where('form_type', 'global')
+                                                            ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                                                            ->first();
+                                                        if ($matchingGlobalField) {
+                                                            $val = $application->form_data[$matchingGlobalField->id] ?? '';
+                                                            if (is_array($val)) $val = implode(', ', $val);
+                                                        }
                                                     }
                                                 } else {
-                                                    // Single OPD: Default from Rekom data
-                                                    $matchingRekomField = $application->perijinan->activeFormFields
-                                                        ->where('form_type', 'rekom')
-                                                        ->where('name', $field->name)
-                                                        ->first() ?? $application->perijinan->activeFormFields
-                                                        ->where('form_type', 'rekom')
-                                                        ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
-                                                        ->first();
-
-                                                    if ($matchingRekomField && !empty($application->rekom_data[$matchingRekomField->name])) {
-                                                        $val = $application->rekom_data[$matchingRekomField->name];
-                                                    }
-
-                                                    if (empty($val) && $field->type !== 'file') {
+                                                    if ($application->perijinan->is_multi_opd) {
+                                                        // Multi-OPD: Default from Global form
                                                         $matchingGlobalField = $application->perijinan->activeFormFields
                                                             ->where('form_type', 'global')
                                                             ->where('name', $field->name)
@@ -1249,6 +1253,34 @@
                                                         if ($matchingGlobalField) {
                                                             $val = $application->form_data[$matchingGlobalField->id] ?? '';
                                                             if (is_array($val)) $val = implode(', ', $val);
+                                                        }
+                                                    } else {
+                                                        // Single OPD: Default from Rekom data
+                                                        $matchingRekomField = $application->perijinan->activeFormFields
+                                                            ->where('form_type', 'rekom')
+                                                            ->where('name', $field->name)
+                                                            ->first() ?? $application->perijinan->activeFormFields
+                                                            ->where('form_type', 'rekom')
+                                                            ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                                                            ->first();
+
+                                                        if ($matchingRekomField && !empty($application->rekom_data[$matchingRekomField->name])) {
+                                                            $val = $application->rekom_data[$matchingRekomField->name];
+                                                        }
+
+                                                        if (empty($val) && $field->type !== 'file') {
+                                                            $matchingGlobalField = $application->perijinan->activeFormFields
+                                                                ->where('form_type', 'global')
+                                                                ->where('name', $field->name)
+                                                                ->first() ?? $application->perijinan->activeFormFields
+                                                                ->where('form_type', 'global')
+                                                                ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                                                                ->first();
+
+                                                            if ($matchingGlobalField) {
+                                                                $val = $application->form_data[$matchingGlobalField->id] ?? '';
+                                                                if (is_array($val)) $val = implode(', ', $val);
+                                                            }
                                                         }
                                                     }
                                                 }
@@ -1302,24 +1334,40 @@
                                                 @endif
 
                                                 @php
-                                                    // File reference priority: Rekom -> Global
+                                                    // File reference priority: BO (if validasi_tanpa_opd & has_bo_form) -> Rekom -> Global
                                                     $globalFile = null;
                                                     
-                                                    // 1. Try Rekom file
-                                                    $matchingRekomFileField = $application->perijinan->activeFormFields
-                                                        ->where('form_type', 'rekom')
-                                                        ->where('name', $field->name)
-                                                        ->first() ?? $application->perijinan->activeFormFields
-                                                        ->where('form_type', 'rekom')
-                                                        ->filter(function($f) use ($field) {
-                                                            return strtolower($f->label) === strtolower($field->label);
-                                                        })->first();
-                                                    
-                                                    if ($matchingRekomFileField) {
-                                                        $globalFile = $application->rekom_data[$matchingRekomFileField->name] ?? null;
+                                                    if ($application->perijinan->validasi_tanpa_opd) {
+                                                        if ($application->perijinan->has_bo_form) {
+                                                            $matchingBoFileField = $application->perijinan->activeFormFields
+                                                                ->where('form_type', 'bo')
+                                                                ->where('name', $field->name)
+                                                                ->first() ?? $application->perijinan->activeFormFields
+                                                                ->where('form_type', 'bo')
+                                                                ->filter(function($f) use ($field) {
+                                                                    return strtolower($f->label) === strtolower($field->label);
+                                                                })->first();
+                                                            if ($matchingBoFileField) {
+                                                                $globalFile = $application->bo_data[$matchingBoFileField->name] ?? null;
+                                                            }
+                                                        }
+                                                    } else {
+                                                        // 1. Try Rekom file
+                                                        $matchingRekomFileField = $application->perijinan->activeFormFields
+                                                            ->where('form_type', 'rekom')
+                                                            ->where('name', $field->name)
+                                                            ->first() ?? $application->perijinan->activeFormFields
+                                                            ->where('form_type', 'rekom')
+                                                            ->filter(function($f) use ($field) {
+                                                                return strtolower($f->label) === strtolower($field->label);
+                                                            })->first();
+                                                        
+                                                        if ($matchingRekomFileField) {
+                                                            $globalFile = $application->rekom_data[$matchingRekomFileField->name] ?? null;
+                                                        }
                                                     }
 
-                                                    // 2. Fallback to Global file if no Rekom file found
+                                                    // 2. Fallback to Global file if no file found yet
                                                     if (!$globalFile) {
                                                         $matchingGlobalFileField = $application->perijinan->activeFormFields
                                                             ->where('form_type', 'global')

@@ -14,6 +14,7 @@ class Perijinan extends Model
         'nama_perijinan',
         'is_multi_opd',
         'has_bo_form',
+        'validasi_tanpa_opd',
         'opsi_perpanjangan',
         'dasar_hukum',
         'persyaratan',
@@ -35,6 +36,7 @@ class Perijinan extends Model
     protected $casts = [
         'is_multi_opd' => 'boolean',
         'has_bo_form' => 'boolean',
+        'validasi_tanpa_opd' => 'boolean',
     ];
 
     /**

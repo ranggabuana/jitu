@@ -108,6 +108,19 @@
                 </p>
             </div>
 
+            <div class="mb-6 bg-amber-50 dark:bg-amber-900/20 p-4 rounded-xl border border-amber-100 dark:border-amber-800">
+                <div class="flex items-center">
+                    <input id="validasi_tanpa_opd" name="validasi_tanpa_opd" type="checkbox" value="1" {{ old('validasi_tanpa_opd', $perijinan->validasi_tanpa_opd) ? 'checked' : '' }}
+                        class="w-5 h-5 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500 dark:focus:ring-amber-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                    <label for="validasi_tanpa_opd" class="ml-3 text-sm font-bold text-amber-800 dark:text-amber-300">
+                        Validasi Tanpa OPD
+                    </label>
+                </div>
+                <p class="mt-2 text-xs text-amber-600 dark:text-amber-400 ml-8 leading-relaxed">
+                    <i class="mdi mdi-information-outline mr-1"></i> Jika aktif, tahapan alur validasi tidak dapat menggunakan role Operator OPD dan Kepala OPD.
+                </p>
+            </div>
+
             <div class="mb-6">
                 <label for="opsi_perpanjangan" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Opsi Perpanjangan
@@ -431,5 +444,33 @@
             console.log('persyaratan length:', persyaratan.length);
             console.log('prosedur length:', prosedur.length);
         });
+
+        // Checkbox mutual exclusivity: is_multi_opd and validasi_tanpa_opd
+        const isMultiOpdCheckbox = document.getElementById('is_multi_opd');
+        const validasiTanpaOpdCheckbox = document.getElementById('validasi_tanpa_opd');
+
+        if (isMultiOpdCheckbox && validasiTanpaOpdCheckbox) {
+            function handleCheckboxes() {
+                if (isMultiOpdCheckbox.checked) {
+                    validasiTanpaOpdCheckbox.checked = false;
+                    validasiTanpaOpdCheckbox.disabled = true;
+                    validasiTanpaOpdCheckbox.parentElement.classList.add('opacity-50');
+                } else if (validasiTanpaOpdCheckbox.checked) {
+                    isMultiOpdCheckbox.checked = false;
+                    isMultiOpdCheckbox.disabled = true;
+                    isMultiOpdCheckbox.parentElement.classList.add('opacity-50');
+                } else {
+                    isMultiOpdCheckbox.disabled = false;
+                    validasiTanpaOpdCheckbox.disabled = false;
+                    isMultiOpdCheckbox.parentElement.classList.remove('opacity-50');
+                    validasiTanpaOpdCheckbox.parentElement.classList.remove('opacity-50');
+                }
+            }
+
+            isMultiOpdCheckbox.addEventListener('change', handleCheckboxes);
+            validasiTanpaOpdCheckbox.addEventListener('change', handleCheckboxes);
+            // Run on load to set initial state
+            handleCheckboxes();
+        }
     </script>
 </x-layout>
