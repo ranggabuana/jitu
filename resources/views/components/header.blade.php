@@ -8,35 +8,165 @@
         </button>
 
         <!-- Breadcrumb -->
+        @php
+            $routeName = Route::currentRouteName();
+            $breadcrumbs = [];
+            
+            // Default home breadcrumb
+            $breadcrumbs[] = [
+                'title' => 'Home',
+                'url' => route('dashboard'),
+                'active' => $routeName === 'dashboard' || request()->path() === 'dashboard'
+            ];
+
+            $segmentTitles = [
+                'dashboard' => 'Dashboard',
+                'opd' => 'OPD',
+                'perijinan' => 'Perijinan',
+                'data-perijinan' => 'Data Perijinan',
+                'berita' => 'Berita',
+                'regulasi' => 'Regulasi',
+                'panduan' => 'Panduan',
+                'jenis-regulasi' => 'Jenis Regulasi',
+                'pengaduan' => 'Pengaduan',
+                'data-skm' => 'Data SKM',
+                'hasil-skm' => 'Hasil SKM',
+                'profile' => 'Profil',
+                'settings' => 'Pengaturan',
+                'application' => 'Aplikasi',
+                'email' => 'Email',
+                'database' => 'Database',
+                'logs' => 'Log Sistem',
+                'pengaduan-handlers' => 'Petugas Pengaduan',
+                'log-tte' => 'Log TTE',
+                'selesai' => 'Selesai',
+                'ditolak' => 'Ditolak',
+                'dalam-proses' => 'Dalam Proses',
+                'belum-diproses' => 'Belum Diproses',
+                'create' => 'Tambah',
+                'edit' => 'Edit',
+                'show' => 'Detail',
+                'form-builder' => 'Form Builder',
+                'alur-validasi' => 'Alur Validasi',
+                'change-password' => 'Ubah Password',
+                'pengguna' => 'Pengguna',
+                'pemohon' => 'Pemohon',
+                'pemerintah' => 'Pemerintah',
+                'sla-report' => 'Laporan SLA',
+            ];
+
+            if ($routeName && strpos($routeName, '.') !== false) {
+                $parts = explode('.', $routeName);
+                $totalParts = count($parts);
+                
+                foreach ($parts as $index => $part) {
+                    if ($index === 0) {
+                        if ($part === 'dashboard') {
+                            $breadcrumbs[] = [
+                                'title' => 'Dashboard',
+                                'url' => null,
+                                'active' => true
+                            ];
+                            continue;
+                        }
+                        
+                        $title = isset($segmentTitles[$part]) ? $segmentTitles[$part] : ucwords(str_replace('-', ' ', $part));
+                        $indexRouteName = $part . '.index';
+                        $url = Route::has($indexRouteName) ? route($indexRouteName) : null;
+                        $isLast = ($index === $totalParts - 1) || ($parts[$index + 1] === 'index');
+                        
+                        $breadcrumbs[] = [
+                            'title' => $title,
+                            'url' => $isLast ? null : $url,
+                            'active' => $isLast
+                        ];
+                    } else {
+                        if ($part === 'index') {
+                            continue;
+                        }
+                        
+                        $title = isset($segmentTitles[$part]) ? $segmentTitles[$part] : ucwords(str_replace('-', ' ', $part));
+                        $isLast = ($index === $totalParts - 1);
+                        
+                        $breadcrumbs[] = [
+                            'title' => $title,
+                            'url' => null,
+                            'active' => $isLast
+                        ];
+                    }
+                }
+            } else {
+                $segments = request()->segments();
+                $builtUrl = '';
+                
+                foreach ($segments as $index => $segment) {
+                    if ($segment === 'dashboard') {
+                        if (count($segments) === 1) {
+                            $breadcrumbs[] = [
+                                'title' => 'Dashboard',
+                                'url' => null,
+                                'active' => true
+                            ];
+                        }
+                        continue;
+                    }
+
+                    if (is_numeric($segment)) {
+                        $hasEditNext = isset($segments[$index + 1]) && $segments[$index + 1] === 'edit';
+                        $hasFormBuilderNext = isset($segments[$index + 1]) && $segments[$index + 1] === 'form-builder';
+                        $hasAlurNext = isset($segments[$index + 1]) && $segments[$index + 1] === 'alur-validasi';
+                        $hasSlaNext = isset($segments[$index + 1]) && $segments[$index + 1] === 'sla-report';
+                        
+                        if (!$hasEditNext && !$hasFormBuilderNext && !$hasAlurNext && !$hasSlaNext) {
+                            $breadcrumbs[] = [
+                                'title' => 'Detail',
+                                'url' => null,
+                                'active' => true
+                            ];
+                        }
+                        $builtUrl .= '/' . $segment;
+                        continue;
+                    }
+
+                    $builtUrl .= '/' . $segment;
+                    $title = isset($segmentTitles[$segment]) ? $segmentTitles[$segment] : ucwords(str_replace('-', ' ', $segment));
+                    $isLast = ($index === count($segments) - 1) || 
+                              ($index === count($segments) - 2 && is_numeric($segments[count($segments) - 1]));
+                              
+                    $breadcrumbs[] = [
+                        'title' => $title,
+                        'url' => $isLast ? null : url($builtUrl),
+                        'active' => $isLast
+                    ];
+                }
+            }
+        @endphp
+
         <nav aria-label="Breadcrumb" class="ml-4 breadcrumb-nav">
             <ol class="flex items-center space-x-2 text-sm">
-                <li>
-                    <a href="{{ route('dashboard') }}"
-                        class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors">
-                        Home
-                    </a>
-                </li>
-                <li class="flex items-center">
-                    <svg class="w-4 h-4 text-gray-400 dark:text-gray-500 mx-2" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd"
-                            d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                            clip-rule="evenodd"></path>
-                    </svg>
-                    <a href="{{ route('dashboard') }}"
-                        class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors">
-                        Dashboard
-                    </a>
-                </li>
-                <li class="flex items-center">
-                    <svg class="w-4 h-4 text-gray-400 dark:text-gray-500 mx-2" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd"
-                            d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                            clip-rule="evenodd"></path>
-                    </svg>
-                    <span class="text-gray-500 dark:text-gray-400 font-medium">
-                        @yield('page-title', 'Beranda')
-                    </span>
-                </li>
+                @foreach($breadcrumbs as $breadcrumb)
+                    @if(!$loop->first)
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-gray-400 dark:text-gray-500 mx-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                        </li>
+                    @endif
+                    <li>
+                        @if($breadcrumb['active'] || !$breadcrumb['url'])
+                            <span class="text-gray-500 dark:text-gray-400 font-medium">
+                                {{ $breadcrumb['title'] }}
+                            </span>
+                        @else
+                            <a href="{{ $breadcrumb['url'] }}"
+                                class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors">
+                                {{ $breadcrumb['title'] }}
+                            </a>
+                        @endif
+                    </li>
+                @endforeach
             </ol>
         </nav>
     </div>
