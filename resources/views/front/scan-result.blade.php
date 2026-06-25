@@ -34,6 +34,20 @@
                 $masaAktifRekom = $perizinan->rekom_data['masa_aktif_rekom'] ?? null;
             }
         }
+
+        $isExpired = false;
+        $expiryDate = null;
+        if ($type === 'rekom') {
+            if ($masaAktifRekom) {
+                $expiryDate = \Carbon\Carbon::parse($masaAktifRekom);
+                $isExpired = $expiryDate->isPast();
+            }
+        } else {
+            if ($perizinan->masa_aktif) {
+                $expiryDate = \Carbon\Carbon::parse($perizinan->masa_aktif);
+                $isExpired = $expiryDate->isPast();
+            }
+        }
     @endphp
 
     <div class="py-12 bg-gray-50 min-h-screen">
@@ -51,7 +65,14 @@
                 <div class="p-8">
                     <!-- Status Badge -->
                     <div class="flex justify-center mb-8">
-                        @if($perizinan->status === 'approved')
+                        @if($isExpired)
+                            <div class="flex flex-col items-center gap-2">
+                                <span class="px-6 py-2 bg-red-100 text-red-700 rounded-full text-sm font-black uppercase tracking-widest border border-red-200 flex items-center gap-2 animate-pulse">
+                                    <i class="fas fa-exclamation-circle text-lg"></i> MASA AKTIF HABIS / KADALUWARSA
+                                </span>
+                                <p class="text-[10px] text-red-500 font-bold uppercase tracking-tighter">Dokumen Sudah Tidak Aktif</p>
+                            </div>
+                        @elseif($perizinan->status === 'approved')
                             <div class="flex flex-col items-center gap-2">
                                 <span class="px-6 py-2 bg-green-100 text-green-700 rounded-full text-sm font-black uppercase tracking-widest border border-green-200 flex items-center gap-2">
                                     <i class="fas fa-check-circle"></i> Dokumen Sah & Berlaku
@@ -68,6 +89,23 @@
                             </span>
                         @endif
                     </div>
+
+                    <!-- Expiration Alert Box -->
+                    @if($isExpired)
+                        <div class="mb-8 p-5 bg-red-50 rounded-2xl border border-red-200 text-red-800 flex items-start gap-4 shadow-sm">
+                            <div class="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center text-red-600 shrink-0">
+                                <i class="fas fa-exclamation-triangle text-xl"></i>
+                            </div>
+                            <div class="text-left">
+                                <h4 class="font-black text-sm uppercase tracking-tight text-red-900">PERINGATAN: DOKUMEN TIDAK AKTIF</h4>
+                                <p class="text-xs text-red-700 mt-1 leading-relaxed">
+                                    Masa berlaku {{ $type === 'rekom' ? 'Surat Rekomendasi' : 'Surat Izin' }} ini telah berakhir pada tanggal 
+                                    <strong>{{ $expiryDate->format('d/m/Y') }}</strong> ({{ $expiryDate->diffForHumans() }}). 
+                                    Dokumen ini sudah tidak dapat digunakan untuk keperluan legalitas atau administrasi apa pun.
+                                </p>
+                            </div>
+                        </div>
+                    @endif
 
                     <!-- Scanned Document Verification Card -->
                     <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100 mb-8 flex flex-col md:flex-row items-center justify-between gap-4">

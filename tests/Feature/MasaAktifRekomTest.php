@@ -231,4 +231,60 @@ class MasaAktifRekomTest extends TestCase
         $scanResponse2->assertSee('Masa Aktif Rekomendasi s/d');
         $scanResponse2->assertSee('15/05/2027');
     }
+
+    public function test_expired_rekom_and_izin_documents()
+    {
+        $opd = Opd::create([
+            'nama_opd' => 'Dinas Kesehatan',
+            'kode_opd' => 'DINKES',
+        ]);
+
+        $user = User::create([
+            'name' => 'Pemohon User',
+            'username' => 'pemohon_test',
+            'email' => 'pemohon@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'pemohon',
+            'status' => 'aktif',
+        ]);
+
+        $perijinan = Perijinan::create([
+            'nama_perijinan' => 'Izin Klinik',
+            'kode_perijinan' => 'KLINIK',
+            'is_multi_opd' => false,
+            'dasar_hukum' => 'Dasar Hukum',
+            'persyaratan' => 'Persyaratan',
+            'prosedur' => 'Prosedur',
+        ]);
+
+        // 1. Test Expired Recommendation (rekom)
+        $appRekomExpired = DataPerijinan::create([
+            'user_id' => $user->id,
+            'perijinan_id' => $perijinan->id,
+            'status' => 'approved',
+            'rekom_data' => [
+                'masa_aktif_rekom' => '2020-01-01', // Past date
+            ],
+        ]);
+
+        $scanRekomExpired = $this->get("/perizinan/scan/{$appRekomExpired->no_registrasi}?type=rekom");
+        $scanRekomExpired->assertStatus(200);
+        $scanRekomExpired->assertSee('MASA AKTIF HABIS / KADALUWARSA');
+        $scanRekomExpired->assertSee('PERINGATAN: DOKUMEN TIDAK AKTIF');
+        $scanRekomExpired->assertSee('01/01/2020');
+
+        // 2. Test Expired Permit (izin)
+        $appIzinExpired = DataPerijinan::create([
+            'user_id' => $user->id,
+            'perijinan_id' => $perijinan->id,
+            'status' => 'approved',
+            'masa_aktif' => '2021-06-15', // Past date
+        ]);
+
+        $scanIzinExpired = $this->get("/perizinan/scan/{$appIzinExpired->no_registrasi}?type=izin");
+        $scanIzinExpired->assertStatus(200);
+        $scanIzinExpired->assertSee('MASA AKTIF HABIS / KADALUWARSA');
+        $scanIzinExpired->assertSee('PERINGATAN: DOKUMEN TIDAK AKTIF');
+        $scanIzinExpired->assertSee('15/06/2021');
+    }
 }
