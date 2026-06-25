@@ -67,7 +67,7 @@
                     <th class="p-4 border-b">Masa Aktif</th>
                     <th class="p-4 border-b">
                         <a href="{{ request()->fullUrlWithQuery(['sort' => 'status', 'direction' => request('direction') === 'asc' ? 'desc' : 'asc']) }}" class="flex items-center gap-1 hover:text-amber-700">
-                            Status
+                            Status Izin
                             <i class="fas {{ request('sort') === 'status' ? (request('direction') === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort' }} opacity-50"></i>
                         </a>
                     </th>

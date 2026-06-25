@@ -286,5 +286,9 @@ class MasaAktifRekomTest extends TestCase
         $scanIzinExpired->assertSee('MASA AKTIF HABIS / KADALUWARSA');
         $scanIzinExpired->assertSee('PERINGATAN: DOKUMEN TIDAK AKTIF');
         $scanIzinExpired->assertSee('15/06/2021');
+
+        // 3. Test Inactive Status Label & Color Accessors on Expired Permit
+        $this->assertEquals('Tidak Aktif', $appIzinExpired->status_label);
+        $this->assertEquals('bg-red-100 text-red-800', $appIzinExpired->status_color);
     }
 }

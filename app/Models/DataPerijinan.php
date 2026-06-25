@@ -249,6 +249,10 @@ class DataPerijinan extends Model
      */
     public function getStatusLabelAttribute(): string
     {
+        if ($this->status === 'approved' && $this->masa_aktif && $this->masa_aktif->isPast()) {
+            return 'Tidak Aktif';
+        }
+
         $labels = [
             'draft' => 'Draft',
             'submitted' => 'Diajukan',
@@ -266,6 +270,10 @@ class DataPerijinan extends Model
      */
     public function getStatusColorAttribute(): string
     {
+        if ($this->status === 'approved' && $this->masa_aktif && $this->masa_aktif->isPast()) {
+            return 'bg-red-100 text-red-800';
+        }
+
         $colors = [
             'draft' => 'bg-gray-100 text-gray-800',
             'submitted' => 'bg-blue-100 text-blue-800',
