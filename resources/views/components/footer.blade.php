@@ -180,37 +180,12 @@
             });
         }
 
-        // Theme Toggle
-        const themeToggle = document.getElementById('theme-toggle');
-
-        themeToggle?.addEventListener('click', () => {
-            document.documentElement.classList.toggle('dark');
-            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' :
-                'light');
-        });
-
         // Check for saved theme preference - default to light mode
         if (localStorage.getItem('theme') === 'dark') {
             document.documentElement.classList.add('dark');
         } else {
             document.documentElement.classList.remove('dark');
         }
-
-        // Notification dropdown
-        const notificationBtn = document.getElementById('notification-btn');
-        const notificationDropdown = document.getElementById('notification-dropdown');
-
-        notificationBtn?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            notificationDropdown?.classList.toggle('hidden');
-        });
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            if (notificationBtn && !notificationBtn.contains(e.target)) {
-                notificationDropdown?.classList.add('hidden');
-            }
-        });
 
         // Submenu Toggle
         const submenuTrigger = document.getElementById('submenu-trigger');
