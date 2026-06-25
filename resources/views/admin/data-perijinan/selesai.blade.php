@@ -134,13 +134,13 @@
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex justify-end gap-2">
                                     @if(!in_array(auth()->user()->role, ['fo', 'bo']) && ($app->file_izin_tte || $app->file_rekom_tte || !empty($app->file_rekom_multi_tte)))
-                                    <div class="relative group inline-block text-left z-50">
-                                        <button type="button" class="inline-flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors shadow-sm focus:outline-none">
+                                    <div class="relative inline-block text-left dropdown-container">
+                                        <button type="button" class="daftar-surat-btn inline-flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors shadow-sm focus:outline-none">
                                             <i class="mdi mdi-file-document-multiple"></i> Daftar Surat <i class="mdi mdi-chevron-down"></i>
                                         </button>
                                         
                                         <!-- Dropdown Menu -->
-                                        <div class="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all flex flex-col p-1.5 gap-1.5 pointer-events-none group-hover:pointer-events-auto">
+                                        <div class="daftar-surat-dropdown absolute right-0 top-full mt-1 w-max min-w-[12rem] max-w-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl transition-all flex flex-col p-1.5 gap-1.5 hidden">
                                             @if($app->file_izin_tte)
                                                 <a href="{{ asset($app->file_izin_tte) }}" target="_blank" class="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-400 px-3 py-2 rounded-md text-[10px] font-bold uppercase transition-colors">
                                                     <i class="mdi mdi-certificate text-sm"></i> Izin TTE
@@ -152,14 +152,17 @@
                                                     @php
                                                         $opdName = \App\Models\Opd::find($opdId)->nama_opd ?? 'OPD';
                                                     @endphp
-                                                    <a href="{{ asset($path) }}" target="_blank" class="flex items-center gap-2 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 text-green-700 dark:text-green-400 px-3 py-2 rounded-md text-[10px] font-bold uppercase transition-colors" title="Rekomendasi {{ $opdName }}">
-                                                        <i class="mdi mdi-file-check text-sm"></i> Rekom TTE ({{ \Illuminate\Support\Str::limit($opdName, 10) }})
+                                                    <a href="{{ asset($path) }}" target="_blank" class="flex items-center gap-2 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 text-green-700 dark:text-green-400 px-3 py-2 rounded-md text-[10px] font-bold uppercase transition-colors whitespace-normal" title="Rekomendasi {{ $opdName }}">
+                                                        <i class="mdi mdi-file-check text-sm flex-shrink-0"></i> Rekom TTE ({{ $opdName }})
                                                     </a>
                                                 @endforeach
                                             @elseif(!empty($app->file_rekom_tte))
-                                                <a href="{{ asset($app->file_rekom_tte) }}" target="_blank" class="flex items-center gap-2 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 text-green-700 dark:text-green-400 px-3 py-2 rounded-md text-[10px] font-bold uppercase transition-colors">
-                                                    <i class="mdi mdi-file-check text-sm"></i> Rekom TTE
-                                                </a>
+                                                 @php
+                                                     $singleOpdName = $app->perijinan->opdConfigs->first()?->opd?->nama_opd;
+                                                 @endphp
+                                                 <a href="{{ asset($app->file_rekom_tte) }}" target="_blank" class="flex items-center gap-2 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 text-green-700 dark:text-green-400 px-3 py-2 rounded-md text-[10px] font-bold uppercase transition-colors whitespace-normal" title="Rekomendasi {{ $singleOpdName ?? 'OPD' }}">
+                                                     <i class="mdi mdi-file-check text-sm flex-shrink-0"></i> Rekom TTE {{ $singleOpdName ? "($singleOpdName)" : '' }}
+                                                 </a>
                                             @endif
                                         </div>
                                     </div>
@@ -318,5 +321,43 @@
 
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') closeExportModal();
+    });
+
+    // Toggle "Daftar Surat" dropdown on click
+    document.addEventListener('DOMContentLoaded', () => {
+        const buttons = document.querySelectorAll('.daftar-surat-btn');
+        buttons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                
+                // Close other open dropdowns first
+                document.querySelectorAll('.daftar-surat-dropdown').forEach(dropdown => {
+                    if (dropdown !== button.nextElementSibling) {
+                        dropdown.classList.add('hidden');
+                        dropdown.closest('.dropdown-container')?.classList.remove('z-50');
+                    }
+                });
+                
+                // Toggle current dropdown
+                const dropdown = button.nextElementSibling;
+                const container = button.closest('.dropdown-container');
+                if (dropdown) {
+                    const isHidden = dropdown.classList.toggle('hidden');
+                    if (!isHidden) {
+                        container?.classList.add('z-50');
+                    } else {
+                        container?.classList.remove('z-50');
+                    }
+                }
+            });
+        });
+
+        // Close dropdowns when clicking anywhere else
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.daftar-surat-dropdown').forEach(dropdown => {
+                dropdown.classList.add('hidden');
+                dropdown.closest('.dropdown-container')?.classList.remove('z-50');
+            });
+        });
     });
 </script>
