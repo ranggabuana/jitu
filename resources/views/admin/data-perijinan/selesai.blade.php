@@ -133,7 +133,7 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex justify-end gap-2">
-                                    @if(!in_array(auth()->user()->role, ['fo', 'bo']) && ($app->file_izin_tte || $app->file_rekom_tte || !empty($app->file_rekom_multi_tte)))
+                                    @if(!in_array(auth()->user()->role, ['fo']) && ($app->file_izin_tte || $app->file_rekom_tte || !empty($app->file_rekom_multi_tte)))
                                     <div class="relative inline-block text-left dropdown-container">
                                         <button type="button" class="daftar-surat-btn inline-flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors shadow-sm focus:outline-none">
                                             <i class="mdi mdi-file-document-multiple"></i> Daftar Surat <i class="mdi mdi-chevron-down"></i>
