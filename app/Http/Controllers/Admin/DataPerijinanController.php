@@ -1044,6 +1044,8 @@ class DataPerijinanController extends Controller
             }
             $rules[$field->name] = $fieldRules;
         }
+        
+        $rules['masa_aktif_rekom'] = 'required|date';
 
         $validated = $request->validate($rules);
         
@@ -1103,6 +1105,10 @@ class DataPerijinanController extends Controller
                         }
                     }
                 }
+            }
+            
+            if (array_key_exists('masa_aktif_rekom', $validated)) {
+                $currentData['masa_aktif_rekom'] = $validated['masa_aktif_rekom'];
             }
 
             $multiData[$opdId] = $currentData;
@@ -1181,6 +1187,11 @@ class DataPerijinanController extends Controller
                     }
                 }
             }
+            
+            if (array_key_exists('masa_aktif_rekom', $validated)) {
+                $rekomData['masa_aktif_rekom'] = $validated['masa_aktif_rekom'];
+            }
+            
             $application->rekom_data = $rekomData;
 
             // Accumulate SLA Duration correctly for the specific step assigned to this user

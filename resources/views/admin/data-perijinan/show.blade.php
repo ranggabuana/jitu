@@ -828,6 +828,17 @@
                                             </div>
                                         @endforeach
                                     </div>
+                                    
+                                    <!-- Masa Aktif Rekomendasi Field -->
+                                    <div class="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
+                                        <div class="max-w-xs">
+                                            <label class="block text-[11px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-tighter mb-2">Masa Aktif Surat Rekomendasi <span class="text-red-500">*</span></label>
+                                            <input type="date" name="masa_aktif_rekom" value="{{ $opdRekomData['masa_aktif_rekom'] ?? '' }}" required
+                                                class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-purple-500 outline-none transition-all">
+                                            <p class="text-[10px] text-gray-400 mt-2 italic">Atur batas waktu berlakunya surat rekomendasi dari OPD Anda.</p>
+                                        </div>
+                                    </div>
+                                    
                                     <div class="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700 flex justify-end">
                                         <button type="submit" class="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg flex items-center gap-3 active:scale-95"><i class="mdi mdi-content-save-check text-lg"></i> SIMPAN & GENERATE REKOMENDASI</button>
                                     </div>
@@ -879,8 +890,16 @@
                                                     </div>
                                                 @endif
                                             @endif
-                                        </div>
                                     @endforeach
+                                    
+                                    @if(!empty($opdRekomData['masa_aktif_rekom']))
+                                        <div class="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700">
+                                            <label class="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Masa Aktif Rekomendasi</label>
+                                            <p class="text-xs font-semibold text-gray-700 dark:text-gray-200">
+                                                {{ \Carbon\Carbon::parse($opdRekomData['masa_aktif_rekom'])->format('d M Y') }}
+                                            </p>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                             @endif
@@ -1098,8 +1117,19 @@
                                                 <p class="text-[10px] text-gray-400 italic mt-1">{{ $field->help_text }}</p>
                                             @endif
                                         </div>
-                                    @endforeach
                                 </div>
+                                
+                                <!-- Masa Aktif Rekomendasi Field -->
+                                <div class="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
+                                    <div class="max-w-xs">
+                                        <label class="block text-[11px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-tighter mb-2">Masa Aktif Surat Rekomendasi <span class="text-red-500">*</span></label>
+                                        <input type="date" name="masa_aktif_rekom" value="{{ $application->rekom_data['masa_aktif_rekom'] ?? '' }}" required
+                                            class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-purple-500 outline-none transition-all"
+                                            {{ !$canEditRekom ? 'readonly disabled' : '' }}>
+                                        <p class="text-[10px] text-gray-400 mt-2 italic">Atur batas waktu berlakunya surat rekomendasi.</p>
+                                    </div>
+                                </div>
+                                
                                 @if($canEditRekom)
                                     <div class="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700 flex justify-end">
                                         <button type="submit" class="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg flex items-center gap-3 active:scale-95"><i class="mdi mdi-content-save-check text-lg"></i> SIMPAN & GENERATE REKOMENDASI</button>

@@ -11,6 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'sqlite') {
+            Schema::table('perijinan', function (Blueprint $table) {
+                try {
+                    $table->dropUnique('perijinan_kode_perijinan_unique');
+                } catch (\Exception $e) {}
+            });
+        }
         Schema::table('perijinan', function (Blueprint $table) {
             // Drop existing columns
             $table->dropColumn(['deskripsi', 'kode_perijinan', 'lama_hari', 'biaya', 'status']);

@@ -12,7 +12,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('admin', 'fo', 'bo', 'operator_opd', 'kepala_opd', 'verifikator', 'kadin', 'pemohon', 'pemerintah') DEFAULT 'pemohon'");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('admin', 'fo', 'bo', 'operator_opd', 'kepala_opd', 'verifikator', 'kadin', 'pemohon', 'pemerintah') DEFAULT 'pemohon'");
+        }
     }
 
     /**
@@ -20,6 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('admin', 'fo', 'bo', 'operator_opd', 'kepala_opd', 'verifikator', 'kadin', 'pemohon') DEFAULT 'pemohon'");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('admin', 'fo', 'bo', 'operator_opd', 'kepala_opd', 'verifikator', 'kadin', 'pemohon') DEFAULT 'pemohon'");
+        }
     }
 };

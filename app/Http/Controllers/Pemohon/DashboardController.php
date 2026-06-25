@@ -241,7 +241,15 @@ class DashboardController extends Controller
             ->where('user_id', $user->id)
             ->get();
 
-        return view('pemohon.pengajuan.create', compact('perijinan', 'user', 'userDokumens'));
+        $renewFromApp = null;
+        if (request()->filled('renew_from')) {
+            $renewFromApp = DataPerijinan::where('id', request()->renew_from)
+                ->where('user_id', $user->id)
+                ->where('status', 'approved')
+                ->first();
+        }
+
+        return view('pemohon.pengajuan.create', compact('perijinan', 'user', 'userDokumens', 'renewFromApp'));
     }
 
     /**

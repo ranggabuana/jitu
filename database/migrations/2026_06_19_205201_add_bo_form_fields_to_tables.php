@@ -20,7 +20,9 @@ return new class extends Migration
         });
 
         // Modify form_type enum in perijinan_form_fields
-        \Illuminate\Support\Facades\DB::statement("ALTER TABLE perijinan_form_fields MODIFY COLUMN form_type ENUM('global', 'rekom', 'izin', 'bo') NOT NULL DEFAULT 'global'");
+        if (\Illuminate\Support\Facades\DB::getDriverName() !== 'sqlite') {
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE perijinan_form_fields MODIFY COLUMN form_type ENUM('global', 'rekom', 'izin', 'bo') NOT NULL DEFAULT 'global'");
+        }
     }
 
     /**
@@ -37,6 +39,8 @@ return new class extends Migration
         });
 
         // Revert form_type enum
-        \Illuminate\Support\Facades\DB::statement("ALTER TABLE perijinan_form_fields MODIFY COLUMN form_type ENUM('global', 'rekom', 'izin') NOT NULL DEFAULT 'global'");
+        if (\Illuminate\Support\Facades\DB::getDriverName() !== 'sqlite') {
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE perijinan_form_fields MODIFY COLUMN form_type ENUM('global', 'rekom', 'izin') NOT NULL DEFAULT 'global'");
+        }
     }
 };

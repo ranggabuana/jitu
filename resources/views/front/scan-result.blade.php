@@ -25,6 +25,15 @@
                 $targetOpd = $targetRecord->validationFlow->assignedUser->opd;
             }
         }
+
+        $masaAktifRekom = null;
+        if ($type === 'rekom') {
+            if ($isMulti && !empty($opdId)) {
+                $masaAktifRekom = $perizinan->rekom_data_multi[$opdId]['masa_aktif_rekom'] ?? null;
+            } else {
+                $masaAktifRekom = $perizinan->rekom_data['masa_aktif_rekom'] ?? null;
+            }
+        }
     @endphp
 
     <div class="py-12 bg-gray-50 min-h-screen">
@@ -114,10 +123,25 @@
                                     <p class="text-gray-800 font-bold">{{ $perizinan->approved_at ? $perizinan->approved_at->format('d/m/Y') : '-' }}</p>
                                 </div>
                                 <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                                    <label class="text-[10px] text-gray-500 uppercase font-black tracking-widest block mb-1">Masa Aktif s/d</label>
-                                    <p class="text-gray-800 font-bold {{ ($perizinan->masa_aktif && $perizinan->masa_aktif->isPast()) ? 'text-red-600' : '' }}">
-                                        {{ $perizinan->masa_aktif ? $perizinan->masa_aktif->format('d/m/Y') : '-' }}
-                                    </p>
+                                    @if($type === 'rekom')
+                                        <label class="text-[10px] text-gray-500 uppercase font-black tracking-widest block mb-1">Masa Aktif Rekomendasi s/d</label>
+                                        @if($masaAktifRekom)
+                                            @php
+                                                $carbonRekomDate = \Carbon\Carbon::parse($masaAktifRekom);
+                                                $isRekomExpired = $carbonRekomDate->isPast();
+                                            @endphp
+                                            <p class="text-gray-800 font-bold {{ $isRekomExpired ? 'text-red-600' : '' }}">
+                                                {{ $carbonRekomDate->format('d/m/Y') }}
+                                            </p>
+                                        @else
+                                            <p class="text-gray-400 italic font-bold">-</p>
+                                        @endif
+                                    @else
+                                        <label class="text-[10px] text-gray-500 uppercase font-black tracking-widest block mb-1">Masa Aktif s/d</label>
+                                        <p class="text-gray-800 font-bold {{ ($perizinan->masa_aktif && $perizinan->masa_aktif->isPast()) ? 'text-red-600' : '' }}">
+                                            {{ $perizinan->masa_aktif ? $perizinan->masa_aktif->format('d/m/Y') : '-' }}
+                                        </p>
+                                    @endif
                                 </div>
                             </div>
                         </div>

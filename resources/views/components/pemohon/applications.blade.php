@@ -97,10 +97,52 @@
                             </span>
                         </td>
                         <td class="p-4 border-b text-right">
-                            <a href="{{ route('pemohon.tracking.detail', $app->id) }}"
-                                class="text-amber-700 hover:text-amber-900 font-medium text-sm">
-                                <i class="fas fa-eye mr-1"></i> Detail
-                            </a>
+                            <div class="flex items-center justify-end gap-3">
+                                @php
+                                    $showRenewBtn = false;
+                                    $isAllowed = false;
+                                    $msg = '';
+                                    if ($app->status === 'approved' && $app->masa_aktif) {
+                                        $isExpired = $app->masa_aktif->isPast();
+                                        $opsi = $app->perijinan->opsi_perpanjangan;
+                                        $formattedDate = $app->masa_aktif->format('d M Y');
+                                        
+                                        if ($opsi === 'setelah_habis') {
+                                            $showRenewBtn = true;
+                                            if ($isExpired) {
+                                                $isAllowed = true;
+                                            } else {
+                                                $isAllowed = false;
+                                                $msg = 'Belum waktunya perpanjang. Perizinan ini hanya dapat diperpanjang setelah masa berlaku habis pada tanggal ' . $formattedDate . '.';
+                                            }
+                                        } elseif ($opsi === 'sebelum_habis') {
+                                            $showRenewBtn = true;
+                                            if (!$isExpired) {
+                                                $isAllowed = true;
+                                            } else {
+                                                $isAllowed = false;
+                                                $msg = 'Masa berlaku perizinan ini sudah habis pada tanggal ' . $formattedDate . '. Silakan lakukan pengajuan baru.';
+                                            }
+                                        } elseif ($opsi === 'keduanya') {
+                                            $showRenewBtn = true;
+                                            $isAllowed = true;
+                                        }
+                                    }
+                                @endphp
+                                @if($showRenewBtn)
+                                    <button type="button"
+                                        class="perpanjang-btn bg-amber-100 hover:bg-amber-200 text-amber-800 font-semibold py-1.5 px-3 rounded-lg text-xs transition-colors flex items-center gap-1 shadow-sm"
+                                        data-allowed="{{ $isAllowed ? 'true' : 'false' }}"
+                                        data-message="{{ $msg }}"
+                                        data-url="{{ route('pemohon.pengajuan.create', ['perijinanId' => $app->perijinan_id, 'renew_from' => $app->id]) }}">
+                                        <i class="fas fa-sync-alt text-[10px]"></i> Perpanjang
+                                    </button>
+                                @endif
+                                <a href="{{ route('pemohon.tracking.detail', $app->id) }}"
+                                    class="text-amber-700 hover:text-amber-900 font-semibold text-sm flex items-center gap-1">
+                                    <i class="fas fa-eye text-xs"></i> Detail
+                                </a>
+                            </div>
                         </td>
                     </tr>
                 @empty
@@ -150,5 +192,40 @@
                 filterForm.submit();
             });
         }
+
+        // Handle perpanjang button click with SweetAlert
+        const perpanjangButtons = document.querySelectorAll('.perpanjang-btn');
+        perpanjangButtons.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const allowed = this.getAttribute('data-allowed') === 'true';
+                const message = this.getAttribute('data-message');
+                const url = this.getAttribute('data-url');
+                
+                if (allowed) {
+                    Swal.fire({
+                        title: 'Konfirmasi Perpanjangan',
+                        text: 'Apakah Anda yakin ingin memperpanjang perizinan ini? Data dari pengajuan sebelumnya akan diisi secara otomatis.',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#78350f',
+                        cancelButtonColor: '#6b7280',
+                        confirmButtonText: 'Ya, Perpanjang',
+                        cancelButtonText: 'Batal'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = url;
+                        }
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Belum Bisa Perpanjang',
+                        text: message,
+                        confirmButtonColor: '#78350f',
+                    });
+                }
+            });
+        });
     });
 </script>

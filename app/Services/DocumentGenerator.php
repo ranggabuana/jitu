@@ -397,7 +397,7 @@ class DocumentGenerator
                         }
                     }
                 } else {
-                    if ($field && $field->type === 'date' && !empty($value)) {
+                    if (($key === 'masa_aktif_rekom' || ($field && $field->type === 'date')) && !empty($value)) {
                         $valStr = self::formatDateIndonesian($value);
                     } else {
                         $valStr = is_array($value) ? implode(', ', $value) : (string)$value;

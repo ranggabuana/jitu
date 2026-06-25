@@ -118,7 +118,7 @@
                                             @endif
                                         </label>
                                         <input type="{{ $field->type }}" name="form_fields[{{ $field->id }}]"
-                                            value="{{ old('form_fields.' . $field->id) }}"
+                                            value="{{ old('form_fields.' . $field->id, isset($renewFromApp) ? ($renewFromApp->form_data[$field->id] ?? '') : '') }}"
                                             class="w-full px-4 py-3 border @error('form_fields.' . $field->id) border-red-500 @else border-gray-300 @endif rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                                             placeholder="{{ $field->placeholder ?? 'Masukkan ' . strtolower($field->label) }}">
                                         @error('form_fields.' . $field->id)
@@ -138,7 +138,7 @@
                                         </label>
                                         <textarea name="form_fields[{{ $field->id }}]" rows="4"
                                             class="w-full px-4 py-3 border @error('form_fields.' . $field->id) border-red-500 @else border-gray-300 @endif rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                                            placeholder="{{ $field->placeholder ?? 'Masukkan ' . strtolower($field->label) }}">{{ old('form_fields.' . $field->id) }}</textarea>
+                                            placeholder="{{ $field->placeholder ?? 'Masukkan ' . strtolower($field->label) }}">{{ old('form_fields.' . $field->id, isset($renewFromApp) ? ($renewFromApp->form_data[$field->id] ?? '') : '') }}</textarea>
                                         @error('form_fields.' . $field->id)
                                             <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                                         @enderror
@@ -160,7 +160,7 @@
                                             @if (is_array($field->options))
                                                 @foreach ($field->options as $option)
                                                     <option value="{{ $option }}"
-                                                        {{ old('form_fields.' . $field->id) == $option ? 'selected' : '' }}>
+                                                        {{ old('form_fields.' . $field->id, isset($renewFromApp) ? ($renewFromApp->form_data[$field->id] ?? '') : '') == $option ? 'selected' : '' }}>
                                                         {{ $option }}
                                                     </option>
                                                 @endforeach
@@ -187,7 +187,7 @@
                                                     <label class="flex items-center gap-2 cursor-pointer">
                                                         <input type="radio" name="form_fields[{{ $field->id }}]"
                                                             value="{{ $option }}"
-                                                            @if (old('form_fields.' . $field->id) == $option) checked @endif
+                                                            @if (old('form_fields.' . $field->id, isset($renewFromApp) ? ($renewFromApp->form_data[$field->id] ?? '') : '') == $option) checked @endif
                                                             class="w-4 h-4 text-amber-600 focus:ring-amber-500">
                                                         <span class="text-sm text-gray-700">{{ $option }}</span>
                                                     </label>
@@ -213,7 +213,7 @@
                                                         <input type="checkbox"
                                                             name="form_fields[{{ $field->id }}][]"
                                                             value="{{ $option }}"
-                                                            @if (in_array($option, old('form_fields.' . $field->id, []))) checked @endif
+                                                            @if (in_array($option, old('form_fields.' . $field->id, isset($renewFromApp) ? ($renewFromApp->form_data[$field->id] ?? []) : []))) checked @endif
                                                             class="w-4 h-4 text-amber-600 focus:ring-amber-500 rounded">
                                                         <span class="text-sm text-gray-700">{{ $option }}</span>
                                                     </label>

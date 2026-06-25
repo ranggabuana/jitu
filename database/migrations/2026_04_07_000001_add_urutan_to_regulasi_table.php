@@ -17,8 +17,10 @@ return new class extends Migration
         });
 
         // Initialize urutan based on existing data (order by created_at)
-        DB::statement('SET @row_number = 0');
-        DB::statement('UPDATE regulasi SET urutan = (@row_number := @row_number + 1) ORDER BY created_at ASC');
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement('SET @row_number = 0');
+            DB::statement('UPDATE regulasi SET urutan = (@row_number := @row_number + 1) ORDER BY created_at ASC');
+        }
     }
 
     /**
