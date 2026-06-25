@@ -3,7 +3,7 @@
 
     <x-pemohon.navbar></x-pemohon.navbar>
 
-    <main class="flex-1 max-w-2xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+    <main class="flex-1 max-w-[95%] mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
         <!-- Header -->
         <div class="mb-6">
             <div class="flex items-center gap-3">

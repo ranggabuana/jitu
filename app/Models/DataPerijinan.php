@@ -47,6 +47,8 @@ class DataPerijinan extends Model
         'approved_at',
         'completed_at',
         'rejected_at',
+        'perpanjang_dari_id',
+        'root_perpanjang_id',
     ];
 
     protected $casts = [
@@ -260,6 +262,7 @@ class DataPerijinan extends Model
             'perbaikan' => 'Perlu Perbaikan Pemohon',
             'approved' => 'Disetujui & Selesai',
             'rejected' => 'Ditolak',
+            'diperpanjang' => 'Diperpanjang',
         ];
         
         return $labels[$this->status] ?? $this->status;
@@ -281,8 +284,41 @@ class DataPerijinan extends Model
             'perbaikan' => 'bg-orange-100 text-orange-800',
             'approved' => 'bg-green-100 text-green-800',
             'rejected' => 'bg-red-100 text-red-800',
+            'diperpanjang' => 'bg-indigo-100 text-indigo-800 border border-indigo-200',
         ];
         
         return $colors[$this->status] ?? 'bg-gray-100 text-gray-800';
+    }
+
+    /**
+     * Get the parent application that this application extended.
+     */
+    public function parentApplication(): BelongsTo
+    {
+        return $this->belongsTo(DataPerijinan::class, 'perpanjang_dari_id');
+    }
+
+    /**
+     * Get the root application of the extension family tree.
+     */
+    public function rootApplication(): BelongsTo
+    {
+        return $this->belongsTo(DataPerijinan::class, 'root_perpanjang_id');
+    }
+
+    /**
+     * Get children applications that extended this application.
+     */
+    public function childApplications(): HasMany
+    {
+        return $this->hasMany(DataPerijinan::class, 'perpanjang_dari_id');
+    }
+
+    /**
+     * Get all applications belonging to the same extension family tree.
+     */
+    public function familyApplications(): HasMany
+    {
+        return $this->hasMany(DataPerijinan::class, 'root_perpanjang_id');
     }
 }

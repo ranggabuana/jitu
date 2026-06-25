@@ -5,7 +5,7 @@
     <x-pemohon.navbar></x-pemohon.navbar>
 
     <!-- Main Content -->
-    <main class="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-12">
+    <main class="flex-1 max-w-[95%] mx-auto w-full px-4 sm:px-6 lg:px-8 py-12">
         <!-- Success Card -->
         <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-amber-200">
             <!-- Success Header -->

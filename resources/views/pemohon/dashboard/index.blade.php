@@ -5,7 +5,7 @@
     <x-pemohon.navbar></x-pemohon.navbar>
 
     <!-- Main Content -->
-    <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <main class="flex-1 max-w-[95%] mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         
         <!-- Hero Section -->
         <x-pemohon.hero></x-pemohon.hero>

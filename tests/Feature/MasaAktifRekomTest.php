@@ -291,4 +291,89 @@ class MasaAktifRekomTest extends TestCase
         $this->assertEquals('Tidak Aktif', $appIzinExpired->status_label);
         $this->assertEquals('bg-red-100 text-red-800', $appIzinExpired->status_color);
     }
+
+    public function test_renewal_creates_new_application_and_marks_old_as_diperpanjang()
+    {
+        $opd = Opd::create([
+            'nama_opd' => 'Dinas Kesehatan',
+            'kode_opd' => 'DINKES',
+        ]);
+
+        $user = User::create([
+            'name' => 'Pemohon User',
+            'username' => 'pemohon_test2',
+            'email' => 'pemohon2@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'pemohon',
+            'status' => 'aktif',
+        ]);
+
+        $perijinan = Perijinan::create([
+            'nama_perijinan' => 'Izin Apotek',
+            'kode_perijinan' => 'APOTEK',
+            'is_multi_opd' => false,
+            'dasar_hukum' => 'Dasar Hukum',
+            'persyaratan' => 'Persyaratan',
+            'prosedur' => 'Prosedur',
+        ]);
+
+        // Create the old approved application
+        $oldApp = DataPerijinan::create([
+            'user_id' => $user->id,
+            'perijinan_id' => $perijinan->id,
+            'status' => 'approved',
+            'masa_aktif' => '2026-06-01',
+        ]);
+
+        // Submit new application that renews from the old one
+        session(['pengajuan_num1' => 5, 'pengajuan_num2' => 5]);
+
+        $response = $this->actingAs($user)
+            ->post(route('pemohon.pengajuan.store'), [
+                'perijinan_id' => $perijinan->id,
+                'captcha' => 10, // 5 + 5
+                'pernyataan' => 1,
+                'renew_from' => $oldApp->id,
+                'form_fields' => [],
+            ]);
+
+        $response->assertRedirect();
+
+        // Verify the old application is updated to 'diperpanjang'
+        $oldApp->refresh();
+        $this->assertEquals('diperpanjang', $oldApp->status);
+        $this->assertEquals('Diperpanjang', $oldApp->status_label);
+        $this->assertEquals('bg-indigo-100 text-indigo-800 border border-indigo-200', $oldApp->status_color);
+
+        // Verify the new application is created with correct parent and root references
+        $newApp = DataPerijinan::where('user_id', $user->id)->where('status', 'submitted')->first();
+        $this->assertNotNull($newApp);
+        $this->assertEquals($oldApp->id, $newApp->perpanjang_dari_id);
+        $this->assertEquals($oldApp->id, $newApp->root_perpanjang_id);
+        $this->assertNotEquals($oldApp->no_registrasi, $newApp->no_registrasi);
+
+        // If we renew again from the new app (once it is approved)
+        $newApp->update(['status' => 'approved', 'masa_aktif' => '2027-06-01']);
+
+        session(['pengajuan_num1' => 3, 'pengajuan_num2' => 4]);
+        $response2 = $this->actingAs($user)
+            ->post(route('pemohon.pengajuan.store'), [
+                'perijinan_id' => $perijinan->id,
+                'captcha' => 7, // 3 + 4
+                'pernyataan' => 1,
+                'renew_from' => $newApp->id,
+                'form_fields' => [],
+            ]);
+
+        $response2->assertRedirect();
+
+        $newApp->refresh();
+        $this->assertEquals('diperpanjang', $newApp->status);
+
+        $newestApp = DataPerijinan::where('user_id', $user->id)->where('status', 'submitted')->first();
+        $this->assertNotNull($newestApp);
+        $this->assertEquals($newApp->id, $newestApp->perpanjang_dari_id);
+        // Root perpanjang ID should be the original oldApp ID!
+        $this->assertEquals($oldApp->id, $newestApp->root_perpanjang_id);
+    }
 }

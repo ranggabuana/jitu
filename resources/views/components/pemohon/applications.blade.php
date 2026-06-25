@@ -51,6 +51,7 @@
         <table class="w-full text-left border-collapse">
             <thead class="bg-amber-50 text-gray-600 text-xs uppercase">
                 <tr>
+                    <th class="p-4 border-b text-center w-12">No</th>
                     <th class="p-4 border-b">
                         <a href="{{ request()->fullUrlWithQuery(['sort' => 'no_registrasi', 'direction' => request('direction') === 'asc' ? 'desc' : 'asc']) }}" class="flex items-center gap-1 hover:text-amber-700">
                             No. Registrasi
@@ -75,8 +76,28 @@
                 </tr>
             </thead>
             <tbody class="text-sm divide-y divide-amber-100">
+                @php
+                    $renderedFamilies = [];
+                    $baseNo = ($applications->currentPage() - 1) * $applications->perPage();
+                @endphp
                 @forelse($applications as $app)
+                    @php
+                        $familyId = $app->root_perpanjang_id ?? $app->id;
+                        $familyCount = $applications->filter(function($item) use ($familyId) {
+                            return ($item->root_perpanjang_id ?? $item->id) == $familyId;
+                        })->count();
+                        
+                        $isFirstOfFamily = !in_array($familyId, $renderedFamilies);
+                        if ($isFirstOfFamily) {
+                            $renderedFamilies[] = $familyId;
+                        }
+                    @endphp
                     <tr class="hover:bg-amber-50 transition-colors">
+                        @if($isFirstOfFamily)
+                            <td class="p-4 border-b text-center font-bold text-gray-700 w-12" rowspan="{{ $familyCount }}">
+                                {{ $baseNo + count($renderedFamilies) }}
+                            </td>
+                        @endif
                         <td class="p-4 border-b">
                             <span class="font-mono font-semibold text-amber-700">{{ $app->no_registrasi }}</span>
                         </td>
@@ -147,7 +168,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="p-8 text-center text-gray-500">
+                        <td colspan="7" class="p-8 text-center text-gray-500">
                             <i class="fas fa-folder-open text-4xl mb-3 opacity-20"></i>
                             <p>Tidak ada data pengajuan yang ditemukan.</p>
                         </td>

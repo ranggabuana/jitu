@@ -3,7 +3,7 @@
 
     <x-pemohon.navbar></x-pemohon.navbar>
 
-    <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <main class="flex-1 max-w-[95%] mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         <div class="mb-6">
             <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Dokumen Saya</h1>
             <p class="text-gray-600 dark:text-gray-400">Kelola dokumen umum dan spesifik Anda untuk mempermudah proses

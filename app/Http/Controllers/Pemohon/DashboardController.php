@@ -78,16 +78,9 @@ class DashboardController extends Controller
             });
         }
 
-        // Sorting
-        $sort = $request->input('sort', 'created_at');
-        $direction = $request->input('direction', 'desc');
-        $allowedSorts = ['created_at', 'no_registrasi', 'status'];
-        
-        if (in_array($sort, $allowedSorts)) {
-            $query->orderBy($sort, $direction);
-        } else {
-            $query->orderBy('created_at', 'desc');
-        }
+        // Sorting - Always group by family (root_perpanjang_id or id) to support rowspan, ordered from newest family to oldest
+        $query->orderByRaw('COALESCE(root_perpanjang_id, id) DESC')
+              ->orderBy('created_at', 'desc');
 
         // Pagination & Per Page
         $perPage = $request->input('per_page', 5);
@@ -486,6 +479,25 @@ class DashboardController extends Controller
             // ===============================
             // 🔹 SIMPAN DATA
             // ===============================
+            $perpanjangDariId = null;
+            $rootPerpanjangId = null;
+
+            if ($request->filled('renew_from')) {
+                $renewFromApp = DataPerijinan::where('id', $request->renew_from)
+                    ->where('user_id', $user->id)
+                    ->first(); // Get matching app
+
+                if ($renewFromApp) {
+                    $perpanjangDariId = $renewFromApp->id;
+                    $rootPerpanjangId = $renewFromApp->root_perpanjang_id ?? $renewFromApp->id;
+
+                    // Update status of previous application to 'diperpanjang'
+                    $renewFromApp->update([
+                        'status' => 'diperpanjang'
+                    ]);
+                }
+            }
+
             $data = DataPerijinan::create([
                 'user_id' => $user->id,
                 'perijinan_id' => $perijinan->id,
@@ -503,6 +515,8 @@ class DashboardController extends Controller
                     'npwp' => $user->npwp,
                 ],
                 'submitted_at' => now(),
+                'perpanjang_dari_id' => $perpanjangDariId,
+                'root_perpanjang_id' => $rootPerpanjangId,
             ]);
 
             // ===============================
