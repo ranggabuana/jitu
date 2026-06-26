@@ -890,6 +890,7 @@
                                                     </div>
                                                 @endif
                                             @endif
+                                        </div>
                                     @endforeach
                                     
                                     @if(!empty($opdRekomData['masa_aktif_rekom']))
@@ -1117,6 +1118,7 @@
                                                 <p class="text-[10px] text-gray-400 italic mt-1">{{ $field->help_text }}</p>
                                             @endif
                                         </div>
+                                    @endforeach
                                 </div>
                                 
                                 <!-- Masa Aktif Rekomendasi Field -->
