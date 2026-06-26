@@ -1078,10 +1078,23 @@ class DataPerijinanController extends Controller
             });
         }
         $rekomFields = $rekomFieldsQuery->get();
+        $existingRekomData = $perijinan->is_multi_opd 
+            ? ($application->rekom_data_multi[$opdId] ?? []) 
+            : ($application->rekom_data ?? []);
             
         $rules = [];
+        $messages = [];
         foreach ($rekomFields as $field) {
-            $fieldRules = ['nullable'];
+            $isFile = in_array($field->type, ['file', 'pas_foto', 'gambar']);
+            $hasExistingFile = $isFile && !empty($existingRekomData[$field->name]);
+            
+            if ($field->is_required && !$hasExistingFile) {
+                $fieldRules = ['required'];
+                $messages[$field->name . '.required'] = "Formulir {$field->label} wajib diisi.";
+            } else {
+                $fieldRules = ['nullable'];
+            }
+            
             if ($field->type === 'email') $fieldRules[] = 'email';
             if ($field->type === 'number') $fieldRules[] = 'numeric';
             if ($field->type === 'file') {
@@ -1097,22 +1110,25 @@ class DataPerijinanController extends Controller
         }
         
         $rules['masa_aktif_rekom'] = 'required|date';
+        $messages['masa_aktif_rekom.required'] = 'Masa aktif rekomendasi wajib diisi.';
+        $messages['masa_aktif_rekom.date'] = 'Masa aktif rekomendasi harus berupa tanggal yang valid.';
 
-        $validated = $request->validate($rules);
+        $validated = $request->validate($rules, $messages);
         
         if ($perijinan->is_multi_opd) {
 
             $multiData = $application->rekom_data_multi ?? [];
             $currentData = $multiData[$opdId] ?? [];
 
-                        foreach ($rekomFields as $field) {
-                if (($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar') && $request->hasFile($field->name)) {
+            foreach ($rekomFields as $field) {
+                $isFile = in_array($field->type, ['file', 'pas_foto', 'gambar']);
+                if ($isFile && $request->hasFile($field->name)) {
                     $file = $request->file($field->name);
                     $filename = 'rekom_' . $opdId . '_' . $field->name . '_' . time() . '.' . $file->getClientOriginalExtension();
                     $path = 'uploads/perijinan/' . $application->perijinan_id;
                     $file->move(public_path($path), $filename);
                     $currentData[$field->name] = $path . '/' . $filename;
-                } else {
+                } elseif (!$isFile) {
                     if (array_key_exists($field->name, $validated)) {
                         $currentData[$field->name] = $validated[$field->name];
                     } else {
@@ -1186,14 +1202,15 @@ class DataPerijinanController extends Controller
         } else {
             // Standard Single OPD Logic
             $rekomData = $application->rekom_data ?? [];
-                        foreach ($rekomFields as $field) {
-                if (($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar') && $request->hasFile($field->name)) {
+            foreach ($rekomFields as $field) {
+                $isFile = in_array($field->type, ['file', 'pas_foto', 'gambar']);
+                if ($isFile && $request->hasFile($field->name)) {
                     $file = $request->file($field->name);
                     $filename = 'rekom_' . $field->name . '_' . time() . '.' . $file->getClientOriginalExtension();
                     $path = 'uploads/perijinan/' . $application->perijinan_id;
                     $file->move(public_path($path), $filename);
                     $rekomData[$field->name] = $path . '/' . $filename;
-                } else {
+                } elseif (!$isFile) {
                     if (array_key_exists($field->name, $validated)) {
                         $rekomData[$field->name] = $validated[$field->name];
                     } else {
@@ -1305,9 +1322,18 @@ class DataPerijinanController extends Controller
             ->where('form_type', 'izin');
             
         $rules = [];
+        $messages = [];
+        $existingIzinData = $application->izin_data ?? [];
         foreach ($izinFields as $field) {
-            // Force all fields to be nullable in the official forms to prevent blockers
-            $fieldRules = ['nullable'];
+            $isFile = in_array($field->type, ['file', 'pas_foto', 'gambar']);
+            $hasExistingFile = $isFile && !empty($existingIzinData[$field->name]);
+            
+            if ($field->is_required && !$hasExistingFile) {
+                $fieldRules = ['required'];
+                $messages[$field->name . '.required'] = "Formulir {$field->label} wajib diisi.";
+            } else {
+                $fieldRules = ['nullable'];
+            }
             
             if ($field->type === 'email') $fieldRules[] = 'email';
             if ($field->type === 'number') $fieldRules[] = 'numeric';
@@ -1325,13 +1351,16 @@ class DataPerijinanController extends Controller
         }
 
         $rules['masa_aktif'] = 'required|date';
+        $messages['masa_aktif.required'] = 'Masa aktif izin wajib diisi.';
+        $messages['masa_aktif.date'] = 'Masa aktif izin harus berupa tanggal yang valid.';
 
-        $validated = $request->validate($rules);
+        $validated = $request->validate($rules, $messages);
         
         $izinData = $application->izin_data ?? [];
 
         foreach ($izinFields as $field) {
-            if (($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar') && $request->hasFile($field->name)) {
+            $isFile = in_array($field->type, ['file', 'pas_foto', 'gambar']);
+            if ($isFile && $request->hasFile($field->name)) {
                 $file = $request->file($field->name);
                 if ($file->isValid()) {
                     $filename = 'izin_' . $field->name . '_' . time() . '.' . $file->getClientOriginalExtension();
@@ -1339,7 +1368,7 @@ class DataPerijinanController extends Controller
                     $file->move(public_path($path), $filename);
                     $izinData[$field->name] = $path . '/' . $filename;
                 }
-            } else {
+            } elseif (!$isFile) {
                 if (array_key_exists($field->name, $validated)) {
                     $izinData[$field->name] = $validated[$field->name];
                 }
@@ -1402,9 +1431,18 @@ class DataPerijinanController extends Controller
             ->where('form_type', 'bo');
             
         $rules = [];
+        $messages = [];
+        $existingBoData = $application->bo_data ?? [];
         foreach ($boFields as $field) {
-            // Force all fields to be nullable in the official forms to prevent blockers
-            $fieldRules = ['nullable'];
+            $isFile = in_array($field->type, ['file', 'pas_foto', 'gambar']);
+            $hasExistingFile = $isFile && !empty($existingBoData[$field->name]);
+            
+            if ($field->is_required && !$hasExistingFile) {
+                $fieldRules = ['required'];
+                $messages[$field->name . '.required'] = "Formulir {$field->label} wajib diisi.";
+            } else {
+                $fieldRules = ['nullable'];
+            }
             
             if ($field->type === 'email') $fieldRules[] = 'email';
             if ($field->type === 'number') $fieldRules[] = 'numeric';
@@ -1421,12 +1459,13 @@ class DataPerijinanController extends Controller
             $rules[$field->name] = $fieldRules;
         }
 
-        $validated = $request->validate($rules);
+        $validated = $request->validate($rules, $messages);
         
         $boData = $application->bo_data ?? [];
 
-                foreach ($boFields as $field) {
-            if (($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar') && $request->hasFile($field->name)) {
+        foreach ($boFields as $field) {
+            $isFile = in_array($field->type, ['file', 'pas_foto', 'gambar']);
+            if ($isFile && $request->hasFile($field->name)) {
                 $file = $request->file($field->name);
                 if ($file->isValid()) {
                     $filename = 'bo_' . $field->name . '_' . time() . '.' . $file->getClientOriginalExtension();
@@ -1434,7 +1473,7 @@ class DataPerijinanController extends Controller
                     $file->move(public_path($path), $filename);
                     $boData[$field->name] = $path . '/' . $filename;
                 }
-            } else {
+            } elseif (!$isFile) {
                 if (array_key_exists($field->name, $validated)) {
                     $boData[$field->name] = $validated[$field->name];
                 } else {
