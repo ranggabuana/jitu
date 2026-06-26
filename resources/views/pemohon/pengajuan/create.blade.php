@@ -288,6 +288,7 @@
                                                     Format: {{ $field->file_types ?? 'Semua format' }} (Maks. {{ $field->max_file_size ?? '2MB' }})
                                                 </p>
                                             </div>
+                                        @endif
                                     </div>
                                 @elseif ($field->type === 'table')
                                     <div>
