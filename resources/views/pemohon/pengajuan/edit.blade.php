@@ -245,6 +245,39 @@
                 </div>
             </div>
 
+            <!-- CAPTCHA (Inside Form) -->
+            <div class="mt-8 pt-8 border-t border-gray-100">
+                <div class="bg-orange-50 border border-orange-200 rounded-2xl p-6">
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">
+                        <i class="fas fa-shield-alt text-orange-600 mr-2"></i>Verifikasi Keamanan
+                    </label>
+                    <div class="flex items-end gap-3 max-w-sm">
+                        <div class="flex-1">
+                            <span id="captcha-question" class="block text-xl font-bold text-orange-600 mb-2">
+                                {{ session('pengajuan_num1') }} + {{ session('pengajuan_num2') }} = ?
+                            </span>
+                            <input type="number"
+                                id="captcha"
+                                name="captcha"
+                                required
+                                placeholder="Hasil Penjumlahan"
+                                class="w-full px-4 py-2 border-2 border-orange-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all text-lg font-semibold @if(session('captcha_error')) border-red-500 @endif">
+                            @if(session('captcha_error'))
+                                <p class="mt-2 text-sm text-red-600 flex items-center gap-1">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    {{ session('captcha_error') }}
+                                </p>
+                            @endif
+                        </div>
+                        <button type="button"
+                            id="refresh-captcha"
+                            class="shrink-0 bg-orange-600 hover:bg-orange-700 text-white w-12 h-12 rounded-xl font-semibold transition-all flex items-center justify-center text-xl shadow-lg hover:shadow-xl">
+                            <i class="fas fa-sync-alt" id="refresh-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Pernyataan Tanggung Jawab -->
             <div class="bg-orange-50 border border-orange-200 rounded-2xl p-6">
                 <label class="flex items-start gap-4 cursor-pointer group">
@@ -483,5 +516,43 @@
                 }
             }
         });
+
+        // Captcha Refresh
+        const refreshBtn = document.getElementById('refresh-captcha');
+        const refreshIcon = document.getElementById('refresh-icon');
+        const captchaQuestion = document.getElementById('captcha-question');
+        const captchaInput = document.getElementById('captcha');
+
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', function() {
+                // Show loading state
+                refreshIcon.classList.add('fa-spin');
+                refreshBtn.disabled = true;
+
+                fetch('{{ route("pemohon.api.refresh-pengajuan-captcha") }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        captchaQuestion.textContent = `${data.num1} + ${data.num2} = ?`;
+                        captchaInput.value = '';
+                        captchaInput.focus();
+
+                        // Reset button
+                        refreshIcon.classList.remove('fa-spin');
+                        refreshBtn.disabled = false;
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        refreshIcon.classList.remove('fa-spin');
+                        refreshBtn.disabled = false;
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Gagal refresh CAPTCHA. Silakan coba lagi.',
+                            confirmButtonColor: '#ea580c',
+                            confirmButtonText: 'OK'
+                        });
+                    });
+            });
+        }
     </script>
 </x-pemohon.layout>
