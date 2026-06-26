@@ -1621,7 +1621,10 @@
                             @csrf <input type="hidden" name="action" id="validationAction" value="">
                             <input type="hidden" name="elapsed_seconds" class="elapsed-seconds-input" value="0">
                             <input type="hidden" name="passphrase" id="passphrase_input" value="">
-                            <textarea name="catatan" id="catatan" rows="3" class="w-full px-3 py-2 text-xs border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-xl mb-4 focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="Berikan catatan..."></textarea>
+                            <textarea name="catatan" id="catatan" rows="3" class="w-full px-3 py-2 text-xs border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-xl mb-1 focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="Berikan catatan..."></textarea>
+                            @error('catatan')
+                                <p class="text-xs text-red-500 font-bold mb-3"><i class="mdi mdi-alert-circle-outline"></i> {{ $message }}</p>
+                            @enderror
                             
                             @if($isVerifikator && $application->perijinan->is_multi_opd)
                                 <select name="target_opd_id" id="target_opd_id" class="hidden">

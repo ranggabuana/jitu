@@ -65,14 +65,7 @@
                 <div class="p-8">
                     <!-- Status Badge -->
                     <div class="flex justify-center mb-8">
-                        @if($isExpired)
-                            <div class="flex flex-col items-center gap-2">
-                                <span class="px-6 py-2 bg-red-100 text-red-700 rounded-full text-sm font-black uppercase tracking-widest border border-red-200 flex items-center gap-2 animate-pulse">
-                                    <i class="fas fa-exclamation-circle text-lg"></i> MASA AKTIF HABIS / KADALUWARSA
-                                </span>
-                                <p class="text-[10px] text-red-500 font-bold uppercase tracking-tighter">Dokumen Sudah Tidak Aktif</p>
-                            </div>
-                        @elseif($perizinan->status === 'approved')
+                        @if($perizinan->status === 'approved')
                             <div class="flex flex-col items-center gap-2">
                                 <span class="px-6 py-2 bg-green-100 text-green-700 rounded-full text-sm font-black uppercase tracking-widest border border-green-200 flex items-center gap-2">
                                     <i class="fas fa-check-circle"></i> Dokumen Sah & Berlaku

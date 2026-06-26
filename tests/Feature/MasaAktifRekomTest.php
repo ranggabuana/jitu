@@ -269,7 +269,6 @@ class MasaAktifRekomTest extends TestCase
 
         $scanRekomExpired = $this->get("/perizinan/scan/{$appRekomExpired->no_registrasi}?type=rekom");
         $scanRekomExpired->assertStatus(200);
-        $scanRekomExpired->assertSee('MASA AKTIF HABIS / KADALUWARSA');
         $scanRekomExpired->assertSee('PERINGATAN: DOKUMEN TIDAK AKTIF');
         $scanRekomExpired->assertSee('01/01/2020');
 
@@ -283,7 +282,6 @@ class MasaAktifRekomTest extends TestCase
 
         $scanIzinExpired = $this->get("/perizinan/scan/{$appIzinExpired->no_registrasi}?type=izin");
         $scanIzinExpired->assertStatus(200);
-        $scanIzinExpired->assertSee('MASA AKTIF HABIS / KADALUWARSA');
         $scanIzinExpired->assertSee('PERINGATAN: DOKUMEN TIDAK AKTIF');
         $scanIzinExpired->assertSee('15/06/2021');
 
