@@ -670,13 +670,64 @@ class DataPerijinanController extends Controller
                     ->update(['status' => 'rejected']);
             } elseif ($request->action === 'revision') {
                 // Send back for revision - RESET SLA
+                
+                // Delete generated recommendation/permit files from disk
+                if ($application->file_rekom && file_exists(public_path($application->file_rekom))) {
+                    @unlink(public_path($application->file_rekom));
+                }
+                if ($application->file_rekom_tte && file_exists(public_path($application->file_rekom_tte))) {
+                    @unlink(public_path($application->file_rekom_tte));
+                }
+                if (!empty($application->file_rekom_multi) && is_array($application->file_rekom_multi)) {
+                    foreach ($application->file_rekom_multi as $path) {
+                        if ($path && file_exists(public_path($path))) {
+                            @unlink(public_path($path));
+                        }
+                    }
+                }
+                if (!empty($application->file_rekom_multi_tte) && is_array($application->file_rekom_multi_tte)) {
+                    foreach ($application->file_rekom_multi_tte as $path) {
+                        if ($path && file_exists(public_path($path))) {
+                            @unlink(public_path($path));
+                        }
+                    }
+                }
+                if ($application->file_izin && file_exists(public_path($application->file_izin))) {
+                    @unlink(public_path($application->file_izin));
+                }
+                if ($application->file_izin_tte && file_exists(public_path($application->file_izin_tte))) {
+                    @unlink(public_path($application->file_izin_tte));
+                }
+
                 $application->update([
                     'status' => 'perbaikan',
                     'catatan_perbaikan' => $request->catatan,
+                    'current_step' => 1,
+                    'bo_data' => null,
+                    'rekom_data' => null,
+                    'rekom_data_multi' => null,
+                    'izin_data' => null,
+                    'no_rekom' => null,
+                    'no_izin' => null,
+                    'no_rekom_kode' => null,
+                    'no_izin_kode' => null,
+                    'file_rekom' => null,
+                    'file_rekom_tte' => null,
+                    'file_rekom_multi' => null,
+                    'file_rekom_multi_tte' => null,
+                    'file_izin' => null,
+                    'file_izin_tte' => null,
                 ]);
 
-                // Reset all duration_seconds for this application's validators
-                $application->validasiRecords()->update(['duration_seconds' => 0]);
+                // Reset all validation records (SLA and status)
+                $application->validasiRecords()->update([
+                    'status' => 'pending',
+                    'user_id' => null,
+                    'catatan' => null,
+                    'validated_at' => null,
+                    'duration_seconds' => 0,
+                    'sla_start_at' => null,
+                ]);
 
                 // Send Email Notification: Returned/Revision
                 if ($application->user && $application->user->email) {
