@@ -158,7 +158,7 @@
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100">
                                     <label class="text-[10px] text-gray-500 uppercase font-black tracking-widest block mb-1">Tanggal Terbit</label>
-                                    <p class="text-gray-800 font-bold">{{ $perizinan->approved_at ? $perizinan->approved_at->format('d/m/Y') : '-' }}</p>
+                                    <p class="text-gray-800 font-bold">{{ isset($tanggalTerbit) && $tanggalTerbit ? $tanggalTerbit->format('d/m/Y') : '-' }}</p>
                                 </div>
                                 <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100">
                                     @if($type === 'rekom')

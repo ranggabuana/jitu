@@ -409,6 +409,33 @@ class DocumentGenerator
                 }
             }
 
+            // Determine TTE/issuance date for this recommendation
+            $rekomDate = null;
+            if ($forceOfficial) {
+                // If forceOfficial is true, we are currently TTE-signing this document
+                $rekomDate = now();
+            } else {
+                // Check if a successful EsignLog exists for this recommendation
+                $rekomTteLog = \App\Models\EsignLog::where('data_perijinan_id', $application->id)
+                    ->where('document_type', 'rekomendasi')
+                    ->where('status', 'success')
+                    ->whereHas('user', function($q) use ($opd) {
+                        if ($opd) {
+                            $q->where('opd_id', $opd->id);
+                        }
+                    })
+                    ->latest()
+                    ->first();
+                if ($rekomTteLog) {
+                    $rekomDate = $rekomTteLog->created_at;
+                }
+            }
+
+            if ($rekomDate) {
+                $rekomReplacements['${TANGGAL}'] = self::formatDateIndonesian($rekomDate);
+                $rekomReplacements['${TANGGAL_HARI_INI}'] = self::formatDateIndonesian($rekomDate);
+            }
+
             $finalReplacements = array_merge($baseReplacements, $applicantReplacements, $boReplacements, $rekomReplacements);
             
             // Override QR code replacements for Rekomendasi

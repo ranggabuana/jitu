@@ -152,6 +152,27 @@ class LandingPageController extends Controller
             }
         }
 
-        return view('front.scan-result', compact('perizinan', 'documentType', 'documentStatus', 'type', 'opdId'));
+        $tanggalTerbit = null;
+        if ($type === 'rekom') {
+            // Find the successful EsignLog for this recommendation
+            $rekomTteLog = \App\Models\EsignLog::where('data_perijinan_id', $perizinan->id)
+                ->where('document_type', 'rekomendasi')
+                ->where('status', 'success')
+                ->whereHas('user', function($q) use ($opdId) {
+                    if ($opdId) {
+                        $q->where('opd_id', $opdId);
+                    }
+                })
+                ->latest()
+                ->first();
+
+            if ($rekomTteLog) {
+                $tanggalTerbit = $rekomTteLog->created_at;
+            }
+        } else {
+            $tanggalTerbit = $perizinan->approved_at;
+        }
+
+        return view('front.scan-result', compact('perizinan', 'documentType', 'documentStatus', 'type', 'opdId', 'tanggalTerbit'));
     }
 }
