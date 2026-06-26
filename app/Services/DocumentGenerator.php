@@ -569,6 +569,31 @@ class DocumentGenerator
                 }
             }
 
+            if ($type === 'izin') {
+                $izinDate = null;
+                if ($forceOfficial) {
+                    // Currently signing the permit (TTE)
+                    $izinDate = now();
+                } else {
+                    // Check if a successful EsignLog exists for this permit
+                    $izinTteLog = \App\Models\EsignLog::where('data_perijinan_id', $application->id)
+                        ->where('document_type', 'izin')
+                        ->where('status', 'success')
+                        ->latest()
+                        ->first();
+                    if ($izinTteLog) {
+                        $izinDate = $izinTteLog->created_at;
+                    } elseif ($application->approved_at) {
+                        $izinDate = $application->approved_at;
+                    }
+                }
+
+                if ($izinDate) {
+                    $dataReplacements['${TANGGAL}'] = self::formatDateIndonesian($izinDate);
+                    $dataReplacements['${TANGGAL_HARI_INI}'] = self::formatDateIndonesian($izinDate);
+                }
+            }
+
             $finalReplacements = array_merge($baseReplacements, $applicantReplacements, $boReplacements, $dataReplacements);
             
             $filename = $config['filename'];

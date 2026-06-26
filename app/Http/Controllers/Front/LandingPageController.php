@@ -170,7 +170,18 @@ class LandingPageController extends Controller
                 $tanggalTerbit = $rekomTteLog->created_at;
             }
         } else {
-            $tanggalTerbit = $perizinan->approved_at;
+            // Find the successful EsignLog for this license (izin)
+            $izinTteLog = \App\Models\EsignLog::where('data_perijinan_id', $perizinan->id)
+                ->where('document_type', 'izin')
+                ->where('status', 'success')
+                ->latest()
+                ->first();
+
+            if ($izinTteLog) {
+                $tanggalTerbit = $izinTteLog->created_at;
+            } else {
+                $tanggalTerbit = $perizinan->approved_at;
+            }
         }
 
         return view('front.scan-result', compact('perizinan', 'documentType', 'documentStatus', 'type', 'opdId', 'tanggalTerbit'));
