@@ -259,7 +259,13 @@ class DocumentGenerator
                         }
                     }
                 } else {
-                    if ($field && $field->type === 'date' && !empty($value)) {
+                    if ($field && $field->type === 'table' && is_array($value)) {
+                        $valStr = self::renderTableFieldForDocument($field, $value);
+                        $boReplacements['_WORD_TABLE_${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = self::renderTableFieldForWord($field, $value);
+                        if ($field) {
+                            $boReplacements['_WORD_TABLE_${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = self::renderTableFieldForWord($field, $value);
+                        }
+                    } elseif ($field && $field->type === 'date' && !empty($value)) {
                         $valStr = self::formatDateIndonesian($value);
                     } else {
                         $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
@@ -397,7 +403,13 @@ class DocumentGenerator
                         }
                     }
                 } else {
-                    if (($key === 'masa_aktif_rekom' || ($field && $field->type === 'date')) && !empty($value)) {
+                    if ($field && $field->type === 'table' && is_array($value)) {
+                        $valStr = self::renderTableFieldForDocument($field, $value);
+                        $rekomReplacements['_WORD_TABLE_${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = self::renderTableFieldForWord($field, $value);
+                        if ($field) {
+                            $rekomReplacements['_WORD_TABLE_${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = self::renderTableFieldForWord($field, $value);
+                        }
+                    } elseif (($key === 'masa_aktif_rekom' || ($field && $field->type === 'date')) && !empty($value)) {
                         $valStr = self::formatDateIndonesian($value);
                     } else {
                         $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
@@ -555,7 +567,13 @@ class DocumentGenerator
                                 }
                             }
                         } else {
-                            if ($field && $field->type === 'date' && !empty($value)) {
+                            if ($field && $field->type === 'table' && is_array($value)) {
+                                $valStr = self::renderTableFieldForDocument($field, $value);
+                                $dataReplacements['_WORD_TABLE_${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = self::renderTableFieldForWord($field, $value);
+                                if ($field) {
+                                    $dataReplacements['_WORD_TABLE_${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = self::renderTableFieldForWord($field, $value);
+                                }
+                            } elseif ($field && $field->type === 'date' && !empty($value)) {
                                 $valStr = self::formatDateIndonesian($value);
                             } else {
                                 $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
@@ -659,9 +677,25 @@ class DocumentGenerator
         $template = str_replace(['[x]', '[v]', '[V]', '✓'], $checkmarkHtml, $template);
         $template = str_replace('<!-- pagebreak -->', '<div class="page-break"></div>', $template);
 
+        $filteredReplacements = [];
+        foreach ($replacements as $key => $value) {
+            if (str_starts_with($key, '_WORD_TABLE_')) {
+                continue;
+            }
+            if (is_array($value)) {
+                $filteredReplacements[$key] = implode(', ', $value);
+            } elseif (is_object($value)) {
+                if (method_exists($value, '__toString')) {
+                    $filteredReplacements[$key] = (string)$value;
+                }
+            } else {
+                $filteredReplacements[$key] = (string)$value;
+            }
+        }
+
         $htmlContent = str_replace(
-            array_keys($replacements),
-            array_values($replacements),
+            array_keys($filteredReplacements),
+            array_values($filteredReplacements),
             $template
         );
 
@@ -718,11 +752,46 @@ class DocumentGenerator
         try {
             $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($realTemplatePath);
 
-            // Replace Data Teks (Supports both [VAR] and ${VAR} formats)
+            // 1. First process complex blocks like Tables
             foreach ($replacements as $key => $value) {
+                if (str_starts_with($key, '_WORD_TABLE_')) {
+                    $originalPlaceholder = substr($key, strlen('_WORD_TABLE_'));
+                    $cleanKey = str_replace(['[', ']', '${', '}'], '', $originalPlaceholder);
+                    
+                    if ($value instanceof \PhpOffice\PhpWord\Element\Table) {
+                        // Pass 1: Replace [VAR]
+                        try {
+                            $templateProcessor->setMacroChars('[', ']');
+                            $templateProcessor->setComplexBlock($cleanKey, $value);
+                        } catch (\Exception $e) {
+                            \Log::error("Failed to set complex block [{$cleanKey}]: " . $e->getMessage());
+                        }
+                        
+                        // Pass 2: Replace ${VAR}
+                        try {
+                            $templateProcessor->setMacroChars('${', '}');
+                            $templateProcessor->setComplexBlock($cleanKey, $value);
+                        } catch (\Exception $e) {
+                            \Log::error("Failed to set complex block \${{$cleanKey}}: " . $e->getMessage());
+                        }
+                    }
+                }
+            }
+
+            // 2. Replace Data Teks (Supports both [VAR] and ${VAR} formats)
+            foreach ($replacements as $key => $value) {
+                if (str_starts_with($key, '_WORD_TABLE_')) {
+                    continue;
+                }
+                
                 $cleanKey = str_replace(['[', ']', '${', '}'], '', $key);
-                // Bypass if value is HTML (like img tag)
-                if (is_string($value) && !str_contains($value, '<img')) {
+                
+                // Bypass if value is HTML (like img tag or table tag)
+                if (is_string($value)) {
+                    if (str_contains($value, '<img') || str_contains($value, '<table') || str_contains($value, '<tr') || str_contains($value, '<td')) {
+                        continue;
+                    }
+                    
                     $val = htmlspecialchars(strip_tags($value));
                     
                     // Pass 1: Replace [VAR]
@@ -870,6 +939,277 @@ class DocumentGenerator
             \Log::error("Error Generate Word: " . $e->getMessage());
             return null;
         }
+    }
+
+    /**
+     * Render a table-type form field as an HTML table string for document embedding.
+     *
+     * @param \App\Models\PerijinanFormField $field
+     * @param array $values  The saved key=>value pairs for this field
+     * @return string  HTML table string
+     */
+    private static function renderTableFieldForDocument($field, array $values): string
+    {
+        $rawTableData = $field->options['table_data'] ?? null;
+        // options is cast to array; table_data may be stored as a JSON string
+        if (is_string($rawTableData)) {
+            $tableData = json_decode($rawTableData, true);
+        } else {
+            $tableData = $rawTableData;
+        }
+        if (empty($tableData['rows'])) {
+            return implode(', ', array_values($values));
+        }
+
+        $rows = $tableData['rows'];
+        $html  = '<table style="width:100%;border-collapse:collapse;font-size:10pt;border:1px solid #000;margin-top:10px;margin-bottom:10px;">';
+        foreach ($rows as $row) {
+            $html .= '<tr>';
+            foreach ($row as $cell) {
+                $colspan   = $cell['colspan'] ?? 1;
+                $rowspan   = $cell['rowspan'] ?? 1;
+                $isInput   = $cell['is_input'] ?? false;
+                $inputName = $cell['input_name'] ?? '';
+                $content   = $cell['content'] ?? '';
+                $fmt       = $cell['fmt'] ?? [];
+
+                // Build inline styles
+                $styles = ['border: 1px solid #000', 'padding: 6px 8px'];
+                
+                if (!empty($fmt['width'])) {
+                    $styles[] = 'width: ' . $fmt['width'] . '%';
+                }
+                if (!empty($fmt['bgColor']) && $fmt['bgColor'] !== '#ffffff') {
+                    $styles[] = 'background-color: ' . $fmt['bgColor'];
+                } elseif (!$isInput && empty($fmt['bgColor'])) {
+                    $styles[] = 'background-color: #f0f0f0'; // default header bg
+                }
+                
+                if (!empty($fmt['color']) && $fmt['color'] !== '#000000') {
+                    $styles[] = 'color: ' . $fmt['color'];
+                }
+                if (!empty($fmt['fontSize'])) {
+                    $styles[] = 'font-size: ' . $fmt['fontSize'];
+                }
+                if (!empty($fmt['bold'])) {
+                    $styles[] = 'font-weight: bold';
+                } elseif (!$isInput) {
+                    $styles[] = 'font-weight: bold'; // default header weight
+                }
+                if (!empty($fmt['italic'])) {
+                    $styles[] = 'font-style: italic';
+                }
+                if (!empty($fmt['underline'])) {
+                    $styles[] = 'text-decoration: underline';
+                }
+                $align = $fmt['align'] ?? ($isInput ? 'left' : 'center');
+                $styles[] = 'text-align: ' . $align;
+
+                $styleAttr = 'style="' . implode(';', $styles) . '"';
+                $colspanAttr = $colspan > 1 ? ' colspan="' . $colspan . '"' : '';
+                $rowspanAttr = $rowspan > 1 ? ' rowspan="' . $rowspan . '"' : '';
+
+                if ($isInput) {
+                    $cellVal = $values[$inputName] ?? '';
+                    $html .= '<td ' . $styleAttr . $colspanAttr . $rowspanAttr . '>' . htmlspecialchars($cellVal) . '</td>';
+                } else {
+                    $html .= '<th ' . $styleAttr . $colspanAttr . $rowspanAttr . '>' . htmlspecialchars($content) . '</th>';
+                }
+            }
+            $html .= '</tr>';
+        }
+        $html .= '</table>';
+
+        return $html;
+    }
+
+    /**
+     * Render a table-type form field as a PhpWord Table element for Word document embedding.
+     *
+     * @param \App\Models\PerijinanFormField $field
+     * @param array $values  The saved key=>value pairs for this field
+     * @return \PhpOffice\PhpWord\Element\Table
+     */
+    private static function renderTableFieldForWord($field, array $values): \PhpOffice\PhpWord\Element\Table
+    {
+        $rawTableData = $field->options['table_data'] ?? null;
+        if (is_string($rawTableData)) {
+            $tableData = json_decode($rawTableData, true);
+        } else {
+            $tableData = $rawTableData;
+        }
+
+        $tableStyle = [
+            'borderSize'  => 6,
+            'borderColor' => '000000',
+            'cellMargin'  => 100,
+            'alignment'   => \PhpOffice\PhpWord\SimpleType\JcTable::CENTER,
+        ];
+        $table = new \PhpOffice\PhpWord\Element\Table($tableStyle);
+
+        if (empty($tableData['rows'])) {
+            $table->addRow();
+            $table->addCell(9000)->addText(implode(', ', array_values($values)));
+            return $table;
+        }
+
+        $rows = $tableData['rows'];
+        $numRows = count($rows);
+
+        // Track grid occupancy for rowspan (vMerge)
+        $gridOccupied = [];
+        $vMergeContinue = [];
+        $cellAtGrid = [];
+
+        $maxCols = 0;
+        
+        // Grid mapping phase
+        for ($r = 0; $r < $numRows; $r++) {
+            $c = 0;
+            foreach ($rows[$r] as $cellIndex => $cell) {
+                while (isset($gridOccupied[$r][$c]) && $gridOccupied[$r][$c]) {
+                    $c++;
+                }
+
+                $colspan = $cell['colspan'] ?? 1;
+                $rowspan = $cell['rowspan'] ?? 1;
+
+                $cellAtGrid[$r][$c] = [
+                    'cell' => $cell,
+                    'colspan' => $colspan,
+                    'rowspan' => $rowspan
+                ];
+
+                for ($dr = 0; $dr < $rowspan; $dr++) {
+                    for ($dc = 0; $dc < $colspan; $dc++) {
+                        $gridOccupied[$r + $dr][$c + $dc] = true;
+                        if ($dr > 0) {
+                            $vMergeContinue[$r + $dr][$c + $dc] = [
+                                'parent_c' => $c,
+                                'colspan' => $colspan
+                            ];
+                        }
+                    }
+                }
+
+                $c += $colspan;
+                if ($c > $maxCols) {
+                    $maxCols = $c;
+                }
+            }
+        }
+
+        // Render phase
+        for ($r = 0; $r < $numRows; $r++) {
+            $table->addRow();
+            $c = 0;
+            while ($c < $maxCols) {
+                if (isset($cellAtGrid[$r][$c])) {
+                    $cellData = $cellAtGrid[$r][$c];
+                    $cell = $cellData['cell'];
+                    $colspan = $cellData['colspan'];
+                    $rowspan = $cellData['rowspan'];
+                    $isInput = $cell['is_input'] ?? false;
+                    $inputName = $cell['input_name'] ?? '';
+                    $content = $cell['content'] ?? '';
+                    $fmt = $cell['fmt'] ?? [];
+
+                    $cellStyle = [
+                        'valign' => 'center',
+                        'borderTopSize' => 6, 'borderTopColor' => '000000',
+                        'borderBottomSize' => 6, 'borderBottomColor' => '000000',
+                        'borderLeftSize' => 6, 'borderLeftColor' => '000000',
+                        'borderRightSize' => 6, 'borderRightColor' => '000000',
+                    ];
+
+                    if ($colspan > 1) {
+                        $cellStyle['gridSpan'] = $colspan;
+                    }
+                    if ($rowspan > 1) {
+                        $cellStyle['vMerge'] = 'restart';
+                    }
+
+                    if (!empty($fmt['bgColor']) && $fmt['bgColor'] !== '#ffffff') {
+                        $cellStyle['bgColor'] = ltrim($fmt['bgColor'], '#');
+                    } elseif (!$isInput && empty($fmt['bgColor'])) {
+                        $cellStyle['bgColor'] = 'F0F0F0';
+                    }
+
+                    $colWidth = 9000 / $maxCols;
+                    $cellWidth = $colWidth * $colspan;
+
+                    $cellObj = $table->addCell($cellWidth, $cellStyle);
+
+                    $fontStyle = [
+                        'name' => 'DejaVu Sans',
+                        'size' => 10,
+                    ];
+
+                    if (!empty($fmt['color']) && $fmt['color'] !== '#000000') {
+                        $fontStyle['color'] = ltrim($fmt['color'], '#');
+                    }
+                    if (!empty($fmt['fontSize'])) {
+                        $sizeVal = intval(preg_replace('/[^0-9]/', '', $fmt['fontSize']));
+                        if ($sizeVal > 0) {
+                            $fontStyle['size'] = $sizeVal;
+                        }
+                    }
+                    if (!empty($fmt['bold']) || (!$isInput && empty($fmt['bold']))) {
+                        $fontStyle['bold'] = true;
+                    }
+                    if (!empty($fmt['italic'])) {
+                        $fontStyle['italic'] = true;
+                    }
+                    if (!empty($fmt['underline'])) {
+                        $fontStyle['underline'] = 'single';
+                    }
+
+                    $alignMap = [
+                        'left' => \PhpOffice\PhpWord\SimpleType\Jc::LEFT,
+                        'center' => \PhpOffice\PhpWord\SimpleType\Jc::CENTER,
+                        'right' => \PhpOffice\PhpWord\SimpleType\Jc::RIGHT,
+                        'justify' => \PhpOffice\PhpWord\SimpleType\Jc::JUSTIFY,
+                    ];
+                    $align = $fmt['align'] ?? ($isInput ? 'left' : 'center');
+                    $pAlign = $alignMap[$align] ?? \PhpOffice\PhpWord\SimpleType\Jc::LEFT;
+
+                    $paraStyle = [
+                        'alignment' => $pAlign,
+                        'spaceBefore' => 0,
+                        'spaceAfter' => 0,
+                    ];
+
+                    if ($isInput) {
+                        $cellVal = $values[$inputName] ?? '';
+                        $cellObj->addText($cellVal, $fontStyle, $paraStyle);
+                    } else {
+                        $cellObj->addText($content, $fontStyle, $paraStyle);
+                    }
+
+                    $c += $colspan;
+                } elseif (isset($vMergeContinue[$r][$c])) {
+                    $continueData = $vMergeContinue[$r][$c];
+                    $colspan = $continueData['colspan'];
+
+                    $cellStyle = [
+                        'vMerge' => 'continue',
+                    ];
+                    if ($colspan > 1) {
+                        $cellStyle['gridSpan'] = $colspan;
+                    }
+
+                    $colWidth = 9000 / $maxCols;
+                    $cellWidth = $colWidth * $colspan;
+
+                    $table->addCell($cellWidth, $cellStyle);
+                    $c += $colspan;
+                } else {
+                    $c++;
+                }
+            }
+        }
+
+        return $table;
     }
 
     /**

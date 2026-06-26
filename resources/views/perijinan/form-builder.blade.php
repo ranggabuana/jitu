@@ -257,6 +257,7 @@
                             <option value="file">File Upload</option>
                             <option value="pas_foto">Pas Foto (3x4)</option>
                             <option value="gambar">Gambar (Dokumentasi/Bebas)</option>
+                            <option value="table">Table (Grid/Matriks)</option>
                         </select>
                     </div>
 
@@ -327,6 +328,195 @@
                                 </button>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Table Configuration (shown when type is table) -->
+                    <div id="table_config_container" class="hidden bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 space-y-4 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center gap-2 mb-3">
+                            <div class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center">
+                                <i class="mdi mdi-table text-indigo-600 dark:text-indigo-400 text-sm"></i>
+                            </div>
+                            <h4 class="text-sm font-semibold text-gray-800 dark:text-white">Konfigurasi Desain Table</h4>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 mb-2">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Baris (Rows)</label>
+                                <input type="number" id="table_rows" value="2" min="1" max="20" class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm text-gray-950 dark:text-gray-100">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Kolom (Cols)</label>
+                                <input type="number" id="table_cols" value="3" min="1" max="10" class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm text-gray-950 dark:text-gray-100">
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button type="button" onclick="resizeTableDesigner('create')" class="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1">
+                                <i class="mdi mdi-table-check"></i> Terapkan Ukuran Grid
+                            </button>
+                            <button type="button" onclick="resetTableDesigner('create')" title="Reset ke grid kosong"
+                                class="px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-700 text-xs font-bold rounded-lg hover:bg-red-100 transition-colors flex items-center gap-1">
+                                <i class="mdi mdi-refresh"></i> Reset
+                            </button>
+                        </div>
+                        
+                        <!-- Table Preview / Selector Grid -->
+                        <div class="mt-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 p-2 overflow-x-auto">
+                            <table id="table_designer_preview_create" class="w-full border-collapse border border-gray-300 text-xs text-gray-900 dark:text-white min-w-[300px]"></table>
+                        </div>
+                        
+                        <!-- Cell Configurator Section -->
+                        <div id="cell_configurator_create" class="hidden p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h5 class="text-xs font-bold text-gray-800 dark:text-white">Edit Sel <span id="selected_cell_label_create" class="font-mono text-indigo-600 dark:text-indigo-400"></span></h5>
+                                <span id="cell_span_info_create" class="text-[10px] text-gray-400"></span>
+                            </div>
+                            <!-- Merge/Split buttons -->
+                            <div class="flex flex-wrap gap-1.5">
+                                <button type="button" onclick="mergeRight('create')" class="px-2.5 py-1.5 text-[10px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-1">
+                                    <i class="mdi mdi-table-merge-cells"></i> Gabung Kanan
+                                </button>
+                                <button type="button" onclick="mergeDown('create')" class="px-2.5 py-1.5 text-[10px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-1">
+                                    <i class="mdi mdi-table-merge-cells" style="transform:rotate(90deg);display:inline-block;"></i> Gabung Bawah
+                                </button>
+                                <button type="button" onclick="splitCell('create')" class="px-2.5 py-1.5 text-[10px] font-bold bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-700 rounded-lg hover:bg-orange-100 transition-colors flex items-center gap-1">
+                                    <i class="mdi mdi-table-split-cell"></i> Pisahkan Sel
+                                </button>
+                            </div>
+                            <!-- Insert / Delete Row & Col -->
+                            <div class="flex flex-wrap gap-1.5">
+                                <button type="button" onclick="insertRowAt('create', tableDesigners.create.selectedRow)" title="Sisipkan baris di atas sel ini"
+                                    class="px-2.5 py-1.5 text-[10px] font-bold bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors flex items-center gap-1">
+                                    <i class="mdi mdi-table-row-plus-before"></i> Sisip Baris Atas
+                                </button>
+                                <button type="button" onclick="insertRowAt('create', tableDesigners.create.selectedRow + 1)" title="Sisipkan baris di bawah sel ini"
+                                    class="px-2.5 py-1.5 text-[10px] font-bold bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors flex items-center gap-1">
+                                    <i class="mdi mdi-table-row-plus-after"></i> Sisip Baris Bawah
+                                </button>
+                                <button type="button" onclick="insertColAt('create', tableDesigners.create.selectedCol)" title="Sisipkan kolom di kiri sel ini"
+                                    class="px-2.5 py-1.5 text-[10px] font-bold bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-700 rounded-lg hover:bg-teal-100 transition-colors flex items-center gap-1">
+                                    <i class="mdi mdi-table-column-plus-before"></i> Sisip Kol Kiri
+                                </button>
+                                <button type="button" onclick="insertColAt('create', tableDesigners.create.selectedCol + 1)" title="Sisipkan kolom di kanan sel ini"
+                                    class="px-2.5 py-1.5 text-[10px] font-bold bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-700 rounded-lg hover:bg-teal-100 transition-colors flex items-center gap-1">
+                                    <i class="mdi mdi-table-column-plus-after"></i> Sisip Kol Kanan
+                                </button>
+                                <button type="button" onclick="deleteRow('create')" title="Hapus baris ini"
+                                    class="px-2.5 py-1.5 text-[10px] font-bold bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-700 rounded-lg hover:bg-red-100 transition-colors flex items-center gap-1">
+                                    <i class="mdi mdi-table-row-remove"></i> Hapus Baris
+                                </button>
+                                <button type="button" onclick="deleteCol('create')" title="Hapus kolom ini"
+                                    class="px-2.5 py-1.5 text-[10px] font-bold bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-700 rounded-lg hover:bg-red-100 transition-colors flex items-center gap-1">
+                                    <i class="mdi mdi-table-column-remove"></i> Hapus Kolom
+                                </button>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Teks Sel / Judul Kolom</label>
+                                <input type="text" id="cell_content_create" oninput="updateCellProperties('create')" class="w-full px-3 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-xs text-gray-950 dark:text-gray-100">
+                            </div>
+
+                            <!-- Text Formatting Panel -->
+                            <div class="bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 rounded-lg p-2.5 space-y-2">
+                                <p class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-1"><i class="mdi mdi-format-text"></i> Format Teks</p>
+
+                                <!-- Bold / Italic / Underline -->
+                                <div class="flex items-center gap-1.5">
+                                    <button type="button" id="cell_fmt_bold_create" onclick="toggleCellFormat('create','bold')" title="Bold"
+                                        class="fmt-btn w-7 h-7 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 transition-colors flex items-center justify-center text-xs font-black">
+                                        <i class="mdi mdi-format-bold"></i>
+                                    </button>
+                                    <button type="button" id="cell_fmt_italic_create" onclick="toggleCellFormat('create','italic')" title="Italic"
+                                        class="fmt-btn w-7 h-7 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 transition-colors flex items-center justify-center text-xs">
+                                        <i class="mdi mdi-format-italic"></i>
+                                    </button>
+                                    <button type="button" id="cell_fmt_underline_create" onclick="toggleCellFormat('create','underline')" title="Underline"
+                                        class="fmt-btn w-7 h-7 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 transition-colors flex items-center justify-center text-xs">
+                                        <i class="mdi mdi-format-underline"></i>
+                                    </button>
+                                    <div class="w-px h-5 bg-gray-200 dark:bg-gray-600 mx-0.5"></div>
+                                    <!-- Alignment -->
+                                    <button type="button" id="cell_fmt_align_left_create" onclick="setCellAlign('create','left')" title="Rata Kiri"
+                                        class="fmt-btn w-7 h-7 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 transition-colors flex items-center justify-center text-xs">
+                                        <i class="mdi mdi-format-align-left"></i>
+                                    </button>
+                                    <button type="button" id="cell_fmt_align_center_create" onclick="setCellAlign('create','center')" title="Rata Tengah"
+                                        class="fmt-btn w-7 h-7 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 transition-colors flex items-center justify-center text-xs">
+                                        <i class="mdi mdi-format-align-center"></i>
+                                    </button>
+                                    <button type="button" id="cell_fmt_align_right_create" onclick="setCellAlign('create','right')" title="Rata Kanan"
+                                        class="fmt-btn w-7 h-7 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 transition-colors flex items-center justify-center text-xs">
+                                        <i class="mdi mdi-format-align-right"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Font Size & Width -->
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-0.5">Ukuran Font</label>
+                                        <select id="cell_font_size_create" onchange="updateCellProperties('create')" class="w-full px-2 py-1 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-xs text-gray-950 dark:text-gray-100">
+                                            <option value="">Default</option>
+                                            <option value="10px">10px (Kecil)</option>
+                                            <option value="11px">11px</option>
+                                            <option value="12px">12px</option>
+                                            <option value="13px">13px</option>
+                                            <option value="14px">14px (Normal)</option>
+                                            <option value="16px">16px (Besar)</option>
+                                            <option value="18px">18px</option>
+                                            <option value="20px">20px</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-0.5">Lebar Kolom (%)</label>
+                                        <input type="number" id="cell_width_create" oninput="updateCellProperties('create')" min="5" max="100" placeholder="Auto"
+                                            class="w-full px-2 py-1 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-xs text-gray-950 dark:text-gray-100">
+                                    </div>
+                                </div>
+
+                                <!-- Colors -->
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-0.5">Warna Teks</label>
+                                        <div class="flex items-center gap-1.5">
+                                            <input type="color" id="cell_text_color_create" oninput="updateCellProperties('create')" value="#000000"
+                                                class="w-7 h-7 rounded border border-gray-200 dark:border-gray-600 cursor-pointer p-0">
+                                            <button type="button" onclick="resetCellColor('create','text')" class="text-[10px] text-gray-400 hover:text-red-500 transition-colors" title="Reset">
+                                                <i class="mdi mdi-close-circle"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-0.5">Warna Latar</label>
+                                        <div class="flex items-center gap-1.5">
+                                            <input type="color" id="cell_bg_color_create" oninput="updateCellProperties('create')" value="#ffffff"
+                                                class="w-7 h-7 rounded border border-gray-200 dark:border-gray-600 cursor-pointer p-0">
+                                            <button type="button" onclick="resetCellColor('create','bg')" class="text-[10px] text-gray-400 hover:text-red-500 transition-colors" title="Reset">
+                                                <i class="mdi mdi-close-circle"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- End Text Formatting Panel -->
+
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" id="cell_is_input_create" onchange="updateCellProperties('create')" class="w-3.5 h-3.5 text-indigo-600 rounded">
+                                <label for="cell_is_input_create" class="text-xs font-semibold text-gray-700 dark:text-gray-300">Merupakan Field Isian</label>
+                            </div>
+                            <div id="cell_input_options_create" class="hidden grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Tipe Isian</label>
+                                    <select id="cell_input_type_create" onchange="updateCellProperties('create')" class="w-full px-2 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-xs text-gray-950 dark:text-gray-100">
+                                        <option value="text">Text</option>
+                                        <option value="number">Number</option>
+                                        <option value="date">Date</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Key Isian (Unique)</label>
+                                    <input type="text" id="cell_input_name_create" oninput="updateCellProperties('create')" class="w-full px-2 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-xs text-gray-950 dark:text-gray-100" placeholder="spesifikasi_1">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <input type="hidden" name="options[table_data]" id="table_data_json_create">
                     </div>
 
                     <div>
@@ -967,6 +1157,7 @@
                         <option value="file">File Upload</option>
                         <option value="pas_foto">Pas Foto (3x4)</option>
                         <option value="gambar">Gambar (Dokumentasi/Bebas)</option>
+                        <option value="table">Table (Grid/Matriks)</option>
                     </select>
                 </div>
 
@@ -981,6 +1172,196 @@
                         <i class="mdi mdi-plus"></i> Tambah Opsi
                     </button>
                 </div>
+
+                <!-- Table Configuration (shown when type is table) for Edit -->
+                <div id="edit_table_config_container" class="hidden bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 space-y-4 border border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center">
+                            <i class="mdi mdi-table text-indigo-600 dark:text-indigo-400 text-sm"></i>
+                        </div>
+                        <h4 class="text-sm font-semibold text-gray-800 dark:text-white">Konfigurasi Desain Table (Edit)</h4>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 mb-2">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Baris (Rows)</label>
+                            <input type="number" id="edit_table_rows" value="2" min="1" max="20" class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm text-gray-950 dark:text-gray-100">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Kolom (Cols)</label>
+                            <input type="number" id="edit_table_cols" value="3" min="1" max="10" class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm text-gray-950 dark:text-gray-100">
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="resizeTableDesigner('edit')" class="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1">
+                            <i class="mdi mdi-table-check"></i> Terapkan Ukuran Grid
+                        </button>
+                        <button type="button" onclick="resetTableDesigner('edit')" title="Reset ke grid kosong"
+                            class="px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-700 text-xs font-bold rounded-lg hover:bg-red-100 transition-colors flex items-center gap-1">
+                            <i class="mdi mdi-refresh"></i> Reset
+                        </button>
+                    </div>
+                    
+                    <!-- Table Preview / Selector Grid -->
+                    <div class="mt-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 p-2 overflow-x-auto">
+                        <table id="edit_table_designer_preview_edit" class="w-full border-collapse border border-gray-300 text-xs text-gray-900 dark:text-white min-w-[300px]"></table>
+                    </div>
+                    
+                    <!-- Cell Configurator Section -->
+                    <div id="cell_configurator_edit" class="hidden p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h5 class="text-xs font-bold text-gray-800 dark:text-white">Edit Sel <span id="selected_cell_label_edit" class="font-mono text-indigo-600 dark:text-indigo-400"></span></h5>
+                            <span id="cell_span_info_edit" class="text-[10px] text-gray-400"></span>
+                        </div>
+                        <!-- Merge/Split buttons -->
+                        <div class="flex flex-wrap gap-1.5">
+                            <button type="button" onclick="mergeRight('edit')" class="px-2.5 py-1.5 text-[10px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-1">
+                                <i class="mdi mdi-table-merge-cells"></i> Gabung Kanan
+                            </button>
+                            <button type="button" onclick="mergeDown('edit')" class="px-2.5 py-1.5 text-[10px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-1">
+                                <i class="mdi mdi-table-merge-cells" style="transform:rotate(90deg);display:inline-block;"></i> Gabung Bawah
+                            </button>
+                            <button type="button" onclick="splitCell('edit')" class="px-2.5 py-1.5 text-[10px] font-bold bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-700 rounded-lg hover:bg-orange-100 transition-colors flex items-center gap-1">
+                                <i class="mdi mdi-table-split-cell"></i> Pisahkan Sel
+                            </button>
+                        </div>
+                        <!-- Insert / Delete Row & Col -->
+                        <div class="flex flex-wrap gap-1.5">
+                            <button type="button" onclick="insertRowAt('edit', tableDesigners.edit.selectedRow)" title="Sisipkan baris di atas sel ini"
+                                class="px-2.5 py-1.5 text-[10px] font-bold bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors flex items-center gap-1">
+                                <i class="mdi mdi-table-row-plus-before"></i> Sisip Baris Atas
+                            </button>
+                            <button type="button" onclick="insertRowAt('edit', tableDesigners.edit.selectedRow + 1)" title="Sisipkan baris di bawah sel ini"
+                                class="px-2.5 py-1.5 text-[10px] font-bold bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors flex items-center gap-1">
+                                <i class="mdi mdi-table-row-plus-after"></i> Sisip Baris Bawah
+                            </button>
+                            <button type="button" onclick="insertColAt('edit', tableDesigners.edit.selectedCol)" title="Sisipkan kolom di kiri sel ini"
+                                class="px-2.5 py-1.5 text-[10px] font-bold bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-700 rounded-lg hover:bg-teal-100 transition-colors flex items-center gap-1">
+                                <i class="mdi mdi-table-column-plus-before"></i> Sisip Kol Kiri
+                            </button>
+                            <button type="button" onclick="insertColAt('edit', tableDesigners.edit.selectedCol + 1)" title="Sisipkan kolom di kanan sel ini"
+                                class="px-2.5 py-1.5 text-[10px] font-bold bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-700 rounded-lg hover:bg-teal-100 transition-colors flex items-center gap-1">
+                                <i class="mdi mdi-table-column-plus-after"></i> Sisip Kol Kanan
+                            </button>
+                            <button type="button" onclick="deleteRow('edit')" title="Hapus baris ini"
+                                class="px-2.5 py-1.5 text-[10px] font-bold bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-700 rounded-lg hover:bg-red-100 transition-colors flex items-center gap-1">
+                                <i class="mdi mdi-table-row-remove"></i> Hapus Baris
+                            </button>
+                            <button type="button" onclick="deleteCol('edit')" title="Hapus kolom ini"
+                                class="px-2.5 py-1.5 text-[10px] font-bold bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-700 rounded-lg hover:bg-red-100 transition-colors flex items-center gap-1">
+                                <i class="mdi mdi-table-column-remove"></i> Hapus Kolom
+                            </button>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Teks Sel / Judul Kolom</label>
+                            <input type="text" id="cell_content_edit" oninput="updateCellProperties('edit')" class="w-full px-3 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-xs text-gray-950 dark:text-gray-100">
+                        </div>
+
+                        <!-- Text Formatting Panel -->
+                        <div class="bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 rounded-lg p-2.5 space-y-2">
+                            <p class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-1"><i class="mdi mdi-format-text"></i> Format Teks</p>
+
+                            <!-- Bold / Italic / Underline -->
+                            <div class="flex items-center gap-1.5">
+                                <button type="button" id="cell_fmt_bold_edit" onclick="toggleCellFormat('edit','bold')" title="Bold"
+                                    class="fmt-btn w-7 h-7 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 transition-colors flex items-center justify-center text-xs font-black">
+                                    <i class="mdi mdi-format-bold"></i>
+                                </button>
+                                <button type="button" id="cell_fmt_italic_edit" onclick="toggleCellFormat('edit','italic')" title="Italic"
+                                    class="fmt-btn w-7 h-7 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 transition-colors flex items-center justify-center text-xs">
+                                    <i class="mdi mdi-format-italic"></i>
+                                </button>
+                                <button type="button" id="cell_fmt_underline_edit" onclick="toggleCellFormat('edit','underline')" title="Underline"
+                                    class="fmt-btn w-7 h-7 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 transition-colors flex items-center justify-center text-xs">
+                                    <i class="mdi mdi-format-underline"></i>
+                                </button>
+                                <div class="w-px h-5 bg-gray-200 dark:bg-gray-600 mx-0.5"></div>
+                                <!-- Alignment -->
+                                <button type="button" id="cell_fmt_align_left_edit" onclick="setCellAlign('edit','left')" title="Rata Kiri"
+                                    class="fmt-btn w-7 h-7 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 transition-colors flex items-center justify-center text-xs">
+                                    <i class="mdi mdi-format-align-left"></i>
+                                </button>
+                                <button type="button" id="cell_fmt_align_center_edit" onclick="setCellAlign('edit','center')" title="Rata Tengah"
+                                    class="fmt-btn w-7 h-7 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 transition-colors flex items-center justify-center text-xs">
+                                    <i class="mdi mdi-format-align-center"></i>
+                                </button>
+                                <button type="button" id="cell_fmt_align_right_edit" onclick="setCellAlign('edit','right')" title="Rata Kanan"
+                                    class="fmt-btn w-7 h-7 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 transition-colors flex items-center justify-center text-xs">
+                                    <i class="mdi mdi-format-align-right"></i>
+                                </button>
+                            </div>
+
+                            <!-- Font Size & Width -->
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-0.5">Ukuran Font</label>
+                                    <select id="cell_font_size_edit" onchange="updateCellProperties('edit')" class="w-full px-2 py-1 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-xs text-gray-950 dark:text-gray-100">
+                                        <option value="">Default</option>
+                                        <option value="10px">10px (Kecil)</option>
+                                        <option value="11px">11px</option>
+                                        <option value="12px">12px</option>
+                                        <option value="13px">13px</option>
+                                        <option value="14px">14px (Normal)</option>
+                                        <option value="16px">16px (Besar)</option>
+                                        <option value="18px">18px</option>
+                                        <option value="20px">20px</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-0.5">Lebar Kolom (%)</label>
+                                    <input type="number" id="cell_width_edit" oninput="updateCellProperties('edit')" min="5" max="100" placeholder="Auto"
+                                        class="w-full px-2 py-1 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-xs text-gray-950 dark:text-gray-100">
+                                </div>
+                            </div>
+
+                            <!-- Colors -->
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-0.5">Warna Teks</label>
+                                    <div class="flex items-center gap-1.5">
+                                        <input type="color" id="cell_text_color_edit" oninput="updateCellProperties('edit')" value="#000000"
+                                            class="w-7 h-7 rounded border border-gray-200 dark:border-gray-600 cursor-pointer p-0">
+                                        <button type="button" onclick="resetCellColor('edit','text')" class="text-[10px] text-gray-400 hover:text-red-500 transition-colors" title="Reset">
+                                            <i class="mdi mdi-close-circle"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-0.5">Warna Latar</label>
+                                    <div class="flex items-center gap-1.5">
+                                        <input type="color" id="cell_bg_color_edit" oninput="updateCellProperties('edit')" value="#ffffff"
+                                            class="w-7 h-7 rounded border border-gray-200 dark:border-gray-600 cursor-pointer p-0">
+                                        <button type="button" onclick="resetCellColor('edit','bg')" class="text-[10px] text-gray-400 hover:text-red-500 transition-colors" title="Reset">
+                                            <i class="mdi mdi-close-circle"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- End Text Formatting Panel -->
+
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="cell_is_input_edit" onchange="updateCellProperties('edit')" class="w-3.5 h-3.5 text-indigo-600 rounded">
+                            <label for="cell_is_input_edit" class="text-xs font-semibold text-gray-700 dark:text-gray-300">Merupakan Field Isian</label>
+                        </div>
+                        <div id="cell_input_options_edit" class="hidden grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Tipe Isian</label>
+                                <select id="cell_input_type_edit" onchange="updateCellProperties('edit')" class="w-full px-2 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-xs text-gray-950 dark:text-gray-100">
+                                    <option value="text">Text</option>
+                                    <option value="number">Number</option>
+                                    <option value="date">Date</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Key Isian (Unique)</label>
+                                <input type="text" id="cell_input_name_edit" oninput="updateCellProperties('edit')" class="w-full px-2 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-xs text-gray-950 dark:text-gray-100" placeholder="spesifikasi_1">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" name="options[table_data]" id="edit_table_data_json_edit">
+                </div>
+
 
                 <!-- File Configuration (shown when type is file) -->
                 <div id="edit_file_config_container" class="hidden bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 space-y-4 border border-gray-200 dark:border-gray-700">
@@ -1110,16 +1491,26 @@
             }
         }
 
+        let tableDesignerInitialized = false;
+
         // Toggle options and file config based on field type
         function toggleOptions() {
             const type = document.getElementById('type').value;
             const optionsContainer = document.getElementById('options_container');
             const fileConfigContainer = document.getElementById('file_config_container');
+            const tableConfigContainer = document.getElementById('table_config_container');
             const needsOptions = ['select', 'radio', 'checkbox'].includes(type);
             const needsFileConfig = type === 'file' || type === 'pas_foto' || type === 'gambar';
+            const needsTableConfig = type === 'table';
             
             optionsContainer.classList.toggle('hidden', !needsOptions);
             fileConfigContainer.classList.toggle('hidden', !needsFileConfig);
+            tableConfigContainer.classList.toggle('hidden', !needsTableConfig);
+            
+            if (needsTableConfig && !tableDesignerInitialized) {
+                initTableDesigner('create');
+                tableDesignerInitialized = true;
+            }
         }
 
         // Set preset file types
@@ -1136,11 +1527,14 @@
             const type = document.getElementById('edit_type').value;
             const optionsContainer = document.getElementById('edit_options_container');
             const editFileConfigContainer = document.getElementById('edit_file_config_container');
+            const editTableConfigContainer = document.getElementById('edit_table_config_container');
             const needsOptions = ['select', 'radio', 'checkbox'].includes(type);
             const needsFileConfig = type === 'file' || type === 'pas_foto' || type === 'gambar';
+            const needsTableConfig = type === 'table';
             
             optionsContainer.classList.toggle('hidden', !needsOptions);
             editFileConfigContainer.classList.toggle('hidden', !needsFileConfig);
+            editTableConfigContainer.classList.toggle('hidden', !needsTableConfig);
         }
 
         // Add new option input
@@ -1198,7 +1592,7 @@
             // Setup options
             const optionsList = document.getElementById('edit_options_list');
             optionsList.innerHTML = '';
-            if (field.options && Array.isArray(field.options)) {
+            if (field.options && Array.isArray(field.options) && field.type !== 'table') {
                 field.options.forEach((opt, index) => {
                     addEditOption(opt);
                 });
@@ -1206,9 +1600,686 @@
                 addEditOption();
             }
 
+            // Setup table config if type is table
+            if (field.type === 'table') {
+                let tableData = (field.options && field.options.table_data) ? field.options.table_data : null;
+                // table_data may be stored as a nested JSON string — parse it if needed
+                if (tableData && typeof tableData === 'string') {
+                    try { tableData = JSON.parse(tableData); } catch(e) { tableData = null; }
+                }
+                initTableDesigner('edit', tableData);
+            }
+
             toggleEditOptions();
             document.getElementById('editModal').classList.remove('hidden');
         }
+
+        // ====================================================================
+        // TABLE GRID DESIGNER — proper merge/split engine
+        // ====================================================================
+        // Internal representation: a flat 2D array [numRows][numCols].
+        // Each cell: { content, is_input, input_type, input_name, colspan, rowspan, skipped }
+        // "skipped" = true means this slot is absorbed by a merged parent; we don't render it.
+        // ====================================================================
+        let tableDesigners = {
+            create: { numRows: 2, numCols: 3, grid: [], selectedRow: -1, selectedCol: -1 },
+            edit:   { numRows: 2, numCols: 3, grid: [], selectedRow: -1, selectedCol: -1 }
+        };
+
+        // ── helpers ──────────────────────────────────────────────────────────
+        function makeCell(r, c) {
+            return { content: `Kolom ${c+1}`, is_input: false, input_type: 'text',
+                     input_name: `cell_${r}_${c}`, colspan: 1, rowspan: 1, skipped: false, fmt: {} };
+        }
+
+        // Build a fresh grid, carrying over existing cell data where possible.
+        function buildGrid(mode, numRows, numCols, oldGrid) {
+            const g = [];
+            for (let r = 0; r < numRows; r++) {
+                g.push([]);
+                for (let c = 0; c < numCols; c++) {
+                    const existing = oldGrid && oldGrid[r] && oldGrid[r][c];
+                    if (existing) {
+                        // Clip spans so they don't exceed new dimensions
+                        const cs = Math.min(existing.colspan || 1, numCols - c);
+                        const rs = Math.min(existing.rowspan || 1, numRows - r);
+                        g[r].push(Object.assign({}, existing, { colspan: cs, rowspan: rs }));
+                    } else {
+                        g[r].push(makeCell(r, c));
+                    }
+                }
+            }
+            // Recompute skipped flags
+            recomputeSkipped(g, numRows, numCols);
+            return g;
+        }
+
+        // Mark cells covered by spans as skipped.
+        function recomputeSkipped(g, numRows, numCols) {
+            // First clear all
+            for (let r = 0; r < numRows; r++)
+                for (let c = 0; c < numCols; c++)
+                    if (g[r] && g[r][c]) g[r][c].skipped = false;
+            // Then mark cells dominated by a span
+            for (let r = 0; r < numRows; r++) {
+                for (let c = 0; c < numCols; c++) {
+                    const cell = g[r] && g[r][c];
+                    if (!cell || cell.skipped) continue;
+                    const cs = cell.colspan || 1;
+                    const rs = cell.rowspan || 1;
+                    if (cs > 1 || rs > 1) {
+                        for (let dr = 0; dr < rs; dr++) {
+                            for (let dc = 0; dc < cs; dc++) {
+                                if (dr === 0 && dc === 0) continue;
+                                if (g[r+dr] && g[r+dr][c+dc]) {
+                                    g[r+dr][c+dc].skipped = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Convert sparse grid (with skipped cells) into the rows array format
+        // that the backend expects: only non-skipped cells per row.
+        function gridToRows(g, numRows) {
+            const rows = [];
+            for (let r = 0; r < numRows; r++) {
+                const row = [];
+                for (let c = 0; c < (g[r] || []).length; c++) {
+                    const cell = g[r][c];
+                    if (!cell.skipped) {
+                        row.push({
+                            content:    cell.content,
+                            is_input:   cell.is_input,
+                            input_type: cell.input_type,
+                            input_name: cell.input_name,
+                            colspan:    cell.colspan,
+                            rowspan:    cell.rowspan,
+                            fmt:        cell.fmt || {}
+                        });
+                    }
+                }
+                rows.push(row);
+            }
+            return rows;
+        }
+
+        // Rebuild flat grid from the saved rows format (which has no skipped cells).
+        function rowsToGrid(rows) {
+            const numRows = rows.length;
+            const numCols = rows.reduce((mx, row) => {
+                const w = row.reduce((s, c) => s + (c.colspan || 1), 0);
+                return Math.max(mx, w);
+            }, 0);
+            const g = [];
+            for (let r = 0; r < numRows; r++) {
+                g.push(new Array(numCols).fill(null).map((_, c) => makeCell(r, c)));
+            }
+            // Fill in cells from saved rows
+            for (let r = 0; r < numRows; r++) {
+                let col = 0;
+                for (const cell of rows[r]) {
+                    // Skip already-skipped slots
+                    while (col < numCols && g[r][col] && g[r][col].skipped) col++;
+                    if (col >= numCols) break;
+                    Object.assign(g[r][col], cell, { skipped: false });
+                    col += (cell.colspan || 1);
+                }
+            }
+            recomputeSkipped(g, numRows, numCols);
+            return { grid: g, numRows, numCols };
+        }
+
+        // ── init (used when first loading saved data) ────────────────────────
+        function initTableDesigner(mode, loadedData = null) {
+            const d = tableDesigners[mode];
+            const rowsInput = document.getElementById(mode === 'create' ? 'table_rows' : 'edit_table_rows');
+            const colsInput = document.getElementById(mode === 'create' ? 'table_cols' : 'edit_table_cols');
+
+            d.selectedRow = -1;
+            d.selectedCol = -1;
+            document.getElementById(`cell_configurator_${mode}`).classList.add('hidden');
+
+            if (loadedData && loadedData.rows && loadedData.rows.length) {
+                const r = rowsToGrid(loadedData.rows);
+                d.grid    = r.grid;
+                d.numRows = r.numRows;
+                d.numCols = r.numCols;
+                rowsInput.value = d.numRows;
+                colsInput.value = d.numCols;
+            } else {
+                d.numRows = parseInt(rowsInput.value) || 2;
+                d.numCols = parseInt(colsInput.value) || 3;
+                // If grid already exists (e.g. toggling tab), preserve it; otherwise build fresh
+                if (d.grid && d.grid.length > 0) {
+                    d.grid = buildGrid(mode, d.numRows, d.numCols, d.grid);
+                } else {
+                    d.grid = buildGrid(mode, d.numRows, d.numCols, null);
+                }
+            }
+
+            renderPreviewGrid(mode);
+            serializeTableDesign(mode);
+        }
+
+        // ── resize (add/remove rows or cols while keeping existing design) ────
+        function resizeTableDesigner(mode) {
+            const d = tableDesigners[mode];
+            const rowsInput = document.getElementById(mode === 'create' ? 'table_rows' : 'edit_table_rows');
+            const colsInput = document.getElementById(mode === 'create' ? 'table_cols' : 'edit_table_cols');
+
+            const newRows = parseInt(rowsInput.value) || 2;
+            const newCols = parseInt(colsInput.value) || 3;
+
+            // Clamp selected cell if it falls outside new bounds
+            if (d.selectedRow >= newRows || d.selectedCol >= newCols) {
+                d.selectedRow = -1;
+                d.selectedCol = -1;
+                document.getElementById(`cell_configurator_${mode}`).classList.add('hidden');
+            }
+
+            // Build new grid carrying over all existing cell data
+            const oldGrid = (d.grid && d.grid.length > 0) ? d.grid : null;
+            d.numRows = newRows;
+            d.numCols = newCols;
+            d.grid = buildGrid(mode, newRows, newCols, oldGrid);
+
+            renderPreviewGrid(mode);
+            serializeTableDesign(mode);
+        }
+
+        // ── reset (wipe grid and start fresh from current row/col inputs) ────
+        function resetTableDesigner(mode) {
+            if (!confirm('Reset grid? Semua desain yang sudah dibuat akan dihapus.')) return;
+            const d = tableDesigners[mode];
+            const rowsInput = document.getElementById(mode === 'create' ? 'table_rows' : 'edit_table_rows');
+            const colsInput = document.getElementById(mode === 'create' ? 'table_cols' : 'edit_table_cols');
+
+            d.selectedRow = -1;
+            d.selectedCol = -1;
+            document.getElementById(`cell_configurator_${mode}`).classList.add('hidden');
+
+            d.numRows = parseInt(rowsInput.value) || 2;
+            d.numCols = parseInt(colsInput.value) || 3;
+            d.grid = buildGrid(mode, d.numRows, d.numCols, null);
+
+            renderPreviewGrid(mode);
+            serializeTableDesign(mode);
+        }
+
+        // ── render ────────────────────────────────────────────────────────────
+        function renderPreviewGrid(mode) {
+            const d = tableDesigners[mode];
+            const tableEl = document.getElementById(
+                mode === 'create' ? 'table_designer_preview_create' : 'edit_table_designer_preview_edit'
+            );
+            if (!tableEl) return;
+            tableEl.innerHTML = '';
+
+            for (let r = 0; r < d.numRows; r++) {
+                const tr = document.createElement('tr');
+                for (let c = 0; c < d.numCols; c++) {
+                    const cell = d.grid[r] && d.grid[r][c];
+                    if (!cell || cell.skipped) continue;
+
+                    const td = document.createElement('td');
+                    td.setAttribute('colspan', cell.colspan || 1);
+                    td.setAttribute('rowspan', cell.rowspan || 1);
+
+                    // Apply cell formatting
+                    const fmt = cell.fmt || {};
+                    let baseCss = 'border:1px solid #d1d5db;padding:8px 10px;cursor:pointer;transition:background .15s;min-width:60px;';
+                    if (fmt.width) baseCss += `width:${fmt.width}%;`;
+                    if (fmt.bgColor && fmt.bgColor !== '#ffffff') baseCss += `background-color:${fmt.bgColor};`;
+                    if (fmt.color && fmt.color !== '#000000') baseCss += `color:${fmt.color};`;
+                    if (fmt.fontSize) baseCss += `font-size:${fmt.fontSize};`;
+                    if (fmt.bold) baseCss += 'font-weight:700;';
+                    if (fmt.italic) baseCss += 'font-style:italic;';
+                    if (fmt.underline) baseCss += 'text-decoration:underline;';
+                    baseCss += `text-align:${fmt.align || 'center'};`;
+                    td.style.cssText = baseCss;
+
+                    const isSelected = d.selectedRow === r && d.selectedCol === c;
+                    if (isSelected) {
+                        td.style.background = '#e0e7ff';
+                        td.style.outline = '2px solid #6366f1';
+                    }
+
+                    if (cell.is_input) {
+                        td.innerHTML = `<span style="background:#f3e8ff;color:#7e22ce;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;">${cell.input_name}</span>`;
+                    } else {
+                        if (!fmt.fontWeight) td.style.fontWeight = fmt.bold ? '700' : '600';
+                        if (!fmt.fontSize) td.style.fontSize = '11px';
+                        td.textContent = cell.content || '-';
+                    }
+
+                    if (cell.colspan > 1 || cell.rowspan > 1) {
+                        const badge = document.createElement('span');
+                        badge.style.cssText = 'display:block;font-size:9px;color:#9ca3af;margin-top:2px;';
+                        badge.textContent = `${cell.colspan}×${cell.rowspan}`;
+                        td.appendChild(badge);
+                    }
+
+                    td.onclick = () => selectCell(mode, r, c);
+                    tr.appendChild(td);
+                }
+                tableEl.appendChild(tr);
+            }
+        }
+
+        // ── select cell ───────────────────────────────────────────────────────
+        function selectCell(mode, r, c) {
+            const d = tableDesigners[mode];
+            d.selectedRow = r;
+            d.selectedCol = c;
+            renderPreviewGrid(mode);
+
+            const cell = d.grid[r][c];
+            const cfg = document.getElementById(`cell_configurator_${mode}`);
+            cfg.classList.remove('hidden');
+
+            document.getElementById(`selected_cell_label_${mode}`).textContent = `[Baris ${r+1}, Kolom ${c+1}]`;
+            const infoEl = document.getElementById(`cell_span_info_${mode}`);
+            if (infoEl) infoEl.textContent = `colspan=${cell.colspan}, rowspan=${cell.rowspan}`;
+
+            document.getElementById(`cell_content_${mode}`).value    = cell.content || '';
+            document.getElementById(`cell_is_input_${mode}`).checked  = cell.is_input || false;
+            document.getElementById(`cell_input_type_${mode}`).value  = cell.input_type || 'text';
+            document.getElementById(`cell_input_name_${mode}`).value  = cell.input_name || `cell_${r}_${c}`;
+
+            // Load formatting
+            const fmt = cell.fmt || {};
+            syncFmtButtons(mode, fmt);
+            const fsEl = document.getElementById(`cell_font_size_${mode}`);
+            if (fsEl) fsEl.value = fmt.fontSize || '';
+            const wEl = document.getElementById(`cell_width_${mode}`);
+            if (wEl) wEl.value = fmt.width || '';
+            const tcEl = document.getElementById(`cell_text_color_${mode}`);
+            if (tcEl) tcEl.value = fmt.color || '#000000';
+            const bcEl = document.getElementById(`cell_bg_color_${mode}`);
+            if (bcEl) bcEl.value = fmt.bgColor || '#ffffff';
+
+            const inputOpts = document.getElementById(`cell_input_options_${mode}`);
+            cell.is_input ? inputOpts.classList.remove('hidden') : inputOpts.classList.add('hidden');
+        }
+
+        // ── sync formatting toggle buttons UI ────────────────────────────────
+        function syncFmtButtons(mode, fmt) {
+            const active = 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 border-indigo-300 dark:border-indigo-600';
+            const inactive = 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600';
+            ['bold','italic','underline'].forEach(prop => {
+                const btn = document.getElementById(`cell_fmt_${prop}_${mode}`);
+                if (!btn) return;
+                btn.className = btn.className.replace(/bg-\S+|text-\S+|border-\S+/g, '').trim();
+                const classes = fmt[prop] ? active : inactive;
+                btn.classList.add(...classes.split(' '));
+            });
+            const alignMap = { left: 'align_left', center: 'align_center', right: 'align_right' };
+            Object.entries(alignMap).forEach(([val, key]) => {
+                const btn = document.getElementById(`cell_fmt_${key}_${mode}`);
+                if (!btn) return;
+                btn.className = btn.className.replace(/bg-\S+|text-\S+|border-\S+/g, '').trim();
+                const classes = (fmt.align === val) ? active : inactive;
+                btn.classList.add(...classes.split(' '));
+            });
+        }
+
+        // ── toggle bold/italic/underline ─────────────────────────────────────
+        function toggleCellFormat(mode, prop) {
+            const d = tableDesigners[mode];
+            const r = d.selectedRow, c = d.selectedCol;
+            if (r === -1) return;
+            const cell = d.grid[r][c];
+            if (!cell.fmt) cell.fmt = {};
+            cell.fmt[prop] = !cell.fmt[prop];
+            syncFmtButtons(mode, cell.fmt);
+            renderPreviewGrid(mode);
+            serializeTableDesign(mode);
+        }
+
+        // ── set text alignment ────────────────────────────────────────────────
+        function setCellAlign(mode, align) {
+            const d = tableDesigners[mode];
+            const r = d.selectedRow, c = d.selectedCol;
+            if (r === -1) return;
+            const cell = d.grid[r][c];
+            if (!cell.fmt) cell.fmt = {};
+            cell.fmt.align = (cell.fmt.align === align) ? '' : align;
+            syncFmtButtons(mode, cell.fmt);
+            renderPreviewGrid(mode);
+            serializeTableDesign(mode);
+        }
+
+        // ── reset color ───────────────────────────────────────────────────────
+        function resetCellColor(mode, type) {
+            const d = tableDesigners[mode];
+            const r = d.selectedRow, c = d.selectedCol;
+            if (r === -1) return;
+            const cell = d.grid[r][c];
+            if (!cell.fmt) cell.fmt = {};
+            if (type === 'text') {
+                cell.fmt.color = '';
+                const el = document.getElementById(`cell_text_color_${mode}`);
+                if (el) el.value = '#000000';
+            } else {
+                cell.fmt.bgColor = '';
+                const el = document.getElementById(`cell_bg_color_${mode}`);
+                if (el) el.value = '#ffffff';
+            }
+            renderPreviewGrid(mode);
+            serializeTableDesign(mode);
+        }
+
+        // ── update cell properties ────────────────────────────────────────────
+        function updateCellProperties(mode) {
+            const d = tableDesigners[mode];
+            const r = d.selectedRow, c = d.selectedCol;
+            if (r === -1) return;
+            const cell = d.grid[r][c];
+
+            cell.content    = document.getElementById(`cell_content_${mode}`).value;
+            cell.is_input   = document.getElementById(`cell_is_input_${mode}`).checked;
+            cell.input_type = document.getElementById(`cell_input_type_${mode}`).value;
+            cell.input_name = document.getElementById(`cell_input_name_${mode}`).value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+
+            // Collect formatting
+            if (!cell.fmt) cell.fmt = {};
+            const fsEl = document.getElementById(`cell_font_size_${mode}`);
+            if (fsEl) cell.fmt.fontSize = fsEl.value;
+            const wEl = document.getElementById(`cell_width_${mode}`);
+            if (wEl) cell.fmt.width = wEl.value ? parseInt(wEl.value) : '';
+            const tcEl = document.getElementById(`cell_text_color_${mode}`);
+            if (tcEl) cell.fmt.color = tcEl.value;
+            const bcEl = document.getElementById(`cell_bg_color_${mode}`);
+            if (bcEl) cell.fmt.bgColor = bcEl.value;
+
+            const inputOpts = document.getElementById(`cell_input_options_${mode}`);
+            cell.is_input ? inputOpts.classList.remove('hidden') : inputOpts.classList.add('hidden');
+
+            const infoEl = document.getElementById(`cell_span_info_${mode}`);
+            if (infoEl) infoEl.textContent = `colspan=${cell.colspan}, rowspan=${cell.rowspan}`;
+
+            renderPreviewGrid(mode);
+            serializeTableDesign(mode);
+        }
+
+        // ── merge right ───────────────────────────────────────────────────────
+        function mergeRight(mode) {
+            const d = tableDesigners[mode];
+            const r = d.selectedRow, c = d.selectedCol;
+            if (r === -1) { alert('Pilih sel terlebih dahulu.'); return; }
+
+            const cell = d.grid[r][c];
+            const nextC = c + cell.colspan;
+            if (nextC >= d.numCols) { alert('Tidak ada kolom di sebelah kanan yang bisa digabungkan.'); return; }
+
+            // Check that target cols in ALL rows covered by this cell's rowspan are not already skipped by another parent
+            for (let dr = 0; dr < (cell.rowspan || 1); dr++) {
+                const targetCell = d.grid[r + dr] && d.grid[r + dr][nextC];
+                if (!targetCell || (targetCell.skipped && !_isSkippedByCell(d.grid, r + dr, nextC, r, c))) {
+                    alert('Sel di sebelah kanan sudah digabung dengan sel lain. Pisahkan dulu sebelum menggabung.'); return;
+                }
+            }
+
+            // Increase colspan and mark absorbed cells as skipped
+            cell.colspan = (cell.colspan || 1) + (d.grid[r][nextC].colspan || 1);
+            recomputeSkipped(d.grid, d.numRows, d.numCols);
+
+            renderPreviewGrid(mode);
+            serializeTableDesign(mode);
+            selectCell(mode, r, c);
+        }
+
+        // ── merge down ────────────────────────────────────────────────────────
+        function mergeDown(mode) {
+            const d = tableDesigners[mode];
+            const r = d.selectedRow, c = d.selectedCol;
+            if (r === -1) { alert('Pilih sel terlebih dahulu.'); return; }
+
+            const cell = d.grid[r][c];
+            const nextR = r + cell.rowspan;
+            if (nextR >= d.numRows) { alert('Tidak ada baris di bawah yang bisa digabungkan.'); return; }
+
+            // Check cells in target row are not already absorbed by another parent
+            for (let dc = 0; dc < (cell.colspan || 1); dc++) {
+                const targetCell = d.grid[nextR] && d.grid[nextR][c + dc];
+                if (!targetCell || (targetCell.skipped && !_isSkippedByCell(d.grid, nextR, c + dc, r, c))) {
+                    alert('Sel di bawah sudah digabung dengan sel lain. Pisahkan dulu sebelum menggabung.'); return;
+                }
+            }
+
+            cell.rowspan = (cell.rowspan || 1) + (d.grid[nextR][c].rowspan || 1);
+            recomputeSkipped(d.grid, d.numRows, d.numCols);
+
+            renderPreviewGrid(mode);
+            serializeTableDesign(mode);
+            selectCell(mode, r, c);
+        }
+
+        // Check if (tr, tc) is skipped because of parent (pr, pc)
+        function _isSkippedByCell(grid, tr, tc, pr, pc) {
+            const parent = grid[pr] && grid[pr][pc];
+            if (!parent) return false;
+            const cs = parent.colspan || 1, rs = parent.rowspan || 1;
+            return tr >= pr && tr < pr + rs && tc >= pc && tc < pc + cs;
+        }
+
+        // ── split cell ────────────────────────────────────────────────────────
+        function splitCell(mode) {
+            const d = tableDesigners[mode];
+            const r = d.selectedRow, c = d.selectedCol;
+            if (r === -1) { alert('Pilih sel terlebih dahulu.'); return; }
+
+            const cell = d.grid[r][c];
+            if ((cell.colspan || 1) === 1 && (cell.rowspan || 1) === 1) {
+                alert('Sel ini tidak dalam kondisi tergabung.'); return;
+            }
+
+            // Release all absorbed cells
+            const cs = cell.colspan || 1, rs = cell.rowspan || 1;
+            for (let dr = 0; dr < rs; dr++) {
+                for (let dc = 0; dc < cs; dc++) {
+                    if (dr === 0 && dc === 0) continue;
+                    if (d.grid[r+dr] && d.grid[r+dr][c+dc]) {
+                        const released = d.grid[r+dr][c+dc];
+                        released.skipped  = false;
+                        released.colspan  = 1;
+                        released.rowspan  = 1;
+                        released.content  = `Kolom ${c+dc+1}`;
+                        released.is_input = false;
+                        released.input_name = `cell_${r+dr}_${c+dc}`;
+                    }
+                }
+            }
+            cell.colspan = 1;
+            cell.rowspan = 1;
+            recomputeSkipped(d.grid, d.numRows, d.numCols);
+
+            renderPreviewGrid(mode);
+            serializeTableDesign(mode);
+            selectCell(mode, r, c);
+        }
+
+        // ── insert row at position ────────────────────────────────────────────
+        function insertRowAt(mode, insertPos) {
+            const d = tableDesigners[mode];
+            const rowsInput = document.getElementById(mode === 'create' ? 'table_rows' : 'edit_table_rows');
+
+            if (insertPos < 0) insertPos = 0;
+            if (insertPos > d.numRows) insertPos = d.numRows;
+            if (d.numRows >= 20) { alert('Maksimal 20 baris.'); return; }
+
+            // Adjust rowspans of cells whose span crosses the insertion point
+            for (let r = 0; r < d.numRows; r++) {
+                for (let c = 0; c < d.numCols; c++) {
+                    const cell = d.grid[r] && d.grid[r][c];
+                    if (!cell || cell.skipped) continue;
+                    const rs = cell.rowspan || 1;
+                    // Cell starts before insertPos and its span reaches into or past it
+                    if (r < insertPos && r + rs > insertPos) {
+                        cell.rowspan = rs + 1;
+                    }
+                }
+            }
+
+            // Build a fresh row for the new position
+            const newRow = [];
+            for (let c = 0; c < d.numCols; c++) {
+                newRow.push(makeCell(insertPos, c));
+            }
+
+            // Splice the new row in
+            d.grid.splice(insertPos, 0, newRow);
+            d.numRows++;
+            rowsInput.value = d.numRows;
+
+            // Shift selected cell down if it was at or below the insertion point
+            if (d.selectedRow >= insertPos) d.selectedRow++;
+
+            recomputeSkipped(d.grid, d.numRows, d.numCols);
+            renderPreviewGrid(mode);
+            serializeTableDesign(mode);
+
+            // Re-select the same cell (now shifted)
+            if (d.selectedRow >= 0 && d.selectedCol >= 0) {
+                selectCell(mode, d.selectedRow, d.selectedCol);
+            }
+        }
+
+        // ── insert col at position ────────────────────────────────────────────
+        function insertColAt(mode, insertPos) {
+            const d = tableDesigners[mode];
+            const colsInput = document.getElementById(mode === 'create' ? 'table_cols' : 'edit_table_cols');
+
+            if (insertPos < 0) insertPos = 0;
+            if (insertPos > d.numCols) insertPos = d.numCols;
+            if (d.numCols >= 10) { alert('Maksimal 10 kolom.'); return; }
+
+            // Adjust colspans of cells whose span crosses the insertion point
+            for (let r = 0; r < d.numRows; r++) {
+                for (let c = 0; c < d.numCols; c++) {
+                    const cell = d.grid[r] && d.grid[r][c];
+                    if (!cell || cell.skipped) continue;
+                    const cs = cell.colspan || 1;
+                    if (c < insertPos && c + cs > insertPos) {
+                        cell.colspan = cs + 1;
+                    }
+                }
+            }
+
+            // Splice a new cell into each row at insertPos
+            for (let r = 0; r < d.numRows; r++) {
+                d.grid[r].splice(insertPos, 0, makeCell(r, insertPos));
+            }
+            d.numCols++;
+            colsInput.value = d.numCols;
+
+            // Shift selected cell right if it was at or past the insertion point
+            if (d.selectedCol >= insertPos) d.selectedCol++;
+
+            recomputeSkipped(d.grid, d.numRows, d.numCols);
+            renderPreviewGrid(mode);
+            serializeTableDesign(mode);
+
+            if (d.selectedRow >= 0 && d.selectedCol >= 0) {
+                selectCell(mode, d.selectedRow, d.selectedCol);
+            }
+        }
+
+        // ── delete selected row ───────────────────────────────────────────────
+        function deleteRow(mode) {
+            const d = tableDesigners[mode];
+            const r = d.selectedRow;
+            if (r === -1) { alert('Pilih sel terlebih dahulu.'); return; }
+            if (d.numRows <= 1) { alert('Tidak dapat menghapus baris terakhir.'); return; }
+
+            // Safety: warn if any visible cell in this row has rowspan > 1 spanning downward
+            for (let c = 0; c < d.numCols; c++) {
+                const cell = d.grid[r] && d.grid[r][c];
+                if (cell && !cell.skipped && (cell.rowspan || 1) > 1) {
+                    alert('Baris ini memiliki sel yang digabung ke bawah. Pisahkan sel terlebih dahulu sebelum menghapus baris.'); return;
+                }
+            }
+
+            // Shrink rowspan of cells that span across the deleted row
+            for (let rr = 0; rr < d.numRows; rr++) {
+                for (let c = 0; c < d.numCols; c++) {
+                    const cell = d.grid[rr] && d.grid[rr][c];
+                    if (!cell || cell.skipped) continue;
+                    const rs = cell.rowspan || 1;
+                    if (rr < r && rr + rs > r) {
+                        cell.rowspan = Math.max(1, rs - 1);
+                    }
+                }
+            }
+
+            d.grid.splice(r, 1);
+            d.numRows--;
+            document.getElementById(mode === 'create' ? 'table_rows' : 'edit_table_rows').value = d.numRows;
+
+            d.selectedRow = -1;
+            d.selectedCol = -1;
+            document.getElementById(`cell_configurator_${mode}`).classList.add('hidden');
+
+            recomputeSkipped(d.grid, d.numRows, d.numCols);
+            renderPreviewGrid(mode);
+            serializeTableDesign(mode);
+        }
+
+        // ── delete selected col ───────────────────────────────────────────────
+        function deleteCol(mode) {
+            const d = tableDesigners[mode];
+            const c = d.selectedCol;
+            if (c === -1) { alert('Pilih sel terlebih dahulu.'); return; }
+            if (d.numCols <= 1) { alert('Tidak dapat menghapus kolom terakhir.'); return; }
+
+            // Safety: warn if any visible cell in this col has colspan > 1 spanning rightward
+            for (let r = 0; r < d.numRows; r++) {
+                const cell = d.grid[r] && d.grid[r][c];
+                if (cell && !cell.skipped && (cell.colspan || 1) > 1) {
+                    alert('Kolom ini memiliki sel yang digabung ke kanan. Pisahkan sel terlebih dahulu sebelum menghapus kolom.'); return;
+                }
+            }
+
+            // Shrink colspan of cells that span across the deleted column
+            for (let r = 0; r < d.numRows; r++) {
+                for (let cc = 0; cc < d.numCols; cc++) {
+                    const cell = d.grid[r] && d.grid[r][cc];
+                    if (!cell || cell.skipped) continue;
+                    const cs = cell.colspan || 1;
+                    if (cc < c && cc + cs > c) {
+                        cell.colspan = Math.max(1, cs - 1);
+                    }
+                }
+            }
+
+            for (let r = 0; r < d.numRows; r++) {
+                d.grid[r].splice(c, 1);
+            }
+            d.numCols--;
+            document.getElementById(mode === 'create' ? 'table_cols' : 'edit_table_cols').value = d.numCols;
+
+            d.selectedRow = -1;
+            d.selectedCol = -1;
+            document.getElementById(`cell_configurator_${mode}`).classList.add('hidden');
+
+            recomputeSkipped(d.grid, d.numRows, d.numCols);
+            renderPreviewGrid(mode);
+            serializeTableDesign(mode);
+        }
+
+        // ── serialize ─────────────────────────────────────────────────────────
+        function serializeTableDesign(mode) {
+            const d = tableDesigners[mode];
+            const rows = gridToRows(d.grid, d.numRows);
+            const json = JSON.stringify({ rows });
+            document.getElementById(
+                mode === 'create' ? 'table_data_json_create' : 'edit_table_data_json_edit'
+            ).value = json;
+        }
+
 
         function closeEditModal() {
             document.getElementById('editModal').classList.add('hidden');

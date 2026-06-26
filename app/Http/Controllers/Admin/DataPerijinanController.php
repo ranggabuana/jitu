@@ -1087,6 +1087,38 @@ class DataPerijinanController extends Controller
         foreach ($rekomFields as $field) {
             $isFile = in_array($field->type, ['file', 'pas_foto', 'gambar']);
             $hasExistingFile = $isFile && !empty($existingRekomData[$field->name]);
+            if ($isFile && !$hasExistingFile) {
+                // Cek referensi BO atau global
+                $refFile = null;
+                if ($perijinan->has_bo_form) {
+                    $matchingBoField = $perijinan->activeFormFields
+                        ->where('form_type', 'bo')
+                        ->where('name', $field->name)
+                        ->first() ?? $perijinan->activeFormFields
+                        ->where('form_type', 'bo')
+                        ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                        ->first();
+                    if ($matchingBoField) {
+                        $refFile = $application->bo_data[$matchingBoField->name] ?? null;
+                    }
+                }
+                if (empty($refFile)) {
+                    $matchingGlobalField = $perijinan->activeFormFields
+                        ->where('form_type', 'global')
+                        ->where('name', $field->name)
+                        ->first() ?? $perijinan->activeFormFields
+                        ->where('form_type', 'global')
+                        ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                        ->first();
+                    if ($matchingGlobalField) {
+                        $globalFiles = $application->form_files[$matchingGlobalField->id] ?? [];
+                        $refFile = is_array($globalFiles) ? ($globalFiles[0] ?? null) : $globalFiles;
+                    }
+                }
+                if (!empty($refFile)) {
+                    $hasExistingFile = true;
+                }
+            }
             
             if ($field->is_required && !$hasExistingFile) {
                 $fieldRules = ['required'];
@@ -1106,6 +1138,10 @@ class DataPerijinanController extends Controller
                 $fieldRules[] = 'mimes:jpeg,jpg,png';
                 $fieldRules[] = 'max:5120';
             }
+            if ($field->type === 'table') {
+                // Table fields are submitted as arrays; skip standard validation
+                continue;
+            }
             $rules[$field->name] = $fieldRules;
         }
         
@@ -1122,12 +1158,50 @@ class DataPerijinanController extends Controller
 
             foreach ($rekomFields as $field) {
                 $isFile = in_array($field->type, ['file', 'pas_foto', 'gambar']);
-                if ($isFile && $request->hasFile($field->name)) {
-                    $file = $request->file($field->name);
-                    $filename = 'rekom_' . $opdId . '_' . $field->name . '_' . time() . '.' . $file->getClientOriginalExtension();
-                    $path = 'uploads/perijinan/' . $application->perijinan_id;
-                    $file->move(public_path($path), $filename);
-                    $currentData[$field->name] = $path . '/' . $filename;
+                if ($isFile) {
+                    if ($request->hasFile($field->name)) {
+                        $file = $request->file($field->name);
+                        $filename = 'rekom_' . $opdId . '_' . $field->name . '_' . time() . '.' . $file->getClientOriginalExtension();
+                        $path = 'uploads/perijinan/' . $application->perijinan_id;
+                        $file->move(public_path($path), $filename);
+                        $currentData[$field->name] = $path . '/' . $filename;
+                    } elseif (empty($currentData[$field->name])) {
+                        // Auto-fill dari BO atau global
+                        $refFile = null;
+                        if ($perijinan->has_bo_form) {
+                            $matchingBoField = $perijinan->activeFormFields
+                                ->where('form_type', 'bo')
+                                ->where('name', $field->name)
+                                ->first() ?? $perijinan->activeFormFields
+                                ->where('form_type', 'bo')
+                                ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                                ->first();
+                            if ($matchingBoField) {
+                                $refFile = $application->bo_data[$matchingBoField->name] ?? null;
+                            }
+                        }
+                        if (empty($refFile)) {
+                            $matchingGlobalField = $perijinan->activeFormFields
+                                ->where('form_type', 'global')
+                                ->where('name', $field->name)
+                                ->first() ?? $perijinan->activeFormFields
+                                ->where('form_type', 'global')
+                                ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                                ->first();
+                            if ($matchingGlobalField) {
+                                $globalFiles = $application->form_files[$matchingGlobalField->id] ?? [];
+                                $refFile = is_array($globalFiles) ? ($globalFiles[0] ?? null) : $globalFiles;
+                            }
+                        }
+                        if (!empty($refFile)) {
+                            $currentData[$field->name] = $refFile;
+                        }
+                    }
+                } elseif ($field->type === 'table') {
+                    $tableVal = $request->input($field->name, []);
+                    if (is_array($tableVal) && count($tableVal) > 0) {
+                        $currentData[$field->name] = $tableVal;
+                    }
                 } elseif (!$isFile) {
                     if (array_key_exists($field->name, $validated)) {
                         $currentData[$field->name] = $validated[$field->name];
@@ -1204,12 +1278,50 @@ class DataPerijinanController extends Controller
             $rekomData = $application->rekom_data ?? [];
             foreach ($rekomFields as $field) {
                 $isFile = in_array($field->type, ['file', 'pas_foto', 'gambar']);
-                if ($isFile && $request->hasFile($field->name)) {
-                    $file = $request->file($field->name);
-                    $filename = 'rekom_' . $field->name . '_' . time() . '.' . $file->getClientOriginalExtension();
-                    $path = 'uploads/perijinan/' . $application->perijinan_id;
-                    $file->move(public_path($path), $filename);
-                    $rekomData[$field->name] = $path . '/' . $filename;
+                if ($isFile) {
+                    if ($request->hasFile($field->name)) {
+                        $file = $request->file($field->name);
+                        $filename = 'rekom_' . $field->name . '_' . time() . '.' . $file->getClientOriginalExtension();
+                        $path = 'uploads/perijinan/' . $application->perijinan_id;
+                        $file->move(public_path($path), $filename);
+                        $rekomData[$field->name] = $path . '/' . $filename;
+                    } elseif (empty($rekomData[$field->name])) {
+                        // Auto-fill dari BO atau global
+                        $refFile = null;
+                        if ($perijinan->has_bo_form) {
+                            $matchingBoField = $perijinan->activeFormFields
+                                ->where('form_type', 'bo')
+                                ->where('name', $field->name)
+                                ->first() ?? $perijinan->activeFormFields
+                                ->where('form_type', 'bo')
+                                ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                                ->first();
+                            if ($matchingBoField) {
+                                $refFile = $application->bo_data[$matchingBoField->name] ?? null;
+                            }
+                        }
+                        if (empty($refFile)) {
+                            $matchingGlobalField = $perijinan->activeFormFields
+                                ->where('form_type', 'global')
+                                ->where('name', $field->name)
+                                ->first() ?? $perijinan->activeFormFields
+                                ->where('form_type', 'global')
+                                ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                                ->first();
+                            if ($matchingGlobalField) {
+                                $globalFiles = $application->form_files[$matchingGlobalField->id] ?? [];
+                                $refFile = is_array($globalFiles) ? ($globalFiles[0] ?? null) : $globalFiles;
+                            }
+                        }
+                        if (!empty($refFile)) {
+                            $rekomData[$field->name] = $refFile;
+                        }
+                    }
+                } elseif ($field->type === 'table') {
+                    $tableVal = $request->input($field->name, []);
+                    if (is_array($tableVal) && count($tableVal) > 0) {
+                        $rekomData[$field->name] = $tableVal;
+                    }
                 } elseif (!$isFile) {
                     if (array_key_exists($field->name, $validated)) {
                         $rekomData[$field->name] = $validated[$field->name];
@@ -1327,6 +1439,49 @@ class DataPerijinanController extends Controller
         foreach ($izinFields as $field) {
             $isFile = in_array($field->type, ['file', 'pas_foto', 'gambar']);
             $hasExistingFile = $isFile && !empty($existingIzinData[$field->name]);
+            if ($isFile && !$hasExistingFile) {
+                // Cek referensi BO, rekom, atau global
+                $refFile = null;
+                if ($application->perijinan->validasi_tanpa_opd && $application->perijinan->has_bo_form) {
+                    $matchingBoFileField = $application->perijinan->activeFormFields
+                        ->where('form_type', 'bo')
+                        ->where('name', $field->name)
+                        ->first() ?? $application->perijinan->activeFormFields
+                        ->where('form_type', 'bo')
+                        ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                        ->first();
+                    if ($matchingBoFileField) {
+                        $refFile = $application->bo_data[$matchingBoFileField->name] ?? null;
+                    }
+                } else {
+                    $matchingRekomFileField = $application->perijinan->activeFormFields
+                        ->where('form_type', 'rekom')
+                        ->where('name', $field->name)
+                        ->first() ?? $application->perijinan->activeFormFields
+                        ->where('form_type', 'rekom')
+                        ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                        ->first();
+                    if ($matchingRekomFileField) {
+                        $refFile = $application->rekom_data[$matchingRekomFileField->name] ?? null;
+                    }
+                }
+                if (empty($refFile)) {
+                    $matchingGlobalFileField = $application->perijinan->activeFormFields
+                        ->where('form_type', 'global')
+                        ->where('name', $field->name)
+                        ->first() ?? $application->perijinan->activeFormFields
+                        ->where('form_type', 'global')
+                        ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                        ->first();
+                    if ($matchingGlobalFileField) {
+                        $globalFiles = $application->form_files[$matchingGlobalFileField->id] ?? [];
+                        $refFile = is_array($globalFiles) ? ($globalFiles[0] ?? null) : $globalFiles;
+                    }
+                }
+                if (!empty($refFile)) {
+                    $hasExistingFile = true;
+                }
+            }
             
             if ($field->is_required && !$hasExistingFile) {
                 $fieldRules = ['required'];
@@ -1346,6 +1501,9 @@ class DataPerijinanController extends Controller
                 $fieldRules[] = 'mimes:jpeg,jpg,png';
                 $fieldRules[] = 'max:5120';
             }
+            if ($field->type === 'table') {
+                continue;
+            }
             
             $rules[$field->name] = $fieldRules;
         }
@@ -1358,17 +1516,66 @@ class DataPerijinanController extends Controller
         
         $izinData = $application->izin_data ?? [];
 
-        foreach ($izinFields as $field) {
-            $isFile = in_array($field->type, ['file', 'pas_foto', 'gambar']);
-            if ($isFile && $request->hasFile($field->name)) {
-                $file = $request->file($field->name);
-                if ($file->isValid()) {
-                    $filename = 'izin_' . $field->name . '_' . time() . '.' . $file->getClientOriginalExtension();
-                    $path = 'uploads/perijinan/' . $application->perijinan_id;
-                    $file->move(public_path($path), $filename);
-                    $izinData[$field->name] = $path . '/' . $filename;
-                }
-            } elseif (!$isFile) {
+            foreach ($izinFields as $field) {
+                $isFile = in_array($field->type, ['file', 'pas_foto', 'gambar']);
+                if ($isFile) {
+                    if ($request->hasFile($field->name)) {
+                        $file = $request->file($field->name);
+                        if ($file->isValid()) {
+                            $filename = 'izin_' . $field->name . '_' . time() . '.' . $file->getClientOriginalExtension();
+                            $path = 'uploads/perijinan/' . $application->perijinan_id;
+                            $file->move(public_path($path), $filename);
+                            $izinData[$field->name] = $path . '/' . $filename;
+                        }
+                    } elseif (empty($izinData[$field->name])) {
+                        // Auto-fill berkas referensi
+                        $refFile = null;
+                        if ($application->perijinan->validasi_tanpa_opd && $application->perijinan->has_bo_form) {
+                            $matchingBoFileField = $application->perijinan->activeFormFields
+                                ->where('form_type', 'bo')
+                                ->where('name', $field->name)
+                                ->first() ?? $application->perijinan->activeFormFields
+                                ->where('form_type', 'bo')
+                                ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                                ->first();
+                            if ($matchingBoFileField) {
+                                $refFile = $application->bo_data[$matchingBoFileField->name] ?? null;
+                            }
+                        } else {
+                            $matchingRekomFileField = $application->perijinan->activeFormFields
+                                ->where('form_type', 'rekom')
+                                ->where('name', $field->name)
+                                ->first() ?? $application->perijinan->activeFormFields
+                                ->where('form_type', 'rekom')
+                                ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                                ->first();
+                            if ($matchingRekomFileField) {
+                                $refFile = $application->rekom_data[$matchingRekomFileField->name] ?? null;
+                            }
+                        }
+                        if (empty($refFile)) {
+                            $matchingGlobalFileField = $application->perijinan->activeFormFields
+                                ->where('form_type', 'global')
+                                ->where('name', $field->name)
+                                ->first() ?? $application->perijinan->activeFormFields
+                                ->where('form_type', 'global')
+                                ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                                ->first();
+                            if ($matchingGlobalFileField) {
+                                $globalFiles = $application->form_files[$matchingGlobalFileField->id] ?? [];
+                                $refFile = is_array($globalFiles) ? ($globalFiles[0] ?? null) : $globalFiles;
+                            }
+                        }
+                        if (!empty($refFile)) {
+                            $izinData[$field->name] = $refFile;
+                        }
+                    }
+                } elseif ($field->type === 'table') {
+                    $tableVal = $request->input($field->name, []);
+                    if (is_array($tableVal) && count($tableVal) > 0) {
+                        $izinData[$field->name] = $tableVal;
+                    }
+                } elseif (!$isFile) {
                 if (array_key_exists($field->name, $validated)) {
                     $izinData[$field->name] = $validated[$field->name];
                 }
@@ -1436,6 +1643,23 @@ class DataPerijinanController extends Controller
         foreach ($boFields as $field) {
             $isFile = in_array($field->type, ['file', 'pas_foto', 'gambar']);
             $hasExistingFile = $isFile && !empty($existingBoData[$field->name]);
+            if ($isFile && !$hasExistingFile) {
+                // Cek apakah ada berkas global pemohon yang di-auto-fill
+                $matchingGlobalField = $application->perijinan->activeFormFields
+                    ->where('form_type', 'global')
+                    ->where('name', $field->name)
+                    ->first() ?? $application->perijinan->activeFormFields
+                    ->where('form_type', 'global')
+                    ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                    ->first();
+                if ($matchingGlobalField) {
+                    $globalFiles = $application->form_files[$matchingGlobalField->id] ?? [];
+                    $globalFile = is_array($globalFiles) ? ($globalFiles[0] ?? null) : $globalFiles;
+                    if (!empty($globalFile)) {
+                        $hasExistingFile = true;
+                    }
+                }
+            }
             
             if ($field->is_required && !$hasExistingFile) {
                 $fieldRules = ['required'];
@@ -1455,6 +1679,9 @@ class DataPerijinanController extends Controller
                 $fieldRules[] = 'mimes:jpeg,jpg,png';
                 $fieldRules[] = 'max:5120';
             }
+            if ($field->type === 'table') {
+                continue;
+            }
             
             $rules[$field->name] = $fieldRules;
         }
@@ -1465,13 +1692,36 @@ class DataPerijinanController extends Controller
 
         foreach ($boFields as $field) {
             $isFile = in_array($field->type, ['file', 'pas_foto', 'gambar']);
-            if ($isFile && $request->hasFile($field->name)) {
-                $file = $request->file($field->name);
-                if ($file->isValid()) {
-                    $filename = 'bo_' . $field->name . '_' . time() . '.' . $file->getClientOriginalExtension();
-                    $path = 'uploads/perijinan/' . $application->perijinan_id;
-                    $file->move(public_path($path), $filename);
-                    $boData[$field->name] = $path . '/' . $filename;
+            if ($isFile) {
+                if ($request->hasFile($field->name)) {
+                    $file = $request->file($field->name);
+                    if ($file->isValid()) {
+                        $filename = 'bo_' . $field->name . '_' . time() . '.' . $file->getClientOriginalExtension();
+                        $path = 'uploads/perijinan/' . $application->perijinan_id;
+                        $file->move(public_path($path), $filename);
+                        $boData[$field->name] = $path . '/' . $filename;
+                    }
+                } elseif (empty($boData[$field->name])) {
+                    // Simpan berkas referensi global jika user tidak upload file baru
+                    $matchingGlobalField = $application->perijinan->activeFormFields
+                        ->where('form_type', 'global')
+                        ->where('name', $field->name)
+                        ->first() ?? $application->perijinan->activeFormFields
+                        ->where('form_type', 'global')
+                        ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                        ->first();
+                    if ($matchingGlobalField) {
+                        $globalFiles = $application->form_files[$matchingGlobalField->id] ?? [];
+                        $globalFile = is_array($globalFiles) ? ($globalFiles[0] ?? null) : $globalFiles;
+                        if (!empty($globalFile)) {
+                            $boData[$field->name] = $globalFile;
+                        }
+                    }
+                }
+            } elseif ($field->type === 'table') {
+                $tableVal = $request->input($field->name, []);
+                if (is_array($tableVal) && count($tableVal) > 0) {
+                    $boData[$field->name] = $tableVal;
                 }
             } elseif (!$isFile) {
                 if (array_key_exists($field->name, $validated)) {
@@ -1488,13 +1738,8 @@ class DataPerijinanController extends Controller
                             ->first();
 
                         if ($matchingGlobalField) {
-                            if ($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar') {
-                                $globalFiles = $application->form_files[$matchingGlobalField->id] ?? [];
-                                $val = is_array($globalFiles) ? ($globalFiles[0] ?? null) : $globalFiles;
-                            } else {
-                                $val = $application->form_data[$matchingGlobalField->id] ?? '';
-                                if (is_array($val)) $val = implode(', ', $val);
-                            }
+                            $val = $application->form_data[$matchingGlobalField->id] ?? '';
+                            if (is_array($val)) $val = implode(', ', $val);
                             if ($val !== null) {
                                 $boData[$field->name] = $val;
                             }

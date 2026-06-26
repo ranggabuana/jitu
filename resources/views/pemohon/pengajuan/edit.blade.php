@@ -219,6 +219,13 @@
                                 @endforeach
                             </div>
 
+                        @elseif($field->type === 'table')
+                            @include('components.form-field.table-input', [
+                                'field' => $field,
+                                'val' => old('form_fields.' . $field->id, $fieldValue),
+                                'ro' => '',
+                                'inputNamePrefix' => "form_fields[{$field->id}]"
+                            ])
                         @else
                             <input type="{{ $field->type }}" name="form_fields[{{ $field->id }}]"
                                 value="{{ old('form_fields.'.$field->id, $fieldValue) }}"

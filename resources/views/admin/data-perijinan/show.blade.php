@@ -475,7 +475,7 @@
                             <input type="hidden" name="elapsed_seconds" class="elapsed-seconds-input" value="0">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 @foreach($boFields as $field)
-                                    <div class="space-y-2">
+                                    <div class="space-y-2 {{ $field->type === 'table' ? 'md:col-span-2' : '' }}">
                                         <label class="block text-[11px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-tighter">{{ $field->label }} @if($field->is_required)<span class="text-red-500">*</span>@endif</label>
                                         @php 
                                                                                         $val = $application->bo_data[$field->name] ?? null; 
@@ -579,6 +579,8 @@
                                             <input type="date" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }}>
                                         @elseif($field->type === 'number')
                                             <input type="number" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }}>
+                                        @elseif($field->type === 'table')
+                                            @include('components.form-field.table-input', ['field' => $field, 'val' => $val, 'ro' => $ro])
                                         @else
                                             <input type="text" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }}>
                                         @endif
@@ -707,7 +709,7 @@
                                     <input type="hidden" name="elapsed_seconds" class="elapsed-seconds-input" value="0">
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         @foreach($rekomFields->filter(fn($f) => $f->opd_id == $opd->id || $f->opd_id === null) as $field)
-                                            <div class="space-y-2">
+                                            <div class="space-y-2 {{ $field->type === 'table' ? 'md:col-span-2' : '' }}">
                                                 <label class="block text-[11px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-tighter">{{ $field->label }} @if($field->is_required)<span class="text-red-500">*</span>@endif</label>
                                                 @php 
                                                     $val = $opdRekomData[$field->name] ?? null; 
@@ -822,6 +824,8 @@
                                                     <input type="date" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}">
                                                 @elseif($field->type === 'number')
                                                     <input type="number" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}">
+                                                @elseif($field->type === 'table')
+                                                    @include('components.form-field.table-input', ['field' => $field, 'val' => $val, 'ro' => ''])
                                                 @else
                                                     <input type="text" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}">
                                                 @endif
@@ -856,11 +860,17 @@
                             <div class="p-6 bg-gray-50/50 dark:bg-gray-900/20">
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     @foreach($rekomFields->filter(fn($f) => $f->opd_id == $opd->id || $f->opd_id === null) as $field)
-                                        <div class="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700">
+                                        <div class="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 {{ $field->type === 'table' ? 'md:col-span-2' : '' }}">
                                             <label class="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">{{ $field->label }}</label>
-                                            <p class="text-xs font-semibold text-gray-700 dark:text-gray-200">
+                                            <div class="text-xs font-semibold text-gray-700 dark:text-gray-200">
                                                 @php $v = $opdRekomData[$field->name] ?? '-'; @endphp
-                                                @if(($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar') && $v !== '-')
+                                                @if($field->type === 'table')
+                                                    @include('components.form-field.table-input', [
+                                                        'field' => $field,
+                                                        'val' => is_array($v) ? $v : [],
+                                                        'ro' => 'readonly disabled'
+                                                    ])
+                                                @elseif(($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar') && $v !== '-')
                                                     @if($field->type === 'pas_foto')
                                                         <div class="mb-2">
                                                             <img src="{{ asset($v) }}" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" class="rounded border shadow-sm" alt="Pas Foto" />
@@ -874,7 +884,7 @@
                                                 @else
                                                     {{ $v }}
                                                 @endif
-                                            </p>
+                                            </div>
                                             @if($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar')
                                                 @php
                                                     $matchingGlobalField = $application->perijinan->activeFormFields
@@ -1003,7 +1013,7 @@
                                 <input type="hidden" name="elapsed_seconds" class="elapsed-seconds-input" value="0">
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     @foreach($rekomFields as $field)
-                                        <div class="space-y-2">
+                                        <div class="space-y-2 {{ $field->type === 'table' ? 'md:col-span-2' : '' }}">
                                             <label class="block text-[11px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-tighter">{{ $field->label }} @if($field->is_required)<span class="text-red-500">*</span>@endif</label>
                                             @php 
                                                                                                 $val = $application->rekom_data[$field->name] ?? null; 
@@ -1119,6 +1129,8 @@
                                                 <input type="date" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }}>
                                             @elseif($field->type === 'number')
                                                 <input type="number" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }}>
+                                            @elseif($field->type === 'table')
+                                                @include('components.form-field.table-input', ['field' => $field, 'val' => $val, 'ro' => $ro])
                                             @else
                                                 <input type="text" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }}>
                                             @endif
@@ -1248,7 +1260,7 @@
                             
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 @foreach($izinFields as $field)
-                                    <div class="space-y-2">
+                                    <div class="space-y-2 {{ $field->type === 'table' ? 'md:col-span-2' : '' }}">
                                         <label class="block text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-tighter">{{ $field->label }} @if($field->is_required)<span class="text-red-500">*</span>@endif</label>
                                         @php 
                                             $val = $application->izin_data[$field->name] ?? null; 
@@ -1442,6 +1454,8 @@
                                             <input type="date" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }}>
                                         @elseif($field->type === 'number')
                                             <input type="number" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }}>
+                                        @elseif($field->type === 'table')
+                                            @include('components.form-field.table-input', ['field' => $field, 'val' => $val, 'ro' => $ro])
                                         @else
                                             <input type="text" name="{{ $field->name }}" value="{{ $val }}" class="{{ $cls }}" {{ $ro }}>
                                         @endif
@@ -1817,6 +1831,16 @@
                                     @else
                                         <p class="text-xs text-gray-400 italic">Tidak ada file diunggah</p>
                                     @endif
+                                @elseif($field->type === 'table')
+                                    @php
+                                        $val = $application->form_data[$field->id] ?? null;
+                                    @endphp
+                                    @include('components.form-field.table-input', [
+                                        'field' => $field,
+                                        'val' => $val,
+                                        'ro' => 'readonly disabled',
+                                        'inputNamePrefix' => "form_fields[{$field->id}]"
+                                    ])
                                 @else
                                     <p class="text-sm font-bold text-gray-800 dark:text-gray-200">
                                         @php 

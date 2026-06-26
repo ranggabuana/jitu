@@ -644,6 +644,16 @@
                                     @else
                                         <p class="text-sm text-gray-400 italic">Tidak ada berkas diunggah</p>
                                     @endif
+                                @elseif($field->type === 'table')
+                                    @php
+                                        $val = $data->form_data[$field->id] ?? null;
+                                    @endphp
+                                    @include('components.form-field.table-input', [
+                                        'field' => $field,
+                                        'val' => $val,
+                                        'ro' => 'readonly disabled',
+                                        'inputNamePrefix' => "form_fields[{$field->id}]"
+                                    ])
                                 @else
                                     <p class="text-sm font-bold text-gray-800 dark:text-gray-200">
                                         @php 

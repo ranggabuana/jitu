@@ -288,6 +288,26 @@
                                                     Format: {{ $field->file_types ?? 'Semua format' }} (Maks. {{ $field->max_file_size ?? '2MB' }})
                                                 </p>
                                             </div>
+                                    </div>
+                                @elseif ($field->type === 'table')
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            {{ $field->label }}
+                                            @if ($field->is_required)
+                                                <span class="text-red-500">*</span>
+                                            @endif
+                                        </label>
+                                        @include('components.form-field.table-input', [
+                                            'field' => $field,
+                                            'val' => old('form_fields.' . $field->id, isset($renewFromApp) ? ($renewFromApp->form_data[$field->id] ?? null) : null),
+                                            'ro' => '',
+                                            'inputNamePrefix' => "form_fields[{$field->id}]"
+                                        ])
+                                        @error('form_fields.' . $field->id)
+                                            <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                                        @enderror
+                                        @if ($field->help_text && !$errors->has('form_fields.' . $field->id))
+                                            <p class="mt-1 text-xs text-gray-500">{{ $field->help_text }}</p>
                                         @endif
                                     </div>
                                 @endif
