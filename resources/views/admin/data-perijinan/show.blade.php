@@ -585,6 +585,9 @@
                                         @if($field->help_text)
                                             <p class="text-[10px] text-gray-400 italic mt-1">{{ $field->help_text }}</p>
                                         @endif
+                                        @error($field->name)
+                                            <p class="text-xs text-red-500 font-bold mt-1"><i class="mdi mdi-alert-circle-outline"></i> {{ $message }}</p>
+                                        @enderror
                                     </div>
                                 @endforeach
                             </div>
@@ -825,6 +828,9 @@
                                                 @if($field->help_text)
                                                     <p class="text-[10px] text-gray-400 italic mt-1">{{ $field->help_text }}</p>
                                                 @endif
+                                                @error($field->name)
+                                                    <p class="text-xs text-red-500 font-bold mt-1"><i class="mdi mdi-alert-circle-outline"></i> {{ $message }}</p>
+                                                @enderror
                                             </div>
                                         @endforeach
                                     </div>
@@ -832,9 +838,11 @@
                                     <!-- Masa Aktif Rekomendasi Field -->
                                     <div class="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
                                         <div class="max-w-xs">
-                                            <label class="block text-[11px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-tighter mb-2">Masa Aktif Surat Rekomendasi <span class="text-red-500">*</span></label>
                                             <input type="date" name="masa_aktif_rekom" value="{{ $opdRekomData['masa_aktif_rekom'] ?? '' }}" required
                                                 class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-purple-500 outline-none transition-all">
+                                            @error('masa_aktif_rekom')
+                                                <p class="text-xs text-red-500 font-bold mt-1"><i class="mdi mdi-alert-circle-outline"></i> {{ $message }}</p>
+                                            @enderror
                                             <p class="text-[10px] text-gray-400 mt-2 italic">Atur batas waktu berlakunya surat rekomendasi dari OPD Anda.</p>
                                         </div>
                                     </div>
@@ -1117,6 +1125,9 @@
                                             @if($field->help_text)
                                                 <p class="text-[10px] text-gray-400 italic mt-1">{{ $field->help_text }}</p>
                                             @endif
+                                            @error($field->name)
+                                                <p class="text-xs text-red-500 font-bold mt-1"><i class="mdi mdi-alert-circle-outline"></i> {{ $message }}</p>
+                                            @enderror
                                         </div>
                                     @endforeach
                                 </div>
@@ -1128,6 +1139,9 @@
                                         <input type="date" name="masa_aktif_rekom" value="{{ $application->rekom_data['masa_aktif_rekom'] ?? '' }}" required
                                             class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-purple-500 outline-none transition-all"
                                             {{ !$canEditRekom ? 'readonly disabled' : '' }}>
+                                        @error('masa_aktif_rekom')
+                                            <p class="text-xs text-red-500 font-bold mt-1"><i class="mdi mdi-alert-circle-outline"></i> {{ $message }}</p>
+                                        @enderror
                                         <p class="text-[10px] text-gray-400 mt-2 italic">Atur batas waktu berlakunya surat rekomendasi.</p>
                                     </div>
                                 </div>
@@ -1434,6 +1448,9 @@
                                         @if($field->help_text)
                                             <p class="text-[10px] text-gray-400 italic mt-1">{{ $field->help_text }}</p>
                                         @endif
+                                        @error($field->name)
+                                            <p class="text-xs text-red-500 font-bold mt-1"><i class="mdi mdi-alert-circle-outline"></i> {{ $message }}</p>
+                                        @enderror
                                         </div>
                                 @endforeach
                             </div>
@@ -1445,6 +1462,9 @@
                                    <input type="date" name="masa_aktif" value="{{ $application->masa_aktif ? $application->masa_aktif->format('Y-m-d') : '' }}" required
                                        class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                                        {{ !$canEditIzin ? 'readonly disabled' : '' }}>
+                                   @error('masa_aktif')
+                                       <p class="text-xs text-red-500 font-bold mt-1"><i class="mdi mdi-alert-circle-outline"></i> {{ $message }}</p>
+                                   @enderror
                                    <p class="text-[10px] text-gray-400 mt-2 italic">Atur batas waktu berlakunya surat izin.</p>
                                </div>
                             </div>
