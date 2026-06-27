@@ -1,5 +1,20 @@
 <x-layout>
     <x-slot:title>Data SKM - Pertanyaan</x-slot:title>
+    
+    <style>
+        .sortable-ghost {
+            opacity: 0.4;
+            background-color: rgb(243 244 246 / var(--tw-bg-opacity, 1));
+        }
+        .sortable-chosen {
+            background-color: rgb(243 244 246 / var(--tw-bg-opacity, 1));
+        }
+        .sortable-drag {
+            background-color: #ffffff;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+
     <div class="flex justify-between items-center mb-6">
         <div>
             <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Data Pertanyaan SKM</h1>
@@ -59,6 +74,9 @@
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-12">
+                            <i class="mdi mdi-drag text-gray-400"></i>
+                        </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-16">
                             Urutan
                         </th>
@@ -73,10 +91,13 @@
                         </th>
                     </tr>
                 </thead>
-                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody id="skmQuestionsTable" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse($dataSkm as $item)
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200 w-16">
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" data-id="{{ $item->id }}">
+                            <td class="px-6 py-4 whitespace-nowrap text-center w-12">
+                                <i class="mdi mdi-drag drag-handle text-gray-400 dark:text-gray-500 text-xl cursor-move"></i>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200 w-16 urutan-cell">
                                 {{ $item->urutan }}
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-200 max-w-[400px]">
@@ -115,7 +136,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                            <td colspan="5" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                                 <i class="mdi mdi-folder-open-outline text-4xl mb-2"></i>
                                 <p>Belum ada data Pertanyaan SKM</p>
                             </td>
@@ -140,6 +161,7 @@
     </div>
 </x-layout>
 
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
     function updatePerPage(perPage) {
         const url = new URL(window.location.href);
@@ -161,5 +183,88 @@
         searchTimeout = setTimeout(() => {
             document.getElementById('search_form').submit();
         }, 500);
+    });
+
+    // Initialize SortableJS
+    document.addEventListener('DOMContentLoaded', function() {
+        const tableBody = document.getElementById('skmQuestionsTable');
+        if (tableBody) {
+            Sortable.create(tableBody, {
+                handle: '.drag-handle',
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                dragClass: 'sortable-drag',
+                onEnd: function(evt) {
+                    // Get new order
+                    const rows = tableBody.querySelectorAll('tr[data-id]');
+                    const order = [];
+                    
+                    rows.forEach((row, index) => {
+                        const newUrutan = index + 1;
+                        order.push({
+                            id: row.getAttribute('data-id'),
+                            urutan: newUrutan
+                        });
+                        
+                        // Update visible order cell
+                        const urutanCell = row.querySelector('.urutan-cell');
+                        if (urutanCell) {
+                            urutanCell.textContent = newUrutan;
+                        }
+                    });
+
+                    // Send AJAX request
+                    fetch('{{ route("skm.data.reorder") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ order: order })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: 'Berhasil!',
+                                text: data.message,
+                                icon: 'success',
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 2000,
+                                timerProgressBar: true
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Error!',
+                                text: data.message || 'Gagal mengubah urutan.',
+                                icon: 'error',
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 3000,
+                                timerProgressBar: true
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Terjadi kesalahan saat menyimpan urutan.',
+                            icon: 'error',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+                    });
+                }
+            });
+        }
     });
 </script>

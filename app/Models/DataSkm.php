@@ -17,6 +17,10 @@ class DataSkm extends Model
         'urutan',
         'status',
         'user_id',
+        'opsi_1',
+        'opsi_2',
+        'opsi_3',
+        'opsi_4',
     ];
 
     protected $casts = [
@@ -46,6 +50,33 @@ class DataSkm extends Model
     public function scopeAktif($query)
     {
         return $query->where('status', 'aktif')->orderBy('urutan');
+    }
+
+    /**
+     * Get label for skala value (instance version, support custom options).
+     */
+    public function getCustomSkalaLabel($value)
+    {
+        $labels = [
+            '1' => $this->opsi_1 ?: 'Kurang Baik',
+            '2' => $this->opsi_2 ?: 'Cukup Baik',
+            '3' => $this->opsi_3 ?: 'Baik',
+            '4' => $this->opsi_4 ?: 'Sangat Baik',
+        ];
+        return $labels[$value] ?? $value;
+    }
+
+    /**
+     * Get all skala labels (instance version, support custom options).
+     */
+    public function getCustomSkalaLabels()
+    {
+        return [
+            '1' => $this->opsi_1 ?: 'Kurang Baik',
+            '2' => $this->opsi_2 ?: 'Cukup Baik',
+            '3' => $this->opsi_3 ?: 'Baik',
+            '4' => $this->opsi_4 ?: 'Sangat Baik',
+        ];
     }
 
     /**

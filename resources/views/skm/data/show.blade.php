@@ -22,7 +22,7 @@
     </div>
 
     @php
-        $labels = \App\Models\DataSkm::getSkalaLabels();
+        $labels = $dataSkm->getCustomSkalaLabels();
         $colors = ['bg-red-500', 'bg-yellow-500', 'bg-blue-500', 'bg-green-500'];
     @endphp
 

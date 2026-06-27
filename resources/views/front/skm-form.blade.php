@@ -166,7 +166,7 @@
                             </div>
                             
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 ml-12">
-                                @foreach(['1' => 'Kurang Baik', '2' => 'Cukup Baik', '3' => 'Baik', '4' => 'Sangat Baik'] as $value => $label)
+                                @foreach($question->getCustomSkalaLabels() as $value => $label)
                                 <label class="relative cursor-pointer group">
                                     <input type="radio"
                                            name="jawaban[{{ $question->id }}]"

@@ -155,6 +155,7 @@ Route::middleware(['auth'])->group(function () {
     // SKM Routes (Admin Only)
     Route::middleware(['admin.role', 'role:admin'])->prefix('skm')->name('skm.')->group(function () {
         // Data SKM (Pertanyaan)
+        Route::post('data/reorder', [DataSkmController::class, 'reorder'])->name('data.reorder');
         Route::resource('data', DataSkmController::class);
 
         // Hasil SKM (Jawaban)

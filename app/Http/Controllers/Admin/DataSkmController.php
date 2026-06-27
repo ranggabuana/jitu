@@ -63,13 +63,20 @@ class DataSkmController extends Controller
     {
         $request->validate([
             'pertanyaan' => 'required|string|max:500',
-            'urutan' => 'required|integer|min:0',
             'status' => 'required|in:aktif,tidak_aktif',
+            'opsi_1' => 'nullable|string|max:100',
+            'opsi_2' => 'nullable|string|max:100',
+            'opsi_3' => 'nullable|string|max:100',
+            'opsi_4' => 'nullable|string|max:100',
         ]);
 
         $data = $request->except('bobot_max');
         $data['user_id'] = Auth::id();
         $data['bobot_max'] = 4; // Fixed bobot max
+
+        // Auto increment urutan and place it at the very end
+        $maxUrutan = \App\Models\DataSkm::max('urutan') ?? 0;
+        $data['urutan'] = $maxUrutan + 1;
 
         $dataSkm = DataSkm::create($data);
 
@@ -126,11 +133,14 @@ class DataSkmController extends Controller
 
         $request->validate([
             'pertanyaan' => 'required|string|max:500',
-            'urutan' => 'required|integer|min:0',
             'status' => 'required|in:aktif,tidak_aktif',
+            'opsi_1' => 'nullable|string|max:100',
+            'opsi_2' => 'nullable|string|max:100',
+            'opsi_3' => 'nullable|string|max:100',
+            'opsi_4' => 'nullable|string|max:100',
         ]);
 
-        $data = $request->except('bobot_max');
+        $data = $request->except(['bobot_max', 'urutan']);
         $data['bobot_max'] = 4; // Fixed bobot max
 
         $dataSkm->update($data);
@@ -171,5 +181,35 @@ class DataSkmController extends Controller
 
         return redirect()->route('skm.data.index')
             ->with('success', 'Pertanyaan SKM berhasil dihapus.');
-    }
+     }
+
+     /**
+      * Reorder SKM questions.
+      */
+     public function reorder(Request $request)
+     {
+         $request->validate([
+             'order' => 'required|array',
+             'order.*.id' => 'required|exists:data_skm,id',
+             'order.*.urutan' => 'required|integer|min:0',
+         ]);
+
+         foreach ($request->order as $item) {
+             DataSkm::where('id', $item['id'])->update(['urutan' => $item['urutan']]);
+         }
+
+         // Log activity
+         ActivityLog::log(
+             'Mengurutkan ulang pertanyaan SKM',
+             null,
+             'updated',
+             ['order' => $request->order],
+             'skm'
+         );
+
+         return response()->json([
+             'success' => true,
+             'message' => 'Urutan pertanyaan SKM berhasil diperbarui.'
+         ]);
+     }
 }

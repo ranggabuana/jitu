@@ -33,12 +33,7 @@
                         '3' => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
                         '4' => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
                     ];
-                    $jawabanLabels = [
-                        '1' => 'Kurang Baik',
-                        '2' => 'Cukup Baik',
-                        '3' => 'Baik',
-                        '4' => 'Sangat Baik',
-                    ];
+                    $jawabanLabels = $hasilSkm->dataSkm->getCustomSkalaLabels();
                 @endphp
                 <div class="flex items-center gap-4">
                     <span class="inline-flex items-center justify-center w-16 h-16 rounded-full text-2xl font-bold {{ $jawabanColors[$hasilSkm->jawaban] }}">
