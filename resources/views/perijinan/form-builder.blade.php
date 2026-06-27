@@ -310,6 +310,18 @@
                                 <i class="mdi mdi-file-document"></i> Documents
                             </button>
                         </div>
+
+                        <!-- Gambar Dimension Configuration (shown when type is gambar) -->
+                        <div id="gambar_dimension_container" class="hidden grid grid-cols-2 gap-3 pt-3 border-t border-gray-200 dark:border-gray-700 mt-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Panjang Gambar (Tinggi / Height) (cm)</label>
+                                <input type="number" step="0.1" name="options[img_height]" id="img_height" class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm text-gray-950 dark:text-gray-100" placeholder="Contoh: 4">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Lebar Gambar (Width) (cm)</label>
+                                <input type="number" step="0.1" name="options[img_width]" id="img_width" class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm text-gray-950 dark:text-gray-100" placeholder="Contoh: 3">
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Options Input (for select/radio/checkbox) -->
@@ -1412,6 +1424,18 @@
                             <i class="mdi mdi-file-document"></i> Documents
                         </button>
                     </div>
+
+                    <!-- Gambar Dimension Configuration (shown when type is gambar) for Edit -->
+                    <div id="edit_gambar_dimension_container" class="hidden grid grid-cols-2 gap-3 pt-3 border-t border-gray-200 dark:border-gray-700 mt-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Panjang Gambar (Tinggi / Height) (cm)</label>
+                            <input type="number" step="0.1" name="options[img_height]" id="edit_img_height" class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm text-gray-950 dark:text-gray-100" placeholder="Contoh: 4">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Lebar Gambar (Width) (cm)</label>
+                            <input type="number" step="0.1" name="options[img_width]" id="edit_img_width" class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm text-gray-950 dark:text-gray-100" placeholder="Contoh: 3">
+                        </div>
+                    </div>
                 </div>
 
                 <div>
@@ -1506,6 +1530,11 @@
             optionsContainer.classList.toggle('hidden', !needsOptions);
             fileConfigContainer.classList.toggle('hidden', !needsFileConfig);
             tableConfigContainer.classList.toggle('hidden', !needsTableConfig);
+
+            const gambarDimensionContainer = document.getElementById('gambar_dimension_container');
+            if (gambarDimensionContainer) {
+                gambarDimensionContainer.classList.toggle('hidden', type !== 'gambar');
+            }
             
             if (needsTableConfig && !tableDesignerInitialized) {
                 initTableDesigner('create');
@@ -1535,6 +1564,11 @@
             optionsContainer.classList.toggle('hidden', !needsOptions);
             editFileConfigContainer.classList.toggle('hidden', !needsFileConfig);
             editTableConfigContainer.classList.toggle('hidden', !needsTableConfig);
+
+            const editGambarDimensionContainer = document.getElementById('edit_gambar_dimension_container');
+            if (editGambarDimensionContainer) {
+                editGambarDimensionContainer.classList.toggle('hidden', type !== 'gambar');
+            }
         }
 
         // Add new option input
@@ -1588,6 +1622,12 @@
             // Setup file config
             document.getElementById('edit_file_types').value = field.file_types || '';
             document.getElementById('edit_max_file_size').value = field.max_file_size || '';
+
+            // Setup gambar dimensions config
+            const imgWidth = (field.options && field.options.img_width) ? field.options.img_width : '';
+            const imgHeight = (field.options && field.options.img_height) ? field.options.img_height : '';
+            document.getElementById('edit_img_width').value = imgWidth;
+            document.getElementById('edit_img_height').value = imgHeight;
 
             // Setup options
             const optionsList = document.getElementById('edit_options_list');

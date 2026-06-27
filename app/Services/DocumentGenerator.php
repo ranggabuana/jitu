@@ -196,8 +196,15 @@ class DocumentGenerator
                                 $htmlImg = '<img src="' . $src . '" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" alt="Pas Foto" />';
                                 $imgValType = 'PASFOTO_';
                             } else {
-                                $htmlImg = '<img src="' . $src . '" style="max-width: 100%; max-height: 250px; width: auto; height: auto; object-fit: contain;" alt="Gambar" />';
-                                $imgValType = 'GAMBAR_';
+                                $wCm = !empty($field->options['img_width']) ? floatval($field->options['img_width']) : null;
+                                $hCm = !empty($field->options['img_height']) ? floatval($field->options['img_height']) : null;
+                                if ($wCm && $hCm) {
+                                    $htmlImg = '<img src="' . $src . '" style="width: ' . $wCm . 'cm; height: ' . $hCm . 'cm; object-fit: contain;" alt="Gambar" />';
+                                    $imgValType = 'GAMBAR_W' . $wCm . '_H' . $hCm . '_';
+                                } else {
+                                    $htmlImg = '<img src="' . $src . '" style="max-width: 100%; max-height: 250px; width: auto; height: auto; object-fit: contain;" alt="Gambar" />';
+                                    $imgValType = 'GAMBAR_';
+                                }
                             }
                             
                             $applicantReplacements['${' . strtoupper(str_replace(' ', '_', $field->name)) . '}'] = $htmlImg;
@@ -234,8 +241,15 @@ class DocumentGenerator
                                 $htmlImg = '<img src="' . $src . '" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" alt="Pas Foto" />';
                                 $imgValType = 'PASFOTO_';
                             } else {
-                                $htmlImg = '<img src="' . $src . '" style="max-width: 100%; max-height: 250px; width: auto; height: auto; object-fit: contain;" alt="Gambar" />';
-                                $imgValType = 'GAMBAR_';
+                                $wCm = !empty($field->options['img_width']) ? floatval($field->options['img_width']) : null;
+                                $hCm = !empty($field->options['img_height']) ? floatval($field->options['img_height']) : null;
+                                if ($wCm && $hCm) {
+                                    $htmlImg = '<img src="' . $src . '" style="width: ' . $wCm . 'cm; height: ' . $hCm . 'cm; object-fit: contain;" alt="Gambar" />';
+                                    $imgValType = 'GAMBAR_W' . $wCm . '_H' . $hCm . '_';
+                                } else {
+                                    $htmlImg = '<img src="' . $src . '" style="max-width: 100%; max-height: 250px; width: auto; height: auto; object-fit: contain;" alt="Gambar" />';
+                                    $imgValType = 'GAMBAR_';
+                                }
                             }
                             
                             $boReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $htmlImg;
@@ -378,8 +392,15 @@ class DocumentGenerator
                                 $htmlImg = '<img src="' . $src . '" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" alt="Pas Foto" />';
                                 $imgValType = 'PASFOTO_';
                             } else {
-                                $htmlImg = '<img src="' . $src . '" style="max-width: 100%; max-height: 250px; width: auto; height: auto; object-fit: contain;" alt="Gambar" />';
-                                $imgValType = 'GAMBAR_';
+                                $wCm = !empty($field->options['img_width']) ? floatval($field->options['img_width']) : null;
+                                $hCm = !empty($field->options['img_height']) ? floatval($field->options['img_height']) : null;
+                                if ($wCm && $hCm) {
+                                    $htmlImg = '<img src="' . $src . '" style="width: ' . $wCm . 'cm; height: ' . $hCm . 'cm; object-fit: contain;" alt="Gambar" />';
+                                    $imgValType = 'GAMBAR_W' . $wCm . '_H' . $hCm . '_';
+                                } else {
+                                    $htmlImg = '<img src="' . $src . '" style="max-width: 100%; max-height: 250px; width: auto; height: auto; object-fit: contain;" alt="Gambar" />';
+                                    $imgValType = 'GAMBAR_';
+                                }
                             }
                             
                             $rekomReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $htmlImg;
@@ -542,8 +563,15 @@ class DocumentGenerator
                                         $htmlImg = '<img src="' . $src . '" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" alt="Pas Foto" />';
                                         $imgValType = 'PASFOTO_';
                                     } else {
-                                        $htmlImg = '<img src="' . $src . '" style="max-width: 100%; max-height: 250px; width: auto; height: auto; object-fit: contain;" alt="Gambar" />';
-                                        $imgValType = 'GAMBAR_';
+                                        $wCm = !empty($field->options['img_width']) ? floatval($field->options['img_width']) : null;
+                                        $hCm = !empty($field->options['img_height']) ? floatval($field->options['img_height']) : null;
+                                        if ($wCm && $hCm) {
+                                            $htmlImg = '<img src="' . $src . '" style="width: ' . $wCm . 'cm; height: ' . $hCm . 'cm; object-fit: contain;" alt="Gambar" />';
+                                            $imgValType = 'GAMBAR_W' . $wCm . '_H' . $hCm . '_';
+                                        } else {
+                                            $htmlImg = '<img src="' . $src . '" style="max-width: 100%; max-height: 250px; width: auto; height: auto; object-fit: contain;" alt="Gambar" />';
+                                            $imgValType = 'GAMBAR_';
+                                        }
                                     }
                                     
                                     $dataReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $htmlImg;
@@ -864,12 +892,28 @@ class DocumentGenerator
                     $isGambar = str_contains($key, '_IMG_VAL_GAMBAR_');
                     
                     if ($isGambar) {
-                        $cleanMacro = str_replace(['[', ']', '${', '}', '_IMG_VAL_GAMBAR_'], '', $key);
+                        $cleanMacro = str_replace(['[', ']', '${', '}'], '', $key);
+                        $width = 350;
+                        $height = 250;
+                        $ratio = true;
+                        
+                        if (preg_match('/_IMG_VAL_GAMBAR_W([\d\.]+)_H([\d\.]+)_/', $cleanMacro, $matches)) {
+                            $wCm = floatval($matches[1]);
+                            $hCm = floatval($matches[2]);
+                            $width = intval(round($wCm * 37.795));
+                            $height = intval(round($hCm * 37.795));
+                            $ratio = false;
+                            $prefixToRemove = '_IMG_VAL_GAMBAR_W' . $matches[1] . '_H' . $matches[2] . '_';
+                            $cleanMacro = str_replace($prefixToRemove, '', $cleanMacro);
+                        } else {
+                            $cleanMacro = str_replace('_IMG_VAL_GAMBAR_', '', $cleanMacro);
+                        }
+                        
                         $imgConfig = [
                             'path' => $path,
-                            'width' => 350,   // Max width bounding box
-                            'height' => 250,  // Max height bounding box
-                            'ratio' => true   // Conserves original aspect ratio
+                            'width' => $width,
+                            'height' => $height,
+                            'ratio' => $ratio
                         ];
                     } else {
                         $cleanMacro = str_replace(['[', ']', '${', '}', '_IMG_VAL_PASFOTO_', '_IMG_VAL_'], '', $key);
