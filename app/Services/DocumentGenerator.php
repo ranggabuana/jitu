@@ -1182,9 +1182,14 @@ class DocumentGenerator
         if (!empty($tableFontFamily)) {
             $tableStyle .= 'font-family: ' . $tableFontFamily . ';';
         }
+        $colWidths = $values['_column_widths'] ?? [];
+        if (is_string($colWidths)) {
+            $colWidths = json_decode($colWidths, true);
+        }
         $html  = '<table style="' . $tableStyle . '">';
         foreach ($rows as $row) {
             $html .= '<tr>';
+            $c = 0;
             foreach ($row as $cell) {
                 $colspan   = $cell['colspan'] ?? 1;
                 $rowspan   = $cell['rowspan'] ?? 1;
@@ -1196,8 +1201,12 @@ class DocumentGenerator
                 // Build inline styles
                 $styles = ['border: 1px solid #000', 'padding: 6px 8px'];
                 
-                if (!empty($fmt['width'])) {
-                    $styles[] = 'width: ' . $fmt['width'] . '%';
+                $colWidth = $colWidths[$c] ?? null;
+                if ($colWidth) {
+                    $styles[] = 'width: ' . $colWidth;
+                } elseif (!empty($fmt['width'])) {
+                    $widthVal = preg_match('/^[0-9]+$/', trim($fmt['width'])) ? trim($fmt['width']) . '%' : trim($fmt['width']);
+                    $styles[] = 'width: ' . $widthVal;
                 }
                 if (!empty($fmt['bgColor']) && $fmt['bgColor'] !== '#ffffff') {
                     $styles[] = 'background-color: ' . $fmt['bgColor'];
@@ -1241,6 +1250,7 @@ class DocumentGenerator
                 } else {
                     $html .= '<th ' . $styleAttr . $colspanAttr . $rowspanAttr . '>' . nl2br(htmlspecialchars($content)) . '</th>';
                 }
+                $c += $colspan;
             }
             $html .= '</tr>';
         }
@@ -1377,6 +1387,65 @@ class DocumentGenerator
             }
         }
 
+        // Calculate column percentages for Word
+        $colPercentages = [];
+        $totalDefinedPercentage = 0;
+        $undefinedColsCount = 0;
+
+        $colWidths = $values['_column_widths'] ?? [];
+        if (is_string($colWidths)) {
+            $colWidths = json_decode($colWidths, true);
+        }
+
+        for ($colIdx = 0; $colIdx < $maxCols; $colIdx++) {
+            $cellData = $cellAtGrid[0][$colIdx] ?? null;
+            $cellFmtWidth = null;
+            if ($cellData) {
+                $cell = $cellData['cell'];
+                $cellFmtWidth = $cell['fmt']['width'] ?? null;
+            }
+
+            $userResizedWidth = $colWidths[$colIdx] ?? null;
+            $widthStr = $userResizedWidth ?: $cellFmtWidth;
+
+            if (!empty($widthStr)) {
+                $parsedWidth = 0;
+                if (str_contains($widthStr, '%')) {
+                    $parsedWidth = floatval($widthStr);
+                } elseif (str_contains($widthStr, 'px')) {
+                    $parsedWidth = (floatval($widthStr) / 600) * 100; // relative to 600px
+                } else {
+                    $parsedWidth = floatval($widthStr);
+                }
+                $colPercentages[$colIdx] = $parsedWidth;
+                $totalDefinedPercentage += $parsedWidth;
+            } else {
+                $colPercentages[$colIdx] = null;
+                $undefinedColsCount++;
+            }
+        }
+
+        $remainingPercentage = 100 - $totalDefinedPercentage;
+        if ($remainingPercentage <= 0) {
+            $scale = 100 / $totalDefinedPercentage;
+            for ($colIdx = 0; $colIdx < $maxCols; $colIdx++) {
+                if ($colPercentages[$colIdx] !== null) {
+                    $colPercentages[$colIdx] *= $scale;
+                } else {
+                    $colPercentages[$colIdx] = 0;
+                }
+            }
+        } else {
+            if ($undefinedColsCount > 0) {
+                $defaultPct = $remainingPercentage / $undefinedColsCount;
+                for ($colIdx = 0; $colIdx < $maxCols; $colIdx++) {
+                    if ($colPercentages[$colIdx] === null) {
+                        $colPercentages[$colIdx] = $defaultPct;
+                    }
+                }
+            }
+        }
+
         // Render phase
         for ($r = 0; $r < $numRows; $r++) {
             $table->addRow();
@@ -1413,8 +1482,11 @@ class DocumentGenerator
                         $cellStyle['bgColor'] = 'F0F0F0';
                     }
 
-                    $colWidth = 9000 / $maxCols;
-                    $cellWidth = $colWidth * $colspan;
+                    $cellPct = 0;
+                    for ($dc = 0; $dc < $colspan; $dc++) {
+                        $cellPct += $colPercentages[$c + $dc] ?? (100 / $maxCols);
+                    }
+                    $cellWidth = 9000 * ($cellPct / 100);
 
                     $cellObj = $table->addCell($cellWidth, $cellStyle);
 

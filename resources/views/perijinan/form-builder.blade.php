@@ -486,8 +486,8 @@
                                         </select>
                                     </div>
                                     <div>
-                                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-0.5">Lebar Kolom (%)</label>
-                                        <input type="number" id="cell_width_create" oninput="updateCellProperties('create')" min="5" max="100" placeholder="Auto"
+                                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-0.5">Lebar Kolom</label>
+                                        <input type="text" id="cell_width_create" oninput="updateCellProperties('create')" placeholder="Contoh: 10% atau 50px"
                                             class="w-full px-2 py-1 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-xs text-gray-950 dark:text-gray-100">
                                     </div>
                                 </div>
@@ -1425,8 +1425,8 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-0.5">Lebar Kolom (%)</label>
-                                    <input type="number" id="cell_width_edit" oninput="updateCellProperties('edit')" min="5" max="100" placeholder="Auto"
+                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-0.5">Lebar Kolom</label>
+                                    <input type="text" id="cell_width_edit" oninput="updateCellProperties('edit')" placeholder="Contoh: 10% atau 50px"
                                         class="w-full px-2 py-1 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-xs text-gray-950 dark:text-gray-100">
                                 </div>
                             </div>
@@ -2063,8 +2063,13 @@
 
                     // Apply cell formatting
                     const fmt = cell.fmt || {};
-                    let baseCss = 'border:1px solid #d1d5db;padding:8px 10px;cursor:pointer;transition:background .15s;min-width:60px;';
-                    if (fmt.width) baseCss += `width:${fmt.width}%;`;
+                    let baseCss = 'border:1px solid #d1d5db;padding:8px 10px;cursor:pointer;transition:background .15s;';
+                    if (fmt.width) {
+                        const widthVal = /^[0-9]+$/.test(fmt.width) ? fmt.width + '%' : fmt.width;
+                        baseCss += `width:${widthVal};`;
+                    } else {
+                        baseCss += 'min-width:60px;';
+                    }
                     if (fmt.bgColor && fmt.bgColor !== '#ffffff') baseCss += `background-color:${fmt.bgColor};`;
                     if (fmt.color && fmt.color !== '#000000') baseCss += `color:${fmt.color};`;
                     if (fmt.fontSize) baseCss += `font-size:${fmt.fontSize};`;
@@ -2224,7 +2229,7 @@
             const fsEl = document.getElementById(`cell_font_size_${mode}`);
             if (fsEl) cell.fmt.fontSize = fsEl.value;
             const wEl = document.getElementById(`cell_width_${mode}`);
-            if (wEl) cell.fmt.width = wEl.value ? parseInt(wEl.value) : '';
+            if (wEl) cell.fmt.width = wEl.value || '';
             const tcEl = document.getElementById(`cell_text_color_${mode}`);
             if (tcEl) cell.fmt.color = tcEl.value;
             const bcEl = document.getElementById(`cell_bg_color_${mode}`);

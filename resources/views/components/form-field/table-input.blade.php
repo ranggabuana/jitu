@@ -16,6 +16,9 @@
     }
     $rows = $tableData['rows'] ?? [];
     $savedVal = is_array($val) ? $val : [];
+    if (isset($savedVal['_column_widths']) && is_string($savedVal['_column_widths'])) {
+        $savedVal['_column_widths'] = json_decode($savedVal['_column_widths'], true);
+    }
     $prefix = $inputNamePrefix ?? $field->name;
 
     // Dynamically expand rows if savedVal contains keys beyond original rows
@@ -65,11 +68,12 @@
 @endphp
 
 @if($originalRowCount > 0)
-    <div class="overflow-x-auto mt-1 rounded-xl border border-gray-200 dark:border-gray-700">
-        <table class="w-full border-collapse text-sm text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-900" data-original-rows="{{ $originalRowCount }}" style="table-layout: auto;">
-            @foreach($rows as $row)
+    <div class="overflow-x-auto mt-1 rounded-xl border border-gray-200 dark:border-gray-700 relative">
+        <input type="hidden" name="{{ $prefix }}[_column_widths]" id="col_widths_{{ $prefix }}" value="{{ json_encode($savedVal['_column_widths'] ?? []) }}">
+        <table class="w-full border-collapse text-sm text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-900 table-resizable" data-prefix="{{ $prefix }}" data-readonly="{{ empty($ro) ? 'false' : 'true' }}" data-original-rows="{{ $originalRowCount }}" style="table-layout: auto;">
+            @foreach($rows as $rKey => $row)
                 <tr>
-                    @foreach($row as $cell)
+                    @foreach($row as $cKey => $cell)
                         @php
                             $colspan = $cell['colspan'] ?? 1;
                             $rowspan = $cell['rowspan'] ?? 1;
@@ -90,13 +94,21 @@
                             }
                             $fmt = $cell['fmt'] ?? [];
 
+                            // Retrieve saved column width if present
+                            $savedWidth = $savedVal['_column_widths'][$cKey] ?? null;
+
                             // Construct cell inline styling based on builder configuration
-                            $cellStyle = 'border: 1px solid #d1d5db; padding: 8px 10px; min-width: 60px;';
+                            $cellStyle = 'border: 1px solid #d1d5db; padding: 8px 10px; position: relative;';
+                            if (!empty($savedWidth)) {
+                                $cellStyle .= 'width: ' . $savedWidth . ';';
+                            } elseif (!empty($fmt['width'])) {
+                                $widthVal = preg_match('/^[0-9]+$/', trim($fmt['width'])) ? trim($fmt['width']) . '%' : trim($fmt['width']);
+                                $cellStyle .= 'width: ' . $widthVal . ';';
+                            } else {
+                                $cellStyle .= 'min-width: 60px;';
+                            }
                             if (!empty($fmt['fontFamily'])) {
                                 $cellStyle .= 'font-family: ' . $fmt['fontFamily'] . ';';
-                            }
-                            if (!empty($fmt['width'])) {
-                                $cellStyle .= 'width: ' . $fmt['width'] . '%;';
                             }
                             if (!empty($fmt['bgColor']) && $fmt['bgColor'] !== '#ffffff') {
                                 $cellStyle .= 'background-color: ' . $fmt['bgColor'] . ';';
@@ -122,7 +134,10 @@
                             $cellStyle .= 'text-align: ' . $align . ';';
                         @endphp
                         
-                        <td colspan="{{ $colspan }}" rowspan="{{ $rowspan }}" style="{{ $cellStyle }}" class="border border-gray-300 dark:border-gray-600 p-2">
+                        <td colspan="{{ $colspan }}" rowspan="{{ $rowspan }}" style="{{ $cellStyle }}" class="border border-gray-300 dark:border-gray-600 p-2 relative">
+                            @if(empty($ro) && $rKey === 0)
+                                <div class="col-resize-handle hover:bg-indigo-500/30 transition-colors" data-col-index="{{ $cKey }}" style="position: absolute; right: 0; top: 0; bottom: 0; width: 6px; cursor: col-resize; z-index: 10; user-select: none;"></div>
+                            @endif
                             @if($isInput)
                                 @php
                                     $cellAttr = $ro;
@@ -184,6 +199,62 @@
 
     <script>
         (function() {
+            function initResizableTables() {
+                document.querySelectorAll('.table-resizable').forEach(table => {
+                    if (table.dataset.resizableInitialized === 'true') return;
+                    table.dataset.resizableInitialized = 'true';
+
+                    const tablePrefix = table.dataset.prefix;
+                    const hiddenInput = document.getElementById('col_widths_' + tablePrefix);
+                    if (!hiddenInput) return;
+
+                    const firstRow = table.querySelector('tr:first-child');
+                    if (!firstRow) return;
+
+                    const handles = firstRow.querySelectorAll('.col-resize-handle');
+                    handles.forEach(handle => {
+                        const colIndex = parseInt(handle.dataset.colIndex);
+                        const cell = handle.closest('td, th');
+                        
+                        let startX, startWidth;
+
+                        handle.addEventListener('mousedown', e => {
+                            e.preventDefault();
+                            startX = e.pageX;
+                            startWidth = cell.offsetWidth;
+
+                            handle.style.backgroundColor = 'rgba(99, 102, 241, 0.4)'; // Highlight on drag
+
+                            const onMouseMove = ev => {
+                                const newWidth = Math.max(30, startWidth + (ev.pageX - startX));
+                                cell.style.width = newWidth + 'px';
+                                
+                                let widths = {};
+                                try {
+                                    widths = JSON.parse(hiddenInput.value || '{}');
+                                } catch(err) {}
+                                widths[colIndex] = newWidth + 'px';
+                                hiddenInput.value = JSON.stringify(widths);
+                            };
+
+                            const onMouseUp = () => {
+                                handle.style.backgroundColor = '';
+                                document.removeEventListener('mousemove', onMouseMove);
+                                document.removeEventListener('mouseup', onMouseUp);
+                            };
+
+                            document.addEventListener('mousemove', onMouseMove);
+                            document.addEventListener('mouseup', onMouseUp);
+                        });
+                    });
+                });
+            }
+
+            // Trigger immediately and register listeners
+            initResizableTables();
+            document.addEventListener('DOMContentLoaded', initResizableTables);
+            window.addEventListener('load', initResizableTables);
+
             function adjustHeights() {
                 document.querySelectorAll('textarea[name^="{{ $prefix }}"]').forEach(el => {
                     el.style.height = 'auto';
