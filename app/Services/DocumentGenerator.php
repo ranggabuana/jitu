@@ -439,6 +439,9 @@ class DocumentGenerator
                     if ($field) {
                         $rekomReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $valStr;
                     }
+                    if ($key === 'masa_aktif_rekom') {
+                        $rekomReplacements['${MASA_AKTIF}'] = $valStr;
+                    }
                 }
             }
 

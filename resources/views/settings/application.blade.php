@@ -498,7 +498,6 @@
                                         '${TANGGAL_HARI_INI}' => 'Tanggal Hari Ini (Lengkap)',
                                         '${NO_REGISTRASI}' => 'Nomor Registrasi Permohonan',
                                         '${NOMOR_SURAT}' => 'Nomor Surat Lengkap (Format: KODE/NO/OPD/TAHUN)',
-                                        '${MASA_AKTIF}' => 'Masa Aktif Izin',
                                         '${LOGO_KABUPATEN}' => 'Logo Kabupaten (Header)',
                                         '${GAMBAR_TTE}' => 'Gambar TTE (Tanda Tangan Elektronik)',
                                     ] as $code => $label)

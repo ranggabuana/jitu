@@ -907,7 +907,6 @@
                                         '${TANGGAL_HARI_INI}' => 'Tanggal Hari Ini (Lengkap)',
                                         '${NO_REGISTRASI}' => 'Nomor Registrasi Permohonan',
                                         '${NOMOR_SURAT}' => 'Nomor Surat Lengkap (Format: KODE/NO/OPD/TAHUN)',
-                                        '${MASA_AKTIF}' => 'Masa Aktif Izin',
                                         '${LOGO_KABUPATEN}' => 'Logo Kabupaten (Header)',
                                         '${GAMBAR_TTE}' => 'Gambar TTE (Tanda Tangan Elektronik)',
                                         '${QRCODE}' => 'QR Code (Scan untuk Verifikasi Izin)',
@@ -940,11 +939,17 @@
                                 </div>
                             </div>
 
-                            <!-- Variabel Khusus Rekom -->
                             <div class="dynamic-var-section hidden" id="var-section-rekom">
                                 <span class="text-[10px] uppercase tracking-wider font-bold text-purple-800 dark:text-purple-300 block mb-2">Variabel Khusus Rekom Form:</span>
                                 <div class="flex flex-wrap gap-2">
-                                    @forelse($perijinan->formFields->where('form_type', 'rekom') as $field)
+                                    <button type="button"
+                                        onclick="insertPlaceholder('${MASA_AKTIF_REKOM}')"
+                                        title="Masa Aktif Rekomendasi"
+                                        class="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300 hover:bg-purple-600 hover:text-white dark:hover:bg-purple-700 hover:border-purple-600 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold transition-all shadow-sm">
+                                        <i class="mdi mdi-plus text-xs"></i>${MASA_AKTIF_REKOM}
+                                    </button>
+
+                                    @foreach($perijinan->formFields->where('form_type', 'rekom') as $field)
                                         @php $varName = strtoupper(str_replace(' ', '_', $field->label)); @endphp
                                         <button type="button"
                                             onclick="insertPlaceholder('{{ '${' . $varName . '}' }}')"
@@ -952,16 +957,20 @@
                                             class="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300 hover:bg-purple-600 hover:text-white dark:hover:bg-purple-700 hover:border-purple-600 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold transition-all shadow-sm">
                                             <i class="mdi mdi-plus text-xs"></i>{{ '${' . $varName . '}' }}
                                         </button>
-                                    @empty
-                                        <span class="text-xs text-gray-400 italic">Belum ada field di Rekom Form</span>
-                                    @endforelse
+                                    @endforeach
                                 </div>
                             </div>
-                            <!-- Variabel Khusus Izin -->
                             <div class="dynamic-var-section hidden" id="var-section-izin">
                                 <span class="text-[10px] uppercase tracking-wider font-bold text-indigo-800 dark:text-indigo-300 block mb-2">Variabel Khusus Izin Form:</span>
                                 <div class="flex flex-wrap gap-2">
-                                    @forelse($perijinan->formFields->where('form_type', 'izin') as $field)
+                                    <button type="button"
+                                        onclick="insertPlaceholder('${MASA_AKTIF}')"
+                                        title="Masa Aktif Izin"
+                                        class="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-700 hover:border-indigo-600 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold transition-all shadow-sm">
+                                        <i class="mdi mdi-plus text-xs"></i>${MASA_AKTIF}
+                                    </button>
+
+                                    @foreach($perijinan->formFields->where('form_type', 'izin') as $field)
                                         @php $varName = strtoupper(str_replace(' ', '_', $field->label)); @endphp
                                         <button type="button"
                                             onclick="insertPlaceholder('{{ '${' . $varName . '}' }}')"
@@ -969,9 +978,7 @@
                                             class="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-700 hover:border-indigo-600 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold transition-all shadow-sm">
                                             <i class="mdi mdi-plus text-xs"></i>{{ '${' . $varName . '}' }}
                                         </button>
-                                    @empty
-                                        <span class="text-xs text-gray-400 italic">Belum ada field di Izin Form</span>
-                                    @endforelse
+                                    @endforeach
                                 </div>
                             </div>
 
