@@ -1032,8 +1032,11 @@ class DataPerijinanController extends Controller
     public function saveRekomData(Request $request, $id)
     {
         $user = auth()->user();
-        if ($user->role !== 'operator_opd' && $user->role !== 'admin') {
-            abort(403, 'Hanya Operator OPD atau Admin yang dapat mengisi data rekomendasi.');
+        if ($user->isAdmin()) {
+            abort(403, 'Admin hanya memiliki akses memantau (read-only).');
+        }
+        if ($user->role !== 'operator_opd') {
+            abort(403, 'Hanya Operator OPD yang dapat mengisi data rekomendasi.');
         }
 
         $application = DataPerijinan::with(['perijinan.activeFormFields', 'validasiRecords.validationFlow'])->findOrFail($id);
@@ -1416,8 +1419,11 @@ class DataPerijinanController extends Controller
     public function saveIzinData(Request $request, $id)
     {
         $user = auth()->user();
-        if ($user->role !== 'verifikator' && $user->role !== 'admin') {
-            abort(403, 'Hanya Verifikator atau Admin yang dapat mengisi data izin.');
+        if ($user->isAdmin()) {
+            abort(403, 'Admin hanya memiliki akses memantau (read-only).');
+        }
+        if ($user->role !== 'verifikator') {
+            abort(403, 'Hanya Verifikator yang dapat mengisi data izin.');
         }
 
         $application = DataPerijinan::with(['perijinan.activeFormFields', 'validasiRecords.validationFlow'])->findOrFail($id);
@@ -1620,8 +1626,11 @@ class DataPerijinanController extends Controller
     public function saveBoData(Request $request, $id)
     {
         $user = auth()->user();
-        if ($user->role !== 'bo' && $user->role !== 'admin') {
-            abort(403, 'Hanya Back Office (BO) atau Admin yang dapat mengisi data BO.');
+        if ($user->isAdmin()) {
+            abort(403, 'Admin hanya memiliki akses memantau (read-only).');
+        }
+        if ($user->role !== 'bo') {
+            abort(403, 'Hanya Back Office (BO) yang dapat mengisi data BO.');
         }
 
         $application = DataPerijinan::with(['perijinan.activeFormFields', 'validasiRecords.validationFlow'])->findOrFail($id);
@@ -2394,6 +2403,11 @@ class DataPerijinanController extends Controller
      */
     public function regenerateDocuments($id)
     {
+        $user = auth()->user();
+        if ($user->isAdmin()) {
+            abort(403, 'Admin hanya memiliki akses memantau (read-only).');
+        }
+
         $application = DataPerijinan::with(['user.provinsi', 'user.kabupaten', 'user.kecamatan', 'user.kelurahan', 'perijinan'])->findOrFail($id);
 
         try {
@@ -2439,6 +2453,9 @@ class DataPerijinanController extends Controller
         ]);
 
         $user = auth()->user();
+        if ($user->isAdmin()) {
+            abort(403, 'Admin hanya memiliki akses memantau (read-only).');
+        }
         $application = DataPerijinan::findOrFail($id);
         $isMultiOpd = $application->perijinan->is_multi_opd;
 

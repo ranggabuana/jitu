@@ -281,11 +281,12 @@
         $isBoTurn = ($cv && $cv->validationFlow->assigned_user_id === auth()->id() && $cv->validationFlow->role === 'bo');
         $canEditBo = ($isBo || $isAdmin) && $isBoTurn && !in_array($application->status, ['approved', 'rejected', 'perbaikan']);
 
-        // Admin can always edit if not finished
-        if ($isAdmin && !in_array($application->status, ['approved', 'rejected'])) {
-            $canEditRekom = true;
-            $canEditIzin = true;
-            $canEditBo = true;
+        // Admin is purely an observer/monitor and cannot edit or validate
+        if ($isAdmin) {
+            $canVal = false;
+            $canEditRekom = false;
+            $canEditIzin = false;
+            $canEditBo = false;
         }
 
         $boFields = $application->perijinan->has_bo_form
@@ -402,7 +403,7 @@
                                 <p class="text-gray-500 text-[10px] uppercase font-bold mt-0.5 tracking-wider">Digenerate otomatis dari data pemohon</p>
                             </div>
                         </div>
-                        @if(!$isFo && !$isBo)
+                        @if(!$isFo && !$isBo && !$isAdmin)
                         <form action="{{ route('data-perijinan.regenerate-documents', $application->id) }}" method="POST" onsubmit="return confirm('Lanjutkan?');">
                             @csrf <button type="submit" class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded-lg text-[10px] font-bold uppercase transition-all"><i class="mdi mdi-sync text-sm"></i> Update</button>
                         </form>
