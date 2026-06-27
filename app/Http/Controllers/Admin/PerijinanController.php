@@ -383,6 +383,7 @@ class PerijinanController extends Controller
             'is_active' => 'boolean',
             'file_types' => 'nullable|string|max:255',
             'max_file_size' => 'nullable|integer|min:1',
+            'dynamic_variable' => 'nullable|string|max:255',
         ]);
 
         if (!empty($validated['file_types'])) {
@@ -466,6 +467,7 @@ class PerijinanController extends Controller
             'is_active' => 'boolean',
             'file_types' => 'nullable|string|max:255',
             'max_file_size' => 'nullable|integer|min:1',
+            'dynamic_variable' => 'nullable|string|max:255',
         ]);
 
         if (!empty($validated['file_types'])) {

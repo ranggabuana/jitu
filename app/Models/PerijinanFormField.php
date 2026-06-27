@@ -24,6 +24,7 @@ class PerijinanFormField extends Model
         'is_active',
         'file_types',
         'max_file_size',
+        'dynamic_variable',
     ];
 
     protected $casts = [

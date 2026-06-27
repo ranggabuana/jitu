@@ -184,3 +184,127 @@ if (!function_exists('formatDuration')) {
         return implode(' ', $parts);
     }
 }
+
+if (!function_exists('resolveDynamicVariable')) {
+    /**
+     * Resolve a dynamic variable placeholder to its actual value from a DataPerijinan application.
+     * Variable format: ${VARIABLE_NAME}
+     * Consistent with DocumentGenerator variable mapping.
+     *
+     * @param \App\Models\DataPerijinan $application
+     * @param string $variable  e.g. '${NAMA_PEMOHON}'
+     * @return string
+     */
+    function resolveDynamicVariable(\App\Models\DataPerijinan $application, string $variable): string
+    {
+        $user = $application->user;
+        $perijinan = $application->perijinan;
+
+        // Build full address
+        $userAddress = $user->alamat_ktp ?? $user->alamat_domisili ?? '';
+        $addressParts = [];
+        if ($user->kelurahan) $addressParts[] = 'Kel/Desa ' . $user->kelurahan->name;
+        if ($user->kecamatan) $addressParts[] = 'Kec. ' . $user->kecamatan->name;
+        if ($user->kabupaten) $addressParts[] = 'Kab/Kota ' . $user->kabupaten->name;
+        if ($user->provinsi) $addressParts[] = 'Provinsi ' . $user->provinsi->name;
+        $fullAlamat = $userAddress;
+        if (!empty($addressParts)) {
+            $fullAlamat .= ', ' . implode(', ', $addressParts);
+        }
+
+        // Extract pekerjaan from form data
+        $pekerjaan = '-';
+        if (!empty($application->form_data) && is_array($application->form_data)) {
+            foreach ($application->form_data as $fieldId => $value) {
+                $field = $perijinan->activeFormFields->firstWhere('id', $fieldId);
+                if ($field && in_array(strtolower($field->name), ['pekerjaan', 'jenis_pekerjaan'])) {
+                    $pekerjaan = is_array($value) ? implode(', ', $value) : (string) $value;
+                    break;
+                }
+            }
+        }
+
+        // System variable map
+        $variableMap = [
+            '${NAMA_PEMOHON}' => $user->name ?? '-',
+            '${NIK}' => $user->nip ?? '-',
+            '${USERNAME}' => $user->username ?? '-',
+            '${EMAIL}' => $user->email ?? '-',
+            '${NO_HP}' => $user->no_hp ?? '-',
+            '${PEKERJAAN}' => $pekerjaan,
+            '${NAMA_PERUSAHAAN}' => $user->nama_perusahaan ?? '-',
+            '${NPWP}' => $user->npwp ?? '-',
+            '${ALAMAT_KTP}' => $user->alamat_ktp ?? '-',
+            '${ALAMAT_DOMISILI}' => $user->alamat_domisili ?? '-',
+            '${ALAMAT_LENGKAP}' => $fullAlamat ?: '-',
+            '${PROVINSI}' => $user->provinsi->name ?? '-',
+            '${KABUPATEN}' => $user->kabupaten->name ?? '-',
+            '${KECAMATAN}' => $user->kecamatan->name ?? '-',
+            '${KELURAHAN}' => $user->kelurahan->name ?? '-',
+            '${STATUS_PEMOHON}' => $user->status_pemohon ?? '-',
+            '${NAMA_IZIN}' => $perijinan->nama_perijinan ?? '-',
+            '${NO_REGISTRASI}' => $application->no_registrasi ?? '-',
+            '${TANGGAL}' => $application->created_at ? Carbon::parse($application->created_at)->translatedFormat('d F Y') : '-',
+            '${TANGGAL_HARI_INI}' => Carbon::now()->translatedFormat('d F Y'),
+            '${MASA_AKTIF}' => $application->masa_aktif ? Carbon::parse($application->masa_aktif)->translatedFormat('d F Y') : '-',
+            '${NOMOR_SURAT}' => $application->no_registrasi ?? '-',
+        ];
+
+        // Direct match from map
+        $varUpper = strtoupper($variable);
+        if (isset($variableMap[$varUpper])) {
+            return $variableMap[$varUpper];
+        }
+
+        // Try to resolve from form fields (global/rekom/izin/bo data)
+        // Variable format: ${field_name}
+        $fieldName = trim($variable, '${}');
+        $fieldNameLower = strtolower($fieldName);
+
+        // Search in form_data (global form - keyed by field ID)
+        if (!empty($application->form_data) && is_array($application->form_data)) {
+            foreach ($application->form_data as $fieldId => $value) {
+                $field = $perijinan->activeFormFields->firstWhere('id', $fieldId);
+                if ($field && strtolower($field->name) === $fieldNameLower) {
+                    return is_array($value) ? implode(', ', $value) : (string) $value;
+                }
+            }
+        }
+
+        // Search in rekom_data
+        if (!empty($application->rekom_data) && is_array($application->rekom_data)) {
+            if (isset($application->rekom_data[$fieldNameLower]) || isset($application->rekom_data[$fieldName])) {
+                $val = $application->rekom_data[$fieldNameLower] ?? $application->rekom_data[$fieldName] ?? '';
+                return is_array($val) ? implode(', ', $val) : (string) $val;
+            }
+        }
+
+        // Search in multi-OPD rekom data
+        if (!empty($application->rekom_data_opd) && is_array($application->rekom_data_opd)) {
+            foreach ($application->rekom_data_opd as $opdId => $opdData) {
+                if (is_array($opdData) && (isset($opdData[$fieldNameLower]) || isset($opdData[$fieldName]))) {
+                    $val = $opdData[$fieldNameLower] ?? $opdData[$fieldName] ?? '';
+                    return is_array($val) ? implode(', ', $val) : (string) $val;
+                }
+            }
+        }
+
+        // Search in izin_data
+        if (!empty($application->izin_data) && is_array($application->izin_data)) {
+            if (isset($application->izin_data[$fieldNameLower]) || isset($application->izin_data[$fieldName])) {
+                $val = $application->izin_data[$fieldNameLower] ?? $application->izin_data[$fieldName] ?? '';
+                return is_array($val) ? implode(', ', $val) : (string) $val;
+            }
+        }
+
+        // Search in bo_data
+        if (!empty($application->bo_data) && is_array($application->bo_data)) {
+            if (isset($application->bo_data[$fieldNameLower]) || isset($application->bo_data[$fieldName])) {
+                $val = $application->bo_data[$fieldNameLower] ?? $application->bo_data[$fieldName] ?? '';
+                return is_array($val) ? implode(', ', $val) : (string) $val;
+            }
+        }
+
+        return '';
+    }
+}

@@ -505,8 +505,16 @@
                                             }
 
                                             $val = $val ?? '';
-                                            $ro = !$canEditBo ? 'readonly disabled' : ''; 
-                                            $cls = "w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all"; 
+                                            $ro = !$canEditBo ? 'readonly disabled' : '';
+                                            $cls = "w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all";
+                                            
+                                            // Dynamic variable override
+                                            $isDynamic = !empty($field->dynamic_variable);
+                                            if ($isDynamic) {
+                                                $val = resolveDynamicVariable($application, $field->dynamic_variable);
+                                                $ro = 'readonly disabled';
+                                                $cls .= ' bg-amber-50/50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-700';
+                                            }
                                         @endphp
 
                                         @if($field->type === 'textarea')
@@ -587,6 +595,14 @@
                                         @endif
                                         @if($field->help_text)
                                             <p class="text-[10px] text-gray-400 italic mt-1">{{ $field->help_text }}</p>
+                                        @endif
+                                        @if(!empty($field->dynamic_variable))
+                                            <div class="flex items-center gap-1.5 mt-1.5 px-2.5 py-1.5 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800/50">
+                                                <i class="mdi mdi-link-variant text-amber-500 text-sm"></i>
+                                                <p class="text-[10px] text-amber-700 dark:text-amber-400 font-medium">
+                                                    <i class="mdi mdi-lock-outline"></i> Input ini diisi otomatis dari variabel dinamis <code class="font-mono bg-amber-100 dark:bg-amber-900/30 px-1 py-0.5 rounded text-[9px]">{{ $field->dynamic_variable }}</code>. Nilai akan tampil pada surat.
+                                                </p>
+                                            </div>
                                         @endif
                                         @error($field->name)
                                             <p class="text-xs text-red-500 font-bold mt-1"><i class="mdi mdi-alert-circle-outline"></i> {{ $message }}</p>
@@ -833,6 +849,14 @@
                                                 @if($field->help_text)
                                                     <p class="text-[10px] text-gray-400 italic mt-1">{{ $field->help_text }}</p>
                                                 @endif
+                                                @if(!empty($field->dynamic_variable))
+                                                    <div class="flex items-center gap-1.5 mt-1.5 px-2.5 py-1.5 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800/50">
+                                                        <i class="mdi mdi-link-variant text-amber-500 text-sm"></i>
+                                                        <p class="text-[10px] text-amber-700 dark:text-amber-400 font-medium">
+                                                            <i class="mdi mdi-lock-outline"></i> Input ini diisi otomatis dari variabel dinamis <code class="font-mono bg-amber-100 dark:bg-amber-900/30 px-1 py-0.5 rounded text-[9px]">{{ $field->dynamic_variable }}</code>. Nilai akan tampil pada surat.
+                                                        </p>
+                                                    </div>
+                                                @endif
                                                 @error($field->name)
                                                     <p class="text-xs text-red-500 font-bold mt-1"><i class="mdi mdi-alert-circle-outline"></i> {{ $message }}</p>
                                                 @enderror
@@ -1055,8 +1079,16 @@
                                                 }
 
                                                 $val = $val ?? '';
-                                                $ro = !$canEditRekom ? 'readonly disabled' : ''; 
-                                                $cls = "w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-purple-500 outline-none transition-all"; 
+                                                $ro = !$canEditRekom ? 'readonly disabled' : '';
+                                                $cls = "w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-purple-500 outline-none transition-all";
+                                                
+                                                // Dynamic variable override
+                                                $isDynamic = !empty($field->dynamic_variable);
+                                                if ($isDynamic) {
+                                                    $val = resolveDynamicVariable($application, $field->dynamic_variable);
+                                                    $ro = 'readonly disabled';
+                                                    $cls .= ' bg-amber-50/50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-700';
+                                                }
                                             @endphp
 
                                             @if($field->type === 'textarea')
@@ -1345,9 +1377,17 @@
                                                 }
                                             }
 
-                                            $val = $val ?? ''; 
-                                            $ro = !$canEditIzin ? 'readonly disabled' : ''; 
-                                            $cls = "w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"; 
+                                            $val = $val ?? '';
+                                            $ro = !$canEditIzin ? 'readonly disabled' : '';
+                                            $cls = "w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all";
+                                            
+                                            // Dynamic variable override
+                                            $isDynamic = !empty($field->dynamic_variable);
+                                            if ($isDynamic) {
+                                                $val = resolveDynamicVariable($application, $field->dynamic_variable);
+                                                $ro = 'readonly disabled';
+                                                $cls .= ' bg-amber-50/50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-700';
+                                            }
                                         @endphp
                                         @if($field->type === 'textarea')
                                             <textarea name="{{ $field->name }}" class="{{ $cls }} min-h-[120px]" {{ $ro }}>{{ $val }}</textarea>
@@ -1462,6 +1502,14 @@
                                         @endif
                                         @if($field->help_text)
                                             <p class="text-[10px] text-gray-400 italic mt-1">{{ $field->help_text }}</p>
+                                        @endif
+                                        @if(!empty($field->dynamic_variable))
+                                            <div class="flex items-center gap-1.5 mt-1.5 px-2.5 py-1.5 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800/50">
+                                                <i class="mdi mdi-link-variant text-amber-500 text-sm"></i>
+                                                <p class="text-[10px] text-amber-700 dark:text-amber-400 font-medium">
+                                                    <i class="mdi mdi-lock-outline"></i> Input ini diisi otomatis dari variabel dinamis <code class="font-mono bg-amber-100 dark:bg-amber-900/30 px-1 py-0.5 rounded text-[9px]">{{ $field->dynamic_variable }}</code>. Nilai akan tampil pada surat.
+                                                </p>
+                                            </div>
                                         @endif
                                         @error($field->name)
                                             <p class="text-xs text-red-500 font-bold mt-1"><i class="mdi mdi-alert-circle-outline"></i> {{ $message }}</p>
