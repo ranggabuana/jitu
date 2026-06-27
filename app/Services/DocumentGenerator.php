@@ -1529,19 +1529,110 @@ class DocumentGenerator
     {
         $map = [];
 
-        // 1. System/Model fields
-        $map['nomor_registrasi'] = $application->no_registrasi;
-        $map['nomor_surat'] = $application->no_izin ?? '-';
-        $map['nomor_izin'] = $application->no_izin ?? '-';
-        $map['tanggal_daftar'] = self::formatDateIndonesian($application->created_at);
-        $map['nama_layanan'] = $application->perijinan->name ?? '-';
+        $user = $application->user;
+        $perijinan = $application->perijinan;
 
-        // 2. Global form fields (applicant data)
-        if (!empty($application->form_data) && is_array($application->form_data)) {
+        // Build full address
+        $userAddress = $user->alamat_ktp ?? $user->alamat_domisili ?? '';
+        $addressParts = [];
+        if ($user && $user->kelurahan) $addressParts[] = 'Kel/Desa ' . $user->kelurahan->name;
+        if ($user && $user->kecamatan) $addressParts[] = 'Kec. ' . $user->kecamatan->name;
+        if ($user && $user->kabupaten) $addressParts[] = 'Kab/Kota ' . $user->kabupaten->name;
+        if ($user && $user->provinsi) $addressParts[] = 'Provinsi ' . $user->provinsi->name;
+        $fullAlamat = $userAddress;
+        if (!empty($addressParts)) {
+            $fullAlamat .= ', ' . implode(', ', $addressParts);
+        }
+
+        // Extract pekerjaan
+        $pekerjaan = '-';
+        if ($perijinan && !empty($application->form_data) && is_array($application->form_data)) {
+            foreach ($application->form_data as $fieldId => $value) {
+                $field = $perijinan->activeFormFields->firstWhere('id', $fieldId);
+                if ($field && in_array(strtolower($field->name), ['pekerjaan', 'jenis_pekerjaan'])) {
+                    $pekerjaan = is_array($value) ? implode(', ', $value) : (string) $value;
+                    break;
+                }
+            }
+        }
+
+        // Calculate NOMOR_REKOM
+        $kodePerijinan = $perijinan->kode_perijinan ?? 'PER';
+        $tahun = $application->created_at ? \Carbon\Carbon::parse($application->created_at)->year : now()->year;
+        $noRekomUrut = $application->no_rekom ?? $perijinan->next_nomor_rekom ?? '1';
+
+        if ($perijinan && $perijinan->is_multi_opd) {
+            $involvedOpds = $perijinan->activeValidationFlows()
+                ->whereIn('role', ['operator_opd', 'kepala_opd'])
+                ->whereNotNull('assigned_user_id')
+                ->with('assignedUser.opd')
+                ->get()
+                ->pluck('assignedUser.opd')
+                ->filter()
+                ->unique('id');
+
+            if ($involvedOpds->count() > 0) {
+                $rekomNums = [];
+                foreach ($involvedOpds as $opd) {
+                    $opdCode = $opd->kode_opd ?? 'OPD';
+                    $rekomNums[] = "{$opd->nama_opd}: {$kodePerijinan}/{$noRekomUrut}/{$opdCode}/{$tahun}";
+                }
+                $nomorRekomResolved = implode(', ', $rekomNums);
+            } else {
+                $nomorRekomResolved = "{$kodePerijinan}/{$noRekomUrut}/OPD/{$tahun}";
+            }
+        } else {
+            $flowWithOpd = $perijinan ? $perijinan->activeValidationFlows()
+                ->whereIn('role', ['operator_opd', 'kepala_opd'])
+                ->whereNotNull('assigned_user_id')
+                ->with('assignedUser.opd')
+                ->get()
+                ->pluck('assignedUser.opd')
+                ->filter()
+                ->first() : null;
+            $kodeOpd = $flowWithOpd ? ($flowWithOpd->kode_opd ?? 'OPD') : ($application->no_rekom_kode ?? 'OPD');
+            $nomorRekomResolved = "{$kodePerijinan}/{$noRekomUrut}/{$kodeOpd}/{$tahun}";
+        }
+
+        // Calculate NOMOR_IZIN
+        $noIzinUrut = $application->no_izin ?? $perijinan->next_nomor_izin ?? '1';
+        $kodeIzinOpd = $application->no_izin_kode ?? 'DPMPTSP';
+        $nomorIzinResolved = "{$kodePerijinan}/{$noIzinUrut}/{$kodeIzinOpd}/{$tahun}";
+
+        // 1. System/Model fields
+        $map['nama_pemohon'] = $user->name ?? '-';
+        $map['nik'] = $user->nip ?? '-';
+        $map['username'] = $user->username ?? '-';
+        $map['email'] = $user->email ?? '-';
+        $map['no_hp'] = $user->no_hp ?? '-';
+        $map['pekerjaan'] = $pekerjaan;
+        $map['nama_perusahaan'] = $user->nama_perusahaan ?? '-';
+        $map['npwp'] = $user->npwp ?? '-';
+        $map['alamat_ktp'] = $user->alamat_ktp ?? '-';
+        $map['alamat_domisili'] = $user->alamat_domisili ?? '-';
+        $map['alamat_lengkap'] = $fullAlamat ?: '-';
+        $map['provinsi'] = $user->provinsi->name ?? '-';
+        $map['kabupaten'] = $user->kabupaten->name ?? '-';
+        $map['kecamatan'] = $user->kecamatan->name ?? '-';
+        $map['kelurahan'] = $user->kelurahan->name ?? '-';
+        $map['status_pemohon'] = $user->status_pemohon ?? '-';
+        $map['nama_layanan'] = $perijinan->nama_perijinan ?? $perijinan->name ?? '-';
+        $map['no_registrasi'] = $application->no_registrasi ?? '-';
+        $map['nomor_registrasi'] = $application->no_registrasi ?? '-';
+        $map['tanggal_daftar'] = $application->created_at ? \Carbon\Carbon::parse($application->created_at)->translatedFormat('d F Y') : '-';
+        $map['tanggal'] = $application->created_at ? \Carbon\Carbon::parse($application->created_at)->translatedFormat('d F Y') : '-';
+        $map['tanggal_hari_ini'] = \Carbon\Carbon::now()->translatedFormat('d F Y');
+        $map['masa_aktif'] = $application->masa_aktif ? \Carbon\Carbon::parse($application->masa_aktif)->translatedFormat('d F Y') : '-';
+        $map['nomor_surat'] = $application->no_izin ?? '-';
+        $map['nomor_rekom'] = $nomorRekomResolved;
+        $map['nomor_izin'] = $nomorIzinResolved;
+
+        // 2. Global form fields
+        if ($perijinan && !empty($application->form_data) && is_array($application->form_data)) {
             foreach ($application->form_data as $fieldId => $value) {
                 $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
                 $map[strtolower($fieldId)] = $valStr;
-                $field = $application->perijinan->activeFormFields->firstWhere('id', $fieldId);
+                $field = $perijinan->activeFormFields->firstWhere('id', $fieldId);
                 if ($field) {
                     $map[strtolower($field->name)] = $valStr;
                     $map[strtolower($field->label)] = $valStr;
@@ -1550,11 +1641,11 @@ class DocumentGenerator
         }
 
         // 3. BO form fields
-        if (!empty($application->bo_data) && is_array($application->bo_data)) {
+        if ($perijinan && !empty($application->bo_data) && is_array($application->bo_data)) {
             foreach ($application->bo_data as $key => $value) {
                 $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
                 $map[strtolower($key)] = $valStr;
-                $field = $application->perijinan->activeFormFields->where('form_type', 'bo')->firstWhere('name', $key);
+                $field = $perijinan->activeFormFields->where('form_type', 'bo')->firstWhere('name', $key);
                 if ($field) {
                     $map[strtolower($field->label)] = $valStr;
                 }
@@ -1562,23 +1653,39 @@ class DocumentGenerator
         }
 
         // 4. Rekom form fields
-        if (!empty($application->rekom_data) && is_array($application->rekom_data)) {
+        if ($perijinan && !empty($application->rekom_data) && is_array($application->rekom_data)) {
             foreach ($application->rekom_data as $key => $value) {
                 $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
                 $map[strtolower($key)] = $valStr;
-                $field = $application->perijinan->activeFormFields->where('form_type', 'rekom')->firstWhere('name', $key);
+                $field = $perijinan->activeFormFields->where('form_type', 'rekom')->firstWhere('name', $key);
                 if ($field) {
                     $map[strtolower($field->label)] = $valStr;
                 }
             }
         }
 
+        // 4.5. Multi-OPD Rekom form fields
+        if ($perijinan && $perijinan->is_multi_opd && !empty($application->rekom_data_multi) && is_array($application->rekom_data_multi)) {
+            foreach ($application->rekom_data_multi as $opdId => $opdData) {
+                if (is_array($opdData)) {
+                    foreach ($opdData as $key => $value) {
+                        $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
+                        $map[strtolower($key)] = $valStr;
+                        $field = $perijinan->activeFormFields->where('form_type', 'rekom')->firstWhere('name', $key);
+                        if ($field) {
+                            $map[strtolower($field->label)] = $valStr;
+                        }
+                    }
+                }
+            }
+        }
+
         // 5. Izin form fields
-        if (!empty($application->izin_data) && is_array($application->izin_data)) {
+        if ($perijinan && !empty($application->izin_data) && is_array($application->izin_data)) {
             foreach ($application->izin_data as $key => $value) {
                 $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
                 $map[strtolower($key)] = $valStr;
-                $field = $application->perijinan->activeFormFields->where('form_type', 'izin')->firstWhere('name', $key);
+                $field = $perijinan->activeFormFields->where('form_type', 'izin')->firstWhere('name', $key);
                 if ($field) {
                     $map[strtolower($field->label)] = $valStr;
                 }

@@ -542,11 +542,29 @@
                                     <div class="space-y-1.5">
                                         <select onchange="insertVarPlaceholder('create', this)" class="w-full px-2 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-xs text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                                             <option value="">-- Pilih Variabel --</option>
-                                            <optgroup label="Sistem / Surat">
-                                                <option value="${nomor_registrasi}">No. Registrasi</option>
-                                                <option value="${nomor_surat}">No. Surat/Izin</option>
-                                                <option value="${tanggal_daftar}">Tgl. Daftar</option>
-                                                <option value="${nama_layanan}">Nama Layanan</option>
+                                            <optgroup label="Variabel Sistem / Surat">
+                                                <option value="${NO_REGISTRASI}">No. Registrasi</option>
+                                                <option value="${NOMOR_SURAT}">No. Surat (Lengkap / Format)</option>
+                                                <option value="${TANGGAL}">Tgl. Daftar</option>
+                                                <option value="${TANGGAL_HARI_INI}">Tgl. Hari Ini</option>
+                                                <option value="${NAMA_IZIN}">Nama Layanan</option>
+                                                <option value="${MASA_AKTIF}">Masa Aktif</option>
+                                            </optgroup>
+                                            <optgroup label="Variabel Data Pemohon">
+                                                <option value="${NAMA_PEMOHON}">Nama Pemohon</option>
+                                                <option value="${NIK}">NIK</option>
+                                                <option value="${EMAIL}">Email</option>
+                                                <option value="${NO_HP}">No. HP</option>
+                                                <option value="${ALAMAT_KTP}">Alamat KTP</option>
+                                                <option value="${ALAMAT_DOMISILI}">Alamat Domisili</option>
+                                                <option value="${ALAMAT_LENGKAP}">Alamat Lengkap</option>
+                                                <option value="${PROVINSI}">Provinsi</option>
+                                                <option value="${KABUPATEN}">Kabupaten</option>
+                                                <option value="${KECAMATAN}">Kecamatan</option>
+                                                <option value="${KELURAHAN}">Kelurahan</option>
+                                                <option value="${PEKERJAAN}">Pekerjaan</option>
+                                                <option value="${NAMA_PERUSAHAAN}">Nama Perusahaan</option>
+                                                <option value="${NPWP}">NPWP</option>
                                             </optgroup>
                                             @if($perijinan->activeFormFields->count() > 0)
                                                 @php
@@ -554,9 +572,15 @@
                                                 @endphp
                                                 @foreach($groupedFields as $type => $fields)
                                                     <optgroup label="Form {{ strtoupper($type) }}">
+                                                        @if($type === 'rekom')
+                                                            <option value="${NOMOR_REKOM}">No. Surat Rekomendasi (Tergenerate)</option>
+                                                        @endif
+                                                        @if($type === 'izin')
+                                                            <option value="${NOMOR_IZIN}">No. Surat Izin (Tergenerate)</option>
+                                                        @endif
                                                         @foreach($fields as $f)
                                                             @if($f->type !== 'table')
-                                                                <option value="{{ '${' . str_replace(' ', '_', strtolower($f->name)) . '}' }}">{{ $f->label }}</option>
+                                                                <option value="{{ '${' . strtoupper(str_replace(' ', '_', $f->name)) . '}' }}">{{ $f->label }}</option>
                                                             @endif
                                                         @endforeach
                                                     </optgroup>
@@ -1457,11 +1481,29 @@
                                 <div class="space-y-1.5">
                                     <select onchange="insertVarPlaceholder('edit', this)" class="w-full px-2 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-xs text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                                         <option value="">-- Pilih Variabel --</option>
-                                        <optgroup label="Sistem / Surat">
-                                            <option value="${nomor_registrasi}">No. Registrasi</option>
-                                            <option value="${nomor_surat}">No. Surat/Izin</option>
-                                            <option value="${tanggal_daftar}">Tgl. Daftar</option>
-                                            <option value="${nama_layanan}">Nama Layanan</option>
+                                        <optgroup label="Variabel Sistem / Surat">
+                                            <option value="${NO_REGISTRASI}">No. Registrasi</option>
+                                            <option value="${NOMOR_SURAT}">No. Surat (Lengkap / Format)</option>
+                                            <option value="${TANGGAL}">Tgl. Daftar</option>
+                                            <option value="${TANGGAL_HARI_INI}">Tgl. Hari Ini</option>
+                                            <option value="${NAMA_IZIN}">Nama Layanan</option>
+                                            <option value="${MASA_AKTIF}">Masa Aktif</option>
+                                        </optgroup>
+                                        <optgroup label="Variabel Data Pemohon">
+                                            <option value="${NAMA_PEMOHON}">Nama Pemohon</option>
+                                            <option value="${NIK}">NIK</option>
+                                            <option value="${EMAIL}">Email</option>
+                                            <option value="${NO_HP}">No. HP</option>
+                                            <option value="${ALAMAT_KTP}">Alamat KTP</option>
+                                            <option value="${ALAMAT_DOMISILI}">Alamat Domisili</option>
+                                            <option value="${ALAMAT_LENGKAP}">Alamat Lengkap</option>
+                                            <option value="${PROVINSI}">Provinsi</option>
+                                            <option value="${KABUPATEN}">Kabupaten</option>
+                                            <option value="${KECAMATAN}">Kecamatan</option>
+                                            <option value="${KELURAHAN}">Kelurahan</option>
+                                            <option value="${PEKERJAAN}">Pekerjaan</option>
+                                            <option value="${NAMA_PERUSAHAAN}">Nama Perusahaan</option>
+                                            <option value="${NPWP}">NPWP</option>
                                         </optgroup>
                                         @if($perijinan->activeFormFields->count() > 0)
                                             @php
@@ -1469,9 +1511,15 @@
                                             @endphp
                                             @foreach($groupedFields as $type => $fields)
                                                 <optgroup label="Form {{ strtoupper($type) }}">
+                                                    @if($type === 'rekom')
+                                                        <option value="${NOMOR_REKOM}">No. Surat Rekomendasi (Tergenerate)</option>
+                                                    @endif
+                                                    @if($type === 'izin')
+                                                        <option value="${NOMOR_IZIN}">No. Surat Izin (Tergenerate)</option>
+                                                    @endif
                                                     @foreach($fields as $f)
                                                         @if($f->type !== 'table')
-                                                            <option value="{{ '${' . str_replace(' ', '_', strtolower($f->name)) . '}' }}">{{ $f->label }}</option>
+                                                            <option value="{{ '${' . strtoupper(str_replace(' ', '_', $f->name)) . '}' }}">{{ $f->label }}</option>
                                                         @endif
                                                     @endforeach
                                                 </optgroup>
