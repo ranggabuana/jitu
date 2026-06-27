@@ -2628,4 +2628,58 @@ class DataPerijinanController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Deactivate permit.
+     */
+    public function deactivate($id)
+    {
+        $user = auth()->user();
+        if (!$user->isAdmin()) {
+            abort(403, 'Hanya Admin yang dapat menonaktifkan izin.');
+        }
+
+        $application = DataPerijinan::findOrFail($id);
+        $application->update(['is_deactivated' => true]);
+
+        ActivityLog::log(
+            'Menonaktifkan izin permohonan ' . $application->no_registrasi,
+            $application,
+            'updated',
+            [
+                'no_registrasi' => $application->no_registrasi,
+                'is_deactivated' => true,
+            ],
+            'data_perijinan'
+        );
+
+        return redirect()->back()->with('success', 'Izin permohonan berhasil dinonaktifkan.');
+    }
+
+    /**
+     * Activate permit.
+     */
+    public function activate($id)
+    {
+        $user = auth()->user();
+        if (!$user->isAdmin()) {
+            abort(403, 'Hanya Admin yang dapat mengaktifkan kembali izin.');
+        }
+
+        $application = DataPerijinan::findOrFail($id);
+        $application->update(['is_deactivated' => false]);
+
+        ActivityLog::log(
+            'Mengaktifkan kembali izin permohonan ' . $application->no_registrasi,
+            $application,
+            'updated',
+            [
+                'no_registrasi' => $application->no_registrasi,
+                'is_deactivated' => false,
+            ],
+            'data_perijinan'
+        );
+
+        return redirect()->back()->with('success', 'Izin permohonan berhasil diaktifkan kembali.');
+    }
 }

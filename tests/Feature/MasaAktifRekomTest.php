@@ -24,13 +24,14 @@ class MasaAktifRekomTest extends TestCase
             'kode_opd' => 'DINKES',
         ]);
 
-        // 2. Create User as Admin
-        $admin = User::create([
-            'name' => 'Admin User',
-            'username' => 'admin_test',
-            'email' => 'admin@test.com',
+        // 2. Create User as Operator OPD
+        $operatorOpd = User::create([
+            'name' => 'Operator Dinkes',
+            'username' => 'opd_test',
+            'email' => 'opd@test.com',
             'password' => bcrypt('password'),
-            'role' => 'admin',
+            'role' => 'operator_opd',
+            'opd_id' => $opd->id,
             'status' => 'aktif',
         ]);
 
@@ -56,14 +57,30 @@ class MasaAktifRekomTest extends TestCase
 
         // 4. Create DataPerijinan
         $application = DataPerijinan::create([
-            'user_id' => $admin->id,
+            'user_id' => $operatorOpd->id,
             'perijinan_id' => $perijinan->id,
             'status' => 'in_progress',
             'current_step' => 1,
         ]);
 
+        $flow = PerijinanValidationFlow::create([
+            'perijinan_id' => $perijinan->id,
+            'role' => 'operator_opd',
+            'role_label' => 'Operator Dinkes',
+            'order' => 1,
+            'assigned_user_id' => $operatorOpd->id,
+            'status' => 'aktif',
+        ]);
+
+        DataPerijinanValidasi::create([
+            'data_perijinan_id' => $application->id,
+            'validation_flow_id' => $flow->id,
+            'status' => 'pending',
+            'order' => 1,
+        ]);
+
         // 5. Submit recommendation data with masa_aktif_rekom
-        $response = $this->actingAs($admin)
+        $response = $this->actingAs($operatorOpd)
             ->put(route('data-perijinan.rekom-data.save', $application->id), [
                 'catatan_teknis' => 'Rekomendasi layak',
                 'masa_aktif_rekom' => '2026-12-31',

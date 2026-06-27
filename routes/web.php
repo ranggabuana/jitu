@@ -203,6 +203,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{id}/validate', [DataPerijinanController::class, 'processValidation'])->name('validate');
         Route::patch('/{id}/status', [DataPerijinanController::class, 'updateStatus'])->name('update-status');
         Route::get('/download/{filepath}', [DataPerijinanController::class, 'downloadFile'])->name('download-file')->where('filepath', '.*');
+        Route::post('/{id}/deactivate', [DataPerijinanController::class, 'deactivate'])->name('deactivate');
+        Route::post('/{id}/activate', [DataPerijinanController::class, 'activate'])->name('activate');
         Route::post('/{id}/regenerate-documents', [DataPerijinanController::class, 'regenerateDocuments'])->name('regenerate-documents');
     });
 

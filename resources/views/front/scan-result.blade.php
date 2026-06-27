@@ -65,7 +65,13 @@
                 <div class="p-8">
                     <!-- Status Badge -->
                     <div class="flex justify-center mb-8">
-                        @if($perizinan->status === 'approved')
+                        @if($perizinan->is_deactivated)
+                            <div class="flex flex-col items-center gap-2">
+                                <span class="px-6 py-2 bg-red-100 text-red-700 rounded-full text-sm font-black uppercase tracking-widest border border-red-200 flex items-center gap-2">
+                                    <i class="fas fa-ban"></i> Surat {{ $type === 'rekom' ? 'Rekomendasi' : 'Izin' }} Dinonaktifkan oleh Admin DPMPTSP
+                                </span>
+                            </div>
+                        @elseif($perizinan->status === 'approved')
                             <div class="flex flex-col items-center gap-2">
                                 <span class="px-6 py-2 bg-green-100 text-green-700 rounded-full text-sm font-black uppercase tracking-widest border border-green-200 flex items-center gap-2">
                                     <i class="fas fa-check-circle"></i> Dokumen Sah & Berlaku
@@ -83,8 +89,21 @@
                         @endif
                     </div>
 
+                    <!-- Deactivation Alert Box -->
+                    @if($perizinan->is_deactivated)
+                        <div class="mb-8 p-5 bg-red-50 rounded-2xl border border-red-200 text-red-800 flex items-start gap-4 shadow-sm">
+                            <div class="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center text-red-600 shrink-0">
+                                <i class="fas fa-ban text-xl"></i>
+                            </div>
+                            <div class="text-left">
+                                <h4 class="font-black text-sm uppercase tracking-tight text-red-900">PERINGATAN: SURAT {{ $type === 'rekom' ? 'REKOMENDASI' : 'IZIN' }} DINONAKTIFKAN</h4>
+                                <p class="text-xs text-red-700 mt-1 leading-relaxed">
+                                    Surat {{ $type === 'rekom' ? 'rekomendasi' : 'izin' }} ini telah dinonaktifkan oleh <strong>Admin DPMPTSP</strong>. Dokumen ini dinyatakan <strong>tidak berlaku lagi</strong>.
+                                </p>
+                            </div>
+                        </div>
                     <!-- Expiration Alert Box -->
-                    @if($isExpired)
+                    @elseif($isExpired)
                         <div class="mb-8 p-5 bg-red-50 rounded-2xl border border-red-200 text-red-800 flex items-start gap-4 shadow-sm">
                             <div class="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center text-red-600 shrink-0">
                                 <i class="fas fa-exclamation-triangle text-xl"></i>

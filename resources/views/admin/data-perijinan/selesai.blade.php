@@ -96,6 +96,9 @@
                             Tanggal Disetujui
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Masa Aktif Izin
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                             Status
                         </th>
                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -126,13 +129,42 @@
                             <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                                 {{ $app->approved_at ? $app->approved_at->format('d M Y') : '-' }}
                             </td>
+                            <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                {{ $app->masa_aktif ? $app->masa_aktif->format('d M Y') : '-' }}
+                            </td>
                             <td class="px-6 py-4">
-                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                    <i class="mdi mdi-check-circle"></i> Disetujui
-                                </span>
+                                @if($app->is_deactivated)
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300">
+                                        <i class="mdi mdi-ban"></i> Dinonaktifkan
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                        <i class="mdi mdi-check-circle"></i> Disetujui
+                                    </span>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex justify-end gap-2">
+                                    @if(auth()->user()->isAdmin())
+                                        @if($app->is_deactivated)
+                                            <form action="{{ route('data-perijinan.activate', $app->id) }}" method="POST" class="inline">
+                                                @csrf
+                                                <button type="button" class="activate-btn inline-flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors shadow-sm">
+                                                    <i class="mdi mdi-check-circle"></i>
+                                                    <span>Aktifkan</span>
+                                                </button>
+                                            </form>
+                                        @else
+                                            <form action="{{ route('data-perijinan.deactivate', $app->id) }}" method="POST" class="inline">
+                                                @csrf
+                                                <button type="button" class="deactivate-btn inline-flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors shadow-sm">
+                                                    <i class="mdi mdi-ban"></i>
+                                                    <span>Nonaktifkan</span>
+                                                </button>
+                                            </form>
+                                        @endif
+                                    @endif
+
                                     @if(!in_array(auth()->user()->role, ['fo']) && ($app->file_izin_tte || $app->file_rekom_tte || !empty($app->file_rekom_multi_tte)))
                                     <div class="relative inline-block text-left dropdown-container">
                                         <button type="button" class="daftar-surat-btn inline-flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors shadow-sm focus:outline-none">
@@ -151,39 +183,39 @@
                                                 @foreach($app->file_rekom_multi_tte as $opdId => $path)
                                                     @php
                                                         $opdName = \App\Models\Opd::find($opdId)->nama_opd ?? 'OPD';
-                                                    @endphp
-                                                    <a href="{{ asset($path) }}" target="_blank" class="flex items-center gap-2 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 text-green-700 dark:text-green-400 px-3 py-2 rounded-md text-[10px] font-bold uppercase transition-colors whitespace-normal" title="Rekomendasi {{ $opdName }}">
-                                                        <i class="mdi mdi-file-check text-sm flex-shrink-0"></i> Rekom TTE ({{ $opdName }})
-                                                    </a>
-                                                @endforeach
-                                            @elseif(!empty($app->file_rekom_tte))
-                                                 @php
-                                                     $singleOpdName = $app->perijinan->opdConfigs->first()?->opd?->nama_opd;
-                                                 @endphp
-                                                 <a href="{{ asset($app->file_rekom_tte) }}" target="_blank" class="flex items-center gap-2 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 text-green-700 dark:text-green-400 px-3 py-2 rounded-md text-[10px] font-bold uppercase transition-colors whitespace-normal" title="Rekomendasi {{ $singleOpdName ?? 'OPD' }}">
-                                                     <i class="mdi mdi-file-check text-sm flex-shrink-0"></i> Rekom TTE {{ $singleOpdName ? "($singleOpdName)" : '' }}
-                                                 </a>
-                                            @endif
-                                        </div>
-                                    </div>
-                                    @endif
-                                    
-                                    <a href="{{ route('data-perijinan.sla-report', $app->id) }}"
-                                        class="inline-flex items-center gap-1 bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors">
-                                        <i class="mdi mdi-timer-star"></i>
-                                        <span>SLA Report</span>
-                                    </a>
-                                    <a href="{{ route('data-perijinan.show', $app->id) }}"
-                                        class="inline-flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors">
-                                        <i class="mdi mdi-eye"></i>
-                                        <span>Detail</span>
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="px-6 py-12 text-center">
+                                                     @endphp
+                                                     <a href="{{ asset($path) }}" target="_blank" class="flex items-center gap-2 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 text-green-700 dark:text-green-400 px-3 py-2 rounded-md text-[10px] font-bold uppercase transition-colors whitespace-normal" title="Rekomendasi {{ $opdName }}">
+                                                         <i class="mdi mdi-file-check text-sm flex-shrink-0"></i> Rekom TTE ({{ $opdName }})
+                                                     </a>
+                                                 @endforeach
+                                             @elseif(!empty($app->file_rekom_tte))
+                                                  @php
+                                                      $singleOpdName = $app->perijinan->opdConfigs->first()?->opd?->nama_opd;
+                                                  @endphp
+                                                  <a href="{{ asset($app->file_rekom_tte) }}" target="_blank" class="flex items-center gap-2 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 text-green-700 dark:text-green-400 px-3 py-2 rounded-md text-[10px] font-bold uppercase transition-colors whitespace-normal" title="Rekomendasi {{ $singleOpdName ?? 'OPD' }}">
+                                                      <i class="mdi mdi-file-check text-sm flex-shrink-0"></i> Rekom TTE {{ $singleOpdName ? "($singleOpdName)" : '' }}
+                                                  </a>
+                                             @endif
+                                         </div>
+                                     </div>
+                                     @endif
+                                     
+                                     <a href="{{ route('data-perijinan.sla-report', $app->id) }}"
+                                         class="inline-flex items-center gap-1 bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors font-semibold">
+                                         <i class="mdi mdi-timer-star"></i>
+                                         <span>SLA</span>
+                                     </a>
+                                     <a href="{{ route('data-perijinan.show', $app->id) }}"
+                                         class="inline-flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors font-semibold">
+                                         <i class="mdi mdi-eye"></i>
+                                         <span>Detail</span>
+                                     </a>
+                                 </div>
+                             </td>
+                         </tr>
+                     @empty
+                         <tr>
+                             <td colspan="7" class="px-6 py-12 text-center">
                                 <div class="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <i class="mdi mdi-inbox-check text-green-400 dark:text-green-500 text-3xl"></i>
                                 </div>
@@ -357,6 +389,52 @@
             document.querySelectorAll('.daftar-surat-dropdown').forEach(dropdown => {
                 dropdown.classList.add('hidden');
                 dropdown.closest('.dropdown-container')?.classList.remove('z-50');
+            });
+        });
+
+        // Deactivate alert confirm with SweetAlert
+        const deactivateButtons = document.querySelectorAll('.deactivate-btn');
+        deactivateButtons.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const form = this.closest('form');
+                Swal.fire({
+                    title: 'Apakah Anda yakin?',
+                    text: 'Segala dokumen terkait (baik rekom maupun izin) tidak akan berlaku lagi ketika dinonaktifkan.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#3b82f6',
+                    confirmButtonText: 'Ya, Nonaktifkan!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+        });
+
+        // Activate alert confirm with SweetAlert
+        const activateButtons = document.querySelectorAll('.activate-btn');
+        activateButtons.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const form = this.closest('form');
+                Swal.fire({
+                    title: 'Apakah Anda yakin?',
+                    text: 'Izin permohonan akan diaktifkan kembali dan dokumen elektronik terkait dapat diakses normal kembali.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#10b981',
+                    cancelButtonColor: '#3b82f6',
+                    confirmButtonText: 'Ya, Aktifkan Kembali!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
             });
         });
     });
