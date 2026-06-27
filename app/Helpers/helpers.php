@@ -224,6 +224,49 @@ if (!function_exists('resolveDynamicVariable')) {
             }
         }
 
+        // Calculate NOMOR_REKOM
+        $kodePerijinan = $perijinan->kode_perijinan ?? 'PER';
+        $tahun = $application->created_at ? Carbon::parse($application->created_at)->year : now()->year;
+        $noRekomUrut = $application->no_rekom ?? $perijinan->next_nomor_rekom ?? '1';
+
+        if ($perijinan->is_multi_opd) {
+            $involvedOpds = $perijinan->activeValidationFlows()
+                ->whereIn('role', ['operator_opd', 'kepala_opd'])
+                ->whereNotNull('assigned_user_id')
+                ->with('assignedUser.opd')
+                ->get()
+                ->pluck('assignedUser.opd')
+                ->filter()
+                ->unique('id');
+
+            if ($involvedOpds->count() > 0) {
+                $rekomNums = [];
+                foreach ($involvedOpds as $opd) {
+                    $opdCode = $opd->kode_opd ?? 'OPD';
+                    $rekomNums[] = "{$opd->nama_opd}: {$kodePerijinan}/{$noRekomUrut}/{$opdCode}/{$tahun}";
+                }
+                $nomorRekomResolved = implode(', ', $rekomNums);
+            } else {
+                $nomorRekomResolved = "{$kodePerijinan}/{$noRekomUrut}/OPD/{$tahun}";
+            }
+        } else {
+            $flowWithOpd = $perijinan->activeValidationFlows()
+                ->whereIn('role', ['operator_opd', 'kepala_opd'])
+                ->whereNotNull('assigned_user_id')
+                ->with('assignedUser.opd')
+                ->get()
+                ->pluck('assignedUser.opd')
+                ->filter()
+                ->first();
+            $kodeOpd = $flowWithOpd ? ($flowWithOpd->kode_opd ?? 'OPD') : ($application->no_rekom_kode ?? 'OPD');
+            $nomorRekomResolved = "{$kodePerijinan}/{$noRekomUrut}/{$kodeOpd}/{$tahun}";
+        }
+
+        // Calculate NOMOR_IZIN
+        $noIzinUrut = $application->no_izin ?? $perijinan->next_nomor_izin ?? '1';
+        $kodeIzinOpd = $application->no_izin_kode ?? 'DPMPTSP';
+        $nomorIzinResolved = "{$kodePerijinan}/{$noIzinUrut}/{$kodeIzinOpd}/{$tahun}";
+
         // System variable map
         $variableMap = [
             '${NAMA_PEMOHON}' => $user->name ?? '-',
@@ -248,6 +291,8 @@ if (!function_exists('resolveDynamicVariable')) {
             '${TANGGAL_HARI_INI}' => Carbon::now()->translatedFormat('d F Y'),
             '${MASA_AKTIF}' => $application->masa_aktif ? Carbon::parse($application->masa_aktif)->translatedFormat('d F Y') : '-',
             '${NOMOR_SURAT}' => $application->no_registrasi ?? '-',
+            '${NOMOR_REKOM}' => $nomorRekomResolved,
+            '${NOMOR_IZIN}' => $nomorIzinResolved,
         ];
 
         // Direct match from map

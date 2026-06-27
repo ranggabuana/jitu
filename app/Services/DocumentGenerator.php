@@ -49,6 +49,49 @@ class DocumentGenerator
             $fullAlamat .= ', ' . implode(', ', $addressParts);
         }
 
+        // Calculate NOMOR_REKOM
+        $kodePerijinan = $perijinan->kode_perijinan ?? 'PER';
+        $tahun = $application->created_at ? Carbon::parse($application->created_at)->year : now()->year;
+        $noRekomUrut = $application->no_rekom ?? $perijinan->next_nomor_rekom ?? '1';
+
+        if ($perijinan->is_multi_opd) {
+            $involvedOpds = $perijinan->activeValidationFlows()
+                ->whereIn('role', ['operator_opd', 'kepala_opd'])
+                ->whereNotNull('assigned_user_id')
+                ->with('assignedUser.opd')
+                ->get()
+                ->pluck('assignedUser.opd')
+                ->filter()
+                ->unique('id');
+
+            if ($involvedOpds->count() > 0) {
+                $rekomNums = [];
+                foreach ($involvedOpds as $opd) {
+                    $opdCode = $opd->kode_opd ?? 'OPD';
+                    $rekomNums[] = "{$opd->nama_opd}: {$kodePerijinan}/{$noRekomUrut}/{$opdCode}/{$tahun}";
+                }
+                $nomorRekomResolved = implode(', ', $rekomNums);
+            } else {
+                $nomorRekomResolved = "{$kodePerijinan}/{$noRekomUrut}/OPD/{$tahun}";
+            }
+        } else {
+            $flowWithOpd = $perijinan->activeValidationFlows()
+                ->whereIn('role', ['operator_opd', 'kepala_opd'])
+                ->whereNotNull('assigned_user_id')
+                ->with('assignedUser.opd')
+                ->get()
+                ->pluck('assignedUser.opd')
+                ->filter()
+                ->first();
+            $kodeOpd = $flowWithOpd ? ($flowWithOpd->kode_opd ?? 'OPD') : ($application->no_rekom_kode ?? 'OPD');
+            $nomorRekomResolved = "{$kodePerijinan}/{$noRekomUrut}/{$kodeOpd}/{$tahun}";
+        }
+
+        // Calculate NOMOR_IZIN
+        $noIzinUrut = $application->no_izin ?? $perijinan->next_nomor_izin ?? '1';
+        $kodeIzinOpd = $application->no_izin_kode ?? 'DPMPTSP';
+        $nomorIzinResolved = "{$kodePerijinan}/{$noIzinUrut}/{$kodeIzinOpd}/{$tahun}";
+
         // 2. Prepare Replacements Map
         $baseReplacements = [
             '${NAMA_PEMOHON}' => $user->name ?? '-',
@@ -75,6 +118,8 @@ class DocumentGenerator
             '${TANGGAL_HARI_INI}' => self::formatDateIndonesian($application->created_at ?? now()),
             '${NO_REGISTRASI}' => $application->no_registrasi ?? '-',
             '${MASA_AKTIF}' => $application->masa_aktif ? self::formatDateIndonesian($application->masa_aktif) : '-',
+            '${NOMOR_REKOM}' => $nomorRekomResolved,
+            '${NOMOR_IZIN}' => $nomorIzinResolved,
         ];
 
         // 3. Define output directory
@@ -288,6 +333,90 @@ class DocumentGenerator
                     if ($field) {
                         $boReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $valStr;
                     }
+                }
+            }
+        }
+
+        // 5.6. Build Recommendation Data Map (Rekom Form)
+        $globalRekomReplacements = [];
+        $rekomFields = $perijinan->activeFormFields->where('form_type', 'rekom');
+        
+        $accumulatedRekomData = [];
+        if (!empty($application->rekom_data) && is_array($application->rekom_data)) {
+            $accumulatedRekomData = $application->rekom_data;
+        }
+        
+        if ($perijinan->is_multi_opd && !empty($application->rekom_data_multi) && is_array($application->rekom_data_multi)) {
+            foreach ($application->rekom_data_multi as $opdId => $opdData) {
+                if (is_array($opdData)) {
+                    $accumulatedRekomData = array_merge($accumulatedRekomData, $opdData);
+                }
+            }
+        }
+        
+        foreach ($accumulatedRekomData as $key => $value) {
+            $field = $rekomFields->firstWhere('name', $key);
+            if ($field && ($field->type === 'pas_foto' || $field->type === 'gambar')) {
+                if ($value) {
+                    $absolutePath = public_path($value);
+                    if (!File::exists($absolutePath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($value)) {
+                        $absolutePath = \Illuminate\Support\Facades\Storage::disk('public')->path($value);
+                    }
+                    if (File::exists($absolutePath)) {
+                        $imageData = base64_encode(File::get($absolutePath));
+                        $mime = File::mimeType($absolutePath);
+                        $src = 'data:' . $mime . ';base64,' . $imageData;
+                        
+                        if ($field->type === 'pas_foto') {
+                            $htmlImg = '<img src="' . $src . '" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" alt="Pas Foto" />';
+                            $imgValType = 'PASFOTO_';
+                        } else {
+                            $wCm = !empty($field->options['img_width']) ? floatval($field->options['img_width']) : null;
+                            $hCm = !empty($field->options['img_height']) ? floatval($field->options['img_height']) : null;
+                            if ($wCm && $hCm) {
+                                $htmlImg = '<img src="' . $src . '" style="width: ' . $wCm . 'cm; height: ' . $hCm . 'cm; object-fit: contain;" alt="Gambar" />';
+                                $imgValType = 'GAMBAR_W' . $wCm . '_H' . $hCm . '_';
+                            } else {
+                                $htmlImg = '<img src="' . $src . '" style="max-width: 100%; max-height: 250px; width: auto; height: auto; object-fit: contain;" alt="Gambar" />';
+                                $imgValType = 'GAMBAR_';
+                            }
+                        }
+                        
+                        $globalRekomReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $htmlImg;
+                        if ($field) {
+                            $globalRekomReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $htmlImg;
+                        }
+                        $globalRekomReplacements['${_IMG_VAL_' . $imgValType . strtoupper(str_replace(' ', '_', $key)) . '}'] = $absolutePath;
+                        if ($field) {
+                            $globalRekomReplacements['${_IMG_VAL_' . $imgValType . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $absolutePath;
+                        }
+                    } else {
+                        $globalRekomReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = '';
+                        if ($field) {
+                            $globalRekomReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = '';
+                        }
+                    }
+                } else {
+                    $globalRekomReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = '';
+                    if ($field) {
+                        $globalRekomReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = '';
+                    }
+                }
+            } else {
+                if ($field && $field->type === 'table' && is_array($value)) {
+                    $valStr = self::renderTableFieldForDocument($field, $value, $application);
+                    $globalRekomReplacements['_WORD_TABLE_${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = self::renderTableFieldForWord($field, $value, $application);
+                    if ($field) {
+                        $globalRekomReplacements['_WORD_TABLE_${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = self::renderTableFieldForWord($field, $value, $application);
+                    }
+                } elseif ($field && $field->type === 'date' && !empty($value)) {
+                    $valStr = self::formatDateIndonesian($value);
+                } else {
+                    $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
+                }
+                $globalRekomReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = $valStr;
+                if ($field) {
+                    $globalRekomReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = $valStr;
                 }
             }
         }
@@ -643,7 +772,7 @@ class DocumentGenerator
                 }
             }
 
-            $finalReplacements = array_merge($baseReplacements, $applicantReplacements, $boReplacements, $dataReplacements);
+            $finalReplacements = array_merge($baseReplacements, $applicantReplacements, $boReplacements, $globalRekomReplacements, $dataReplacements);
             
             $filename = $config['filename'];
             if ($type === 'izin') {

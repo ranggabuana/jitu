@@ -257,6 +257,46 @@ class PerijinanController extends Controller
         }
 
         $replacements['[NOMOR SURAT]'] = ($perijinan->kode_perijinan ?? 'KODE') . '/' . $realNumber . '/' . $kodeOpd . '/' . date('Y');
+        $replacements['${NOMOR_SURAT}'] = $replacements['[NOMOR SURAT]'];
+
+        // Determine preview NOMOR_REKOM
+        $noRekomUrutPreview = $request->input('next_nomor_rekom') ?? $perijinan->next_nomor_rekom ?? 1;
+        $kodePerijinanPreview = $perijinan->kode_perijinan ?? 'KODE';
+        $tahunPreview = date('Y');
+
+        if ($perijinan->is_multi_opd) {
+            $involvedOpdsPreview = $perijinan->activeValidationFlows()
+                ->whereIn('role', ['operator_opd', 'kepala_opd'])
+                ->whereNotNull('assigned_user_id')
+                ->with('assignedUser.opd')
+                ->get()
+                ->pluck('assignedUser.opd')
+                ->filter()
+                ->unique('id');
+
+            if ($involvedOpdsPreview->count() > 0) {
+                $rekomNumsPreview = [];
+                foreach ($involvedOpdsPreview as $opdPreview) {
+                    $opdCodePreview = $opdPreview->kode_opd ?? 'OPD';
+                    $rekomNumsPreview[] = "{$opdPreview->nama_opd}: {$kodePerijinanPreview}/{$noRekomUrutPreview}/{$opdCodePreview}/{$tahunPreview}";
+                }
+                $nomorRekomPreview = implode(', ', $rekomNumsPreview);
+            } else {
+                $nomorRekomPreview = "{$kodePerijinanPreview}/{$noRekomUrutPreview}/OPD/{$tahunPreview}";
+            }
+        } else {
+            $nomorRekomPreview = "{$kodePerijinanPreview}/{$noRekomUrutPreview}/{$kodeOpd}/{$tahunPreview}";
+        }
+
+        // Determine preview NOMOR_IZIN
+        $noIzinUrutPreview = $request->input('next_nomor_izin') ?? $perijinan->next_nomor_izin ?? 1;
+        $nomorIzinPreview = "{$kodePerijinanPreview}/{$noIzinUrutPreview}/DPMPTSP/{$tahunPreview}";
+
+        $replacements['${NOMOR_REKOM}'] = $nomorRekomPreview;
+        $replacements['[NOMOR REKOM]'] = $nomorRekomPreview;
+        $replacements['${NOMOR_IZIN}'] = $nomorIzinPreview;
+        $replacements['[NOMOR IZIN]'] = $nomorIzinPreview;
+
 
         // [GAMBAR TTE]
         $gambarTte = \App\Models\Setting::get('gambar_tte');
@@ -383,7 +423,6 @@ class PerijinanController extends Controller
             'is_active' => 'boolean',
             'file_types' => 'nullable|string|max:255',
             'max_file_size' => 'nullable|integer|min:1',
-            'dynamic_variable' => 'nullable|string|max:255',
         ]);
 
         if (!empty($validated['file_types'])) {
@@ -467,7 +506,6 @@ class PerijinanController extends Controller
             'is_active' => 'boolean',
             'file_types' => 'nullable|string|max:255',
             'max_file_size' => 'nullable|integer|min:1',
-            'dynamic_variable' => 'nullable|string|max:255',
         ]);
 
         if (!empty($validated['file_types'])) {

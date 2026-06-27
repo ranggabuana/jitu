@@ -591,64 +591,6 @@
                             placeholder="Contoh: Isi sesuai dengan KTP">
                     </div>
 
-                    <!-- Dynamic Variable Binding -->
-                    <div id="dynamic_var_container" class="bg-amber-50/50 dark:bg-amber-900/10 rounded-lg p-4 border border-amber-200 dark:border-amber-800/30">
-                        <div class="flex items-center gap-2 mb-3">
-                            <div class="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                                <i class="mdi mdi-link-variant text-amber-600 dark:text-amber-400 text-sm"></i>
-                            </div>
-                            <div>
-                                <h4 class="text-sm font-semibold text-gray-800 dark:text-white">Variabel Dinamis</h4>
-                                <p class="text-[10px] text-gray-500 dark:text-gray-400">Opsional — Field akan readonly & terisi otomatis</p>
-                            </div>
-                        </div>
-                        <select name="dynamic_variable" id="dynamic_variable"
-                            class="w-full px-4 py-2.5 border border-amber-200 dark:border-amber-700 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-sm">
-                            <option value="">-- Tidak Menggunakan Variabel --</option>
-                            <optgroup label="Variabel Sistem / Surat">
-                                <option value="${NO_REGISTRASI}">No. Registrasi</option>
-                                <option value="${NOMOR_SURAT}">No. Surat</option>
-                                <option value="${TANGGAL}">Tgl. Daftar</option>
-                                <option value="${TANGGAL_HARI_INI}">Tgl. Hari Ini</option>
-                                <option value="${NAMA_IZIN}">Nama Layanan</option>
-                                <option value="${MASA_AKTIF}">Masa Aktif</option>
-                            </optgroup>
-                            <optgroup label="Variabel Data Pemohon">
-                                <option value="${NAMA_PEMOHON}">Nama Pemohon</option>
-                                <option value="${NIK}">NIK</option>
-                                <option value="${EMAIL}">Email</option>
-                                <option value="${NO_HP}">No. HP</option>
-                                <option value="${ALAMAT_KTP}">Alamat KTP</option>
-                                <option value="${ALAMAT_DOMISILI}">Alamat Domisili</option>
-                                <option value="${ALAMAT_LENGKAP}">Alamat Lengkap</option>
-                                <option value="${PROVINSI}">Provinsi</option>
-                                <option value="${KABUPATEN}">Kabupaten</option>
-                                <option value="${KECAMATAN}">Kecamatan</option>
-                                <option value="${KELURAHAN}">Kelurahan</option>
-                                <option value="${PEKERJAAN}">Pekerjaan</option>
-                                <option value="${NAMA_PERUSAHAAN}">Nama Perusahaan</option>
-                                <option value="${NPWP}">NPWP</option>
-                            </optgroup>
-                            @if($perijinan->activeFormFields->count() > 0)
-                                @php
-                                    $dynGroupedFields = $perijinan->activeFormFields->groupBy('form_type');
-                                @endphp
-                                @foreach($dynGroupedFields as $dynType => $dynFields)
-                                    <optgroup label="Form {{ strtoupper($dynType) }}">
-                                        @foreach($dynFields as $dynF)
-                                            @if(!in_array($dynF->type, ['table', 'file', 'pas_foto', 'gambar']))
-                                                <option value="{{ '${' . strtoupper(str_replace(' ', '_', $dynF->name)) . '}' }}">{{ $dynF->label }}</option>
-                                            @endif
-                                        @endforeach
-                                    </optgroup>
-                                @endforeach
-                            @endif
-                        </select>
-                        <p class="text-[10px] text-amber-600 dark:text-amber-400 mt-2 flex items-center gap-1">
-                            <i class="mdi mdi-information-outline"></i>
-                            Jika variabel dipilih, field akan diisi otomatis saat validasi dan bersifat readonly.
-                        </p>
-                    </div>
 
                     <div class="flex items-center gap-4 pt-2">
                         <label class="flex items-center gap-2 cursor-pointer">
@@ -785,13 +727,7 @@
                                                     </span>
                                                 @endif
                                             @endif
-                                            @if($field->dynamic_variable)
-                                                <span
-                                                    class="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-900/20 px-2.5 py-1 rounded-md text-amber-600 dark:text-amber-400">
-                                                    <i class="mdi mdi-link-variant"></i>
-                                                    <span class="font-mono text-[10px]">{{ $field->dynamic_variable }}</span>
-                                                </span>
-                                            @endif
+
                                         </div>
                                     </div>
 
@@ -1009,6 +945,13 @@
                                 <span class="text-[10px] uppercase tracking-wider font-bold text-purple-800 dark:text-purple-300 block mb-2">Variabel Khusus Rekom Form:</span>
                                 <div class="flex flex-wrap gap-2">
                                     <button type="button"
+                                        onclick="insertPlaceholder('${NOMOR_REKOM}')"
+                                        title="Nomor Surat Rekomendasi"
+                                        class="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300 hover:bg-purple-600 hover:text-white dark:hover:bg-purple-700 hover:border-purple-600 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold transition-all shadow-sm">
+                                        <i class="mdi mdi-plus text-xs"></i>${NOMOR_REKOM}
+                                    </button>
+
+                                    <button type="button"
                                         onclick="insertPlaceholder('${MASA_AKTIF_REKOM}')"
                                         title="Masa Aktif Rekomendasi"
                                         class="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300 hover:bg-purple-600 hover:text-white dark:hover:bg-purple-700 hover:border-purple-600 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold transition-all shadow-sm">
@@ -1029,6 +972,20 @@
                             <div class="dynamic-var-section hidden" id="var-section-izin">
                                 <span class="text-[10px] uppercase tracking-wider font-bold text-indigo-800 dark:text-indigo-300 block mb-2">Variabel Khusus Izin Form:</span>
                                 <div class="flex flex-wrap gap-2">
+                                    <button type="button"
+                                        onclick="insertPlaceholder('${NOMOR_IZIN}')"
+                                        title="Nomor Surat Izin"
+                                        class="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-700 hover:border-indigo-600 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold transition-all shadow-sm">
+                                        <i class="mdi mdi-plus text-xs"></i>${NOMOR_IZIN}
+                                    </button>
+
+                                    <button type="button"
+                                        onclick="insertPlaceholder('${NOMOR_REKOM}')"
+                                        title="Nomor Surat Rekomendasi"
+                                        class="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-700 hover:border-indigo-600 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold transition-all shadow-sm">
+                                        <i class="mdi mdi-plus text-xs"></i>${NOMOR_REKOM}
+                                    </button>
+
                                     <button type="button"
                                         onclick="insertPlaceholder('${MASA_AKTIF}')"
                                         title="Masa Aktif Izin"
@@ -1611,64 +1568,6 @@
                         class="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all">
                 </div>
 
-                <!-- Dynamic Variable Binding (Edit) -->
-                <div class="bg-amber-50/50 dark:bg-amber-900/10 rounded-lg p-4 border border-amber-200 dark:border-amber-800/30">
-                    <div class="flex items-center gap-2 mb-3">
-                        <div class="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                            <i class="mdi mdi-link-variant text-amber-600 dark:text-amber-400 text-sm"></i>
-                        </div>
-                        <div>
-                            <h4 class="text-sm font-semibold text-gray-800 dark:text-white">Variabel Dinamis</h4>
-                            <p class="text-[10px] text-gray-500 dark:text-gray-400">Opsional — Field akan readonly & terisi otomatis</p>
-                        </div>
-                    </div>
-                    <select name="dynamic_variable" id="edit_dynamic_variable"
-                        class="w-full px-4 py-2.5 border border-amber-200 dark:border-amber-700 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-sm">
-                        <option value="">-- Tidak Menggunakan Variabel --</option>
-                        <optgroup label="Variabel Sistem / Surat">
-                            <option value="${NO_REGISTRASI}">No. Registrasi</option>
-                            <option value="${NOMOR_SURAT}">No. Surat</option>
-                            <option value="${TANGGAL}">Tgl. Daftar</option>
-                            <option value="${TANGGAL_HARI_INI}">Tgl. Hari Ini</option>
-                            <option value="${NAMA_IZIN}">Nama Layanan</option>
-                            <option value="${MASA_AKTIF}">Masa Aktif</option>
-                        </optgroup>
-                        <optgroup label="Variabel Data Pemohon">
-                            <option value="${NAMA_PEMOHON}">Nama Pemohon</option>
-                            <option value="${NIK}">NIK</option>
-                            <option value="${EMAIL}">Email</option>
-                            <option value="${NO_HP}">No. HP</option>
-                            <option value="${ALAMAT_KTP}">Alamat KTP</option>
-                            <option value="${ALAMAT_DOMISILI}">Alamat Domisili</option>
-                            <option value="${ALAMAT_LENGKAP}">Alamat Lengkap</option>
-                            <option value="${PROVINSI}">Provinsi</option>
-                            <option value="${KABUPATEN}">Kabupaten</option>
-                            <option value="${KECAMATAN}">Kecamatan</option>
-                            <option value="${KELURAHAN}">Kelurahan</option>
-                            <option value="${PEKERJAAN}">Pekerjaan</option>
-                            <option value="${NAMA_PERUSAHAAN}">Nama Perusahaan</option>
-                            <option value="${NPWP}">NPWP</option>
-                        </optgroup>
-                        @if($perijinan->activeFormFields->count() > 0)
-                            @php
-                                $editDynGroupedFields = $perijinan->activeFormFields->groupBy('form_type');
-                            @endphp
-                            @foreach($editDynGroupedFields as $editDynType => $editDynFields)
-                                <optgroup label="Form {{ strtoupper($editDynType) }}">
-                                    @foreach($editDynFields as $editDynF)
-                                        @if(!in_array($editDynF->type, ['table', 'file', 'pas_foto', 'gambar']))
-                                            <option value="{{ '${' . strtoupper(str_replace(' ', '_', $editDynF->name)) . '}' }}">{{ $editDynF->label }}</option>
-                                        @endif
-                                    @endforeach
-                                </optgroup>
-                            @endforeach
-                        @endif
-                    </select>
-                    <p class="text-[10px] text-amber-600 dark:text-amber-400 mt-2 flex items-center gap-1">
-                        <i class="mdi mdi-information-outline"></i>
-                        Jika variabel dipilih, field akan diisi otomatis saat validasi dan bersifat readonly.
-                    </p>
-                </div>
 
                 <div class="flex items-center gap-4 pt-2">
                     <label class="flex items-center gap-2 cursor-pointer">
@@ -1835,11 +1734,7 @@
             document.getElementById('edit_is_required').checked = field.is_required;
             document.getElementById('edit_is_active').checked = field.is_active;
             
-            // Setup dynamic variable
-            const editDynVarSelect = document.getElementById('edit_dynamic_variable');
-            if (editDynVarSelect) {
-                editDynVarSelect.value = field.dynamic_variable || '';
-            }
+
             
             // Setup file config
             document.getElementById('edit_file_types').value = field.file_types || '';
@@ -2754,7 +2649,7 @@
                 
                 // Show Global + Izin variables + BO variables
                 if (varSectionGlobal) varSectionGlobal.classList.remove('hidden');
-                if (varSectionRekom) varSectionRekom.classList.add('hidden');
+                if (varSectionRekom) varSectionRekom.classList.remove('hidden');
                 if (varSectionIzin) varSectionIzin.classList.remove('hidden');
                 if (varSectionBo) varSectionBo.classList.remove('hidden');
             } else if (tabId === 'bo') {
