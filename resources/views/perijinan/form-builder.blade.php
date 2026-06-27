@@ -522,18 +522,50 @@
                                 <input type="checkbox" id="cell_is_input_create" onchange="updateCellProperties('create')" class="w-3.5 h-3.5 text-indigo-600 rounded">
                                 <label for="cell_is_input_create" class="text-xs font-semibold text-gray-700 dark:text-gray-300">Merupakan Field Isian</label>
                             </div>
-                            <div id="cell_input_options_create" class="hidden grid grid-cols-2 gap-2">
-                                <div>
-                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Tipe Isian</label>
-                                    <select id="cell_input_type_create" onchange="updateCellProperties('create')" class="w-full px-2 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-xs text-gray-950 dark:text-gray-100">
-                                        <option value="text">Text</option>
-                                        <option value="number">Number</option>
-                                        <option value="date">Date</option>
-                                    </select>
+                            <div id="cell_input_options_create" class="hidden space-y-2">
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Tipe Isian</label>
+                                        <select id="cell_input_type_create" onchange="updateCellProperties('create')" class="w-full px-2 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-xs text-gray-950 dark:text-gray-100">
+                                            <option value="text">Text</option>
+                                            <option value="number">Number</option>
+                                            <option value="date">Date</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Key Isian (Unique)</label>
+                                        <input type="text" id="cell_input_name_create" oninput="updateCellProperties('create')" class="w-full px-2 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-xs text-gray-950 dark:text-gray-100" placeholder="spesifikasi_1">
+                                    </div>
                                 </div>
                                 <div>
-                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Key Isian (Unique)</label>
-                                    <input type="text" id="cell_input_name_create" oninput="updateCellProperties('create')" class="w-full px-2 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-xs text-gray-950 dark:text-gray-100" placeholder="spesifikasi_1">
+                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-0.5">Isi Otomatis / Variabel Dinamis</label>
+                                    <div class="space-y-1.5">
+                                        <select onchange="insertVarPlaceholder('create', this)" class="w-full px-2 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-xs text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                            <option value="">-- Pilih Variabel --</option>
+                                            <optgroup label="Sistem / Surat">
+                                                <option value="${nomor_registrasi}">No. Registrasi</option>
+                                                <option value="${nomor_surat}">No. Surat/Izin</option>
+                                                <option value="${tanggal_daftar}">Tgl. Daftar</option>
+                                                <option value="${nama_layanan}">Nama Layanan</option>
+                                            </optgroup>
+                                            @if($perijinan->activeFormFields->count() > 0)
+                                                @php
+                                                    $groupedFields = $perijinan->activeFormFields->groupBy('form_type');
+                                                @endphp
+                                                @foreach($groupedFields as $type => $fields)
+                                                    <optgroup label="Form {{ strtoupper($type) }}">
+                                                        @foreach($fields as $f)
+                                                            @if($f->type !== 'table')
+                                                                <option value="{{ '${' . str_replace(' ', '_', strtolower($f->name)) . '}' }}">{{ $f->label }}</option>
+                                                            @endif
+                                                        @endforeach
+                                                    </optgroup>
+                                                @endforeach
+                                            @endif
+                                        </select>
+                                        <input type="text" id="cell_dynamic_var_create" oninput="updateCellProperties('create')" placeholder="Ketik manual atau pilih di atas..." class="w-full px-2 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-xs text-gray-955 dark:text-gray-100">
+                                    </div>
+                                    <p class="text-[9px] text-gray-400 mt-0.5 italic">Pilih dari dropdown di atas atau ketik manual.</p>
                                 </div>
                             </div>
                         </div>
@@ -1375,18 +1407,50 @@
                             <input type="checkbox" id="cell_is_input_edit" onchange="updateCellProperties('edit')" class="w-3.5 h-3.5 text-indigo-600 rounded">
                             <label for="cell_is_input_edit" class="text-xs font-semibold text-gray-700 dark:text-gray-300">Merupakan Field Isian</label>
                         </div>
-                        <div id="cell_input_options_edit" class="hidden grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Tipe Isian</label>
-                                <select id="cell_input_type_edit" onchange="updateCellProperties('edit')" class="w-full px-2 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-xs text-gray-950 dark:text-gray-100">
-                                    <option value="text">Text</option>
-                                    <option value="number">Number</option>
-                                    <option value="date">Date</option>
-                                </select>
+                        <div id="cell_input_options_edit" class="hidden space-y-2">
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Tipe Isian</label>
+                                    <select id="cell_input_type_edit" onchange="updateCellProperties('edit')" class="w-full px-2 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-xs text-gray-950 dark:text-gray-100">
+                                        <option value="text">Text</option>
+                                        <option value="number">Number</option>
+                                        <option value="date">Date</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Key Isian (Unique)</label>
+                                    <input type="text" id="cell_input_name_edit" oninput="updateCellProperties('edit')" class="w-full px-2 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-xs text-gray-950 dark:text-gray-100" placeholder="spesifikasi_1">
+                                </div>
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Key Isian (Unique)</label>
-                                <input type="text" id="cell_input_name_edit" oninput="updateCellProperties('edit')" class="w-full px-2 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-xs text-gray-950 dark:text-gray-100" placeholder="spesifikasi_1">
+                                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-0.5">Isi Otomatis / Variabel Dinamis</label>
+                                <div class="space-y-1.5">
+                                    <select onchange="insertVarPlaceholder('edit', this)" class="w-full px-2 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-xs text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                        <option value="">-- Pilih Variabel --</option>
+                                        <optgroup label="Sistem / Surat">
+                                            <option value="${nomor_registrasi}">No. Registrasi</option>
+                                            <option value="${nomor_surat}">No. Surat/Izin</option>
+                                            <option value="${tanggal_daftar}">Tgl. Daftar</option>
+                                            <option value="${nama_layanan}">Nama Layanan</option>
+                                        </optgroup>
+                                        @if($perijinan->activeFormFields->count() > 0)
+                                            @php
+                                                $groupedFields = $perijinan->activeFormFields->groupBy('form_type');
+                                            @endphp
+                                            @foreach($groupedFields as $type => $fields)
+                                                <optgroup label="Form {{ strtoupper($type) }}">
+                                                    @foreach($fields as $f)
+                                                        @if($f->type !== 'table')
+                                                            <option value="{{ '${' . str_replace(' ', '_', strtolower($f->name)) . '}' }}">{{ $f->label }}</option>
+                                                        @endif
+                                                    @endforeach
+                                                </optgroup>
+                                            @endforeach
+                                        @endif
+                                    </select>
+                                    <input type="text" id="cell_dynamic_var_edit" oninput="updateCellProperties('edit')" placeholder="Ketik manual atau pilih di atas..." class="w-full px-2 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-xs text-gray-955 dark:text-gray-100">
+                                </div>
+                                <p class="text-[9px] text-gray-400 mt-0.5 italic">Pilih dari dropdown di atas atau ketik manual.</p>
                             </div>
                         </div>
                     </div>
@@ -1689,7 +1753,7 @@
         // ── helpers ──────────────────────────────────────────────────────────
         function makeCell(r, c) {
             return { content: `Kolom ${c+1}`, is_input: false, input_type: 'text',
-                     input_name: `cell_${r}_${c}`, colspan: 1, rowspan: 1, skipped: false, fmt: {} };
+                     input_name: `cell_${r}_${c}`, dynamic_var: '', colspan: 1, rowspan: 1, skipped: false, fmt: {} };
         }
 
         // Build a fresh grid, carrying over existing cell data where possible.
@@ -1755,6 +1819,7 @@
                             is_input:   cell.is_input,
                             input_type: cell.input_type,
                             input_name: cell.input_name,
+                            dynamic_var: cell.dynamic_var || '',
                             colspan:    cell.colspan,
                             rowspan:    cell.rowspan,
                             fmt:        cell.fmt || {}
@@ -1975,6 +2040,7 @@
             document.getElementById(`cell_is_input_${mode}`).checked  = cell.is_input || false;
             document.getElementById(`cell_input_type_${mode}`).value  = cell.input_type || 'text';
             document.getElementById(`cell_input_name_${mode}`).value  = cell.input_name || `cell_${r}_${c}`;
+            document.getElementById(`cell_dynamic_var_${mode}`).value = cell.dynamic_var || '';
 
             // Load formatting
             const fmt = cell.fmt || {};
@@ -2070,6 +2136,7 @@
             cell.is_input   = document.getElementById(`cell_is_input_${mode}`).checked;
             cell.input_type = document.getElementById(`cell_input_type_${mode}`).value;
             cell.input_name = document.getElementById(`cell_input_name_${mode}`).value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+            cell.dynamic_var = document.getElementById(`cell_dynamic_var_${mode}`).value;
 
             // Collect formatting
             if (!cell.fmt) cell.fmt = {};
@@ -2759,6 +2826,15 @@
                 });
             }
         });
+
+        function insertVarPlaceholder(mode, selectEl) {
+            const val = selectEl.value;
+            if (val) {
+                document.getElementById(`cell_dynamic_var_${mode}`).value = val;
+                updateCellProperties(mode);
+                selectEl.value = ''; // reset select
+            }
+        }
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js" referrerpolicy="origin"></script>
     </div> <!-- End form-builder-app -->

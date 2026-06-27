@@ -274,10 +274,10 @@ class DocumentGenerator
                     }
                 } else {
                     if ($field && $field->type === 'table' && is_array($value)) {
-                        $valStr = self::renderTableFieldForDocument($field, $value);
-                        $boReplacements['_WORD_TABLE_${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = self::renderTableFieldForWord($field, $value);
+                        $valStr = self::renderTableFieldForDocument($field, $value, $application);
+                        $boReplacements['_WORD_TABLE_${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = self::renderTableFieldForWord($field, $value, $application);
                         if ($field) {
-                            $boReplacements['_WORD_TABLE_${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = self::renderTableFieldForWord($field, $value);
+                            $boReplacements['_WORD_TABLE_${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = self::renderTableFieldForWord($field, $value, $application);
                         }
                     } elseif ($field && $field->type === 'date' && !empty($value)) {
                         $valStr = self::formatDateIndonesian($value);
@@ -596,10 +596,10 @@ class DocumentGenerator
                             }
                         } else {
                             if ($field && $field->type === 'table' && is_array($value)) {
-                                $valStr = self::renderTableFieldForDocument($field, $value);
-                                $dataReplacements['_WORD_TABLE_${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = self::renderTableFieldForWord($field, $value);
+                                $valStr = self::renderTableFieldForDocument($field, $value, $application);
+                                $dataReplacements['_WORD_TABLE_${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = self::renderTableFieldForWord($field, $value, $application);
                                 if ($field) {
-                                    $dataReplacements['_WORD_TABLE_${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = self::renderTableFieldForWord($field, $value);
+                                    $dataReplacements['_WORD_TABLE_${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = self::renderTableFieldForWord($field, $value, $application);
                                 }
                             } elseif ($field && $field->type === 'date' && !empty($value)) {
                                 $valStr = self::formatDateIndonesian($value);
@@ -992,8 +992,13 @@ class DocumentGenerator
      * @param array $values  The saved key=>value pairs for this field
      * @return string  HTML table string
      */
-    private static function renderTableFieldForDocument($field, array $values): string
+    private static function renderTableFieldForDocument($field, array $values, $application = null): string
     {
+        $dynamicVarMap = [];
+        if ($application) {
+            $dynamicVarMap = self::getDynamicVariableMap($application);
+        }
+
         $rawTableData = $field->options['table_data'] ?? null;
         // options is cast to array; table_data may be stored as a JSON string
         if (is_string($rawTableData)) {
@@ -1094,6 +1099,12 @@ class DocumentGenerator
 
                 if ($isInput) {
                     $cellVal = $values[$inputName] ?? '';
+                    if (!empty($cell['dynamic_var'])) {
+                        $cleanVarName = strtolower(str_replace(['$', '{', '}', ' '], ['', '', '', '_'], $cell['dynamic_var']));
+                        if (isset($dynamicVarMap[$cleanVarName])) {
+                            $cellVal = $dynamicVarMap[$cleanVarName];
+                        }
+                    }
                     $html .= '<td ' . $styleAttr . $colspanAttr . $rowspanAttr . '>' . nl2br(htmlspecialchars($cellVal)) . '</td>';
                 } else {
                     $html .= '<th ' . $styleAttr . $colspanAttr . $rowspanAttr . '>' . nl2br(htmlspecialchars($content)) . '</th>';
@@ -1113,8 +1124,13 @@ class DocumentGenerator
      * @param array $values  The saved key=>value pairs for this field
      * @return \PhpOffice\PhpWord\Element\Table
      */
-    private static function renderTableFieldForWord($field, array $values): \PhpOffice\PhpWord\Element\Table
+    private static function renderTableFieldForWord($field, array $values, $application = null): \PhpOffice\PhpWord\Element\Table
     {
+        $dynamicVarMap = [];
+        if ($application) {
+            $dynamicVarMap = self::getDynamicVariableMap($application);
+        }
+
         $rawTableData = $field->options['table_data'] ?? null;
         if (is_string($rawTableData)) {
             $tableData = json_decode($rawTableData, true);
@@ -1311,6 +1327,12 @@ class DocumentGenerator
 
                     if ($isInput) {
                         $cellVal = $values[$inputName] ?? '';
+                        if (!empty($cell['dynamic_var'])) {
+                            $cleanVarName = strtolower(str_replace(['$', '{', '}', ' '], ['', '', '', '_'], $cell['dynamic_var']));
+                            if (isset($dynamicVarMap[$cleanVarName])) {
+                                $cellVal = $dynamicVarMap[$cleanVarName];
+                            }
+                        }
                         $lines = explode("\n", str_replace("\r", "", $cellVal));
                         if (count($lines) > 1) {
                             $textRun = $cellObj->addTextRun($paraStyle);
@@ -1362,6 +1384,83 @@ class DocumentGenerator
         }
 
         return $table;
+    }
+
+    /**
+     * Get a simple key-value map of all dynamic variables for a given application.
+     * Keys are lowercase placeholder names (without ${} or with them, but let's standardise on placeholder names like 'nama_pemohon', 'nik', etc.).
+     *
+     * @param \App\Models\DataPerijinan $application
+     * @return array
+     */
+    public static function getDynamicVariableMap($application): array
+    {
+        $map = [];
+
+        // 1. System/Model fields
+        $map['nomor_registrasi'] = $application->no_registrasi;
+        $map['nomor_surat'] = $application->no_izin ?? '-';
+        $map['nomor_izin'] = $application->no_izin ?? '-';
+        $map['tanggal_daftar'] = self::formatDateIndonesian($application->created_at);
+        $map['nama_layanan'] = $application->perijinan->name ?? '-';
+
+        // 2. Global form fields (applicant data)
+        if (!empty($application->form_data) && is_array($application->form_data)) {
+            foreach ($application->form_data as $fieldId => $value) {
+                $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
+                $map[strtolower($fieldId)] = $valStr;
+                $field = $application->perijinan->activeFormFields->firstWhere('id', $fieldId);
+                if ($field) {
+                    $map[strtolower($field->name)] = $valStr;
+                    $map[strtolower($field->label)] = $valStr;
+                }
+            }
+        }
+
+        // 3. BO form fields
+        if (!empty($application->bo_data) && is_array($application->bo_data)) {
+            foreach ($application->bo_data as $key => $value) {
+                $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
+                $map[strtolower($key)] = $valStr;
+                $field = $application->perijinan->activeFormFields->where('form_type', 'bo')->firstWhere('name', $key);
+                if ($field) {
+                    $map[strtolower($field->label)] = $valStr;
+                }
+            }
+        }
+
+        // 4. Rekom form fields
+        if (!empty($application->rekom_data) && is_array($application->rekom_data)) {
+            foreach ($application->rekom_data as $key => $value) {
+                $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
+                $map[strtolower($key)] = $valStr;
+                $field = $application->perijinan->activeFormFields->where('form_type', 'rekom')->firstWhere('name', $key);
+                if ($field) {
+                    $map[strtolower($field->label)] = $valStr;
+                }
+            }
+        }
+
+        // 5. Izin form fields
+        if (!empty($application->izin_data) && is_array($application->izin_data)) {
+            foreach ($application->izin_data as $key => $value) {
+                $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
+                $map[strtolower($key)] = $valStr;
+                $field = $application->perijinan->activeFormFields->where('form_type', 'izin')->firstWhere('name', $key);
+                if ($field) {
+                    $map[strtolower($field->label)] = $valStr;
+                }
+            }
+        }
+
+        // Standardise keys by removing spaces, converting to lowercase
+        $finalMap = [];
+        foreach ($map as $key => $value) {
+            $cleanKey = strtolower(str_replace(' ', '_', $key));
+            $finalMap[$cleanKey] = $value;
+        }
+
+        return $finalMap;
     }
 
     /**

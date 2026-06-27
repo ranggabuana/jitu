@@ -52,6 +52,16 @@
             $rows[$r] = $newRow;
         }
     }
+
+    // Resolve dynamic variable map from context if available
+    $applicationInstance = $application ?? $data ?? null;
+    if (!$applicationInstance && isset($detail)) {
+        $applicationInstance = $detail;
+    }
+    $dynamicVarMap = [];
+    if ($applicationInstance instanceof \App\Models\DataPerijinan) {
+        $dynamicVarMap = \App\Services\DocumentGenerator::getDynamicVariableMap($applicationInstance);
+    }
 @endphp
 
 @if($originalRowCount > 0)
@@ -68,6 +78,16 @@
                             $inputName = $cell['input_name'] ?? '';
                             $cellContent = $cell['content'] ?? '';
                             $savedCellVal = $savedVal[$inputName] ?? '';
+                            $isDynamicVar = false;
+                            $dynamicVarLabel = '';
+                            if (!empty($cell['dynamic_var'])) {
+                                $isDynamicVar = true;
+                                $dynamicVarLabel = $cell['dynamic_var'];
+                                $cleanVarName = strtolower(str_replace(['$', '{', '}', ' '], ['', '', '', '_'], $cell['dynamic_var']));
+                                if (isset($dynamicVarMap[$cleanVarName])) {
+                                    $savedCellVal = $dynamicVarMap[$cleanVarName];
+                                }
+                            }
                             $fmt = $cell['fmt'] ?? [];
 
                             // Construct cell inline styling based on builder configuration
@@ -104,29 +124,42 @@
                         
                         <td colspan="{{ $colspan }}" rowspan="{{ $rowspan }}" style="{{ $cellStyle }}" class="border border-gray-300 dark:border-gray-600 p-2">
                             @if($isInput)
+                                @php
+                                    $cellAttr = $ro;
+                                    if ($isDynamicVar) {
+                                        $cellAttr .= ' readonly';
+                                    }
+                                @endphp
                                 @if($inputType === 'date')
                                     <input type="date"
                                         name="{{ $prefix }}[{{ $inputName }}]"
                                         value="{{ $savedCellVal }}"
-                                        {{ $ro }}
-                                        class="w-full px-2 py-1 text-xs border-0 bg-transparent focus:ring-1 focus:ring-indigo-400 outline-none rounded text-gray-900 dark:text-gray-100"
+                                        {{ $cellAttr }}
+                                        class="w-full px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 bg-transparent focus:ring-1 focus:ring-indigo-400 outline-none rounded text-gray-900 dark:text-gray-100 {{ $isDynamicVar ? 'bg-gray-100/50 dark:bg-gray-800/50 cursor-not-allowed text-gray-500' : '' }}"
                                         style="text-align: inherit; font-size: inherit; font-weight: inherit; color: inherit; background: transparent;">
                                 @elseif($inputType === 'number')
                                     <input type="number"
                                         name="{{ $prefix }}[{{ $inputName }}]"
                                         value="{{ $savedCellVal }}"
-                                        {{ $ro }}
-                                        class="w-full px-2 py-1 text-xs border-0 bg-transparent focus:ring-1 focus:ring-indigo-400 outline-none rounded text-gray-900 dark:text-gray-100"
+                                        {{ $cellAttr }}
+                                        class="w-full px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 bg-transparent focus:ring-1 focus:ring-indigo-400 outline-none rounded text-gray-900 dark:text-gray-100 {{ $isDynamicVar ? 'bg-gray-100/50 dark:bg-gray-800/50 cursor-not-allowed text-gray-500' : '' }}"
                                         style="text-align: inherit; font-size: inherit; font-weight: inherit; color: inherit; background: transparent;">
                                 @else
                                     <textarea
                                         name="{{ $prefix }}[{{ $inputName }}]"
-                                        {{ $ro }}
+                                        {{ $cellAttr }}
                                         rows="1"
-                                        class="w-full px-2 py-1 text-xs border-0 bg-transparent focus:ring-1 focus:ring-indigo-400 outline-none rounded text-gray-900 dark:text-gray-100"
-                                        style="text-align: inherit; font-size: inherit; font-weight: inherit; color: inherit; background: transparent; min-height: 24px; display: block; resize: vertical;"
+                                        class="w-full px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 bg-transparent focus:ring-1 focus:ring-indigo-400 outline-none rounded text-gray-900 dark:text-gray-100 {{ $isDynamicVar ? 'bg-gray-100/50 dark:bg-gray-800/50 cursor-not-allowed text-gray-500' : '' }}"
+                                        style="text-align: inherit; font-size: inherit; font-weight: inherit; color: inherit; background: transparent; min-height: 24px; display: block; resize: {{ $isDynamicVar ? 'none' : 'vertical' }};"
                                         oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px';"
                                     >{{ $savedCellVal }}</textarea>
+                                @endif
+
+                                @if($isDynamicVar)
+                                    <div class="text-[9px] text-indigo-600 dark:text-indigo-400 mt-1 italic text-center leading-tight">
+                                        <span class="block text-[8px] opacity-75">Abaikan saja, terisi otomatis dari:</span>
+                                        <strong class="font-bold font-mono">{{ $dynamicVarLabel }}</strong>
+                                    </div>
                                 @endif
                             @else
                                 {{ $cellContent ?: '-' }}
