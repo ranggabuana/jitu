@@ -37,8 +37,8 @@ class LandingPageController extends Controller
             'user',
             'perijinan',
             'perijinan.activeValidationFlows',
-            'validasiRecords.validationFlow.assignedUser',
-            'validasiRecords.validator'
+            'validasiRecords.validationFlow.assignedUser.opd',
+            'validasiRecords.validator.opd'
         ])
         ->where('no_registrasi', $request->no_registrasi)
         ->first();
@@ -66,6 +66,13 @@ class LandingPageController extends Controller
             $internalRole = $validasi->validationFlow->role ?? '';
             $displayRole = $publicRoleLabels[$internalRole] ?? $roleLabel;
 
+            $opdName = null;
+            if ($validasi->validationFlow && $validasi->validationFlow->assignedUser && $validasi->validationFlow->assignedUser->opd) {
+                $opdName = $validasi->validationFlow->assignedUser->opd->nama_opd;
+            } elseif ($validasi->validator && $validasi->validator->opd) {
+                $opdName = $validasi->validator->opd->nama_opd;
+            }
+
             return [
                 'status' => $validasi->status,
                 'catatan' => $validasi->catatan,
@@ -76,6 +83,7 @@ class LandingPageController extends Controller
                 ],
                 'validator' => [
                     'role_label' => $displayRole,
+                    'opd_name' => $opdName,
                     // We hide the real name of the validator for public tracking
                 ],
             ];

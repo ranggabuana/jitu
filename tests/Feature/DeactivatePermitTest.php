@@ -108,7 +108,7 @@ class DeactivatePermitTest extends TestCase
 
         // Create Operator User
         $operator = User::create([
-            'name' => 'Operator Dinkes',
+            'name' => 'Budi Utomo',
             'username' => 'opd_multi_test',
             'email' => 'opd_multi@test.com',
             'password' => bcrypt('password'),
@@ -161,5 +161,25 @@ class DeactivatePermitTest extends TestCase
         $scanRekomResponse->assertSee('Surat Rekomendasi Dinonaktifkan oleh Admin DPMPTSP');
         $scanRekomResponse->assertSee('PERINGATAN: SURAT REKOMENDASI DINONAKTIFKAN');
         $scanRekomResponse->assertSee('Dinas Kesehatan'); // Should display the OPD name in the scan result
+
+        // 5. Verify pemohon tracking detail hides validator name but shows role and OPD name
+        $trackingResponse = $this->actingAs($admin)->get(route('pemohon.tracking.detail', $application->id));
+        $trackingResponse->assertStatus(200);
+        $trackingResponse->assertSee('Operator OPD');
+        $trackingResponse->assertSee('Dinas Kesehatan');
+        $trackingResponse->assertDontSee($operator->name); // Should not see "Budi Utomo"
+
+        // 6. Verify public tracking API hides validator name but shows role and OPD name
+        $publicTrackingResponse = $this->post(route('front.perizinan.track'), [
+            'no_registrasi' => $application->no_registrasi
+        ]);
+        $publicTrackingResponse->assertStatus(200);
+        $publicTrackingResponse->assertJsonFragment([
+            'role_label' => 'Tim Teknis OPD',
+            'opd_name' => 'Dinas Kesehatan'
+        ]);
+        $publicTrackingResponse->assertJsonMissing([
+            'name' => $operator->name
+        ]);
     }
 }

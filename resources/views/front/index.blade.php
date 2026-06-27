@@ -737,32 +737,25 @@
                                             Divalidasi pada ${new Date(validasi.validated_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} WIB
                                         </p>
                                     ` : ''}
-                                ${validasi.validator ? `
-                                    ${['fo', 'bo', 'operator_opd', 'kepala_opd'].includes(validasi.validator.role) ? `
-                                        <div class="mt-2 flex items-center gap-2 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-2 border border-amber-200">
-                                            <div class="w-6 h-6 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
-                                                <i class="fas fa-user-check text-white text-xs"></i>
-                                            </div>
-                                            <div class="flex-1">
-                                                <p class="text-xs font-semibold text-gray-800">
-                                                    <i class="fas fa-user-tie mr-1"></i>
-                                                    ${escapeHtml(validasi.validator.name)}
-                                                </p>
-                                                <p class="text-xs text-gray-500">${escapeHtml(validasi.validator.role_label) || 'Validator'}</p>
-                                            </div>
-                                        </div>
-                                    ` : `
-                                        <div class="mt-2 flex items-center gap-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-2 border border-blue-200">
-                                            <div class="w-6 h-6 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center flex-shrink-0">
-                                                <i class="fas fa-users text-white text-xs"></i>
-                                            </div>
-                                            <p class="text-xs font-semibold text-gray-800">
-                                                <i class="fas fa-user-check mr-1"></i>
-                                                Divalidasi oleh ${escapeHtml(validasi.validator.role_label) || escapeHtml(validasi.validation_flow?.role_label) || 'Validator'}
-                                            </p>
-                                        </div>
-                                    `}
-                                ` : ''}
+                                 ${validasi.validator ? `
+                                     <div class="mt-2 flex items-center gap-2 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-2 border border-amber-200">
+                                         <div class="w-6 h-6 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                             <i class="fas fa-user-check text-white text-xs"></i>
+                                         </div>
+                                         <div class="flex-1">
+                                             <p class="text-xs font-bold text-gray-800">
+                                                 <i class="fas fa-user-tie mr-1"></i>
+                                                 ${escapeHtml(validasi.validator.role_label) || escapeHtml(validasi.validation_flow?.role_label) || 'Petugas'}
+                                             </p>
+                                             ${validasi.validator.opd_name ? `
+                                                 <p class="text-[10px] text-gray-500">
+                                                     <i class="fas fa-building mr-1"></i>
+                                                     ${escapeHtml(validasi.validator.opd_name)}
+                                                 </p>
+                                             ` : ''}
+                                         </div>
+                                     </div>
+                                 ` : ''}
                             </div>
                         </div>
                     `;

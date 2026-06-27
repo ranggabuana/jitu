@@ -234,19 +234,29 @@
                                             <i class="fas fa-user-check text-white text-sm"></i>
                                         </div>
                                         <div class="flex-1">
-                                            <p class="text-xs {{ $textColor }} font-semibold mb-0.5">
-                                                <i class="fas fa-user-tie mr-1"></i>
-                                                Petugas yang Ditugaskan:
-                                            </p>
-                                            <p class="text-sm font-bold text-gray-800">
-                                                {{ $validatorName }}
-                                            </p>
-                                            <p class="text-xs text-gray-500">
-                                                <i class="fas fa-id-badge mr-1"></i>
-                                                {{ $validatorRoleLabel ?? $labelKey }}
-                                            </p>
-                                        </div>
-                                    </div>
+                                             <p class="text-xs {{ $textColor }} font-semibold mb-0.5">
+                                                 <i class="fas fa-user-tie mr-1"></i>
+                                                 Petugas yang Ditugaskan:
+                                             </p>
+                                             <p class="text-sm font-bold text-gray-800">
+                                                 {{ $validatorRoleLabel ?? $labelKey }}
+                                             </p>
+                                             @php
+                                                 $opdName = null;
+                                                 if ($validasi->validationFlow->assignedUser && $validasi->validationFlow->assignedUser->opd) {
+                                                     $opdName = $validasi->validationFlow->assignedUser->opd->nama_opd;
+                                                 } elseif ($validasi->validator && $validasi->validator->opd) {
+                                                     $opdName = $validasi->validator->opd->nama_opd;
+                                                 }
+                                             @endphp
+                                             @if($opdName)
+                                                 <p class="text-xs text-gray-500">
+                                                     <i class="fas fa-building mr-1"></i>
+                                                     {{ $opdName }}
+                                                 </p>
+                                             @endif
+                                         </div>
+                                     </div>
                                 @elseif ($validasi->validator && in_array($validatorRole, ['verifikator', 'kadin']))
                                     <!-- Untuk role kolektif yang belum di-assign, tampilkan role saja -->
                                     <div class="mt-3 flex items-center gap-2 bg-gradient-to-r from-purple-50 to-violet-50 rounded-lg p-3 border border-purple-200">

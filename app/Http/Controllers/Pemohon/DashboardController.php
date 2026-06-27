@@ -621,8 +621,8 @@ class DashboardController extends Controller
 
         $data = DataPerijinan::with([
             'perijinan.activeFormFields',
-            'validasiRecords.validationFlow.assignedUser',
-            'validasiRecords.validator'
+            'validasiRecords.validationFlow.assignedUser.opd',
+            'validasiRecords.validator.opd'
         ])
             ->where('id', $id)
             ->where('user_id', $user->id)
