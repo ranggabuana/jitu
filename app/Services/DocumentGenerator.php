@@ -1060,9 +1060,9 @@ class DocumentGenerator
 
                 if ($isInput) {
                     $cellVal = $values[$inputName] ?? '';
-                    $html .= '<td ' . $styleAttr . $colspanAttr . $rowspanAttr . '>' . htmlspecialchars($cellVal) . '</td>';
+                    $html .= '<td ' . $styleAttr . $colspanAttr . $rowspanAttr . '>' . nl2br(htmlspecialchars($cellVal)) . '</td>';
                 } else {
-                    $html .= '<th ' . $styleAttr . $colspanAttr . $rowspanAttr . '>' . htmlspecialchars($content) . '</th>';
+                    $html .= '<th ' . $styleAttr . $colspanAttr . $rowspanAttr . '>' . nl2br(htmlspecialchars($content)) . '</th>';
                 }
             }
             $html .= '</tr>';
@@ -1244,9 +1244,31 @@ class DocumentGenerator
 
                     if ($isInput) {
                         $cellVal = $values[$inputName] ?? '';
-                        $cellObj->addText($cellVal, $fontStyle, $paraStyle);
+                        $lines = explode("\n", str_replace("\r", "", $cellVal));
+                        if (count($lines) > 1) {
+                            $textRun = $cellObj->addTextRun($paraStyle);
+                            foreach ($lines as $index => $line) {
+                                if ($index > 0) {
+                                    $textRun->addTextBreak();
+                                }
+                                $textRun->addText($line, $fontStyle);
+                            }
+                        } else {
+                            $cellObj->addText($cellVal, $fontStyle, $paraStyle);
+                        }
                     } else {
-                        $cellObj->addText($content, $fontStyle, $paraStyle);
+                        $lines = explode("\n", str_replace("\r", "", $content));
+                        if (count($lines) > 1) {
+                            $textRun = $cellObj->addTextRun($paraStyle);
+                            foreach ($lines as $index => $line) {
+                                if ($index > 0) {
+                                    $textRun->addTextBreak();
+                                }
+                                $textRun->addText($line, $fontStyle);
+                            }
+                        } else {
+                            $cellObj->addText($content, $fontStyle, $paraStyle);
+                        }
                     }
 
                     $c += $colspan;

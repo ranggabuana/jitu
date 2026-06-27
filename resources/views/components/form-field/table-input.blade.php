@@ -84,12 +84,14 @@
                                         class="w-full px-2 py-1 text-xs border-0 bg-transparent focus:ring-1 focus:ring-indigo-400 outline-none rounded text-gray-900 dark:text-gray-100"
                                         style="text-align: inherit; font-size: inherit; font-weight: inherit; color: inherit; background: transparent;">
                                 @else
-                                    <input type="text"
+                                    <textarea
                                         name="{{ $prefix }}[{{ $inputName }}]"
-                                        value="{{ $savedCellVal }}"
                                         {{ $ro }}
+                                        rows="1"
                                         class="w-full px-2 py-1 text-xs border-0 bg-transparent focus:ring-1 focus:ring-indigo-400 outline-none rounded text-gray-900 dark:text-gray-100"
-                                        style="text-align: inherit; font-size: inherit; font-weight: inherit; color: inherit; background: transparent;">
+                                        style="text-align: inherit; font-size: inherit; font-weight: inherit; color: inherit; background: transparent; min-height: 24px; display: block; resize: vertical;"
+                                        oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px';"
+                                    >{{ $savedCellVal }}</textarea>
                                 @endif
                             @else
                                 {{ $cellContent ?: '-' }}
@@ -100,6 +102,19 @@
             @endforeach
         </table>
     </div>
+    <script>
+        (function() {
+            function adjustHeights() {
+                document.querySelectorAll('textarea[name^="{{ $prefix }}"]').forEach(el => {
+                    el.style.height = 'auto';
+                    el.style.height = (el.scrollHeight > 24 ? el.scrollHeight : 24) + 'px';
+                });
+            }
+            adjustHeights();
+            window.addEventListener('load', adjustHeights);
+            document.addEventListener('DOMContentLoaded', adjustHeights);
+        })();
+    </script>
 @else
     <p class="text-xs text-gray-400 italic mt-1">Desain table belum dikonfigurasi.</p>
 @endif
