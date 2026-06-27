@@ -1006,6 +1006,40 @@ class DocumentGenerator
         }
 
         $rows = $tableData['rows'];
+        $maxRowIndex = count($rows) - 1;
+        foreach ($values as $key => $val) {
+            if (preg_match('/cell_(\d+)_/i', $key, $matches)) {
+                $rIndex = intval($matches[1]);
+                if ($rIndex > $maxRowIndex) {
+                    $maxRowIndex = $rIndex;
+                }
+            }
+        }
+        $originalRowCount = count($rows);
+        if ($originalRowCount > 0 && $maxRowIndex >= $originalRowCount) {
+            $lastRowTemplate = $rows[$originalRowCount - 1];
+            for ($r = $originalRowCount; $r <= $maxRowIndex; $r++) {
+                $newRow = [];
+                $isFirstCell = true;
+                foreach ($lastRowTemplate as $cell) {
+                    $newCell = $cell;
+                    if (!empty($cell['input_name'])) {
+                        $newCell['input_name'] = preg_replace('/cell_\d+_/', 'cell_' . $r . '_', $cell['input_name']);
+                    }
+                    if ($isFirstCell && empty($cell['is_input']) && isset($cell['content'])) {
+                        $content = trim($cell['content']);
+                        if (ctype_digit($content)) {
+                            $diff = $r - ($originalRowCount - 1);
+                            $newCell['content'] = strval(intval($content) + $diff);
+                        }
+                    }
+                    $isFirstCell = false;
+                    $newRow[] = $newCell;
+                }
+                $rows[$r] = $newRow;
+            }
+        }
+
         $tableFontFamily = $tableData['fontFamily'] ?? '';
         $tableStyle = 'width:100%;border-collapse:collapse;font-size:10pt;border:1px solid #000;margin-top:10px;margin-bottom:10px;';
         if (!empty($tableFontFamily)) {
@@ -1117,6 +1151,39 @@ class DocumentGenerator
         }
 
         $rows = $tableData['rows'];
+        $maxRowIndex = count($rows) - 1;
+        foreach ($values as $key => $val) {
+            if (preg_match('/cell_(\d+)_/i', $key, $matches)) {
+                $rIndex = intval($matches[1]);
+                if ($rIndex > $maxRowIndex) {
+                    $maxRowIndex = $rIndex;
+                }
+            }
+        }
+        $originalRowCount = count($rows);
+        if ($originalRowCount > 0 && $maxRowIndex >= $originalRowCount) {
+            $lastRowTemplate = $rows[$originalRowCount - 1];
+            for ($r = $originalRowCount; $r <= $maxRowIndex; $r++) {
+                $newRow = [];
+                $isFirstCell = true;
+                foreach ($lastRowTemplate as $cell) {
+                    $newCell = $cell;
+                    if (!empty($cell['input_name'])) {
+                        $newCell['input_name'] = preg_replace('/cell_\d+_/', 'cell_' . $r . '_', $cell['input_name']);
+                    }
+                    if ($isFirstCell && empty($cell['is_input']) && isset($cell['content'])) {
+                        $content = trim($cell['content']);
+                        if (ctype_digit($content)) {
+                            $diff = $r - ($originalRowCount - 1);
+                            $newCell['content'] = strval(intval($content) + $diff);
+                        }
+                    }
+                    $isFirstCell = false;
+                    $newRow[] = $newCell;
+                }
+                $rows[$r] = $newRow;
+            }
+        }
         $numRows = count($rows);
 
         // Track grid occupancy for rowspan (vMerge)
