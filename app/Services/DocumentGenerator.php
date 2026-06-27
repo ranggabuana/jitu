@@ -1006,7 +1006,12 @@ class DocumentGenerator
         }
 
         $rows = $tableData['rows'];
-        $html  = '<table style="width:100%;border-collapse:collapse;font-size:10pt;border:1px solid #000;margin-top:10px;margin-bottom:10px;">';
+        $tableFontFamily = $tableData['fontFamily'] ?? '';
+        $tableStyle = 'width:100%;border-collapse:collapse;font-size:10pt;border:1px solid #000;margin-top:10px;margin-bottom:10px;';
+        if (!empty($tableFontFamily)) {
+            $tableStyle .= 'font-family: ' . $tableFontFamily . ';';
+        }
+        $html  = '<table style="' . $tableStyle . '">';
         foreach ($rows as $row) {
             $html .= '<tr>';
             foreach ($row as $cell) {
@@ -1081,6 +1086,20 @@ class DocumentGenerator
             $tableData = json_decode($rawTableData, true);
         } else {
             $tableData = $rawTableData;
+        }
+
+        $tableFontFamily = $tableData['fontFamily'] ?? '';
+        $globalFontName = 'DejaVu Sans';
+        if (!empty($tableFontFamily)) {
+            if (str_contains($tableFontFamily, 'Times New Roman')) {
+                $globalFontName = 'Times New Roman';
+            } elseif (str_contains($tableFontFamily, 'Bookman')) {
+                $globalFontName = 'Bookman Old Style';
+            } elseif (str_contains($tableFontFamily, 'Arial')) {
+                $globalFontName = 'Arial';
+            } elseif (str_contains($tableFontFamily, 'Courier')) {
+                $globalFontName = 'Courier New';
+            }
         }
 
         $tableStyle = [
@@ -1185,7 +1204,7 @@ class DocumentGenerator
                     $cellObj = $table->addCell($cellWidth, $cellStyle);
 
                     $fontStyle = [
-                        'name' => 'DejaVu Sans',
+                        'name' => $globalFontName,
                         'size' => 10,
                     ];
 

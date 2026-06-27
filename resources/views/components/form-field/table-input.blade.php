@@ -37,6 +37,9 @@
 
                             // Construct cell inline styling based on builder configuration
                             $cellStyle = 'border: 1px solid #d1d5db; padding: 8px 10px; min-width: 60px;';
+                            if (!empty($fmt['fontFamily'])) {
+                                $cellStyle .= 'font-family: ' . $fmt['fontFamily'] . ';';
+                            }
                             if (!empty($fmt['width'])) {
                                 $cellStyle .= 'width: ' . $fmt['width'] . '%;';
                             }
