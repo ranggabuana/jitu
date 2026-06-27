@@ -85,6 +85,7 @@ class PerijinanController extends Controller
             return redirect()->route('perijinan.index')->with('error', 'Hanya Admin yang dapat menambah data perijinan.');
         }
         $request->validate([
+            'kode_perijinan' => 'nullable|string|max:50',
             'nama_perijinan' => 'required|string|max:255',
             'is_multi_opd' => 'nullable|boolean',
             'has_bo_form' => 'nullable|boolean',
@@ -793,7 +794,7 @@ class PerijinanController extends Controller
         $perijinan = Perijinan::findOrFail($id);
 
         $request->validate([
-            'kode_perijinan' => 'nullable|string|max:50|unique:perijinan,kode_perijinan,' . $id,
+            'kode_perijinan' => 'nullable|string|max:50',
             'nama_perijinan' => 'required|string|max:255',
             'is_multi_opd' => 'nullable|boolean',
             'has_bo_form' => 'nullable|boolean',
