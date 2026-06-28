@@ -531,6 +531,12 @@ class DashboardController extends Controller
             }
 
             $pembetulanDariId = null;
+            $oldNoRegistrasi = null;
+            $oldNoIzin = null;
+            $oldNoIzinKode = null;
+            $oldNoRekom = null;
+            $oldNoRekomKode = null;
+
             if ($request->filled('pembetulan_from')) {
                 $pembetulanFromApp = DataPerijinan::where('id', $request->pembetulan_from)
                     ->where('user_id', $user->id)
@@ -538,10 +544,20 @@ class DashboardController extends Controller
 
                 if ($pembetulanFromApp) {
                     $pembetulanDariId = $pembetulanFromApp->id;
+                    $oldNoRegistrasi = $pembetulanFromApp->no_registrasi;
+                    $oldNoIzin = $pembetulanFromApp->no_izin;
+                    $oldNoIzinKode = $pembetulanFromApp->no_izin_kode;
+                    $oldNoRekom = $pembetulanFromApp->no_rekom;
+                    $oldNoRekomKode = $pembetulanFromApp->no_rekom_kode;
+
+                    // Rename old registration number to free it up and avoid unique constraint error
+                    $pembetulanFromApp->update([
+                        'no_registrasi' => $oldNoRegistrasi . '-REV'
+                    ]);
                 }
             }
 
-            $data = DataPerijinan::create([
+            $createData = [
                 'user_id' => $user->id,
                 'perijinan_id' => $perijinan->id,
                 'status' => 'submitted',
@@ -561,7 +577,17 @@ class DashboardController extends Controller
                 'perpanjang_dari_id' => $perpanjangDariId,
                 'root_perpanjang_id' => $rootPerpanjangId,
                 'pembetulan_dari_id' => $pembetulanDariId,
-            ]);
+            ];
+
+            if ($pembetulanDariId && $oldNoRegistrasi) {
+                $createData['no_registrasi'] = $oldNoRegistrasi;
+                $createData['no_izin'] = $oldNoIzin;
+                $createData['no_izin_kode'] = $oldNoIzinKode;
+                $createData['no_rekom'] = $oldNoRekom;
+                $createData['no_rekom_kode'] = $oldNoRekomKode;
+            }
+
+            $data = DataPerijinan::create($createData);
 
             // ===============================
             // 🔹 VALIDASI FLOW

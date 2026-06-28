@@ -76,6 +76,11 @@ class PembetulanIzinTest extends TestCase
             'perijinan_id' => $perijinan->id,
             'status' => 'approved',
             'current_step' => 6,
+            'no_registrasi' => 'REG-999',
+            'no_izin' => 123,
+            'no_izin_kode' => 'KLN-TEST',
+            'no_rekom' => 456,
+            'no_rekom_kode' => 'REK-TEST',
             'form_data' => [
                 $fieldNama->id => 'Dr. Budi Santoso',
                 $fieldAlamat->id => 'Jl. Pemuda No. 45',
@@ -125,6 +130,17 @@ class PembetulanIzinTest extends TestCase
         // 7. Verify TTE files are reset (null) on the new application
         $this->assertNull($newApp->file_izin_tte);
         $this->assertNull($newApp->file_rekom_tte);
+
+        // Verify registration number and permit/rekom numbers are preserved
+        $this->assertEquals('REG-999', $newApp->no_registrasi);
+        $this->assertEquals(123, $newApp->no_izin);
+        $this->assertEquals('KLN-TEST', $newApp->no_izin_kode);
+        $this->assertEquals(456, $newApp->no_rekom);
+        $this->assertEquals('REK-TEST', $newApp->no_rekom_kode);
+
+        // Verify the old application got renamed to free up the unique constraint
+        $completedApp->refresh();
+        $this->assertEquals('REG-999-REV', $completedApp->no_registrasi);
 
         // 8. Assert validation flow: only FO, BO, Verifikator, Kadin. Operator/Kepala OPD are skipped!
         $validasiRecords = DataPerijinanValidasi::where('data_perijinan_id', $newApp->id)
