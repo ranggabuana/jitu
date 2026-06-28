@@ -58,6 +58,17 @@ class PembetulanIzinTest extends TestCase
             'order' => 2,
         ]);
 
+        $fieldFile = PerijinanFormField::create([
+            'perijinan_id' => $perijinan->id,
+            'form_type' => 'global',
+            'type' => 'file',
+            'name' => 'surat_keterangan',
+            'label' => 'Surat Keterangan',
+            'is_required' => true,
+            'status' => 'aktif',
+            'order' => 3,
+        ]);
+
         // Create 6 validation steps: FO, BO, Operator OPD, Kepala OPD, Verifikator, Kadin
         $roles = ['fo', 'bo', 'operator_opd', 'kepala_opd', 'verifikator', 'kadin'];
         foreach ($roles as $idx => $role) {
@@ -85,6 +96,9 @@ class PembetulanIzinTest extends TestCase
                 $fieldNama->id => 'Dr. Budi Santoso',
                 $fieldAlamat->id => 'Jl. Pemuda No. 45',
             ],
+            'form_files' => [
+                $fieldFile->id => ['uploads/perijinan/1/test_sk.pdf'],
+            ],
             'file_izin' => 'uploads/izin_old.pdf',
             'file_izin_tte' => 'uploads/izin_old_tte.pdf',
         ]);
@@ -99,12 +113,20 @@ class PembetulanIzinTest extends TestCase
         $createResponse->assertStatus(200);
         $createResponse->assertSee('Dr. Budi Santoso');
         $createResponse->assertSee('Jl. Pemuda No. 45');
+        $createResponse->assertSee('test_sk.pdf');
 
         // Setup CAPTCHA answer
         session([
             'pengajuan_num1' => 5,
             'pengajuan_num2' => 5,
         ]);
+
+        // Create dummy file for copy check
+        $dummyPath = public_path('uploads/perijinan/1/test_sk.pdf');
+        if (!file_exists(dirname($dummyPath))) {
+            mkdir(dirname($dummyPath), 0755, true);
+        }
+        file_put_contents($dummyPath, 'dummy content');
 
         // 5. Test POST Store Page as correction
         $storeResponse = $this->actingAs($pemohon)
@@ -115,9 +137,15 @@ class PembetulanIzinTest extends TestCase
                     $fieldNama->id => 'Dr. Budi Santoso (Dibetulkan)',
                     $fieldAlamat->id => 'Jl. Pemuda No. 45',
                 ],
+                'old_files' => [
+                    $fieldFile->id => ['uploads/perijinan/1/test_sk.pdf'],
+                ],
                 'captcha' => 10,
                 'pernyataan' => 1,
             ]);
+
+        // Clean up dummy file
+        @unlink($dummyPath);
 
         $storeResponse->assertRedirect();
 
@@ -127,7 +155,7 @@ class PembetulanIzinTest extends TestCase
         $this->assertEquals('Dr. Budi Santoso (Dibetulkan)', $newApp->form_data[$fieldNama->id]);
         $this->assertEquals('submitted', $newApp->status);
 
-        // 7. Verify TTE files are reset (null) on the new application
+        // Verify TTE files are reset (null) on the new application
         $this->assertNull($newApp->file_izin_tte);
         $this->assertNull($newApp->file_rekom_tte);
 
@@ -137,6 +165,14 @@ class PembetulanIzinTest extends TestCase
         $this->assertEquals('KLN-TEST', $newApp->no_izin_kode);
         $this->assertEquals(456, $newApp->no_rekom);
         $this->assertEquals('REK-TEST', $newApp->no_rekom_kode);
+
+        // Verify old file is copied to new application
+        $this->assertNotNull($newApp->form_files);
+        $this->assertNotEmpty($newApp->form_files[$fieldFile->id]);
+        $this->assertStringContainsString('test_sk', $newApp->form_files[$fieldFile->id][0]);
+        // Clean up newly copied file
+        $copiedPath = public_path($newApp->form_files[$fieldFile->id][0]);
+        @unlink($copiedPath);
 
         // Verify the old application got renamed to free up the unique constraint
         $completedApp->refresh();

@@ -278,7 +278,36 @@
                                         </div>
 
                                         <input type="hidden" name="existing_files[{{ $field->id }}]" id="existing_file_{{ $field->id }}">
-                                        <div id="preview_{{ $field->id }}" class="mt-2 empty:hidden"></div>
+                                        <div id="preview_{{ $field->id }}" class="mt-2 empty:hidden">
+                                            @if(isset($sourceApp) && !empty($sourceApp->form_files[$field->id]))
+                                                @php
+                                                    $oldFileArray = (array) $sourceApp->form_files[$field->id];
+                                                @endphp
+                                                <div class="space-y-2" id="old_files_container_{{ $field->id }}">
+                                                    @foreach($oldFileArray as $oldIdx => $oldFilePath)
+                                                        @php
+                                                            $oldFileName = basename($oldFilePath);
+                                                        @endphp
+                                                        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-3 relative" id="old_file_item_{{ $field->id }}_{{ $oldIdx }}">
+                                                            <input type="hidden" name="old_files[{{ $field->id }}][]" value="{{ $oldFilePath }}">
+                                                            <i class="fas fa-file-alt text-amber-600 text-xl"></i>
+                                                            <div class="flex-1 min-w-0 text-left">
+                                                                <p class="text-sm font-semibold text-gray-800 truncate">{{ $oldFileName }}</p>
+                                                                <p class="text-[10px] text-gray-500">Berkas sebelumnya</p>
+                                                            </div>
+                                                            <div class="flex items-center gap-2">
+                                                                <a href="{{ asset($oldFilePath) }}" target="_blank" class="text-amber-600 hover:text-amber-800 p-1" title="Lihat Berkas">
+                                                                    <i class="fas fa-eye"></i>
+                                                                </a>
+                                                                <button type="button" onclick="removeOldFile({{ $field->id }}, {{ $oldIdx }})" class="text-red-500 hover:text-red-700 p-1" title="Hapus Berkas">
+                                                                    <i class="fas fa-trash-alt"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                        </div>
                                         
                                         @error('form_files.' . $field->id)
                                             <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
@@ -674,11 +703,17 @@
             const fileInput = document.getElementById('file_' + fieldId);
             fileInput.value = '';
             
+            // Clear old files container if any
+            const oldContainer = document.getElementById('old_files_container_' + fieldId);
+            if (oldContainer) {
+                oldContainer.remove();
+            }
+            
             // Update preview
             const preview = document.getElementById('preview_' + fieldId);
             preview.innerHTML = `
                 <div class="bg-purple-50 border border-purple-200 rounded-lg p-3 flex items-center gap-3 relative">
-                    <i class="mdi mdi-folder-account text-purple-600 text-xl"></i>
+                     <i class="mdi mdi-folder-account text-purple-600 text-xl"></i>
                     <div class="flex-1 min-w-0 text-left">
                         <p class="text-sm font-bold text-purple-800 truncate">${docName}</p>
                         <p class="text-xs text-purple-600 truncate">${fileName}</p>
@@ -697,10 +732,28 @@
             document.getElementById('preview_' + fieldId).innerHTML = '';
         }
 
+        function removeOldFile(fieldId, idx) {
+            const item = document.getElementById(`old_file_item_${fieldId}_${idx}`);
+            if (item) {
+                item.remove();
+            }
+            const preview = document.getElementById('preview_' + fieldId);
+            const remainingItems = preview.querySelectorAll('[id^="old_file_item_"]');
+            if (remainingItems.length === 0) {
+                preview.innerHTML = '';
+            }
+        }
+
         function previewFiles(input, fieldId) {
             const preview = document.getElementById('preview_' + fieldId);
             // If they pick a new file, clear the existing document selection
             document.getElementById('existing_file_' + fieldId).value = '';
+            
+            // Clear old files container if any
+            const oldContainer = document.getElementById('old_files_container_' + fieldId);
+            if (oldContainer) {
+                oldContainer.remove();
+            }
             
             if (input.files && input.files.length > 0) {
                 let html = '<div class="space-y-2">';

@@ -370,11 +370,12 @@ class DashboardController extends Controller
         // ===============================
         $formFiles = $request->file('form_files');
         $existingFiles = $request->input('existing_files', []);
+        $oldFiles = $request->input('old_files', []);
 
         foreach ($perijinan->activeFormFields as $field) {
             if (($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar') && $field->is_required) {
-                // If it's required but NOT in uploaded files and NOT in existing files, throw error
-                if (empty($formFiles[$field->id]) && empty($existingFiles[$field->id])) {
+                // If it's required but NOT in uploaded files, NOT in existing files, and NOT in old files, throw error
+                if (empty($formFiles[$field->id]) && empty($existingFiles[$field->id]) && empty($oldFiles[$field->id])) {
                     $validationRules["form_files.{$field->id}"] = 'required';
                     $validationMessages["form_files.{$field->id}.required"] = "Field {$field->label} wajib diisi.";
                 }
@@ -501,6 +502,31 @@ class DashboardController extends Controller
 
                                 $file->move($uploadPath, $filename);
 
+                                $uploadedFiles[$fieldId][] = 'uploads/perijinan/' . $perijinan->id . '/' . $filename;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Copy Old Files from previous application (renew/pembetulan) if no new file is uploaded/selected
+            if (!empty($oldFiles)) {
+                foreach ($oldFiles as $fieldId => $paths) {
+                    // Check if we already have files for this field (uploaded or selected from My Documents)
+                    if (empty($uploadedFiles[$fieldId])) {
+                        foreach ((array) $paths as $oldPath) {
+                            $originalPath = public_path($oldPath);
+                            if (file_exists($originalPath)) {
+                                $extension = pathinfo($originalPath, PATHINFO_EXTENSION);
+                                $originalName = pathinfo($originalPath, PATHINFO_FILENAME);
+                                $filename = $originalName . '_' . time() . '.' . $extension;
+                                $uploadPath = public_path('uploads/perijinan/' . $perijinan->id);
+
+                                if (!file_exists($uploadPath)) {
+                                    mkdir($uploadPath, 0755, true);
+                                }
+
+                                copy($originalPath, $uploadPath . '/' . $filename);
                                 $uploadedFiles[$fieldId][] = 'uploads/perijinan/' . $perijinan->id . '/' . $filename;
                             }
                         }
