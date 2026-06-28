@@ -46,7 +46,7 @@
         </div>
         
         <!-- Dokumen Izin Download Section -->
-        @if($data->status === 'approved' && ($data->file_izin_tte || $data->file_izin))
+        @if(in_array($data->status, ['approved', 'diperbaiki']) && ($data->file_izin_tte || $data->file_izin))
             @if($data->isSkmFilled())
                 <div class="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-6 shadow-sm flex items-center justify-between flex-wrap gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
                     <div class="flex items-center gap-4">
@@ -367,7 +367,7 @@
     </main>
 
     <!-- SKM Modal -->
-    @if($data->status === 'approved' && !$data->isSkmFilled())
+    @if(in_array($data->status, ['approved', 'diperbaiki']) && !$data->isSkmFilled())
         <div id="skmModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4">
             <div class="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in duration-300">
                 <!-- Modal Header -->

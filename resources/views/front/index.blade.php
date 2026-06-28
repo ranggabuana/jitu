@@ -858,7 +858,7 @@
                                     Informasi Pengunduhan Berkas
                                 </h4>
                                 <div class="space-y-2 text-blue-700 text-sm">
-                                    ${data.status === 'approved' ? `
+                                    ${['approved', 'diperbaiki'].includes(data.status) ? `
                                             <p class="flex items-center gap-2">
                                                 <i class="fas fa-check-circle text-green-500"></i>
                                                 <span><strong>Validasi Selesai!</strong> Berkas izin Anda sudah dapat diunduh.</span>

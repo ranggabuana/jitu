@@ -110,20 +110,20 @@ class DataPerijinanController extends Controller
         }
 
         // Get only in-progress applications (not approved/completed, and not rejected)
-        $query->whereNotIn('status', ['approved', 'completed', 'rejected', 'perbaikan']);
+        $query->whereNotIn('status', ['approved', 'diperbaiki', 'completed', 'rejected', 'perbaikan']);
 
         $applications = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
 
         // Statistics - only count for accessible perijinan
         if ($user->isAdmin()) {
-            $totalDalamProses = DataPerijinan::whereNotIn('status', ['approved', 'completed', 'rejected', 'perbaikan'])->count();
+            $totalDalamProses = DataPerijinan::whereNotIn('status', ['approved', 'diperbaiki', 'completed', 'rejected', 'perbaikan'])->count();
             $totalSubmitted = DataPerijinan::where('status', 'submitted')->count();
             $totalInProgress = DataPerijinan::where('status', 'in_progress')->count();
             $totalPerbaikan = DataPerijinan::where('status', 'perbaikan')->count();
         } else {
             $accessibleIds = $user->getAccessiblePerijinanIds();
             $totalDalamProses = DataPerijinan::whereIn('perijinan_id', $accessibleIds)
-                ->whereNotIn('status', ['approved', 'completed', 'rejected', 'perbaikan'])->count();
+                ->whereNotIn('status', ['approved', 'diperbaiki', 'completed', 'rejected', 'perbaikan'])->count();
             $totalSubmitted = DataPerijinan::whereIn('perijinan_id', $accessibleIds)
                 ->where('status', 'submitted')->count();
             $totalInProgress = DataPerijinan::whereIn('perijinan_id', $accessibleIds)
@@ -225,20 +225,20 @@ class DataPerijinanController extends Controller
         }
 
         // Get only completed/approved applications
-        $query->where('status', 'approved');
+        $query->whereIn('status', ['approved', 'diperbaiki']);
 
         $applications = $query->orderBy('approved_at', 'desc')->paginate(10)->withQueryString();
 
         // Statistics - only count for accessible perijinan
         if ($user->isAdmin()) {
-            $totalSelesai = DataPerijinan::where('status', 'approved')->count();
-            $totalApproved = DataPerijinan::where('status', 'approved')->count();
+            $totalSelesai = DataPerijinan::whereIn('status', ['approved', 'diperbaiki'])->count();
+            $totalApproved = DataPerijinan::whereIn('status', ['approved', 'diperbaiki'])->count();
         } else {
             $accessibleIds = $user->getAccessiblePerijinanIds();
             $totalSelesai = DataPerijinan::whereIn('perijinan_id', $accessibleIds)
-                ->where('status', 'approved')->count();
+                ->whereIn('status', ['approved', 'diperbaiki'])->count();
             $totalApproved = DataPerijinan::whereIn('perijinan_id', $accessibleIds)
-                ->where('status', 'approved')->count();
+                ->whereIn('status', ['approved', 'diperbaiki'])->count();
         }
 
         // Perijinan types for filter
@@ -611,9 +611,13 @@ class DataPerijinanController extends Controller
 
                 if (!$nextPendingRecord) {
                     // All validations complete - approve application
-                    $applicationUpdateData['status'] = 'approved';
+                    $applicationUpdateData['status'] = $application->is_pembetulan ? 'diperbaiki' : 'approved';
                     $applicationUpdateData['approved_at'] = now();
                     $applicationUpdateData['completed_at'] = now();
+
+                    if ($application->is_pembetulan) {
+                        $application->hasilSkm()->delete();
+                    }
 
                     if ($application->no_rekom === null) {
                         $applicationUpdateData['no_rekom'] = $perijinan->next_nomor_rekom;
@@ -1802,12 +1806,20 @@ class DataPerijinanController extends Controller
         $application = DataPerijinan::findOrFail($id);
         $oldStatus = $application->status;
 
+        $targetStatus = $request->status;
+        if ($request->status === 'approved' && $application->is_pembetulan) {
+            $targetStatus = 'diperbaiki';
+        }
+
         $updateData = [
-            'status' => $request->status,
+            'status' => $targetStatus,
         ];
 
         if ($request->status === 'approved') {
             $updateData['approved_at'] = now();
+            if ($application->is_pembetulan) {
+                $application->hasilSkm()->delete();
+            }
             
             // Determine Kode OPD from current validator
             $user = auth()->user();
@@ -1930,7 +1942,7 @@ class DataPerijinanController extends Controller
             $query->whereDate('created_at', '<=', $dateTo);
         }
 
-        $query->whereNotIn('status', ['approved', 'completed', 'rejected', 'perbaikan']);
+        $query->whereNotIn('status', ['approved', 'diperbaiki', 'completed', 'rejected', 'perbaikan']);
         $applications = $query->orderBy('created_at', 'desc')->get();
 
         return $this->exportToExcel($applications, 'dalam_proses', $dateFrom, $dateTo);
@@ -2013,7 +2025,7 @@ class DataPerijinanController extends Controller
             $query->whereDate('approved_at', '<=', $dateTo);
         }
 
-        $query->where('status', 'approved');
+        $query->whereIn('status', ['approved', 'diperbaiki']);
         $applications = $query->orderBy('approved_at', 'desc')->get();
 
         // XML-based Excel Export (matching existing pattern)
@@ -2116,7 +2128,7 @@ class DataPerijinanController extends Controller
             $query->whereDate('approved_at', '<=', $dateTo);
         }
 
-        $query->where('status', 'approved');
+        $query->whereIn('status', ['approved', 'diperbaiki']);
         $applications = $query->orderBy('approved_at', 'desc')->get();
 
         return $this->exportToExcel($applications, 'selesai', $dateFrom, $dateTo);
@@ -2310,7 +2322,7 @@ class DataPerijinanController extends Controller
             echo '<Cell ss:StyleID="center"><Data ss:Type="String">' . htmlspecialchars($statusLabelsMap[$app->status] ?? $app->status) . '</Data></Cell>';
             
             $approvalDate = '';
-            if ($app->status === 'approved' && $app->approved_at) {
+            if (in_array($app->status, ['approved', 'diperbaiki']) && $app->approved_at) {
                 $approvalDate = $app->approved_at;
             } elseif ($app->status === 'rejected' && $app->rejected_at) {
                 $approvalDate = $app->rejected_at;

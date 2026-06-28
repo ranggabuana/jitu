@@ -262,7 +262,7 @@ class DashboardController extends Controller
         if (request()->filled('renew_from')) {
             $renewFromApp = DataPerijinan::where('id', request()->renew_from)
                 ->where('user_id', $user->id)
-                ->where('status', 'approved')
+                ->whereIn('status', ['approved', 'diperbaiki'])
                 ->first();
         }
 
@@ -270,7 +270,7 @@ class DashboardController extends Controller
         if (request()->filled('pembetulan_from')) {
             $pembetulanFromApp = DataPerijinan::where('id', request()->pembetulan_from)
                 ->where('user_id', $user->id)
-                ->where('status', 'approved')
+                ->whereIn('status', ['approved', 'diperbaiki'])
                 ->first();
         }
 
@@ -557,11 +557,7 @@ class DashboardController extends Controller
             }
 
             $pembetulanDariId = null;
-            $oldNoRegistrasi = null;
-            $oldNoIzin = null;
-            $oldNoIzinKode = null;
-            $oldNoRekom = null;
-            $oldNoRekomKode = null;
+            $isPembetulan = false;
 
             if ($request->filled('pembetulan_from')) {
                 $pembetulanFromApp = DataPerijinan::where('id', $request->pembetulan_from)
@@ -570,50 +566,114 @@ class DashboardController extends Controller
 
                 if ($pembetulanFromApp) {
                     $pembetulanDariId = $pembetulanFromApp->id;
-                    $oldNoRegistrasi = $pembetulanFromApp->no_registrasi;
-                    $oldNoIzin = $pembetulanFromApp->no_izin;
-                    $oldNoIzinKode = $pembetulanFromApp->no_izin_kode;
-                    $oldNoRekom = $pembetulanFromApp->no_rekom;
-                    $oldNoRekomKode = $pembetulanFromApp->no_rekom_kode;
-
-                    // Rename old registration number to free it up and avoid unique constraint error
-                    $pembetulanFromApp->update([
-                        'no_registrasi' => $oldNoRegistrasi . '-REV'
-                    ]);
+                    $isPembetulan = true;
                 }
             }
 
-            $createData = [
-                'user_id' => $user->id,
-                'perijinan_id' => $perijinan->id,
-                'status' => 'submitted',
-                'current_step' => 1,
-                'form_data' => $request->form_fields ?? [],
-                'form_files' => !empty($uploadedFiles) ? $uploadedFiles : null,
-                'data_pemohon' => [
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'nip' => $user->nip,
-                    'no_hp' => $user->no_hp,
-                    'status_pemohon' => $user->status_pemohon,
-                    'nama_perusahaan' => $user->nama_perusahaan,
-                    'npwp' => $user->npwp,
-                ],
-                'submitted_at' => now(),
-                'perpanjang_dari_id' => $perpanjangDariId,
-                'root_perpanjang_id' => $rootPerpanjangId,
-                'pembetulan_dari_id' => $pembetulanDariId,
-            ];
+            if ($isPembetulan) {
+                $data = $pembetulanFromApp;
+                
+                // Clear old validation records
+                $data->validasiRecords()->delete();
 
-            if ($pembetulanDariId && $oldNoRegistrasi) {
-                $createData['no_registrasi'] = $oldNoRegistrasi;
-                $createData['no_izin'] = $oldNoIzin;
-                $createData['no_izin_kode'] = $oldNoIzinKode;
-                $createData['no_rekom'] = $oldNoRekom;
-                $createData['no_rekom_kode'] = $oldNoRekomKode;
+                // Re-evaluate BO data matching global fields
+                $boData = $data->bo_data ?? [];
+                $allFields = \App\Models\PerijinanFormField::where('perijinan_id', $perijinan->id)
+                    ->where('is_active', true)
+                    ->get();
+                $boFields = $allFields->where('form_type', 'bo');
+                
+                foreach ($boFields as $field) {
+                    $matchingGlobalField = $allFields
+                        ->where('form_type', 'global')
+                        ->where('name', $field->name)
+                        ->first() ?? $allFields
+                        ->where('form_type', 'global')
+                        ->filter(fn($f) => strtolower($f->label) === strtolower($field->label))
+                        ->first();
+                        
+                    if ($matchingGlobalField) {
+                        $isFile = in_array($field->type, ['file', 'pas_foto', 'gambar']);
+                        if ($isFile) {
+                            $globalFiles = $uploadedFiles[$matchingGlobalField->id] ?? [];
+                            $globalFile = is_array($globalFiles) ? ($globalFiles[0] ?? null) : $globalFiles;
+                            if (!empty($globalFile)) {
+                                $boData[$field->name] = $globalFile;
+                            }
+                        } else if ($field->type !== 'table') {
+                            $val = ($request->form_fields ?? [])[$matchingGlobalField->id] ?? '';
+                            $boData[$field->name] = $val;
+                        }
+                    }
+                }
+
+                $updateData = [
+                    'status' => 'submitted',
+                    'current_step' => 1,
+                    'is_pembetulan' => true,
+                    'pembetulan_dari_id' => $pembetulanDariId,
+                    'form_data' => $request->form_fields ?? [],
+                    'form_files' => !empty($uploadedFiles) ? $uploadedFiles : null,
+                    'bo_data' => $boData,
+                    'data_pemohon' => [
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'nip' => $user->nip,
+                        'no_hp' => $user->no_hp,
+                        'status_pemohon' => $user->status_pemohon,
+                        'nama_perusahaan' => $user->nama_perusahaan,
+                        'npwp' => $user->npwp,
+                    ],
+                    'submitted_at' => now(),
+                    'approved_at' => null,
+                    'completed_at' => null,
+                    'rejected_at' => null,
+                    'file_izin_tte' => null,
+                    'file_izin' => null,
+                ];
+
+                $data->update($updateData);
+            } else {
+                $perpanjangDariId = null;
+                $rootPerpanjangId = null;
+
+                if ($request->filled('renew_from')) {
+                    $renewFromApp = DataPerijinan::where('id', $request->renew_from)
+                        ->where('user_id', $user->id)
+                        ->first(); // Get matching app
+
+                    if ($renewFromApp) {
+                        $perpanjangDariId = $renewFromApp->id;
+                        $rootPerpanjangId = $renewFromApp->root_perpanjang_id ?? $renewFromApp->id;
+
+                        // Update status of previous application to 'diperpanjang'
+                        $renewFromApp->update([
+                            'status' => 'diperpanjang'
+                        ]);
+                    }
+                }
+
+                $data = DataPerijinan::create([
+                    'user_id' => $user->id,
+                    'perijinan_id' => $perijinan->id,
+                    'status' => 'submitted',
+                    'current_step' => 1,
+                    'form_data' => $request->form_fields ?? [],
+                    'form_files' => !empty($uploadedFiles) ? $uploadedFiles : null,
+                    'data_pemohon' => [
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'nip' => $user->nip,
+                        'no_hp' => $user->no_hp,
+                        'status_pemohon' => $user->status_pemohon,
+                        'nama_perusahaan' => $user->nama_perusahaan,
+                        'npwp' => $user->npwp,
+                    ],
+                    'submitted_at' => now(),
+                    'perpanjang_dari_id' => $perpanjangDariId,
+                    'root_perpanjang_id' => $rootPerpanjangId,
+                ]);
             }
-
-            $data = DataPerijinan::create($createData);
 
             // ===============================
             // 🔹 VALIDASI FLOW
@@ -654,8 +714,8 @@ class DashboardController extends Controller
                     'file_rekom' => $generatedDocs['file_rekom'] ?? null,
                     'file_rekom_multi' => $generatedDocs['file_rekom_multi'] ?? null,
                     'file_izin' => $generatedDocs['file_izin'] ?? null,
-                    'file_rekom_tte' => null,
-                    'file_rekom_multi_tte' => null,
+                    'file_rekom_tte' => $data->is_pembetulan ? $data->file_rekom_tte : null,
+                    'file_rekom_multi_tte' => $data->is_pembetulan ? $data->file_rekom_multi_tte : null,
                     'file_izin_tte' => null,
                 ]);
             } catch (\Exception $docEx) {
@@ -736,7 +796,7 @@ class DashboardController extends Controller
 
         // Fetch SKM questions if needed
         $skmQuestions = [];
-        if ($data->status === 'approved' && !$data->isSkmFilled()) {
+        if (in_array($data->status, ['approved', 'diperbaiki']) && !$data->isSkmFilled()) {
             $skmQuestions = \App\Models\DataSkm::aktif()->orderBy('urutan')->get();
             
             // Generate CAPTCHA if not exists

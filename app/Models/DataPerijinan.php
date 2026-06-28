@@ -51,6 +51,7 @@ class DataPerijinan extends Model
         'perpanjang_dari_id',
         'root_perpanjang_id',
         'pembetulan_dari_id',
+        'is_pembetulan',
     ];
 
     protected $casts = [
@@ -69,6 +70,7 @@ class DataPerijinan extends Model
         'approved_at' => 'datetime',
         'completed_at' => 'datetime',
         'rejected_at' => 'datetime',
+        'is_pembetulan' => 'boolean',
     ];
 
     /**
@@ -242,7 +244,11 @@ class DataPerijinan extends Model
      */
     public function getProgressPercentageAttribute(): float
     {
-        $totalSteps = $this->perijinan->activeValidationFlows()->count();
+        if ($this->is_pembetulan) {
+            $totalSteps = $this->validasiRecords()->count();
+        } else {
+            $totalSteps = $this->perijinan->activeValidationFlows()->count();
+        }
         if ($totalSteps === 0) return 0;
         
         $completedSteps = $this->completedValidasi()->count();
@@ -254,7 +260,7 @@ class DataPerijinan extends Model
      */
     public function getStatusLabelAttribute(): string
     {
-        if ($this->status === 'approved' && $this->masa_aktif && $this->masa_aktif->isPast()) {
+        if (in_array($this->status, ['approved', 'diperbaiki']) && $this->masa_aktif && $this->masa_aktif->isPast()) {
             return 'Habis Masa';
         }
 
@@ -266,6 +272,7 @@ class DataPerijinan extends Model
             'approved' => 'Disetujui & Selesai',
             'rejected' => 'Ditolak',
             'diperpanjang' => 'Diperpanjang',
+            'diperbaiki' => 'Diperbaiki',
         ];
         
         return $labels[$this->status] ?? $this->status;
@@ -276,7 +283,7 @@ class DataPerijinan extends Model
      */
     public function getStatusColorAttribute(): string
     {
-        if ($this->status === 'approved' && $this->masa_aktif && $this->masa_aktif->isPast()) {
+        if (in_array($this->status, ['approved', 'diperbaiki']) && $this->masa_aktif && $this->masa_aktif->isPast()) {
             return 'bg-red-100 text-red-800';
         }
 
@@ -288,6 +295,7 @@ class DataPerijinan extends Model
             'approved' => 'bg-green-100 text-green-800',
             'rejected' => 'bg-red-100 text-red-800',
             'diperpanjang' => 'bg-indigo-100 text-indigo-800 border border-indigo-200',
+            'diperbaiki' => 'bg-teal-100 text-teal-800 border border-teal-200',
         ];
         
         return $colors[$this->status] ?? 'bg-gray-100 text-gray-800';

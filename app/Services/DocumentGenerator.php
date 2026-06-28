@@ -426,7 +426,11 @@ class DocumentGenerator
 
         // 6. Handle Recommendation Documents (The Complex Part)
         $rekomList = [];
-        if ($perijinan->is_multi_opd) {
+        if ($application->is_pembetulan) {
+            // Keep existing recommendation files
+            $generatedPaths['file_rekom'] = $application->file_rekom;
+            $generatedPaths['file_rekom_multi'] = $application->file_rekom_multi;
+        } else if ($perijinan->is_multi_opd) {
             // Multi OPD: Get all OPDs involved in the validation flow
             $involvedOpds = $perijinan->activeValidationFlows()
                 ->whereIn('role', ['operator_opd', 'kepala_opd'])
@@ -1056,6 +1060,13 @@ class DocumentGenerator
                     } catch (\Exception $e) {}
                 }
             }
+
+            // Re-scan variables after complex table blocks have been inserted
+            $templateProcessor->setMacroChars('${', '}');
+            $dollarVars = array_unique(array_merge($dollarVars, $templateProcessor->getVariables()));
+
+            $templateProcessor->setMacroChars('[', ']');
+            $bracketVars = array_unique(array_merge($bracketVars, $templateProcessor->getVariables()));
 
             // Handle dynamic image replacements (pas_foto and gambar)
             foreach ($replacements as $key => $path) {

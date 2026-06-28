@@ -123,7 +123,7 @@
                                     $showRenewBtn = false;
                                     $isAllowed = false;
                                     $msg = '';
-                                    if ($app->status === 'approved' && $app->progress_percentage >= 100 && $app->masa_aktif) {
+                                    if (in_array($app->status, ['approved', 'diperbaiki']) && $app->progress_percentage >= 100 && $app->masa_aktif) {
                                         $isExpired = $app->masa_aktif->isPast();
                                         $opsi = $app->perijinan->opsi_perpanjangan;
                                         $formattedDate = $app->masa_aktif->format('d M Y');
@@ -159,7 +159,7 @@
                                         <i class="fas fa-sync-alt text-[10px]"></i> Perpanjang
                                     </button>
                                 @endif
-                                @if($app->status === 'approved' && $app->progress_percentage >= 100)
+                                @if(in_array($app->status, ['approved', 'diperbaiki']) && $app->progress_percentage >= 100)
                                     <button type="button"
                                         class="pembetulan-btn bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-semibold py-1.5 px-3 rounded-lg text-xs transition-colors flex items-center gap-1 shadow-sm"
                                         data-url="{{ route('pemohon.pengajuan.create', ['perijinanId' => $app->perijinan_id, 'pembetulan_from' => $app->id]) }}">

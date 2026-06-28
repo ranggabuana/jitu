@@ -250,7 +250,7 @@
         }
 
         $canVal = false;
-        if ($application->status !== 'approved' && $application->status !== 'perbaikan' && $application->status !== 'rejected') {
+        if ($application->status !== 'approved' && $application->status !== 'diperbaiki' && $application->status !== 'perbaikan' && $application->status !== 'rejected') {
             if ($isParallelOpdTurn) {
                 $canVal = true;
             } elseif ($cv && $cv->validationFlow->assigned_user_id === auth()->id()) {
@@ -263,7 +263,7 @@
 
         // Strict sequential editing logic for Recommendation Form
         // For Multi-OPD, any OPD operator can edit if phase is reached
-        $canEditRekom = ($isOperatorOpd || $isAdmin) && !in_array($application->status, ['approved', 'rejected', 'perbaikan']);
+        $canEditRekom = ($isOperatorOpd || $isAdmin) && !in_array($application->status, ['approved', 'diperbaiki', 'rejected', 'perbaikan']);
         if ($isOperatorOpd && !$isAdmin && $isMultiOpd) {
             $opdSteps = $application->validasiRecords->filter(fn($v) => in_array($v->validationFlow->role, ['operator_opd', 'kepala_opd']));
             $minOpdOrder = $opdSteps->min('order');
@@ -275,11 +275,11 @@
 
         // Strict sequential editing logic for Izin Form
         $isIzinTurn = ($cv && $cv->validationFlow->assigned_user_id === auth()->id() && $cv->validationFlow->role === 'verifikator');
-        $canEditIzin = ($isVerifikator || $isAdmin) && $isIzinTurn && !in_array($application->status, ['approved', 'rejected', 'perbaikan']);
+        $canEditIzin = ($isVerifikator || $isAdmin) && $isIzinTurn && !in_array($application->status, ['approved', 'diperbaiki', 'rejected', 'perbaikan']);
 
         // Strict sequential editing logic for BO Form
         $isBoTurn = ($cv && $cv->validationFlow->assigned_user_id === auth()->id() && $cv->validationFlow->role === 'bo');
-        $canEditBo = ($isBo || $isAdmin) && $isBoTurn && !in_array($application->status, ['approved', 'rejected', 'perbaikan']);
+        $canEditBo = ($isBo || $isAdmin) && $isBoTurn && !in_array($application->status, ['approved', 'diperbaiki', 'rejected', 'perbaikan']);
 
         // Admin is purely an observer/monitor and cannot edit or validate
         if ($isAdmin) {
@@ -362,7 +362,7 @@
 
             <!-- TAB 1: DATA DAN BERKAS PEMOHON -->
             <div id="tab-panel-data-pemohon" class="tab-content-panel space-y-6">
-                @if($isFutureValidator && $application->status !== 'approved' && $application->status !== 'rejected')
+                @if($isFutureValidator && $application->status !== 'approved' && $application->status !== 'diperbaiki' && $application->status !== 'rejected')
                     <div class="p-4 bg-rose-50 dark:bg-rose-900/20 border-l-4 border-rose-500 rounded-r-xl flex gap-3 shadow-sm mb-6">
                         <i class="mdi mdi-lock-clock text-rose-600 text-xl mt-0.5"></i>
                         <div class="flex-1">
@@ -1002,7 +1002,7 @@
                             @if(!$canEditRekom) <span class="px-3 py-1 bg-gray-100 text-gray-500 text-[10px] font-bold rounded-full uppercase border">Hanya Baca</span> @endif
                         </div>
                         <div class="p-6">
-                            @if($isFutureValidator && !in_array($application->status, ['approved', 'rejected', 'perbaikan']))
+                            @if($isFutureValidator && !in_array($application->status, ['approved', 'diperbaiki', 'rejected', 'perbaikan']))
                                 <div class="mb-6 p-4 bg-rose-50 dark:bg-rose-900/20 border-l-4 border-rose-500 rounded-r-xl flex gap-3 shadow-sm">
                                     <i class="mdi mdi-lock-clock text-rose-600 text-xl mt-0.5"></i>
                                     <div class="flex-1">
@@ -1256,7 +1256,7 @@
                         @if(!$canEditIzin) <span class="px-3 py-1 bg-gray-100 text-gray-500 text-[10px] font-bold rounded-full uppercase border">Hanya Baca</span> @endif
                     </div>
                     <div class="p-6">
-                        @if($isFutureValidator && !in_array($application->status, ['approved', 'rejected', 'perbaikan']))
+                        @if($isFutureValidator && !in_array($application->status, ['approved', 'diperbaiki', 'rejected', 'perbaikan']))
                             <div class="mb-6 p-4 bg-rose-50 dark:bg-rose-900/20 border-l-4 border-rose-500 rounded-r-xl flex gap-3 shadow-sm">
                                 <i class="mdi mdi-lock-clock text-rose-600 text-xl mt-0.5"></i>
                                 <div class="flex-1">
