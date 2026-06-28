@@ -12,6 +12,7 @@ class Perijinan extends Model
     protected $fillable = [
         'kode_perijinan',
         'nama_perijinan',
+        'jenis_perijinan',
         'is_multi_opd',
         'has_bo_form',
         'validasi_tanpa_opd',

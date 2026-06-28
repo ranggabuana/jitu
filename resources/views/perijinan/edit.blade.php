@@ -82,6 +82,21 @@
                 @enderror
             </div>
 
+            <div class="mb-6">
+                <label for="jenis_perijinan" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Jenis Perizinan <span class="text-red-500">*</span>
+                </label>
+                <select id="jenis_perijinan" name="jenis_perijinan" required
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('jenis_perijinan') border-red-500 @enderror">
+                    <option value="" disabled>-- Pilih Jenis Perizinan --</option>
+                    <option value="umum" {{ old('jenis_perijinan', $perijinan->jenis_perijinan) == 'umum' ? 'selected' : '' }}>Umum</option>
+                    <option value="pencabutan_medis" {{ old('jenis_perijinan', $perijinan->jenis_perijinan) == 'pencabutan_medis' ? 'selected' : '' }}>Pencabutan Medis</option>
+                </select>
+                @error('jenis_perijinan')
+                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+
             <div class="mb-6 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800">
                 <div class="flex items-center">
                     <input id="is_multi_opd" name="is_multi_opd" type="checkbox" value="1" {{ old('is_multi_opd', $perijinan->is_multi_opd) ? 'checked' : '' }}

@@ -98,11 +98,35 @@ class DashboardController extends Controller
      */
     public function perijinan(Request $request)
     {
-        $query = Perijinan::query();
+        $search = $request->get('search', '');
 
-        // Search filter
-        if ($request->filled('search')) {
-            $search = $request->search;
+        // Fetch pencabutan medis items separately
+        $pencabutanQuery = Perijinan::where('jenis_perijinan', 'pencabutan_medis');
+        if ($search !== '') {
+            $pencabutanQuery->where(function ($q) use ($search) {
+                $q->where('nama_perijinan', 'like', "%{$search}%")
+                    ->orWhere('dasar_hukum', 'like', "%{$search}%")
+                    ->orWhere('persyaratan', 'like', "%{$search}%");
+            });
+        }
+        $pencabutanMedisItems = $pencabutanQuery->orderBy('nama_perijinan')->get();
+
+        // Determine if we should show the representative card
+        $includePencabutanMedis = false;
+        if ($pencabutanMedisItems->count() > 0) {
+            if ($search === '') {
+                $includePencabutanMedis = true;
+            } else {
+                $repName = "pencabutan Surat Izin Praktik (SIP) tenaga medis dan tenaga kesehatan";
+                if (stripos($repName, $search) !== false || $pencabutanMedisItems->count() > 0) {
+                    $includePencabutanMedis = true;
+                }
+            }
+        }
+
+        // Fetch other items
+        $query = Perijinan::where('jenis_perijinan', '!=', 'pencabutan_medis');
+        if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->where('nama_perijinan', 'like', "%{$search}%")
                     ->orWhere('dasar_hukum', 'like', "%{$search}%")
@@ -112,7 +136,7 @@ class DashboardController extends Controller
 
         $perijinans = $query->orderBy('nama_perijinan')->paginate(12)->withQueryString();
 
-        return view('pemohon.perijinan.index', compact('perijinans'));
+        return view('pemohon.perijinan.index', compact('perijinans', 'includePencabutanMedis', 'pencabutanMedisItems'));
     }
 
     /**

@@ -81,7 +81,18 @@
                                 {{ $perijinans->firstItem() + $index }}
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-200">
-                                <div class="font-medium">{{ $perijinan->nama_perijinan }}</div>
+                                <div class="flex items-center gap-2">
+                                    <div class="font-medium">{{ $perijinan->nama_perijinan }}</div>
+                                    @if($perijinan->jenis_perijinan === 'pencabutan_medis')
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
+                                            Pencabutan Medis
+                                        </span>
+                                    @elseif($perijinan->jenis_perijinan === 'umum')
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                                            Umum
+                                        </span>
+                                    @endif
+                                </div>
                                 <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $perijinan->kode_perijinan ?? '-' }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

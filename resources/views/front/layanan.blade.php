@@ -57,14 +57,48 @@
                         <p class="text-gray-600">
                             Menampilkan hasil pencarian untuk: <strong
                                 class="text-blue-600">"{{ request('search') }}"</strong>
-                            <span class="text-gray-400">({{ $layanan->total() }} hasil)</span>
+                            <span class="text-gray-400">({{ $layanan->total() + ($includePencabutanMedis ? 1 : 0) }} hasil)</span>
                         </p>
                     </div>
                 @endif
             </div>
 
-            @if ($layanan->count() > 0)
+            @if ($layanan->count() > 0 || $includePencabutanMedis)
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    @if($includePencabutanMedis && request('page', 1) == 1)
+                        <!-- Card Representatif Pencabutan Medis -->
+                        <div class="cursor-pointer group" onclick="openPencabutanModal()">
+                            <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-red-100 h-full flex flex-col justify-between">
+                                <div class="p-6 flex-1">
+                                    <!-- Icon Header -->
+                                    <div class="flex items-center gap-4 mb-4">
+                                        <div class="w-14 h-14 bg-gradient-to-br from-red-500 to-red-700 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                                            <i class="fas fa-file-medical-alt text-white text-2xl"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h3 class="text-lg font-bold text-gray-800 group-hover:text-red-600 transition-colors">
+                                                pencabutan Surat Izin Praktik (SIP) tenaga medis dan tenaga kesehatan
+                                            </h3>
+                                        </div>
+                                    </div>
+
+                                    <!-- Description -->
+                                    <p class="text-gray-600 text-sm mb-4">
+                                        Layanan khusus untuk pengajuan pencabutan Surat Izin Praktik (SIP) bagi tenaga medis dan tenaga kesehatan di wilayah Kabupaten Banjarnegara.
+                                    </p>
+                                </div>
+                                <div class="px-6 pb-6 pt-4 border-t border-gray-100 flex items-center justify-between">
+                                    <span class="text-xs text-gray-500">
+                                        <i class="fas fa-list-ul mr-1"></i> {{ $pencabutanMedisItems->count() }} Layanan
+                                    </span>
+                                    <span class="inline-flex items-center gap-2 text-red-600 font-semibold text-sm group-hover:gap-3 transition-all">
+                                        Lihat Daftar <i class="fas fa-arrow-right"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
                     @foreach ($layanan as $item)
                         <a href="{{ route('layanan.show', $item->id) }}" class="group">
                             <div
@@ -78,7 +112,7 @@
                                         </div>
                                         <div class="flex-1">
                                             <h3
-                                                class="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors line-clamp-2">
+                                                class="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors">
                                                 {{ $item->nama_perijinan }}
                                             </h3>
                                         </div>
@@ -137,5 +171,78 @@
             @endif
         </div>
     </section>
+
+    <!-- Modal List Pencabutan Medis -->
+    <div id="pencabutanModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col transform transition-all duration-300 scale-95 opacity-0" id="pencabutanModalContent">
+            <!-- Header -->
+            <div class="bg-gradient-to-br from-red-600 via-red-700 to-red-800 text-white p-6 flex-shrink-0 flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-file-medical-alt text-2xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold">Pencabutan SIP Medis & Nakes</h2>
+                        <p class="text-red-100 text-xs mt-0.5">Pilih jenis perijinan pencabutan medis yang Anda inginkan</p>
+                    </div>
+                </div>
+                <button onclick="closePencabutanModal()" class="text-white/80 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full p-2">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <!-- Body -->
+            <div class="flex-1 overflow-y-auto p-6 space-y-3 bg-gray-50">
+                @foreach($pencabutanMedisItems as $pencabutanItem)
+                    <a href="{{ route('layanan.show', $pencabutanItem->id) }}" class="block bg-white hover:bg-red-50/30 p-4 rounded-xl border border-gray-200 hover:border-red-300 transition-all shadow-sm hover:shadow-md group">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1 pr-4">
+                                <h4 class="font-bold text-gray-800 group-hover:text-red-600 transition-colors">
+                                    {{ $pencabutanItem->nama_perijinan }}
+                                </h4>
+                                @if($pencabutanItem->dasar_hukum)
+                                    <p class="text-xs text-gray-500 mt-1 line-clamp-1">
+                                        {{ strip_tags($pencabutanItem->dasar_hukum) }}
+                                    </p>
+                                @endif
+                            </div>
+                            <div class="text-gray-400 group-hover:text-red-600 group-hover:translate-x-1 transition-all">
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </div>
+                    </a>
+                @endforeach
+            </div>
+            <!-- Footer -->
+            <div class="p-4 border-t border-gray-200 bg-white flex justify-end flex-shrink-0">
+                <button onclick="closePencabutanModal()" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-colors">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openPencabutanModal() {
+            const modal = document.getElementById('pencabutanModal');
+            const modalContent = document.getElementById('pencabutanModalContent');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closePencabutanModal() {
+            const modal = document.getElementById('pencabutanModal');
+            const modalContent = document.getElementById('pencabutanModalContent');
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            modalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }, 300);
+        }
+    </script>
 
 </x-front-layout>

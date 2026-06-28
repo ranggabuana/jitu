@@ -63,6 +63,16 @@
                                 </p>
                             </div>
                             <div>
+                                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Jenis Perizinan</h3>
+                                <p class="text-sm font-medium text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-100 dark:border-gray-600 inline-block min-w-[120px]">
+                                    @if($perijinan->jenis_perijinan === 'pencabutan_medis')
+                                        Pencabutan Medis
+                                    @else
+                                        Umum
+                                    @endif
+                                </p>
+                            </div>
+                            <div>
                                 <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Opsi Perpanjangan</h3>
                                 <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
                                     @if($perijinan->opsi_perpanjangan == 'setelah_habis')

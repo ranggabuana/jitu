@@ -87,6 +87,7 @@ class PerijinanController extends Controller
         $request->validate([
             'kode_perijinan' => 'nullable|string|max:50',
             'nama_perijinan' => 'required|string|max:255',
+            'jenis_perijinan' => 'required|in:umum,pencabutan_medis',
             'is_multi_opd' => 'nullable|boolean',
             'has_bo_form' => 'nullable|boolean',
             'validasi_tanpa_opd' => 'nullable|boolean',
@@ -836,6 +837,7 @@ class PerijinanController extends Controller
         $request->validate([
             'kode_perijinan' => 'nullable|string|max:50',
             'nama_perijinan' => 'required|string|max:255',
+            'jenis_perijinan' => 'required|in:umum,pencabutan_medis',
             'is_multi_opd' => 'nullable|boolean',
             'has_bo_form' => 'nullable|boolean',
             'validasi_tanpa_opd' => 'nullable|boolean',
