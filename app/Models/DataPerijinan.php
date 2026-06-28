@@ -50,6 +50,7 @@ class DataPerijinan extends Model
         'rejected_at',
         'perpanjang_dari_id',
         'root_perpanjang_id',
+        'pembetulan_dari_id',
     ];
 
     protected $casts = [
@@ -254,7 +255,7 @@ class DataPerijinan extends Model
     public function getStatusLabelAttribute(): string
     {
         if ($this->status === 'approved' && $this->masa_aktif && $this->masa_aktif->isPast()) {
-            return 'Tidak Aktif';
+            return 'Habis Masa';
         }
 
         $labels = [
@@ -322,5 +323,13 @@ class DataPerijinan extends Model
     public function familyApplications(): HasMany
     {
         return $this->hasMany(DataPerijinan::class, 'root_perpanjang_id');
+    }
+
+    /**
+     * Get the parent application that this application corrected.
+     */
+    public function pembetulanDari(): BelongsTo
+    {
+        return $this->belongsTo(DataPerijinan::class, 'pembetulan_dari_id');
     }
 }

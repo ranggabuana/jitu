@@ -159,11 +159,36 @@ class ValidatorRequiredFieldsTest extends TestCase
     {
         $file = UploadedFile::fake()->create('document.pdf', 500);
 
-        // 2. Submit with valid inputs
+        // Add BO table field to perijinan
+        PerijinanFormField::create([
+            'perijinan_id' => $this->perijinan->id,
+            'form_type' => 'bo',
+            'type' => 'table',
+            'name' => 'rincian_alat_bo',
+            'label' => 'Rincian Alat BO',
+            'is_required' => false,
+            'status' => 'aktif',
+            'options' => [
+                'table_data' => [
+                    'rows' => [
+                        [
+                            ['is_input' => false, 'content' => '1'],
+                            ['is_input' => true, 'input_type' => 'text', 'input_name' => 'cell_0_nama_alat']
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+
+        // 2. Submit with valid inputs including the table data with a new row
         $response = $this->actingAs($this->boUser)
             ->put(route('data-perijinan.bo-data.save', $this->application->id), [
                 'nomor_rekom_bo' => '123/BO/2026',
                 'dokumen_pendukung_bo' => $file,
+                'rincian_alat_bo' => [
+                    'cell_0_nama_alat' => 'Alat Lama',
+                    'cell_1_nama_alat' => 'Alat Baru',
+                ]
             ]);
 
         $response->assertRedirect();
@@ -171,6 +196,8 @@ class ValidatorRequiredFieldsTest extends TestCase
         $this->application->refresh();
         $this->assertEquals('123/BO/2026', $this->application->bo_data['nomor_rekom_bo']);
         $this->assertNotNull($this->application->bo_data['dokumen_pendukung_bo']);
+        $this->assertEquals('Alat Lama', $this->application->bo_data['rincian_alat_bo']['cell_0_nama_alat']);
+        $this->assertEquals('Alat Baru', $this->application->bo_data['rincian_alat_bo']['cell_1_nama_alat']);
     }
 
     public function test_save_bo_data_does_not_require_file_if_already_uploaded()

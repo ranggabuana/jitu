@@ -266,7 +266,15 @@ class DashboardController extends Controller
                 ->first();
         }
 
-        return view('pemohon.pengajuan.create', compact('perijinan', 'user', 'userDokumens', 'renewFromApp'));
+        $pembetulanFromApp = null;
+        if (request()->filled('pembetulan_from')) {
+            $pembetulanFromApp = DataPerijinan::where('id', request()->pembetulan_from)
+                ->where('user_id', $user->id)
+                ->where('status', 'approved')
+                ->first();
+        }
+
+        return view('pemohon.pengajuan.create', compact('perijinan', 'user', 'userDokumens', 'renewFromApp', 'pembetulanFromApp'));
     }
 
     /**
@@ -522,6 +530,17 @@ class DashboardController extends Controller
                 }
             }
 
+            $pembetulanDariId = null;
+            if ($request->filled('pembetulan_from')) {
+                $pembetulanFromApp = DataPerijinan::where('id', $request->pembetulan_from)
+                    ->where('user_id', $user->id)
+                    ->first();
+
+                if ($pembetulanFromApp) {
+                    $pembetulanDariId = $pembetulanFromApp->id;
+                }
+            }
+
             $data = DataPerijinan::create([
                 'user_id' => $user->id,
                 'perijinan_id' => $perijinan->id,
@@ -541,6 +560,7 @@ class DashboardController extends Controller
                 'submitted_at' => now(),
                 'perpanjang_dari_id' => $perpanjangDariId,
                 'root_perpanjang_id' => $rootPerpanjangId,
+                'pembetulan_dari_id' => $pembetulanDariId,
             ]);
 
             // ===============================
@@ -548,7 +568,14 @@ class DashboardController extends Controller
             // ===============================
             $validationFlows = $perijinan->activeValidationFlows()->orderBy('order')->get();
 
-            foreach ($validationFlows as $index => $flow) {
+            if ($data->pembetulan_dari_id) {
+                $validationFlows = $validationFlows->filter(function($flow) {
+                    return in_array($flow->role, ['fo', 'bo', 'verifikator', 'kadin']);
+                });
+            }
+
+            $validationIndex = 1;
+            foreach ($validationFlows as $flow) {
                 // Untuk role tertentu (FO, BO, Verifikator, Kadin), user_id bisa NULL
                 // karena semua user dengan role tersebut bisa validasi
                 $assignedUserId = $flow->assigned_user_id;
@@ -558,7 +585,7 @@ class DashboardController extends Controller
                     'validation_flow_id' => $flow->id,
                     'user_id' => $assignedUserId, // NULL untuk FO/BO/Verifikator/Kadin jika tidak di-assign
                     'status' => 'pending',
-                    'order' => $index + 1,
+                    'order' => $validationIndex++,
                 ]);
             }
 
@@ -575,6 +602,9 @@ class DashboardController extends Controller
                     'file_rekom' => $generatedDocs['file_rekom'] ?? null,
                     'file_rekom_multi' => $generatedDocs['file_rekom_multi'] ?? null,
                     'file_izin' => $generatedDocs['file_izin'] ?? null,
+                    'file_rekom_tte' => null,
+                    'file_rekom_multi_tte' => null,
+                    'file_izin_tte' => null,
                 ]);
             } catch (\Exception $docEx) {
                 \Log::error('Error generating permit letters in storePengajuan: ' . $docEx->getMessage());

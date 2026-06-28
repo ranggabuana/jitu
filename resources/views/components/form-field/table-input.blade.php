@@ -21,38 +21,71 @@
     }
     $prefix = $inputNamePrefix ?? $field->name;
 
-    // Dynamically expand rows if savedVal contains keys beyond original rows
-    $maxRowIndex = count($rows) - 1;
-    foreach ($savedVal as $key => $v) {
-        if (preg_match('/cell_(\d+)_/i', $key, $matches)) {
-            $rIndex = intval($matches[1]);
-            if ($rIndex > $maxRowIndex) {
-                $maxRowIndex = $rIndex;
+    // Find the maximum input name index in the original rows template
+    $maxOriginalInputIndex = -1;
+    foreach ($rows as $row) {
+        foreach ($row as $cell) {
+            if (!empty($cell['input_name']) && preg_match('/cell_(\d+)_/i', $cell['input_name'], $matches)) {
+                $idx = intval($matches[1]);
+                if ($idx > $maxOriginalInputIndex) {
+                    $maxOriginalInputIndex = $idx;
+                }
             }
         }
     }
-    $originalRowCount = count($rows);
-    if ($originalRowCount > 0 && $maxRowIndex >= $originalRowCount) {
-        $lastRowTemplate = $rows[$originalRowCount - 1];
-        for ($r = $originalRowCount; $r <= $maxRowIndex; $r++) {
-            $newRow = [];
-            $isFirstCell = true;
-            foreach ($lastRowTemplate as $cell) {
-                $newCell = $cell;
-                if (!empty($cell['input_name'])) {
-                    $newCell['input_name'] = preg_replace('/cell_\d+_/', 'cell_' . $r . '_', $cell['input_name']);
-                }
-                if ($isFirstCell && empty($cell['is_input']) && isset($cell['content'])) {
-                    $content = trim($cell['content']);
-                    if (ctype_digit($content)) {
-                        $diff = $r - ($originalRowCount - 1);
-                        $newCell['content'] = strval(intval($content) + $diff);
-                    }
-                }
-                $isFirstCell = false;
-                $newRow[] = $newCell;
+
+    // Find the maximum input name index in the saved values
+    $maxSavedIndex = $maxOriginalInputIndex;
+    foreach ($savedVal as $key => $v) {
+        if (preg_match('/cell_(\d+)_/i', $key, $matches)) {
+            $idx = intval($matches[1]);
+            if ($idx > $maxSavedIndex) {
+                $maxSavedIndex = $idx;
             }
-            $rows[$r] = $newRow;
+        }
+    }
+
+    $originalRowCount = count($rows);
+    if ($originalRowCount > 0 && $maxSavedIndex > $maxOriginalInputIndex) {
+        // Find the last row that contains inputs to use as a template
+        $lastRowTemplate = null;
+        for ($i = $originalRowCount - 1; $i >= 0; $i--) {
+            $hasInput = false;
+            foreach ($rows[$i] as $cell) {
+                if (!empty($cell['is_input'])) {
+                    $hasInput = true;
+                    break;
+                }
+            }
+            if ($hasInput) {
+                $lastRowTemplate = $rows[$i];
+                break;
+            }
+        }
+
+        if ($lastRowTemplate) {
+            $diffRows = $maxSavedIndex - $maxOriginalInputIndex;
+            for ($k = 1; $k <= $diffRows; $k++) {
+                $targetInputIndex = $maxOriginalInputIndex + $k;
+                $newRow = [];
+                $isFirstCell = true;
+                foreach ($lastRowTemplate as $cell) {
+                    $newCell = $cell;
+                    if (!empty($cell['input_name'])) {
+                        $newCell['input_name'] = preg_replace('/cell_\d+_/', 'cell_' . $targetInputIndex . '_', $cell['input_name']);
+                    }
+                    if ($isFirstCell && empty($cell['is_input']) && isset($cell['content'])) {
+                        $content = trim($cell['content']);
+                        if (ctype_digit($content)) {
+                            // Increment the serial number dynamically
+                            $newCell['content'] = strval(intval($content) + $k);
+                        }
+                    }
+                    $isFirstCell = false;
+                    $newRow[] = $newCell;
+                }
+                $rows[] = $newRow;
+            }
         }
     }
 
@@ -70,7 +103,11 @@
 @if($originalRowCount > 0)
     <div class="overflow-x-auto mt-1 rounded-xl border border-gray-200 dark:border-gray-700 relative">
         <input type="hidden" name="{{ $prefix }}[_column_widths]" id="col_widths_{{ $prefix }}" value="{{ json_encode($savedVal['_column_widths'] ?? []) }}">
-        <table class="w-full border-collapse text-sm text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-900 table-resizable" data-prefix="{{ $prefix }}" data-readonly="{{ empty($ro) ? 'false' : 'true' }}" data-original-rows="{{ $originalRowCount }}" style="table-layout: auto;">
+        @php
+            $hasSavedWidths = !empty($savedVal['_column_widths']);
+            $tableLayout = $hasSavedWidths ? 'fixed' : 'auto';
+        @endphp
+        <table class="w-full border-collapse text-sm text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-900 table-resizable" data-prefix="{{ $prefix }}" data-readonly="{{ empty($ro) ? 'false' : 'true' }}" data-original-rows="{{ $originalRowCount }}" style="table-layout: {{ $tableLayout }};">
             @foreach($rows as $rKey => $row)
                 <tr>
                     @foreach($row as $cKey => $cell)
@@ -84,12 +121,27 @@
                             $savedCellVal = $savedVal[$inputName] ?? '';
                             $isDynamicVar = false;
                             $dynamicVarLabel = '';
+                            $isImageVar = false;
                             if (!empty($cell['dynamic_var'])) {
                                 $isDynamicVar = true;
                                 $dynamicVarLabel = $cell['dynamic_var'];
                                 $cleanVarName = strtolower(str_replace(['$', '{', '}', ' '], ['', '', '', '_'], $cell['dynamic_var']));
                                 if (isset($dynamicVarMap[$cleanVarName])) {
                                     $savedCellVal = $dynamicVarMap[$cleanVarName];
+                                }
+                                if ($applicationInstance) {
+                                    $varField = $applicationInstance->perijinan->activeFormFields->first(function($f) use ($cleanVarName) {
+                                        return strtolower(str_replace(' ', '_', $f->name)) === $cleanVarName;
+                                    });
+                                    if ($varField && in_array($varField->type, ['pas_foto', 'gambar'])) {
+                                        $isImageVar = true;
+                                    }
+                                }
+                            }
+                            $hasRealData = false;
+                            if ($isDynamicVar && !empty($savedCellVal)) {
+                                if (!str_contains($savedCellVal, '$') && !str_contains($savedCellVal, '{')) {
+                                    $hasRealData = true;
                                 }
                             }
                             $fmt = $cell['fmt'] ?? [];
@@ -135,7 +187,7 @@
                         @endphp
                         
                         <td colspan="{{ $colspan }}" rowspan="{{ $rowspan }}" style="{{ $cellStyle }}" class="border border-gray-300 dark:border-gray-600 p-2 relative">
-                            @if(empty($ro) && $rKey === 0)
+                            @if($rKey === 0)
                                 <div class="col-resize-handle hover:bg-indigo-500/30 transition-colors" data-col-index="{{ $cKey }}" style="position: absolute; right: 0; top: 0; bottom: 0; width: 6px; cursor: col-resize; z-index: 10; user-select: none;"></div>
                             @endif
                             @if($isInput)
@@ -145,36 +197,49 @@
                                         $cellAttr .= ' readonly';
                                     }
                                 @endphp
-                                @if($inputType === 'date')
-                                    <input type="date"
-                                        name="{{ $prefix }}[{{ $inputName }}]"
-                                        value="{{ $savedCellVal }}"
-                                        {{ $cellAttr }}
-                                        class="w-full px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 bg-transparent focus:ring-1 focus:ring-indigo-400 outline-none rounded text-gray-900 dark:text-gray-100 {{ $isDynamicVar ? 'bg-gray-100/50 dark:bg-gray-800/50 cursor-not-allowed text-gray-500' : '' }}"
-                                        style="text-align: inherit; font-size: inherit; font-weight: inherit; color: inherit; background: transparent;">
-                                @elseif($inputType === 'number')
-                                    <input type="number"
-                                        name="{{ $prefix }}[{{ $inputName }}]"
-                                        value="{{ $savedCellVal }}"
-                                        {{ $cellAttr }}
-                                        class="w-full px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 bg-transparent focus:ring-1 focus:ring-indigo-400 outline-none rounded text-gray-900 dark:text-gray-100 {{ $isDynamicVar ? 'bg-gray-100/50 dark:bg-gray-800/50 cursor-not-allowed text-gray-500' : '' }}"
-                                        style="text-align: inherit; font-size: inherit; font-weight: inherit; color: inherit; background: transparent;">
+                                @if($isDynamicVar && $hasRealData)
+                                    <input type="hidden" name="{{ $prefix }}[{{ $inputName }}]" value="{{ $savedCellVal }}">
+                                    @if($isImageVar)
+                                        <div class="text-center p-1">
+                                            <img src="{{ asset($savedCellVal) }}" class="max-h-24 max-w-full mx-auto rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm" alt="Preview">
+                                        </div>
+                                    @else
+                                        <div class="text-center font-bold text-gray-900 dark:text-gray-100 text-xs p-1">
+                                            {{ $savedCellVal }}
+                                        </div>
+                                    @endif
                                 @else
-                                    <textarea
-                                        name="{{ $prefix }}[{{ $inputName }}]"
-                                        {{ $cellAttr }}
-                                        rows="1"
-                                        class="w-full px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 bg-transparent focus:ring-1 focus:ring-indigo-400 outline-none rounded text-gray-900 dark:text-gray-100 {{ $isDynamicVar ? 'bg-gray-100/50 dark:bg-gray-800/50 cursor-not-allowed text-gray-500' : '' }}"
-                                        style="text-align: inherit; font-size: inherit; font-weight: inherit; color: inherit; background: transparent; min-height: 24px; display: block; resize: {{ $isDynamicVar ? 'none' : 'vertical' }};"
-                                        oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px';"
-                                    >{{ $savedCellVal }}</textarea>
-                                @endif
+                                    @if($inputType === 'date')
+                                        <input type="date"
+                                            name="{{ $prefix }}[{{ $inputName }}]"
+                                            value="{{ $savedCellVal }}"
+                                            {{ $cellAttr }}
+                                            class="w-full px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 bg-transparent focus:ring-1 focus:ring-indigo-400 outline-none rounded text-gray-900 dark:text-gray-100 {{ $isDynamicVar ? 'bg-gray-100/50 dark:bg-gray-800/50 cursor-not-allowed text-gray-500' : '' }}"
+                                            style="text-align: inherit; font-size: inherit; font-weight: inherit; color: inherit; background: transparent; min-width: 0;">
+                                    @elseif($inputType === 'number')
+                                        <input type="number"
+                                            name="{{ $prefix }}[{{ $inputName }}]"
+                                            value="{{ $savedCellVal }}"
+                                            {{ $cellAttr }}
+                                            class="w-full px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 bg-transparent focus:ring-1 focus:ring-indigo-400 outline-none rounded text-gray-900 dark:text-gray-100 {{ $isDynamicVar ? 'bg-gray-100/50 dark:bg-gray-800/50 cursor-not-allowed text-gray-500' : '' }}"
+                                            style="text-align: inherit; font-size: inherit; font-weight: inherit; color: inherit; background: transparent; min-width: 0;">
+                                    @else
+                                        <textarea
+                                            name="{{ $prefix }}[{{ $inputName }}]"
+                                            {{ $cellAttr }}
+                                            rows="1"
+                                            class="w-full px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 bg-transparent focus:ring-1 focus:ring-indigo-400 outline-none rounded text-gray-900 dark:text-gray-100 {{ $isDynamicVar ? 'bg-gray-100/50 dark:bg-gray-800/50 cursor-not-allowed text-gray-500' : '' }}"
+                                            style="text-align: inherit; font-size: inherit; font-weight: inherit; color: inherit; background: transparent; min-height: 24px; display: block; resize: {{ $isDynamicVar ? 'none' : 'vertical' }}; min-width: 0;"
+                                            oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px';"
+                                        >{{ $savedCellVal }}</textarea>
+                                    @endif
 
-                                @if($isDynamicVar)
-                                    <div class="text-[9px] text-indigo-600 dark:text-indigo-400 mt-1 italic text-center leading-tight">
-                                        <span class="block text-[8px] opacity-75">Abaikan saja, terisi otomatis dari:</span>
-                                        <strong class="font-bold font-mono">{{ $dynamicVarLabel }}</strong>
-                                    </div>
+                                    @if($isDynamicVar)
+                                        <div class="text-[9px] text-indigo-600 dark:text-indigo-400 mt-1 italic text-center leading-tight">
+                                            <span class="block text-[8px] opacity-75">Abaikan saja, terisi otomatis dari:</span>
+                                            <strong class="font-bold font-mono">{{ $dynamicVarLabel }}</strong>
+                                        </div>
+                                    @endif
                                 @endif
                             @else
                                 {{ $cellContent ?: '-' }}
@@ -221,6 +286,24 @@
                         handle.addEventListener('mousedown', e => {
                             e.preventDefault();
                             startX = e.pageX;
+                            
+                            // If table is not fixed layout yet, convert it to fixed layout and capture current widths!
+                            if (table.style.tableLayout !== 'fixed') {
+                                const allCells = firstRow.querySelectorAll('td, th');
+                                let widths = {};
+                                try {
+                                    widths = JSON.parse(hiddenInput.value || '{}');
+                                } catch(err) {}
+
+                                allCells.forEach((c, idx) => {
+                                    const currentW = c.offsetWidth;
+                                    c.style.width = currentW + 'px';
+                                    widths[idx] = currentW + 'px';
+                                });
+                                hiddenInput.value = JSON.stringify(widths);
+                                table.style.tableLayout = 'fixed';
+                            }
+                            
                             startWidth = cell.offsetWidth;
 
                             handle.style.backgroundColor = 'rgba(99, 102, 241, 0.4)'; // Highlight on drag

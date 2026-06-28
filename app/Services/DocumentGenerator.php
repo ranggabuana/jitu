@@ -12,6 +12,8 @@ use Carbon\Carbon;
 
 class DocumentGenerator
 {
+    public static $tableImageReplacements = [];
+
     /**
      * Generate the three required documents for an application.
      *
@@ -20,6 +22,7 @@ class DocumentGenerator
      */
     public static function generateDocuments(DataPerijinan $application, $targetOpdId = null, bool $forceOfficial = false): array
     {
+        self::$tableImageReplacements = [];
         $tempFilesToDelete = [];
         $perijinan = $application->perijinan;
         $user = $application->user;
@@ -554,10 +557,10 @@ class DocumentGenerator
                     }
                 } else {
                     if ($field && $field->type === 'table' && is_array($value)) {
-                        $valStr = self::renderTableFieldForDocument($field, $value);
-                        $rekomReplacements['_WORD_TABLE_${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = self::renderTableFieldForWord($field, $value);
+                        $valStr = self::renderTableFieldForDocument($field, $value, $application, $opd);
+                        $rekomReplacements['_WORD_TABLE_${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = self::renderTableFieldForWord($field, $value, $application, $opd);
                         if ($field) {
-                            $rekomReplacements['_WORD_TABLE_${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = self::renderTableFieldForWord($field, $value);
+                            $rekomReplacements['_WORD_TABLE_${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = self::renderTableFieldForWord($field, $value, $application, $opd);
                         }
                     } elseif (($key === 'masa_aktif_rekom' || ($field && $field->type === 'date')) && !empty($value)) {
                         $valStr = self::formatDateIndonesian($value);
@@ -601,7 +604,25 @@ class DocumentGenerator
                 $rekomReplacements['${TANGGAL_HARI_INI}'] = self::formatDateIndonesian($rekomDate);
             }
 
-            $finalReplacements = array_merge($baseReplacements, $applicantReplacements, $boReplacements, $rekomReplacements);
+            // Re-evaluate table fields in boReplacements with the current OPD context
+            $opdBoReplacements = $boReplacements;
+            if ($application->bo_data && is_array($application->bo_data)) {
+                foreach ($application->bo_data as $key => $value) {
+                    $field = $perijinan->activeFormFields->where('form_type', 'bo')->firstWhere('name', $key);
+                    if ($field && $field->type === 'table' && is_array($value)) {
+                        $opdBoReplacements['${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = self::renderTableFieldForDocument($field, $value, $application, $opd);
+                        if ($field) {
+                            $opdBoReplacements['${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = self::renderTableFieldForDocument($field, $value, $application, $opd);
+                        }
+                        $opdBoReplacements['_WORD_TABLE_${' . strtoupper(str_replace(' ', '_', $key)) . '}'] = self::renderTableFieldForWord($field, $value, $application, $opd);
+                        if ($field) {
+                            $opdBoReplacements['_WORD_TABLE_${' . strtoupper(str_replace(' ', '_', $field->label)) . '}'] = self::renderTableFieldForWord($field, $value, $application, $opd);
+                        }
+                    }
+                }
+            }
+
+            $finalReplacements = array_merge($baseReplacements, $applicantReplacements, $opdBoReplacements, $rekomReplacements);
             
             // Override QR code replacements for Rekomendasi
             $finalReplacements['${QRCODE}'] = $rekomQrHtml;
@@ -893,6 +914,7 @@ class DocumentGenerator
      */
     private static function generateFromWord($templatePathDB, $replacements, $filename, $folderPath, $absoluteFolder)
     {
+        $replacements = array_merge($replacements, self::$tableImageReplacements);
         // Templates are now stored in public/uploads/templates
         $realTemplatePath = public_path($templatePathDB);
         
@@ -912,6 +934,13 @@ class DocumentGenerator
         try {
             $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($realTemplatePath);
 
+            // Scan all variables once with both macro chars
+            $templateProcessor->setMacroChars('${', '}');
+            $dollarVars = $templateProcessor->getVariables();
+
+            $templateProcessor->setMacroChars('[', ']');
+            $bracketVars = $templateProcessor->getVariables();
+
             // 1. First process complex blocks like Tables
             foreach ($replacements as $key => $value) {
                 if (str_starts_with($key, '_WORD_TABLE_')) {
@@ -919,20 +948,20 @@ class DocumentGenerator
                     $cleanKey = str_replace(['[', ']', '${', '}'], '', $originalPlaceholder);
                     
                     if ($value instanceof \PhpOffice\PhpWord\Element\Table) {
-                        // Pass 1: Replace [VAR]
-                        try {
-                            $templateProcessor->setMacroChars('[', ']');
-                            $templateProcessor->setComplexBlock($cleanKey, $value);
-                        } catch (\Exception $e) {
-                            \Log::error("Failed to set complex block [{$cleanKey}]: " . $e->getMessage());
-                        }
-                        
-                        // Pass 2: Replace ${VAR}
-                        try {
-                            $templateProcessor->setMacroChars('${', '}');
-                            $templateProcessor->setComplexBlock($cleanKey, $value);
-                        } catch (\Exception $e) {
-                            \Log::error("Failed to set complex block \${{$cleanKey}}: " . $e->getMessage());
+                        if (in_array($cleanKey, $dollarVars)) {
+                            try {
+                                $templateProcessor->setMacroChars('${', '}');
+                                $templateProcessor->setComplexBlock($cleanKey, $value);
+                            } catch (\Exception $e) {
+                                \Log::error("Failed to set complex block \${{$cleanKey}}: " . $e->getMessage());
+                            }
+                        } else {
+                            try {
+                                $templateProcessor->setMacroChars('[', ']');
+                                $templateProcessor->setComplexBlock($cleanKey, $value);
+                            } catch (\Exception $e) {
+                                \Log::error("Failed to set complex block [{$cleanKey}]: " . $e->getMessage());
+                            }
                         }
                     }
                 }
@@ -954,13 +983,18 @@ class DocumentGenerator
                     
                     $val = htmlspecialchars(strip_tags($value));
                     
-                    // Pass 1: Replace [VAR]
-                    $templateProcessor->setMacroChars('[', ']');
-                    $templateProcessor->setValue($cleanKey, $val);
-                    
-                    // Pass 2: Replace ${VAR}
-                    $templateProcessor->setMacroChars('${', '}');
-                    $templateProcessor->setValue($cleanKey, $val);
+                    if (in_array($cleanKey, $dollarVars)) {
+                        try {
+                            $templateProcessor->setMacroChars('${', '}');
+                            $templateProcessor->setValue($cleanKey, $val);
+                        } catch (\Exception $e) {}
+                    }
+                    if (in_array($cleanKey, $bracketVars)) {
+                        try {
+                            $templateProcessor->setMacroChars('[', ']');
+                            $templateProcessor->setValue($cleanKey, $val);
+                        } catch (\Exception $e) {}
+                    }
                 }
             }
 
@@ -970,7 +1004,7 @@ class DocumentGenerator
             $logoKab = \App\Models\Setting::get('logo_kabupaten');
             $qrCode = $replacements['${_IMG_PATH_QRCODE}'] ?? null;
 
-            // Handle Image Placeholders for both formats (spaces and underscores)
+            // Handle Image Placeholders for both formats
             $macros = [
                 'GAMBAR TTE' => $gambarTte,
                 'GAMBAR_TTE' => $gambarTte,
@@ -1000,20 +1034,25 @@ class DocumentGenerator
                     ];
 
                     try {
-                        // Replace [IMAGE_VAR]
-                        $templateProcessor->setMacroChars('[', ']');
-                        $templateProcessor->setImageValue($macro, $imgConfig);
-
-                        // Replace ${IMAGE_VAR}
-                        $templateProcessor->setMacroChars('${', '}');
-                        $templateProcessor->setImageValue($macro, $imgConfig);
+                        if (in_array($macro, $dollarVars)) {
+                            $templateProcessor->setMacroChars('${', '}');
+                            $templateProcessor->setImageValue($macro, $imgConfig);
+                        }
+                        if (in_array($macro, $bracketVars)) {
+                            $templateProcessor->setMacroChars('[', ']');
+                            $templateProcessor->setImageValue($macro, $imgConfig);
+                        }
                     } catch (\Exception $e) {}
                 } else {
                     try {
-                        $templateProcessor->setMacroChars('[', ']');
-                        $templateProcessor->setValue($macro, '');
-                        $templateProcessor->setMacroChars('${', '}');
-                        $templateProcessor->setValue($macro, '');
+                        if (in_array($macro, $dollarVars)) {
+                            $templateProcessor->setMacroChars('${', '}');
+                            $templateProcessor->setValue($macro, '');
+                        }
+                        if (in_array($macro, $bracketVars)) {
+                            $templateProcessor->setMacroChars('[', ']');
+                            $templateProcessor->setValue($macro, '');
+                        }
                     } catch (\Exception $e) {}
                 }
             }
@@ -1059,19 +1098,27 @@ class DocumentGenerator
                     
                     if ($path && File::exists($path)) {
                         try {
-                            $templateProcessor->setMacroChars('[', ']');
-                            $templateProcessor->setImageValue($cleanMacro, $imgConfig);
-                            $templateProcessor->setMacroChars('${', '}');
-                            $templateProcessor->setImageValue($cleanMacro, $imgConfig);
+                            if (in_array($cleanMacro, $dollarVars)) {
+                                $templateProcessor->setMacroChars('${', '}');
+                                $templateProcessor->setImageValue($cleanMacro, $imgConfig);
+                            }
+                            if (in_array($cleanMacro, $bracketVars)) {
+                                $templateProcessor->setMacroChars('[', ']');
+                                $templateProcessor->setImageValue($cleanMacro, $imgConfig);
+                            }
                         } catch (\Exception $e) {
                             \Log::error("Failed to replace dynamic word image {$cleanMacro}: " . $e->getMessage());
                         }
                     } else {
                         try {
-                            $templateProcessor->setMacroChars('[', ']');
-                            $templateProcessor->setValue($cleanMacro, '');
-                            $templateProcessor->setMacroChars('${', '}');
-                            $templateProcessor->setValue($cleanMacro, '');
+                            if (in_array($cleanMacro, $dollarVars)) {
+                                $templateProcessor->setMacroChars('${', '}');
+                                $templateProcessor->setValue($cleanMacro, '');
+                            }
+                            if (in_array($cleanMacro, $bracketVars)) {
+                                $templateProcessor->setMacroChars('[', ']');
+                                $templateProcessor->setValue($cleanMacro, '');
+                            }
                         } catch (\Exception $e) {}
                     }
                 }
@@ -1124,11 +1171,11 @@ class DocumentGenerator
      * @param array $values  The saved key=>value pairs for this field
      * @return string  HTML table string
      */
-    private static function renderTableFieldForDocument($field, array $values, $application = null): string
+    private static function renderTableFieldForDocument($field, array $values, $application = null, $currentOpd = null): string
     {
         $dynamicVarMap = [];
         if ($application) {
-            $dynamicVarMap = self::getDynamicVariableMap($application);
+            $dynamicVarMap = self::getDynamicVariableMap($application, $currentOpd);
         }
 
         $rawTableData = $field->options['table_data'] ?? null;
@@ -1143,37 +1190,71 @@ class DocumentGenerator
         }
 
         $rows = $tableData['rows'];
-        $maxRowIndex = count($rows) - 1;
-        foreach ($values as $key => $val) {
-            if (preg_match('/cell_(\d+)_/i', $key, $matches)) {
-                $rIndex = intval($matches[1]);
-                if ($rIndex > $maxRowIndex) {
-                    $maxRowIndex = $rIndex;
+        // Find the maximum input name index in the original rows template
+        $maxOriginalInputIndex = -1;
+        foreach ($rows as $row) {
+            foreach ($row as $cell) {
+                if (!empty($cell['input_name']) && preg_match('/cell_(\d+)_/i', $cell['input_name'], $matches)) {
+                    $idx = intval($matches[1]);
+                    if ($idx > $maxOriginalInputIndex) {
+                        $maxOriginalInputIndex = $idx;
+                    }
                 }
             }
         }
-        $originalRowCount = count($rows);
-        if ($originalRowCount > 0 && $maxRowIndex >= $originalRowCount) {
-            $lastRowTemplate = $rows[$originalRowCount - 1];
-            for ($r = $originalRowCount; $r <= $maxRowIndex; $r++) {
-                $newRow = [];
-                $isFirstCell = true;
-                foreach ($lastRowTemplate as $cell) {
-                    $newCell = $cell;
-                    if (!empty($cell['input_name'])) {
-                        $newCell['input_name'] = preg_replace('/cell_\d+_/', 'cell_' . $r . '_', $cell['input_name']);
-                    }
-                    if ($isFirstCell && empty($cell['is_input']) && isset($cell['content'])) {
-                        $content = trim($cell['content']);
-                        if (ctype_digit($content)) {
-                            $diff = $r - ($originalRowCount - 1);
-                            $newCell['content'] = strval(intval($content) + $diff);
-                        }
-                    }
-                    $isFirstCell = false;
-                    $newRow[] = $newCell;
+
+        // Find the maximum input name index in the saved values
+        $maxSavedIndex = $maxOriginalInputIndex;
+        foreach ($values as $key => $v) {
+            if (preg_match('/cell_(\d+)_/i', $key, $matches)) {
+                $idx = intval($matches[1]);
+                if ($idx > $maxSavedIndex) {
+                    $maxSavedIndex = $idx;
                 }
-                $rows[$r] = $newRow;
+            }
+        }
+
+        $originalRowCount = count($rows);
+        if ($originalRowCount > 0 && $maxSavedIndex > $maxOriginalInputIndex) {
+            // Find the last row that contains inputs to use as a template
+            $lastRowTemplate = null;
+            for ($i = $originalRowCount - 1; $i >= 0; $i--) {
+                $hasInput = false;
+                foreach ($rows[$i] as $cell) {
+                    if (!empty($cell['is_input'])) {
+                        $hasInput = true;
+                        break;
+                    }
+                }
+                if ($hasInput) {
+                    $lastRowTemplate = $rows[$i];
+                    break;
+                }
+            }
+
+            if ($lastRowTemplate) {
+                $diffRows = $maxSavedIndex - $maxOriginalInputIndex;
+                for ($k = 1; $k <= $diffRows; $k++) {
+                    $targetInputIndex = $maxOriginalInputIndex + $k;
+                    $newRow = [];
+                    $isFirstCell = true;
+                    foreach ($lastRowTemplate as $cell) {
+                        $newCell = $cell;
+                        if (!empty($cell['input_name'])) {
+                            $newCell['input_name'] = preg_replace('/cell_\d+_/', 'cell_' . $targetInputIndex . '_', $cell['input_name']);
+                        }
+                        if ($isFirstCell && empty($cell['is_input']) && isset($cell['content'])) {
+                            $content = trim($cell['content']);
+                            if (ctype_digit($content)) {
+                                // Increment the serial number dynamically
+                                $newCell['content'] = strval(intval($content) + $k);
+                            }
+                        }
+                        $isFirstCell = false;
+                        $newRow[] = $newCell;
+                    }
+                    $rows[] = $newRow;
+                }
             }
         }
 
@@ -1246,7 +1327,123 @@ class DocumentGenerator
                             $cellVal = $dynamicVarMap[$cleanVarName];
                         }
                     }
-                    $html .= '<td ' . $styleAttr . $colspanAttr . $rowspanAttr . '>' . nl2br(htmlspecialchars($cellVal)) . '</td>';
+
+                    $isImageCell = false;
+                    $htmlImg = '';
+                    if (!empty($cell['dynamic_var']) && $application) {
+                        $cleanVarName = strtolower(str_replace(['$', '{', '}', ' '], ['', '', '', '_'], $cell['dynamic_var']));
+                        
+                        // Look up the field configuration of this dynamic variable
+                        $varField = $application->perijinan->activeFormFields->first(function($f) use ($cleanVarName) {
+                            return strtolower(str_replace(' ', '_', $f->name)) === $cleanVarName;
+                        });
+
+                        if ($varField && in_array($varField->type, ['pas_foto', 'gambar'])) {
+                            $filePath = null;
+                            $tableFormType = $field->form_type ?? 'global';
+
+                            // Prioritize search based on the table's form_type
+                            if ($tableFormType === 'rekom') {
+                                if ($currentOpd && isset($application->rekom_data_multi[$currentOpd->id][$varField->name])) {
+                                    $filePath = $application->rekom_data_multi[$currentOpd->id][$varField->name];
+                                }
+                                if (!$filePath && isset($application->rekom_data[$varField->name])) {
+                                    $filePath = $application->rekom_data[$varField->name];
+                                }
+                                if (!$filePath && $application->perijinan->is_multi_opd && is_array($application->rekom_data_multi)) {
+                                    foreach ($application->rekom_data_multi as $opdData) {
+                                        if (is_array($opdData) && isset($opdData[$varField->name])) {
+                                            $filePath = $opdData[$varField->name];
+                                            break;
+                                        }
+                                    }
+                                }
+                            } elseif ($tableFormType === 'bo' && isset($application->bo_data[$varField->name])) {
+                                $filePath = $application->bo_data[$varField->name];
+                            } elseif ($tableFormType === 'izin' && isset($application->izin_data[$varField->name])) {
+                                $filePath = $application->izin_data[$varField->name];
+                            }
+
+                            // Fallback to checking all sources sequentially if not found in prioritized source
+                            if (!$filePath) {
+                                // 1. Check in rekom_data_multi (Multi OPD) for the specific OPD first
+                                if ($currentOpd && isset($application->rekom_data_multi[$currentOpd->id][$varField->name])) {
+                                    $filePath = $application->rekom_data_multi[$currentOpd->id][$varField->name];
+                                }
+                                // 2. Check in rekom_data (Single OPD)
+                                if (!$filePath && isset($application->rekom_data[$varField->name])) {
+                                    $filePath = $application->rekom_data[$varField->name];
+                                }
+                                // 3. Check in rekom_data_multi (Multi OPD) - fallback to other OPDs
+                                if (!$filePath && $application->perijinan->is_multi_opd && is_array($application->rekom_data_multi)) {
+                                    foreach ($application->rekom_data_multi as $opdData) {
+                                        if (is_array($opdData) && isset($opdData[$varField->name])) {
+                                            $filePath = $opdData[$varField->name];
+                                            break;
+                                        }
+                                    }
+                                }
+                                // 4. Check in form_files (Global)
+                                if (!$filePath) {
+                                    // Try to find the exact field matching the global type first
+                                    $globalField = $application->perijinan->activeFormFields
+                                        ->where('form_type', 'global')
+                                        ->first(function($f) use ($cleanVarName) {
+                                            return strtolower(str_replace(' ', '_', $f->name)) === $cleanVarName;
+                                        });
+                                    $targetGlobalField = $globalField ?: $varField;
+                                    if (isset($application->form_files[$targetGlobalField->id])) {
+                                        $files = $application->form_files[$targetGlobalField->id];
+                                        $filePath = is_array($files) ? ($files[0] ?? null) : $files;
+                                    }
+                                }
+                                // 5. Check in bo_data
+                                if (!$filePath && isset($application->bo_data[$varField->name])) {
+                                    $filePath = $application->bo_data[$varField->name];
+                                }
+                                // 6. Check in izin_data
+                                if (!$filePath && isset($application->izin_data[$varField->name])) {
+                                    $filePath = $application->izin_data[$varField->name];
+                                }
+                            }
+
+                            // Fallback to direct cell value if it's already a path
+                            if (!$filePath && !empty($cellVal) && is_string($cellVal) && (str_contains($cellVal, 'uploads/') || file_exists(public_path($cellVal)))) {
+                                $filePath = $cellVal;
+                            }
+
+                            if ($filePath) {
+                                $absolutePath = public_path($filePath);
+                                if (!File::exists($absolutePath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($filePath)) {
+                                    $absolutePath = \Illuminate\Support\Facades\Storage::disk('public')->path($filePath);
+                                }
+                                if (File::exists($absolutePath)) {
+                                    $imageData = base64_encode(File::get($absolutePath));
+                                    $mime = File::mimeType($absolutePath);
+                                    $src = 'data:' . $mime . ';base64,' . $imageData;
+                                    
+                                    if ($varField->type === 'pas_foto') {
+                                        $htmlImg = '<img src="' . $src . '" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" alt="Pas Foto" />';
+                                    } else {
+                                        $wCm = !empty($varField->options['img_width']) ? floatval($varField->options['img_width']) : null;
+                                        $hCm = !empty($varField->options['img_height']) ? floatval($varField->options['img_height']) : null;
+                                        if ($wCm && $hCm) {
+                                            $htmlImg = '<img src="' . $src . '" style="width: ' . $wCm . 'cm; height: ' . $hCm . 'cm; object-fit: contain;" alt="Gambar" />';
+                                        } else {
+                                            $htmlImg = '<img src="' . $src . '" style="max-width: 100%; max-height: 250px; width: auto; height: auto; object-fit: contain;" alt="Gambar" />';
+                                        }
+                                    }
+                                    $isImageCell = true;
+                                }
+                            }
+                        }
+                    }
+
+                    if ($isImageCell && $htmlImg) {
+                        $html .= '<td ' . $styleAttr . $colspanAttr . $rowspanAttr . '>' . $htmlImg . '</td>';
+                    } else {
+                        $html .= '<td ' . $styleAttr . $colspanAttr . $rowspanAttr . '>' . nl2br(htmlspecialchars($cellVal)) . '</td>';
+                    }
                 } else {
                     $html .= '<th ' . $styleAttr . $colspanAttr . $rowspanAttr . '>' . nl2br(htmlspecialchars($content)) . '</th>';
                 }
@@ -1266,11 +1463,11 @@ class DocumentGenerator
      * @param array $values  The saved key=>value pairs for this field
      * @return \PhpOffice\PhpWord\Element\Table
      */
-    private static function renderTableFieldForWord($field, array $values, $application = null): \PhpOffice\PhpWord\Element\Table
+    private static function renderTableFieldForWord($field, array $values, $application = null, $currentOpd = null): \PhpOffice\PhpWord\Element\Table
     {
         $dynamicVarMap = [];
         if ($application) {
-            $dynamicVarMap = self::getDynamicVariableMap($application);
+            $dynamicVarMap = self::getDynamicVariableMap($application, $currentOpd);
         }
 
         $rawTableData = $field->options['table_data'] ?? null;
@@ -1309,37 +1506,71 @@ class DocumentGenerator
         }
 
         $rows = $tableData['rows'];
-        $maxRowIndex = count($rows) - 1;
-        foreach ($values as $key => $val) {
-            if (preg_match('/cell_(\d+)_/i', $key, $matches)) {
-                $rIndex = intval($matches[1]);
-                if ($rIndex > $maxRowIndex) {
-                    $maxRowIndex = $rIndex;
+        // Find the maximum input name index in the original rows template
+        $maxOriginalInputIndex = -1;
+        foreach ($rows as $row) {
+            foreach ($row as $cell) {
+                if (!empty($cell['input_name']) && preg_match('/cell_(\d+)_/i', $cell['input_name'], $matches)) {
+                    $idx = intval($matches[1]);
+                    if ($idx > $maxOriginalInputIndex) {
+                        $maxOriginalInputIndex = $idx;
+                    }
                 }
             }
         }
-        $originalRowCount = count($rows);
-        if ($originalRowCount > 0 && $maxRowIndex >= $originalRowCount) {
-            $lastRowTemplate = $rows[$originalRowCount - 1];
-            for ($r = $originalRowCount; $r <= $maxRowIndex; $r++) {
-                $newRow = [];
-                $isFirstCell = true;
-                foreach ($lastRowTemplate as $cell) {
-                    $newCell = $cell;
-                    if (!empty($cell['input_name'])) {
-                        $newCell['input_name'] = preg_replace('/cell_\d+_/', 'cell_' . $r . '_', $cell['input_name']);
-                    }
-                    if ($isFirstCell && empty($cell['is_input']) && isset($cell['content'])) {
-                        $content = trim($cell['content']);
-                        if (ctype_digit($content)) {
-                            $diff = $r - ($originalRowCount - 1);
-                            $newCell['content'] = strval(intval($content) + $diff);
-                        }
-                    }
-                    $isFirstCell = false;
-                    $newRow[] = $newCell;
+
+        // Find the maximum input name index in the saved values
+        $maxSavedIndex = $maxOriginalInputIndex;
+        foreach ($values as $key => $v) {
+            if (preg_match('/cell_(\d+)_/i', $key, $matches)) {
+                $idx = intval($matches[1]);
+                if ($idx > $maxSavedIndex) {
+                    $maxSavedIndex = $idx;
                 }
-                $rows[$r] = $newRow;
+            }
+        }
+
+        $originalRowCount = count($rows);
+        if ($originalRowCount > 0 && $maxSavedIndex > $maxOriginalInputIndex) {
+            // Find the last row that contains inputs to use as a template
+            $lastRowTemplate = null;
+            for ($i = $originalRowCount - 1; $i >= 0; $i--) {
+                $hasInput = false;
+                foreach ($rows[$i] as $cell) {
+                    if (!empty($cell['is_input'])) {
+                        $hasInput = true;
+                        break;
+                    }
+                }
+                if ($hasInput) {
+                    $lastRowTemplate = $rows[$i];
+                    break;
+                }
+            }
+
+            if ($lastRowTemplate) {
+                $diffRows = $maxSavedIndex - $maxOriginalInputIndex;
+                for ($k = 1; $k <= $diffRows; $k++) {
+                    $targetInputIndex = $maxOriginalInputIndex + $k;
+                    $newRow = [];
+                    $isFirstCell = true;
+                    foreach ($lastRowTemplate as $cell) {
+                        $newCell = $cell;
+                        if (!empty($cell['input_name'])) {
+                            $newCell['input_name'] = preg_replace('/cell_\d+_/', 'cell_' . $targetInputIndex . '_', $cell['input_name']);
+                        }
+                        if ($isFirstCell && empty($cell['is_input']) && isset($cell['content'])) {
+                            $content = trim($cell['content']);
+                            if (ctype_digit($content)) {
+                                // Increment the serial number dynamically
+                                $newCell['content'] = strval(intval($content) + $k);
+                            }
+                        }
+                        $isFirstCell = false;
+                        $newRow[] = $newCell;
+                    }
+                    $rows[] = $newRow;
+                }
             }
         }
         $numRows = count($rows);
@@ -1537,17 +1768,139 @@ class DocumentGenerator
                                 $cellVal = $dynamicVarMap[$cleanVarName];
                             }
                         }
-                        $lines = explode("\n", str_replace("\r", "", $cellVal));
-                        if (count($lines) > 1) {
-                            $textRun = $cellObj->addTextRun($paraStyle);
-                            foreach ($lines as $index => $line) {
-                                if ($index > 0) {
-                                    $textRun->addTextBreak();
+
+                        $isImageCell = false;
+                        $imagePath = null;
+                        $varField = null;
+
+                        if (!empty($cell['dynamic_var']) && $application) {
+                            $cleanVarName = strtolower(str_replace(['$', '{', '}', ' '], ['', '', '', '_'], $cell['dynamic_var']));
+                            
+                            $varField = $application->perijinan->activeFormFields->first(function($f) use ($cleanVarName) {
+                                return strtolower(str_replace(' ', '_', $f->name)) === $cleanVarName;
+                            });
+
+                            if ($varField && in_array($varField->type, ['pas_foto', 'gambar'])) {
+                                $filePath = null;
+                                $tableFormType = $field->form_type ?? 'global';
+
+                                // Prioritize search based on the table's form_type
+                                if ($tableFormType === 'rekom') {
+                                    if ($currentOpd && isset($application->rekom_data_multi[$currentOpd->id][$varField->name])) {
+                                        $filePath = $application->rekom_data_multi[$currentOpd->id][$varField->name];
+                                    }
+                                    if (!$filePath && isset($application->rekom_data[$varField->name])) {
+                                        $filePath = $application->rekom_data[$varField->name];
+                                    }
+                                    if (!$filePath && $application->perijinan->is_multi_opd && is_array($application->rekom_data_multi)) {
+                                        foreach ($application->rekom_data_multi as $opdData) {
+                                            if (is_array($opdData) && isset($opdData[$varField->name])) {
+                                                $filePath = $opdData[$varField->name];
+                                                break;
+                                            }
+                                        }
+                                    }
+                                } elseif ($tableFormType === 'bo' && isset($application->bo_data[$varField->name])) {
+                                    $filePath = $application->bo_data[$varField->name];
+                                } elseif ($tableFormType === 'izin' && isset($application->izin_data[$varField->name])) {
+                                    $filePath = $application->izin_data[$varField->name];
                                 }
-                                $textRun->addText($line, $fontStyle);
+
+                                // Fallback to checking all sources sequentially if not found in prioritized source
+                                if (!$filePath) {
+                                    // 1. Check in rekom_data_multi (Multi OPD) for the specific OPD first
+                                    if ($currentOpd && isset($application->rekom_data_multi[$currentOpd->id][$varField->name])) {
+                                        $filePath = $application->rekom_data_multi[$currentOpd->id][$varField->name];
+                                    }
+                                    // 2. Check in rekom_data (Single OPD)
+                                    if (!$filePath && isset($application->rekom_data[$varField->name])) {
+                                        $filePath = $application->rekom_data[$varField->name];
+                                    }
+                                    // 3. Check in rekom_data_multi (Multi OPD) - fallback to other OPDs
+                                    if (!$filePath && $application->perijinan->is_multi_opd && is_array($application->rekom_data_multi)) {
+                                        foreach ($application->rekom_data_multi as $opdData) {
+                                            if (is_array($opdData) && isset($opdData[$varField->name])) {
+                                                $filePath = $opdData[$varField->name];
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    // 4. Check in form_files (Global)
+                                    if (!$filePath) {
+                                        // Try to find the exact field matching the global type first
+                                        $globalField = $application->perijinan->activeFormFields
+                                            ->where('form_type', 'global')
+                                            ->first(function($f) use ($cleanVarName) {
+                                                return strtolower(str_replace(' ', '_', $f->name)) === $cleanVarName;
+                                            });
+                                        $targetGlobalField = $globalField ?: $varField;
+                                        if (isset($application->form_files[$targetGlobalField->id])) {
+                                            $files = $application->form_files[$targetGlobalField->id];
+                                            $filePath = is_array($files) ? ($files[0] ?? null) : $files;
+                                        }
+                                    }
+                                    // 5. Check in bo_data
+                                    if (!$filePath && isset($application->bo_data[$varField->name])) {
+                                        $filePath = $application->bo_data[$varField->name];
+                                    }
+                                    // 6. Check in izin_data
+                                    if (!$filePath && isset($application->izin_data[$varField->name])) {
+                                        $filePath = $application->izin_data[$varField->name];
+                                    }
+                                }
+
+                                // Fallback to direct cell value if it's already a path
+                                if (!$filePath && !empty($cellVal) && is_string($cellVal) && (str_contains($cellVal, 'uploads/') || file_exists(public_path($cellVal)))) {
+                                    $filePath = $cellVal;
+                                }
+
+                                if ($filePath) {
+                                    $absolutePath = public_path($filePath);
+                                    if (!File::exists($absolutePath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($filePath)) {
+                                        $absolutePath = \Illuminate\Support\Facades\Storage::disk('public')->path($filePath);
+                                    }
+                                    if (File::exists($absolutePath)) {
+                                        $imagePath = $absolutePath;
+                                        $isImageCell = true;
+                                    }
+                                }
                             }
+                        }
+
+                        if ($isImageCell && $imagePath) {
+                            $isPasFoto = ($varField->type === 'pas_foto');
+                            $placeholderName = 'TBL_IMG_' . strtoupper(str_replace(' ', '_', $varField->name)) . '_' . $r . '_' . $c;
+                            $cellObj->addText('${' . $placeholderName . '}', $fontStyle, $paraStyle);
+
+                            $prefix = $isPasFoto ? '_IMG_VAL_PASFOTO_' : '_IMG_VAL_GAMBAR_';
+                            
+                            $wCm = null;
+                            $hCm = null;
+                            if (!$isPasFoto) {
+                                $wCm = !empty($varField->options['img_width']) ? floatval($varField->options['img_width']) : 4.0;
+                                $hCm = !empty($varField->options['img_height']) ? floatval($varField->options['img_height']) : 3.0;
+                            }
+
+                            if ($wCm && $hCm) {
+                                $replacementKey = '${' . $prefix . 'W' . $wCm . '_H' . $hCm . '_' . $placeholderName . '}';
+                            } else {
+                                $replacementKey = '${' . $prefix . $placeholderName . '}';
+                            }
+
+                            self::$tableImageReplacements[$replacementKey] = $imagePath;
                         } else {
-                            $cellObj->addText($cellVal, $fontStyle, $paraStyle);
+                            $lines = explode("\n", str_replace("\r", "", $cellVal));
+                            if (count($lines) > 1) {
+                                $textRun = $cellObj->addTextRun($paraStyle);
+                                foreach ($lines as $index => $line) {
+                                    if ($index > 0) {
+                                        $textRun->addTextBreak();
+                                    }
+                                    $textRun->addText($line, $fontStyle);
+                                }
+                            } else {
+                                $cellObj->addText($cellVal, $fontStyle, $paraStyle);
+                            }
                         }
                     } else {
                         $lines = explode("\n", str_replace("\r", "", $content));
@@ -1597,7 +1950,7 @@ class DocumentGenerator
      * @param \App\Models\DataPerijinan $application
      * @return array
      */
-    public static function getDynamicVariableMap($application): array
+    public static function getDynamicVariableMap($application, $currentOpd = null): array
     {
         $map = [];
 
@@ -1738,7 +2091,34 @@ class DocumentGenerator
 
         // 4.5. Multi-OPD Rekom form fields
         if ($perijinan && $perijinan->is_multi_opd && !empty($application->rekom_data_multi) && is_array($application->rekom_data_multi)) {
+            // Determine active OPD to prioritize
+            $prioritizedOpdId = null;
+            if ($currentOpd) {
+                $prioritizedOpdId = $currentOpd->id;
+            } elseif (auth()->check() && in_array(auth()->user()->role, ['operator_opd', 'kepala_opd']) && auth()->user()->opd_id) {
+                $prioritizedOpdId = auth()->user()->opd_id;
+            }
+
+            // Loop and add non-prioritized OPDs first, so prioritized one overwrites and wins!
             foreach ($application->rekom_data_multi as $opdId => $opdData) {
+                if ($opdId == $prioritizedOpdId) {
+                    continue;
+                }
+                if (is_array($opdData)) {
+                    foreach ($opdData as $key => $value) {
+                        $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
+                        $map[strtolower($key)] = $valStr;
+                        $field = $perijinan->activeFormFields->where('form_type', 'rekom')->firstWhere('name', $key);
+                        if ($field) {
+                            $map[strtolower($field->label)] = $valStr;
+                        }
+                    }
+                }
+            }
+
+            // Add prioritized OPD last so it takes precedence!
+            if ($prioritizedOpdId && isset($application->rekom_data_multi[$prioritizedOpdId])) {
+                $opdData = $application->rekom_data_multi[$prioritizedOpdId];
                 if (is_array($opdData)) {
                     foreach ($opdData as $key => $value) {
                         $valStr = is_array($value) ? implode(', ', $value) : (string)$value;
