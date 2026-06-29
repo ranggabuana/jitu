@@ -97,6 +97,8 @@ class LandingPageController extends Controller
             'data' => [
                 'no_registrasi' => $perizinan->no_registrasi,
                 'status' => $perizinan->status,
+                'status_label' => $perizinan->status_label,
+                'perpanjang_dari_id' => $perizinan->perpanjang_dari_id,
                 'current_step' => $perizinan->current_step,
                 'progress_percentage' => $perizinan->progress_percentage,
                 'catatan_perbaikan' => $perizinan->catatan_perbaikan,

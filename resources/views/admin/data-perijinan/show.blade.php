@@ -30,13 +30,17 @@
                                 Pembetulan Izin
                             </span>
                         @elseif($application->perpanjang_dari_id)
-                            <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border border-purple-200 dark:border-purple-800/50">
-                                Perpanjang Izin
-                            </span>
+                            @if($application->status_label !== 'Pengajuan Perpanjangan')
+                                <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border border-purple-200 dark:border-purple-800/50">
+                                    Perpanjang Izin
+                                </span>
+                            @endif
                         @else
-                            <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50">
-                                Pengajuan Izin
-                            </span>
+                            @if($application->status_label !== 'Diajukan')
+                                <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50">
+                                    Pengajuan Izin
+                                </span>
+                            @endif
                         @endif
                     </div>
                     <p class="text-xs text-gray-500 dark:text-gray-400">{{ $application->perijinan->nama_perijinan }}
@@ -1956,6 +1960,56 @@
                                 </div>
                             </div>
                         </form>
+                    </div>
+            @endif
+
+            {{-- Renewal History Timeline Card --}}
+            @if(isset($renewalHistory) && $renewalHistory->count() > 1)
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                        <h3 class="font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                            <i class="mdi mdi-link-variant text-blue-500"></i> Histori Perpanjangan Izin
+                        </h3>
+                    </div>
+                    <div class="p-5">
+                        <div class="relative border-l border-gray-200 dark:border-gray-700 ml-3 pl-6 space-y-5">
+                            @foreach($renewalHistory as $hApp)
+                                @php
+                                    $isSelf = ($hApp->id == $application->id);
+                                @endphp
+                                <div class="relative">
+                                    {{-- Bullet dot --}}
+                                    <div class="absolute -left-[31px] top-1.5 w-3.5 h-3.5 rounded-full border-2 {{ $isSelf ? 'bg-blue-600 border-white dark:border-gray-900 shadow-sm scale-110' : 'bg-gray-200 border-white dark:border-gray-900' }}"></div>
+                                    
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <a href="{{ route('data-perijinan.show', $hApp->id) }}" 
+                                               class="font-mono text-xs font-bold {{ $isSelf ? 'text-blue-600 dark:text-blue-400 font-extrabold' : 'text-gray-700 dark:text-gray-300 hover:text-blue-500' }}">
+                                                {{ $hApp->no_registrasi }}
+                                            </a>
+                                            @if($isSelf)
+                                                <span class="px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                                                    Dokumen Ini
+                                                </span>
+                                            @endif
+                                        </div>
+                                        <div class="flex flex-col gap-0.5 mt-0.5">
+                                            <p class="text-[10px] text-gray-500 dark:text-gray-400">
+                                                Tanggal: {{ $hApp->created_at->format('d/m/Y') }}
+                                            </p>
+                                            @if($hApp->masa_aktif)
+                                                <p class="text-[10px] text-gray-500 dark:text-gray-400">
+                                                    Masa Berlaku s/d: {{ $hApp->masa_aktif->format('d/m/Y') }}
+                                                </p>
+                                            @endif
+                                            <p class="text-[9px] font-semibold text-gray-400 uppercase tracking-tighter mt-0.5">
+                                                Status: <span class="{{ $hApp->status_color }} px-1.5 py-0.5 rounded-full text-[8px] font-bold">{{ $hApp->status_label }}</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
             @endif

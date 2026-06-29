@@ -431,4 +431,160 @@ class MasaAktifRekomTest extends TestCase
         $scan->assertDontSee('PERINGATAN: DOKUMEN TIDAK AKTIF');
         $scan->assertSee('Dokumen Sah & Berlaku', false);
     }
+
+    public function test_renewed_permit_shows_deactivated_warning_on_scan()
+    {
+        $user = User::create([
+            'name' => 'Pemohon User',
+            'username' => 'pemohon_test4',
+            'email' => 'pemohon4@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'pemohon',
+            'status' => 'aktif',
+        ]);
+
+        $perijinan = Perijinan::create([
+            'nama_perijinan' => 'Izin Test Diperpanjang',
+            'kode_perijinan' => 'TEST_DI_PERPANJANG',
+            'is_multi_opd' => false,
+            'dasar_hukum' => 'Dasar Hukum',
+            'persyaratan' => 'Persyaratan',
+            'prosedur' => 'Prosedur',
+        ]);
+
+        // Create application with status set to diperpanjang
+        $app = DataPerijinan::create([
+            'user_id' => $user->id,
+            'perijinan_id' => $perijinan->id,
+            'status' => 'diperpanjang',
+            'masa_aktif' => now()->subYear()->toDateString(), // Already past
+        ]);
+
+        // Scan page check should see warning: Dokumen Tidak Berlaku (Telah Diperpanjang)
+        $scan = $this->get("/perizinan/scan/{$app->no_registrasi}?type=izin");
+        $scan->assertStatus(200);
+        $scan->assertSee('Dokumen Tidak Berlaku (Telah Diperpanjang)', false);
+        $scan->assertSee('tidak berlaku lagi karena izin telah diperpanjang', false);
+    }
+
+    public function test_renewal_history_is_displayed_on_detail_pages()
+    {
+        $user = User::create([
+            'name' => 'Pemohon User History',
+            'username' => 'pemohon_history',
+            'email' => 'pemohon_history@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'pemohon',
+            'status' => 'aktif',
+        ]);
+
+        $admin = User::create([
+            'name' => 'Admin User',
+            'username' => 'admin_history',
+            'email' => 'admin_history@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'admin',
+            'status' => 'aktif',
+        ]);
+
+        $perijinan = Perijinan::create([
+            'nama_perijinan' => 'Izin Test History',
+            'kode_perijinan' => 'TEST_HISTORY',
+            'is_multi_opd' => false,
+            'dasar_hukum' => 'Dasar Hukum',
+            'persyaratan' => 'Persyaratan',
+            'prosedur' => 'Prosedur',
+        ]);
+
+        // Original application A
+        $appA = DataPerijinan::create([
+            'user_id' => $user->id,
+            'perijinan_id' => $perijinan->id,
+            'status' => 'diperpanjang',
+        ]);
+
+        // First renewal B
+        $appB = DataPerijinan::create([
+            'user_id' => $user->id,
+            'perijinan_id' => $perijinan->id,
+            'status' => 'diperpanjang',
+            'perpanjang_dari_id' => $appA->id,
+            'root_perpanjang_id' => $appA->id,
+        ]);
+
+        // Second renewal C
+        $appC = DataPerijinan::create([
+            'user_id' => $user->id,
+            'perijinan_id' => $perijinan->id,
+            'status' => 'approved',
+            'perpanjang_dari_id' => $appB->id,
+            'root_perpanjang_id' => $appA->id,
+        ]);
+
+        // 1. Check pemohon tracking detail page for App C
+        $response1 = $this->actingAs($user)
+            ->get(route('pemohon.tracking.detail', $appC->id));
+        $response1->assertStatus(200);
+        $response1->assertSee('Histori Perpanjangan Izin');
+        $response1->assertSee($appA->no_registrasi);
+        $response1->assertSee($appB->no_registrasi);
+        $response1->assertSee($appC->no_registrasi);
+
+        // 2. Check admin detail page for App C
+        $response2 = $this->actingAs($admin)
+            ->get(route('data-perijinan.show', $appC->id));
+        $response2->assertStatus(200);
+        $response2->assertSee('Histori Perpanjangan Izin');
+        $response2->assertSee($appA->no_registrasi);
+        $response2->assertSee($appB->no_registrasi);
+        $response2->assertSee($appC->no_registrasi);
+    }
+
+    public function test_renewal_shows_pengajuan_perpanjangan_label()
+    {
+        $user = User::create([
+            'name' => 'Pemohon User',
+            'username' => 'pemohon_label_test',
+            'email' => 'pemohon_label@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'pemohon',
+            'status' => 'aktif',
+        ]);
+
+        $perijinan = Perijinan::create([
+            'nama_perijinan' => 'Izin Test Label',
+            'kode_perijinan' => 'TEST_LABEL',
+            'is_multi_opd' => false,
+            'dasar_hukum' => 'Dasar Hukum',
+            'persyaratan' => 'Persyaratan',
+            'prosedur' => 'Prosedur',
+        ]);
+
+        // Original application A
+        $appA = DataPerijinan::create([
+            'user_id' => $user->id,
+            'perijinan_id' => $perijinan->id,
+            'status' => 'approved',
+        ]);
+
+        // Submitted renewal B
+        $appB = DataPerijinan::create([
+            'user_id' => $user->id,
+            'perijinan_id' => $perijinan->id,
+            'status' => 'submitted',
+            'perpanjang_dari_id' => $appA->id,
+            'root_perpanjang_id' => $appA->id,
+        ]);
+
+        // Assert that $appB's status_label is 'Pengajuan Perpanjangan'
+        $this->assertEquals('Pengajuan Perpanjangan', $appB->status_label);
+        $this->assertStringContainsString('bg-purple-100', $appB->status_color);
+
+        // Fetch tracking JSON via LandingPageController
+        $response = $this->post(route('front.perizinan.track'), [
+            'no_registrasi' => $appB->no_registrasi,
+        ]);
+        $response->assertStatus(200);
+        $response->assertJsonPath('data.status_label', 'Pengajuan Perpanjangan');
+    }
 }

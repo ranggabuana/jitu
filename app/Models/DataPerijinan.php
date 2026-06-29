@@ -265,6 +265,10 @@ class DataPerijinan extends Model
             return 'Habis Masa';
         }
 
+        if ($this->status === 'submitted' && $this->perpanjang_dari_id) {
+            return 'Pengajuan Perpanjangan';
+        }
+
         $labels = [
             'draft' => 'Draft',
             'submitted' => 'Diajukan',
@@ -286,6 +290,10 @@ class DataPerijinan extends Model
     {
         if (in_array($this->status, ['approved', 'diperbaiki']) && $this->masa_aktif && $this->masa_aktif->endOfDay()->isPast()) {
             return 'bg-red-100 text-red-800';
+        }
+
+        if ($this->status === 'submitted' && $this->perpanjang_dari_id) {
+            return 'bg-purple-100 text-purple-800 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800/50';
         }
 
         $colors = [

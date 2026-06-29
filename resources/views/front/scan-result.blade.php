@@ -71,6 +71,12 @@
                                     <i class="fas fa-ban"></i> Surat {{ $type === 'rekom' ? 'Rekomendasi' : 'Izin' }} Dinonaktifkan oleh Admin DPMPTSP
                                 </span>
                             </div>
+                        @elseif($perizinan->status === 'diperpanjang')
+                            <div class="flex flex-col items-center gap-2">
+                                <span class="px-6 py-2 bg-orange-100 text-orange-700 rounded-full text-sm font-black uppercase tracking-widest border border-orange-200 flex items-center gap-2">
+                                    <i class="fas fa-history"></i> Dokumen Tidak Berlaku (Telah Diperpanjang)
+                                </span>
+                            </div>
                         @elseif(in_array($perizinan->status, ['approved', 'diperbaiki']))
                             <div class="flex flex-col items-center gap-2">
                                 <span class="px-6 py-2 bg-green-100 text-green-700 rounded-full text-sm font-black uppercase tracking-widest border border-green-200 flex items-center gap-2">
@@ -99,6 +105,19 @@
                                 <h4 class="font-black text-sm uppercase tracking-tight text-red-900">PERINGATAN: SURAT {{ $type === 'rekom' ? 'REKOMENDASI' : 'IZIN' }} DINONAKTIFKAN</h4>
                                 <p class="text-xs text-red-700 mt-1 leading-relaxed">
                                     Surat {{ $type === 'rekom' ? 'rekomendasi' : 'izin' }} ini telah dinonaktifkan oleh <strong>Admin DPMPTSP</strong>. Dokumen ini dinyatakan <strong>tidak berlaku lagi</strong>.
+                                </p>
+                            </div>
+                        </div>
+                    <!-- Renewed (Diperpanjang) Alert Box -->
+                    @elseif($perizinan->status === 'diperpanjang')
+                        <div class="mb-8 p-5 bg-orange-50 rounded-2xl border border-orange-200 text-orange-800 flex items-start gap-4 shadow-sm">
+                            <div class="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600 shrink-0">
+                                <i class="fas fa-history text-xl"></i>
+                            </div>
+                            <div class="text-left">
+                                <h4 class="font-black text-sm uppercase tracking-tight text-orange-900">PERINGATAN: DOKUMEN TIDAK BERLAKU</h4>
+                                <p class="text-xs text-orange-700 mt-1 leading-relaxed">
+                                    Surat {{ $type === 'rekom' ? 'rekomendasi' : 'izin' }} ini <strong>tidak berlaku lagi karena izin telah diperpanjang</strong>. Silakan gunakan surat izin baru yang telah diperpanjang.
                                 </p>
                             </div>
                         </div>

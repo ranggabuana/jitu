@@ -772,9 +772,9 @@
                             <p class="text-sm text-gray-500 mb-1">Nomor Registrasi</p>
                             <p class="text-lg font-bold text-gray-800 font-mono">${escapeHtml(data.no_registrasi)}</p>
                         </div>
-                        <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border-2 ${statusColors[data.status] || statusColors.submitted}">
+                        <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border-2 ${data.status === 'submitted' && data.perpanjang_dari_id ? 'bg-purple-100 text-purple-800 border-purple-300' : (statusColors[data.status] || statusColors.submitted)}">
                             <i class="fas ${statusIcons[data.status] || statusIcons.submitted}"></i>
-                            ${escapeHtml(statusLabels[data.status]) || escapeHtml(data.status)}
+                            ${escapeHtml(data.status_label || statusLabels[data.status]) || escapeHtml(data.status)}
                         </span>
                     </div>
 

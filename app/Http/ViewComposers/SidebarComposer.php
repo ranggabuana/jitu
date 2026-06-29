@@ -24,7 +24,7 @@ class SidebarComposer
             $countSelesai = 0;
         } elseif ($user->role === 'admin') {
             // Admin sees all
-            $countDalamProses = DataPerijinan::whereNotIn('status', ['approved', 'diperbaiki', 'completed', 'rejected', 'perbaikan'])->count();
+            $countDalamProses = DataPerijinan::whereNotIn('status', ['approved', 'diperbaiki', 'diperpanjang', 'completed', 'rejected', 'perbaikan'])->count();
             $countPerluPerbaikan = DataPerijinan::where('status', 'perbaikan')->count();
             $countDitolak = DataPerijinan::where('status', 'rejected')->count();
             $countSelesai = DataPerijinan::whereIn('status', ['approved', 'diperbaiki'])->count();
@@ -43,7 +43,7 @@ class SidebarComposer
                 $countSelesai = 0;
             } else {
                 $countDalamProses = DataPerijinan::whereIn('perijinan_id', $accessiblePerijinanIds)
-                    ->whereNotIn('status', ['approved', 'diperbaiki', 'completed', 'rejected'])
+                    ->whereNotIn('status', ['approved', 'diperbaiki', 'diperpanjang', 'completed', 'rejected'])
                     ->where('status', '!=', 'perbaikan')
                     ->count();
 

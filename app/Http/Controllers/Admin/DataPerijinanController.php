@@ -110,20 +110,20 @@ class DataPerijinanController extends Controller
         }
 
         // Get only in-progress applications (not approved/completed, and not rejected)
-        $query->whereNotIn('status', ['approved', 'diperbaiki', 'completed', 'rejected', 'perbaikan']);
+        $query->whereNotIn('status', ['approved', 'diperbaiki', 'diperpanjang', 'completed', 'rejected', 'perbaikan']);
 
         $applications = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
 
         // Statistics - only count for accessible perijinan
         if ($user->isAdmin()) {
-            $totalDalamProses = DataPerijinan::whereNotIn('status', ['approved', 'diperbaiki', 'completed', 'rejected', 'perbaikan'])->count();
+            $totalDalamProses = DataPerijinan::whereNotIn('status', ['approved', 'diperbaiki', 'diperpanjang', 'completed', 'rejected', 'perbaikan'])->count();
             $totalSubmitted = DataPerijinan::where('status', 'submitted')->count();
             $totalInProgress = DataPerijinan::where('status', 'in_progress')->count();
             $totalPerbaikan = DataPerijinan::where('status', 'perbaikan')->count();
         } else {
             $accessibleIds = $user->getAccessiblePerijinanIds();
             $totalDalamProses = DataPerijinan::whereIn('perijinan_id', $accessibleIds)
-                ->whereNotIn('status', ['approved', 'diperbaiki', 'completed', 'rejected', 'perbaikan'])->count();
+                ->whereNotIn('status', ['approved', 'diperbaiki', 'diperpanjang', 'completed', 'rejected', 'perbaikan'])->count();
             $totalSubmitted = DataPerijinan::whereIn('perijinan_id', $accessibleIds)
                 ->where('status', 'submitted')->count();
             $totalInProgress = DataPerijinan::whereIn('perijinan_id', $accessibleIds)
@@ -1034,7 +1034,16 @@ class DataPerijinanController extends Controller
             'data_perijinan'
         );
 
-        return view('admin.data-perijinan.show', compact('application'));
+        // Fetch renewal history chain
+        $rootPerpanjangId = $application->root_perpanjang_id ?? $application->id;
+        $renewalHistory = DataPerijinan::where(function($q) use ($rootPerpanjangId) {
+            $q->where('id', $rootPerpanjangId)
+              ->orWhere('root_perpanjang_id', $rootPerpanjangId);
+        })
+        ->orderBy('created_at', 'asc')
+        ->get();
+
+        return view('admin.data-perijinan.show', compact('application', 'renewalHistory'));
     }
 
     /**
@@ -2008,7 +2017,7 @@ class DataPerijinanController extends Controller
             $query->whereDate('created_at', '<=', $dateTo);
         }
 
-        $query->whereNotIn('status', ['approved', 'diperbaiki', 'completed', 'rejected', 'perbaikan']);
+        $query->whereNotIn('status', ['approved', 'diperbaiki', 'diperpanjang', 'completed', 'rejected', 'perbaikan']);
         $applications = $query->orderBy('created_at', 'desc')->get();
 
         return $this->exportToExcel($applications, 'dalam_proses', $dateFrom, $dateTo);

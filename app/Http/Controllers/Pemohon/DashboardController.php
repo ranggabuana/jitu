@@ -80,7 +80,7 @@ class DashboardController extends Controller
 
         // Sorting - Always group by family (root_perpanjang_id or id) to support rowspan, ordered from newest family to oldest
         $query->orderByRaw('COALESCE(root_perpanjang_id, id) DESC')
-              ->orderBy('created_at', 'desc');
+              ->orderBy('created_at', 'asc');
 
         // Pagination & Per Page
         $perPage = $request->input('per_page', 5);
@@ -820,7 +820,16 @@ class DashboardController extends Controller
             }
         }
 
-        return view('pemohon.tracking.detail', compact('data', 'skmQuestions'));
+        // Fetch renewal history chain
+        $rootPerpanjangId = $data->root_perpanjang_id ?? $data->id;
+        $renewalHistory = DataPerijinan::where(function($q) use ($rootPerpanjangId) {
+            $q->where('id', $rootPerpanjangId)
+              ->orWhere('root_perpanjang_id', $rootPerpanjangId);
+        })
+        ->orderBy('created_at', 'asc')
+        ->get();
+
+        return view('pemohon.tracking.detail', compact('data', 'skmQuestions', 'renewalHistory'));
     }
 
     /**

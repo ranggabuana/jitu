@@ -308,6 +308,55 @@
             </div>
         </div>
 
+        <!-- Renewal History Card -->
+        @if(isset($renewalHistory) && $renewalHistory->count() > 1)
+            <div class="bg-white rounded-2xl shadow-sm border border-amber-200 p-6">
+                <h2 class="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
+                    <i class="fas fa-history text-amber-600"></i>
+                    Histori Perpanjangan Izin
+                </h2>
+                <div class="relative border-l border-amber-200 ml-4 pl-6 space-y-6">
+                    @foreach($renewalHistory as $hApp)
+                        @php
+                            $isSelf = ($hApp->id == $data->id);
+                        @endphp
+                        <div class="relative">
+                            {{-- Dot bullet --}}
+                            <div class="absolute -left-[31px] top-1.5 w-4 h-4 rounded-full border-4 border-white shadow-md
+                                {{ $isSelf ? 'bg-amber-600 scale-110' : 'bg-gray-300' }}"></div>
+                            
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <a href="{{ route('pemohon.tracking.detail', $hApp->id) }}" 
+                                       class="font-mono text-sm font-bold {{ $isSelf ? 'text-amber-600 font-extrabold' : 'text-gray-700 hover:text-amber-500' }}">
+                                        {{ $hApp->no_registrasi }}
+                                    </a>
+                                    @if($isSelf)
+                                        <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-amber-100 text-amber-800">
+                                            Dokumen Ini
+                                        </span>
+                                    @endif
+                                </div>
+                                <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs text-gray-500 mt-1">
+                                    <span>
+                                        <i class="far fa-calendar-alt mr-1"></i> Tanggal: {{ $hApp->created_at->format('d M Y') }}
+                                    </span>
+                                    @if($hApp->masa_aktif)
+                                        <span>
+                                            <i class="far fa-clock mr-1"></i> Berlaku s/d: {{ $hApp->masa_aktif->format('d M Y') }}
+                                        </span>
+                                    @endif
+                                    <span>
+                                        Status: <span class="{{ $hApp->status_color }} px-2 py-0.5 rounded-full text-[10px] font-bold">{{ $hApp->status_label }}</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         @if ($data->catatan_perbaikan)
             <!-- Catatan Perbaikan -->
             <div class="bg-orange-50 border-l-4 border-orange-400 p-6 rounded-r-2xl">

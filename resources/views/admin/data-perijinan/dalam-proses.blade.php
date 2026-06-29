@@ -157,11 +157,11 @@
                                 {{ $app->created_at->format('d M Y') }}
                             </td>
                             <td class="px-6 py-4">
-                                @if ($app->status === 'submitted')
-                                    <span class="inline-flex flex-col gap-1">
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 uppercase tracking-wider">
-                                            <i class="mdi mdi-file-upload"></i> Diajukan
-                                        </span>
+                                 @if ($app->status === 'submitted')
+                                     <span class="inline-flex flex-col gap-1">
+                                         <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold {{ $app->perpanjang_dari_id ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 border border-purple-200 dark:border-purple-800' : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border border-green-200 dark:border-green-800' }} uppercase tracking-wider">
+                                             <i class="mdi mdi-file-upload"></i> {{ $app->status_label }}
+                                         </span>
                                         <span class="text-[9px] text-gray-500 font-bold uppercase ml-1">Tahap: {{ $app->currentValidasi()->validationFlow->role_label ?? 'FO' }}</span>
                                     </span>
                                 @elseif ($app->status === 'in_progress')
