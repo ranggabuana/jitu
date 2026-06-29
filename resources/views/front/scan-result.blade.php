@@ -40,12 +40,12 @@
         if ($type === 'rekom') {
             if ($masaAktifRekom) {
                 $expiryDate = \Carbon\Carbon::parse($masaAktifRekom);
-                $isExpired = $expiryDate->isPast();
+                $isExpired = $expiryDate->endOfDay()->isPast();
             }
         } else {
             if ($perizinan->masa_aktif) {
                 $expiryDate = \Carbon\Carbon::parse($perizinan->masa_aktif);
-                $isExpired = $expiryDate->isPast();
+                $isExpired = $expiryDate->endOfDay()->isPast();
             }
         }
     @endphp
@@ -178,7 +178,7 @@
                                         @if($masaAktifRekom)
                                             @php
                                                 $carbonRekomDate = \Carbon\Carbon::parse($masaAktifRekom);
-                                                $isRekomExpired = $carbonRekomDate->isPast();
+                                                $isRekomExpired = $carbonRekomDate->endOfDay()->isPast();
                                             @endphp
                                             <p class="text-gray-800 font-bold {{ $isRekomExpired ? 'text-red-600' : '' }}">
                                                 {{ $carbonRekomDate->format('d/m/Y') }}
@@ -188,7 +188,7 @@
                                         @endif
                                     @else
                                         <label class="text-[10px] text-gray-500 uppercase font-black tracking-widest block mb-1">Masa Aktif s/d</label>
-                                        <p class="text-gray-800 font-bold {{ ($perizinan->masa_aktif && $perizinan->masa_aktif->isPast()) ? 'text-red-600' : '' }}">
+                                        <p class="text-gray-800 font-bold {{ ($perizinan->masa_aktif && $perizinan->masa_aktif->endOfDay()->isPast()) ? 'text-red-600' : '' }}">
                                             {{ $perizinan->masa_aktif ? $perizinan->masa_aktif->format('d/m/Y') : '-' }}
                                         </p>
                                     @endif

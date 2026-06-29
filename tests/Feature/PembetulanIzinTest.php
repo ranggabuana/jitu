@@ -302,4 +302,303 @@ class PembetulanIzinTest extends TestCase
         $trackingResponse3->assertStatus(200);
         $trackingResponse3->assertSee('Bagaimana pelayanan kami?');
     }
+
+    public function test_detail_page_displays_correct_badges_for_different_application_types()
+    {
+        // Create Admin/Validator user who has access
+        $admin = User::create([
+            'name' => 'Admin Test',
+            'username' => 'admin_test',
+            'email' => 'admin@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'admin',
+            'status' => 'aktif',
+        ]);
+
+        $pemohon = User::create([
+            'name' => 'Pemohon Test',
+            'username' => 'pemohon_test',
+            'email' => 'pemohon@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'pemohon',
+            'status' => 'aktif',
+        ]);
+
+        $perijinan = Perijinan::create([
+            'nama_perijinan' => 'Izin Klinik Kesehatan',
+            'kode_perijinan' => 'KLINIK_TES',
+            'is_multi_opd' => false,
+            'dasar_hukum' => 'UUD',
+            'persyaratan' => 'Persyaratan',
+            'prosedur' => 'Prosedur',
+        ]);
+
+        // 1. New application (Pengajuan Izin)
+        $newApp = DataPerijinan::create([
+            'user_id' => $pemohon->id,
+            'perijinan_id' => $perijinan->id,
+            'status' => 'submitted',
+            'current_step' => 1,
+            'no_registrasi' => 'REG-NEW',
+        ]);
+
+        $responseNew = $this->actingAs($admin)
+            ->get(route('data-perijinan.show', $newApp->id));
+        $responseNew->assertStatus(200);
+        $responseNew->assertSee('Pengajuan Izin');
+        $responseNew->assertDontSee('Pembetulan Izin');
+        $responseNew->assertDontSee('Perpanjang Izin');
+
+        // 2. Renewal application (Perpanjang Izin)
+        $renewApp = DataPerijinan::create([
+            'user_id' => $pemohon->id,
+            'perijinan_id' => $perijinan->id,
+            'status' => 'submitted',
+            'current_step' => 1,
+            'no_registrasi' => 'REG-RENEW',
+            'perpanjang_dari_id' => $newApp->id,
+        ]);
+
+        $responseRenew = $this->actingAs($admin)
+            ->get(route('data-perijinan.show', $renewApp->id));
+        $responseRenew->assertStatus(200);
+        $responseRenew->assertSee('Perpanjang Izin');
+        $responseRenew->assertDontSee('Pembetulan Izin');
+        $responseRenew->assertDontSee('Pengajuan Izin');
+
+        // 3. Correction application (Pembetulan Izin)
+        $correctApp = DataPerijinan::create([
+            'user_id' => $pemohon->id,
+            'perijinan_id' => $perijinan->id,
+            'status' => 'submitted',
+            'current_step' => 1,
+            'no_registrasi' => 'REG-CORRECT',
+            'is_pembetulan' => true,
+            'pembetulan_dari_id' => $newApp->id,
+        ]);
+
+        $responseCorrect = $this->actingAs($admin)
+            ->get(route('data-perijinan.show', $correctApp->id));
+        $responseCorrect->assertStatus(200);
+        $responseCorrect->assertSee('Pembetulan Izin');
+        $responseCorrect->assertDontSee('Perpanjang Izin');
+        $responseCorrect->assertDontSee('Pengajuan Izin');
+
+        // --- Test List Pages ---
+
+        // 4. Test Dalam Proses List Page (where status = submitted)
+        $responseDalamProses = $this->actingAs($admin)
+            ->get(route('data-perijinan.dalam-proses'));
+        $responseDalamProses->assertStatus(200);
+        $responseDalamProses->assertSee('Pengajuan Izin');
+        $responseDalamProses->assertSee('Perpanjang Izin');
+        $responseDalamProses->assertSee('Pembetulan Izin');
+
+        // 5. Test Perlu Perbaikan List Page (status = perbaikan)
+        $newApp->status = 'perbaikan';
+        $newApp->save();
+
+        $responsePerluPerbaikan = $this->actingAs($admin)
+            ->get(route('data-perijinan.perlu-perbaikan'));
+        $responsePerluPerbaikan->assertStatus(200);
+        $responsePerluPerbaikan->assertSee('Pengajuan Izin');
+        $responsePerluPerbaikan->assertDontSee('Perpanjang Izin');
+        $responsePerluPerbaikan->assertDontSee('Pembetulan Izin');
+
+        // 6. Test Selesai List Page (status = approved)
+        $renewApp->status = 'approved';
+        $renewApp->save();
+
+        $responseSelesai = $this->actingAs($admin)
+            ->get(route('data-perijinan.selesai'));
+        $responseSelesai->assertStatus(200);
+        $responseSelesai->assertSee('Perpanjang Izin');
+        $responseSelesai->assertDontSee('Pengajuan Izin');
+        $responseSelesai->assertDontSee('Pembetulan Izin');
+
+        // 7. Test Ditolak List Page (status = rejected)
+        $correctApp->status = 'rejected';
+        $correctApp->save();
+
+        $responseDitolak = $this->actingAs($admin)
+            ->get(route('data-perijinan.ditolak'));
+        $responseDitolak->assertStatus(200);
+        $responseDitolak->assertSee('Pembetulan Izin');
+        $responseDitolak->assertDontSee('Pengajuan Izin');
+        $responseDitolak->assertDontSee('Perpanjang Izin');
+    }
+
+    public function test_bo_can_upload_docx_template_for_pembetulan_and_convert_to_pdf()
+    {
+        // 1. Setup User and Application
+        $boUser = User::create([
+            'name' => 'BO User',
+            'username' => 'bo_user',
+            'email' => 'bo@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'bo',
+            'status' => 'aktif',
+        ]);
+
+        $pemohon = User::create([
+            'name' => 'Pemohon Test',
+            'username' => 'pemohon_test',
+            'email' => 'pemohon@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'pemohon',
+            'status' => 'aktif',
+        ]);
+
+        $perijinan = Perijinan::create([
+            'nama_perijinan' => 'Izin Klinik Kesehatan',
+            'kode_perijinan' => 'KLINIK_TES',
+            'is_multi_opd' => false,
+            'dasar_hukum' => 'UUD',
+            'persyaratan' => 'Persyaratan',
+            'prosedur' => 'Prosedur',
+        ]);
+
+        $application = DataPerijinan::create([
+            'user_id' => $pemohon->id,
+            'perijinan_id' => $perijinan->id,
+            'status' => 'in_progress',
+            'current_step' => 1,
+            'no_registrasi' => 'REG-PEMBETULAN-TEST',
+            'is_pembetulan' => true,
+        ]);
+
+        // Mock a validation record for current step
+        $flow = PerijinanValidationFlow::create([
+            'perijinan_id' => $perijinan->id,
+            'role' => 'bo',
+            'role_label' => 'Back Office',
+            'order' => 1,
+            'status' => 'aktif',
+            'assigned_user_id' => $boUser->id,
+        ]);
+
+        DataPerijinanValidasi::create([
+            'data_perijinan_id' => $application->id,
+            'validation_flow_id' => $flow->id,
+            'user_id' => $boUser->id,
+            'status' => 'pending',
+            'order' => 1,
+        ]);
+
+        // Create a dummy template docx file content
+        $phpWord = new \PhpOffice\PhpWord\PhpWord();
+        $section = $phpWord->addSection();
+        $section->addText('Template Izin Pembetulan ${NAMA_PEMOHON} ${QRCODE}');
+        $tempDocxFile = tempnam(sys_get_temp_dir(), 'test_docx') . '.docx';
+        $writer = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
+        $writer->save($tempDocxFile);
+
+        $uploadedFile = new \Illuminate\Http\UploadedFile(
+            $tempDocxFile,
+            'template.docx',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            null,
+            true
+        );
+
+        // 2. Submit the DOCX template upload
+        $response = $this->actingAs($boUser)
+            ->put(route('data-perijinan.bo-data.save', $application->id), [
+                'file_izin_pembetulan' => $uploadedFile,
+            ]);
+
+        // Clean up temp template docx file
+        @unlink($tempDocxFile);
+
+        $response->assertRedirect();
+        
+        // 3. Assert database paths
+        $application = $application->fresh();
+        $this->assertNotNull($application->file_izin_pembetulan);
+        // Path should be a PDF
+        $this->assertStringEndsWith('.pdf', $application->file_izin_pembetulan);
+        $this->assertFileExists(public_path($application->file_izin_pembetulan));
+        
+        // And the corresponding docx template should also exist on disk
+        $docxTemplatePath = str_replace('.pdf', '_template.docx', $application->file_izin_pembetulan);
+        $this->assertFileExists(public_path($docxTemplatePath));
+
+        // Clean up created files
+        @unlink(public_path($application->file_izin_pembetulan));
+        @unlink(public_path($docxTemplatePath));
+    }
+
+    public function test_verifier_can_refresh_pembetulan_pdf()
+    {
+        // 1. Setup User, Verifikator, and Application
+        $verifikator = User::create([
+            'name' => 'Verifier User',
+            'username' => 'verifier_user',
+            'email' => 'verifier@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'verifikator',
+            'status' => 'aktif',
+        ]);
+
+        $pemohon = User::create([
+            'name' => 'Pemohon Test',
+            'username' => 'pemohon_test2',
+            'email' => 'pemohon2@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'pemohon',
+            'status' => 'aktif',
+        ]);
+
+        $perijinan = Perijinan::create([
+            'nama_perijinan' => 'Izin Klinik Kesehatan 2',
+            'kode_perijinan' => 'KLINIK_TES2',
+            'is_multi_opd' => false,
+            'dasar_hukum' => 'UUD',
+            'persyaratan' => 'Persyaratan',
+            'prosedur' => 'Prosedur',
+        ]);
+
+        // Create application with dummy PDF and dummy DOCX template
+        $pdfPath = 'uploads/perijinan/' . $perijinan->id . '/izin_pembetulan_test.pdf';
+        $docxPath = 'uploads/perijinan/' . $perijinan->id . '/izin_pembetulan_test_template.docx';
+        
+        // Make sure destination directory exists
+        @mkdir(public_path('uploads/perijinan/' . $perijinan->id), 0755, true);
+
+        // Generate dynamic docx template
+        $phpWord = new \PhpOffice\PhpWord\PhpWord();
+        $section = $phpWord->addSection();
+        $section->addText('Template Izin Pembetulan ${NAMA_PEMOHON} ${QRCODE} ${NOMOR_SURAT}');
+        $writer = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
+        $writer->save(public_path($docxPath));
+        
+        // Write dummy PDF
+        file_put_contents(public_path($pdfPath), '%PDF-1.4 ... dummy PDF ...');
+
+        $application = DataPerijinan::create([
+            'user_id' => $pemohon->id,
+            'perijinan_id' => $perijinan->id,
+            'status' => 'in_progress',
+            'current_step' => 1,
+            'no_registrasi' => 'REG-REFRESH-TEST',
+            'is_pembetulan' => true,
+            'file_izin_pembetulan' => $pdfPath,
+        ]);
+
+        // 2. Call the refresh route
+        $response = $this->actingAs($verifikator)
+            ->post(route('data-perijinan.pembetulan.refresh', $application->id));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        // Clean up created files
+        @unlink(public_path($pdfPath));
+        @unlink(public_path($docxPath));
+        if ($application->fresh()->file_izin_pembetulan) {
+            @unlink(public_path($application->fresh()->file_izin_pembetulan));
+            @unlink(public_path(str_replace('.pdf', '_template.docx', $application->fresh()->file_izin_pembetulan)));
+        }
+    }
 }
+

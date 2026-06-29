@@ -558,6 +558,13 @@ class DataPerijinanController extends Controller
                 return redirect()->back()->with('error', 'Tahap validasi ini sudah diselesaikan.');
             }
 
+            // Guard: on pembetulan, BO must upload the izin PDF before approving
+            if ($request->action === 'approved' && $application->is_pembetulan && $userRole === 'bo') {
+                if (empty($application->file_izin_pembetulan) || !file_exists(public_path($application->file_izin_pembetulan))) {
+                    return redirect()->back()->with('error', 'Harap unggah file PDF surat izin yang siap TTE terlebih dahulu sebelum menyetujui tahap ini.');
+                }
+            }
+
             // Enforce role restriction for revision action
             if ($request->action === 'revision' && in_array($userRole, ['verifikator', 'kadin'])) {
                 return redirect()->back()->with('error', 'Verifikator dan Kadin tidak diperbolehkan meminta perbaikan ke pemohon.');
@@ -1699,6 +1706,14 @@ class DataPerijinanController extends Controller
             $rules[$field->name] = $fieldRules;
         }
 
+        // Pembetulan: validate the uploaded izin DOCX template
+        if ($application->is_pembetulan) {
+            $hasPembetulanFile = !empty($application->file_izin_pembetulan) && file_exists(public_path($application->file_izin_pembetulan));
+            $rules['file_izin_pembetulan'] = $hasPembetulanFile ? ['nullable', 'file', 'mimes:docx', 'max:10240'] : ['required', 'file', 'mimes:docx', 'max:10240'];
+            $messages['file_izin_pembetulan.required'] = 'Harap unggah file template DOCX surat izin.';
+            $messages['file_izin_pembetulan.mimes'] = 'File surat izin harus berformat DOCX.';
+        }
+
         $validated = $request->validate($rules, $messages);
         
         $boData = $application->bo_data ?? [];
@@ -1778,16 +1793,67 @@ class DataPerijinanController extends Controller
             }
         }
 
-        // Reload to ensure everything is fresh for document generation
-        $application->load(['perijinan.activeFormFields', 'user']);
-
-        try {
-            $generatedDocs = \App\Services\DocumentGenerator::generateDocuments($application);
-            if (!empty($generatedDocs)) {
-                $application->update($generatedDocs);
+        // Handle pembetulan DOCX upload for izin
+        if ($application->is_pembetulan && $request->hasFile('file_izin_pembetulan')) {
+            $docxFile = $request->file('file_izin_pembetulan');
+            if ($docxFile->isValid()) {
+                // If there's an existing PDF, clean it up
+                if ($application->file_izin_pembetulan && file_exists(public_path($application->file_izin_pembetulan))) {
+                    @unlink(public_path($application->file_izin_pembetulan));
+                    // Also clean up its matching template docx if any
+                    $oldDocxTemplate = str_replace('.pdf', '_template.docx', $application->file_izin_pembetulan);
+                    if (file_exists(public_path($oldDocxTemplate))) {
+                        @unlink(public_path($oldDocxTemplate));
+                    }
+                }
+                
+                $time = time();
+                $destPath = 'uploads/perijinan/' . $application->perijinan_id;
+                
+                // Save the uploaded DOCX template file on disk
+                $docxFilename = 'izin_pembetulan_' . $application->id . '_' . $time . '_template.docx';
+                $docxFile->move(public_path($destPath), $docxFilename);
+                $docxAbsPath = public_path($destPath . '/' . $docxFilename);
+                
+                // Also reset TTE so Kadin must sign the new file
+                $application->file_izin_tte = null;
+                
+                // Process dynamic variable placeholders in the uploaded DOCX template
+                // and compile it to a PDF using LibreOffice!
+                try {
+                    $application->load(['perijinan', 'user']);
+                    $generatedPdfPath = \App\Services\DocumentGenerator::processPembetulanDocx($docxAbsPath, $application);
+                    
+                    // Save the processed PDF path in database
+                    $application->file_izin_pembetulan = $generatedPdfPath;
+                    $application->save();
+                } catch (\Exception $e) {
+                    \Log::error('processPembetulanDocx failed after BO upload: ' . $e->getMessage(), [
+                        'application_id' => $application->id,
+                        'trace' => $e->getTraceAsString(),
+                    ]);
+                    // Clean up and redirect back with error
+                    if (file_exists($docxAbsPath)) {
+                        @unlink($docxAbsPath);
+                    }
+                    return redirect()->back()->with('error', 'Gagal memproses file template DOCX: ' . $e->getMessage());
+                }
             }
-        } catch (\Exception $e) {
-            \Log::error('Failed to regenerate documents after saving bo data: ' . $e->getMessage());
+        }
+
+
+        // Reload to ensure everything is fresh for document generation
+        // Skip auto-generation for pembetulan: BO provides the PDF manually
+        if (!$application->is_pembetulan) {
+            $application->load(['perijinan.activeFormFields', 'user']);
+            try {
+                $generatedDocs = \App\Services\DocumentGenerator::generateDocuments($application);
+                if (!empty($generatedDocs)) {
+                    $application->update($generatedDocs);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Failed to regenerate documents after saving bo data: ' . $e->getMessage());
+            }
         }
 
         return redirect()->back()->with('success', 'Data BO Form berhasil disimpan.');
@@ -2455,6 +2521,69 @@ class DataPerijinanController extends Controller
     }
 
     /**
+     * Refresh/regenerate the PDF of a correction permit from its uploaded DOCX template.
+     */
+    public function refreshPembetulanPdf($id)
+    {
+        $user = auth()->user();
+        if ($user->isAdmin()) {
+            abort(403, 'Admin hanya memiliki akses memantau (read-only).');
+        }
+        
+        if (!in_array($user->role, ['verifikator', 'bo'])) {
+            abort(403, 'Hanya Verifikator atau BO yang dapat memperbarui dokumen pembetulan.');
+        }
+
+        $application = DataPerijinan::with(['user.provinsi', 'user.kabupaten', 'user.kecamatan', 'user.kelurahan', 'perijinan'])->findOrFail($id);
+
+        if (!$application->is_pembetulan) {
+            return redirect()->back()->with('error', 'Aplikasi ini bukan pengajuan pembetulan izin.');
+        }
+
+        if (empty($application->file_izin_pembetulan)) {
+            return redirect()->back()->with('error', 'Belum ada berkas surat izin yang diunggah oleh BO.');
+        }
+
+        $docxTemplatePath = str_replace('.pdf', '_template.docx', $application->file_izin_pembetulan);
+        $docxAbsPath = public_path($docxTemplatePath);
+
+        if (!file_exists($docxAbsPath)) {
+            return redirect()->back()->with('error', 'File template DOCX asli tidak ditemukan di server.');
+        }
+
+        try {
+            // Process the template docx again using updated data and overwrite/update the PDF
+            $generatedPdfPath = \App\Services\DocumentGenerator::processPembetulanDocx($docxAbsPath, $application);
+
+            // Update path in database (should remain same but resets TTE so it has to be signed again)
+            $application->update([
+                'file_izin_pembetulan' => $generatedPdfPath,
+                'file_izin_tte' => null, // reset TTE if any since contents changed
+            ]);
+
+            // Log activity
+            ActivityLog::log(
+                'Memperbarui/regenerasi PDF pembetulan dari template DOCX',
+                $application,
+                'updated',
+                [
+                    'no_registrasi' => $application->no_registrasi,
+                ],
+                'data_perijinan'
+            );
+
+            return redirect()->back()->with('success', 'PDF surat izin pembetulan berhasil diperbarui berdasarkan data perizinan terbaru.');
+
+        } catch (\Exception $e) {
+            \Log::error('refreshPembetulanPdf failed: ' . $e->getMessage(), [
+                'application_id' => $application->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return redirect()->back()->with('error', 'Gagal memperbarui PDF: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Apply TTE (Digital Signature) to a document.
      */
     public function applyTte(Request $request, $id)
@@ -2526,17 +2655,26 @@ class DataPerijinanController extends Controller
                     abort(403, 'Hanya Kadin yang dapat menandatangani Surat Izin.');
                 }
 
-                // Force regenerate document with official black QR code before TTE signing
                 $filePath = null;
-                try {
-                    $generatedDocs = \App\Services\DocumentGenerator::generateDocuments($application, null, true);
-                    $filePath = $generatedDocs['file_izin'] ?? null;
-                } catch (\Exception $e) {
-                    \Log::error('Gagal meregenerasi izin sebelum TTE: ' . $e->getMessage());
-                }
 
-                if (!$filePath || !file_exists(public_path($filePath))) {
-                    throw new \Exception("Dokumen draft izin tidak ditemukan.");
+                if ($application->is_pembetulan) {
+                    // Pembetulan: use the PDF uploaded by BO — do NOT regenerate from template
+                    $filePath = $application->file_izin_pembetulan ?? null;
+                    if (!$filePath || !file_exists(public_path($filePath))) {
+                        throw new \Exception("File PDF surat izin yang diunggah BO tidak ditemukan. Minta BO untuk mengunggah ulang.");
+                    }
+                } else {
+                    // Normal flow: force regenerate document with official black QR code before TTE signing
+                    try {
+                        $generatedDocs = \App\Services\DocumentGenerator::generateDocuments($application, null, true);
+                        $filePath = $generatedDocs['file_izin'] ?? null;
+                    } catch (\Exception $e) {
+                        \Log::error('Gagal meregenerasi izin sebelum TTE: ' . $e->getMessage());
+                    }
+
+                    if (!$filePath || !file_exists(public_path($filePath))) {
+                        throw new \Exception("Dokumen draft izin tidak ditemukan.");
+                    }
                 }
 
                 // Process TTE

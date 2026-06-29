@@ -391,4 +391,44 @@ class MasaAktifRekomTest extends TestCase
         // Root perpanjang ID should be the original oldApp ID!
         $this->assertEquals($oldApp->id, $newestApp->root_perpanjang_id);
     }
+
+    public function test_today_is_considered_active()
+    {
+        $user = User::create([
+            'name' => 'Pemohon User',
+            'username' => 'pemohon_test3',
+            'email' => 'pemohon3@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'pemohon',
+            'status' => 'aktif',
+        ]);
+
+        $perijinan = Perijinan::create([
+            'nama_perijinan' => 'Izin Test Aktif',
+            'kode_perijinan' => 'TEST_AKTIF',
+            'is_multi_opd' => false,
+            'dasar_hukum' => 'Dasar Hukum',
+            'persyaratan' => 'Persyaratan',
+            'prosedur' => 'Prosedur',
+        ]);
+
+        // Create application with active date set to today
+        $app = DataPerijinan::create([
+            'user_id' => $user->id,
+            'perijinan_id' => $perijinan->id,
+            'status' => 'approved',
+            'masa_aktif' => now()->toDateString(), // Today's date
+        ]);
+
+        // Asserts status label is NOT 'Habis Masa'
+        $this->assertNotEquals('Habis Masa', $app->status_label);
+        $this->assertEquals('Disetujui & Selesai', $app->status_label);
+        $this->assertEquals('bg-green-100 text-green-800', $app->status_color);
+
+        // Scan page check should not see "PERINGATAN: DOKUMEN TIDAK AKTIF"
+        $scan = $this->get("/perizinan/scan/{$app->no_registrasi}?type=izin");
+        $scan->assertStatus(200);
+        $scan->assertDontSee('PERINGATAN: DOKUMEN TIDAK AKTIF');
+        $scan->assertSee('Dokumen Sah & Berlaku', false);
+    }
 }

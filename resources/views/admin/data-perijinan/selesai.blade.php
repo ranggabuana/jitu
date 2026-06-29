@@ -110,7 +110,22 @@
                     @forelse($applications as $app)
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                             <td class="px-6 py-4">
-                                <span class="font-mono font-semibold text-blue-600 dark:text-blue-400">{{ $app->no_registrasi }}</span>
+                                <div class="flex flex-col gap-1.5 items-start">
+                                    <span class="font-mono font-semibold text-blue-600 dark:text-blue-400">{{ $app->no_registrasi }}</span>
+                                    @if($app->is_pembetulan)
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50">
+                                            Pembetulan Izin
+                                        </span>
+                                    @elseif($app->perpanjang_dari_id)
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border border-purple-200 dark:border-purple-800/50">
+                                            Perpanjang Izin
+                                        </span>
+                                    @else
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50">
+                                            Pengajuan Izin
+                                        </span>
+                                    @endif
+                                </div>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">

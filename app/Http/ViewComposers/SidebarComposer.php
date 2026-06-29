@@ -24,10 +24,10 @@ class SidebarComposer
             $countSelesai = 0;
         } elseif ($user->role === 'admin') {
             // Admin sees all
-            $countDalamProses = DataPerijinan::whereNotIn('status', ['approved', 'completed', 'rejected', 'perbaikan'])->count();
+            $countDalamProses = DataPerijinan::whereNotIn('status', ['approved', 'diperbaiki', 'completed', 'rejected', 'perbaikan'])->count();
             $countPerluPerbaikan = DataPerijinan::where('status', 'perbaikan')->count();
             $countDitolak = DataPerijinan::where('status', 'rejected')->count();
-            $countSelesai = DataPerijinan::where('status', 'approved')->count();
+            $countSelesai = DataPerijinan::whereIn('status', ['approved', 'diperbaiki'])->count();
         } else {
             // All other roles (FO, BO, Verifikator, Kadin, Opd, etc.): 
             // Count only perijinan where user is SPECIFICALLY assigned in validation flow
@@ -43,7 +43,7 @@ class SidebarComposer
                 $countSelesai = 0;
             } else {
                 $countDalamProses = DataPerijinan::whereIn('perijinan_id', $accessiblePerijinanIds)
-                    ->whereNotIn('status', ['approved', 'completed', 'rejected'])
+                    ->whereNotIn('status', ['approved', 'diperbaiki', 'completed', 'rejected'])
                     ->where('status', '!=', 'perbaikan')
                     ->count();
 
@@ -56,7 +56,7 @@ class SidebarComposer
                     ->count();
 
                 $countSelesai = DataPerijinan::whereIn('perijinan_id', $accessiblePerijinanIds)
-                    ->where('status', 'approved')
+                    ->whereIn('status', ['approved', 'diperbaiki'])
                     ->count();
             }
         }

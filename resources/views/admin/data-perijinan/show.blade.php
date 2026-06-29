@@ -25,6 +25,19 @@
                         <span class="px-2.5 py-1 rounded-full text-xs font-medium {{ $application->status_color }}">
                             {{ $application->status_label }}
                         </span>
+                        @if($application->is_pembetulan)
+                            <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50">
+                                Pembetulan Izin
+                            </span>
+                        @elseif($application->perpanjang_dari_id)
+                            <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border border-purple-200 dark:border-purple-800/50">
+                                Perpanjang Izin
+                            </span>
+                        @else
+                            <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50">
+                                Pengajuan Izin
+                            </span>
+                        @endif
                     </div>
                     <p class="text-xs text-gray-500 dark:text-gray-400">{{ $application->perijinan->nama_perijinan }}
                     </p>
@@ -294,7 +307,7 @@
             : collect([]);
 
         // Tab visibility logic
-        $showRekomTab = ($isOperatorOpd || $isKepalaOpd || $isAdmin || $isVerifikator || $isKadin);
+        $showRekomTab = !$application->is_pembetulan && ($isOperatorOpd || $isKepalaOpd || $isAdmin || $isVerifikator || $isKadin);
         $showIzinTab = ($isVerifikator || $isAdmin || $isKadin);
     @endphp
     <!-- Navigation Tabs -->
@@ -442,7 +455,16 @@
                     </div>
                 </div>
 
-                @if($application->perijinan->has_bo_form && ($canEditBo || !empty($application->bo_data)))
+                @php
+                    // Who can VIEW the BO form:
+                    // - BO: can edit (if their turn) or read-only
+                    // - Admin: always read-only
+                    // - Verifikator & Kadin: read-only (validators above BO who need to review BO data)
+                    $canViewBoForm = $application->perijinan->has_bo_form
+                        && ($isBo || $isAdmin || $isVerifikator || $isKadin)
+                        && ($canEditBo || !empty($application->bo_data));
+                @endphp
+                @if($canViewBoForm)
                 <!-- Card: Form Khusus BO -->
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-emerald-200 dark:border-emerald-900/30 overflow-hidden mb-6">
                     <div class="px-5 py-4 border-b border-emerald-100 dark:border-emerald-900/50 bg-emerald-50/50 dark:bg-emerald-800/10 flex items-center justify-between">
@@ -610,12 +632,85 @@
                                     </div>
                                 @endforeach
                             </div>
+
+                            {{-- Pembetulan: BO upload izin PDF section --}}
+                            @if($application->is_pembetulan)
+                            <div class="mt-8 pt-6 border-t-2 border-dashed border-blue-200 dark:border-blue-800">
+                                <div class="flex items-center gap-3 mb-4">
+                                    <div class="w-9 h-9 bg-blue-100 dark:bg-blue-900/40 rounded-xl flex items-center justify-center border border-blue-200 dark:border-blue-800">
+                                        <i class="mdi mdi-file-sign text-blue-600 dark:text-blue-400 text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-black text-blue-800 dark:text-blue-300 uppercase tracking-wide">Unggah Surat Izin (Siap TTE)</h4>
+                                        <p class="text-[10px] text-blue-600 dark:text-blue-400">Wajib — file ini akan diperiksa Verifikator lalu ditandatangani Kadin</p>
+                                    </div>
+                                </div>
+
+                                <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800 space-y-3">
+                                    <p class="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+                                        <i class="mdi mdi-information-outline mr-1"></i>
+                                        Siapkan template surat izin dalam format <strong>Word (.docx)</strong> yang berisi variabel dinamis (misal: ${NAMA_PEMOHON}, ${QRCODE}).
+                                        Sistem akan otomatis mengganti variabel tersebut dengan data asli dan mengonversinya menjadi PDF yang siap ditandatangani secara elektronik (TTE) oleh Kadin.
+                                    </p>
+
+                                    <div class="space-y-2">
+                                        @if($canEditBo)
+                                            <input type="file" name="file_izin_pembetulan" id="file_izin_pembetulan"
+                                                class="w-full text-sm text-gray-700 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700 file:transition-all cursor-pointer"
+                                                accept=".docx">
+                                            @error('file_izin_pembetulan')
+                                                <p class="text-xs text-red-500 font-bold mt-1"><i class="mdi mdi-alert-circle-outline"></i> {{ $message }}</p>
+                                            @enderror
+                                        @endif
+
+                                        @if($application->file_izin_pembetulan && file_exists(public_path($application->file_izin_pembetulan)))
+                                            @php
+                                                $docxTemplatePath = str_replace('.pdf', '_template.docx', $application->file_izin_pembetulan);
+                                            @endphp
+                                            <div class="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-xl border border-blue-200 dark:border-blue-800">
+                                                <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/60 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                    <i class="mdi mdi-file-word text-blue-600 dark:text-blue-400 text-lg"></i>
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="text-xs font-bold text-blue-700 dark:text-blue-300">Template DOCX Terupload <span class="font-normal text-[10px] text-blue-500 dark:text-blue-400">(siap dikonversi ke PDF)</span></p>
+                                                    <p class="text-[10px] text-blue-600 dark:text-blue-400 truncate">{{ file_exists(public_path($docxTemplatePath)) ? basename($docxTemplatePath) : basename($application->file_izin_pembetulan) }}</p>
+                                                </div>
+                                                <div class="flex items-center gap-2 flex-shrink-0">
+                                                    @if(file_exists(public_path($docxTemplatePath)))
+                                                        <a href="{{ asset($docxTemplatePath) }}" download
+                                                            class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 shadow-sm">
+                                                            <i class="mdi mdi-download"></i> Unduh DOCX Template
+                                                        </a>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        @else
+                                            <div class="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
+                                                <i class="mdi mdi-alert-circle-outline text-amber-600"></i>
+                                                <p class="text-xs text-amber-700 dark:text-amber-400 font-bold">Belum ada file template DOCX yang diunggah. Harap unggah sebelum menyetujui.</p>
+                                            </div>
+                                        @endif
+
+                                        {{-- Dynamic Variable Trigger Button --}}
+                                        <button type="button" onclick="document.getElementById('modal-variabel-dinamis').classList.remove('hidden')"
+                                            class="mt-1 w-full flex items-center justify-center gap-2 px-3 py-2 bg-indigo-50 dark:bg-indigo-900/20 border border-dashed border-indigo-300 dark:border-indigo-700 rounded-xl text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider hover:bg-indigo-100 transition-colors">
+                                            <i class="mdi mdi-code-braces text-sm"></i>
+                                            Lihat Daftar Variabel Dinamis
+                                        </button>
+                                    </div>
+
+
+                                </div>
+                            </div>
+                            @endif
+
                             @if($canEditBo)
                                 <div class="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700 flex justify-end">
                                     <button type="submit" class="px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg flex items-center gap-3 active:scale-95"><i class="mdi mdi-content-save-check text-lg"></i> SIMPAN DATA BO</button>
                                 </div>
                             @endif
                         </form>
+
                     </div>
                 </div>
                 @endif
@@ -1211,12 +1306,47 @@
                         <i class="mdi mdi-information-variant text-blue-600 text-xl mt-0.5"></i>
                         <div class="flex-1">
                             <h4 class="text-sm font-bold text-blue-800 dark:text-blue-300">Informasi Verifikasi</h4>
-                            <p class="text-xs text-blue-700 dark:text-blue-400 leading-relaxed mt-1">Berikut adalah <strong>Draft Surat Izin / SK</strong> dari Verifikator. Silahkan berikan TTE pada Draft agar menjadi Surat Izin / SK Resmi.</p>
+                            @if($application->is_pembetulan)
+                                <p class="text-xs text-blue-700 dark:text-blue-400 leading-relaxed mt-1">Ini adalah pengajuan <strong>pembetulan izin</strong>. Berikan TTE pada <strong>file PDF yang diunggah oleh BO</strong> (bukan generate ulang dari template).</p>
+                            @else
+                                <p class="text-xs text-blue-700 dark:text-blue-400 leading-relaxed mt-1">Berikut adalah <strong>Draft Surat Izin / SK</strong> dari Verifikator. Silahkan berikan TTE pada Draft agar menjadi Surat Izin / SK Resmi.</p>
+                            @endif
                         </div>
                     </div>
                 @endif
 
-                 @if($application->file_izin && !empty($application->izin_data))
+
+                @if($application->is_pembetulan && $application->file_izin_pembetulan && file_exists(public_path($application->file_izin_pembetulan)))
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-blue-200 dark:border-blue-900/30 overflow-hidden mb-2">
+                    <div class="px-5 py-4 border-b border-blue-100 dark:border-blue-900/50 bg-blue-50/50 dark:bg-blue-900/20 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center border border-blue-200 dark:border-blue-800"><i class="mdi mdi-file-sign text-blue-600 dark:text-blue-400 text-xl"></i></div>
+                            <div>
+                                <h3 class="text-sm font-bold text-gray-800 dark:text-white">Surat Izin dari BO (Pembetulan)</h3>
+                                <p class="text-[10px] text-blue-600 font-bold uppercase tracking-wider">Diunggah BO — Siap TTE Kadin</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            @if($isVerifikator && $application->validasiRecords->where('order', $application->current_step)->first()?->status === 'pending')
+                                <form action="{{ route('data-perijinan.pembetulan.refresh', $application->id) }}" method="POST" class="inline">
+                                    @csrf
+                                    <button type="submit" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm flex items-center gap-1">
+                                        <i class="mdi mdi-refresh"></i> Perbarui PDF
+                                    </button>
+                                </form>
+                            @endif
+                            <button onclick="openPdfPreview('{{ asset($application->file_izin_pembetulan) }}?t={{ time() }}', 'Draft Izin Pembetulan dari BO')" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm">Buka PDF</button>
+                        </div>
+                    </div>
+                </div>
+                @elseif($application->is_pembetulan)
+                <div class="flex items-center gap-2 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800 mb-2">
+                    <i class="mdi mdi-alert-circle-outline text-amber-600 text-lg"></i>
+                    <p class="text-xs text-amber-700 dark:text-amber-400 font-bold">BO belum mengunggah file PDF surat izin untuk pembetulan ini.</p>
+                </div>
+                @endif
+
+                 @if(!$application->is_pembetulan && $application->file_izin && !empty($application->izin_data))
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-indigo-200 dark:border-indigo-900/30 overflow-hidden">
                         <div class="px-5 py-4 border-b border-indigo-100 dark:border-indigo-900/50 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
                             <div class="flex items-center gap-3">
@@ -1228,6 +1358,7 @@
                             </div>
                         </div>
                     </div>
+                 @endif
 
                     @if($application->file_izin_tte)
                     <!-- Signed Document Card (Surat Izin) -->
@@ -1246,7 +1377,7 @@
                         </div>
                     </div>
                     @endif
-                @endif
+                @if(!$application->is_pembetulan)
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
                         <div class="flex items-center gap-4">
@@ -1540,6 +1671,7 @@
                         </form>
                     </div>
                 </div>
+                @endif
             </div>
             @endif
         </div>
@@ -1752,26 +1884,37 @@
                                                 if ($application->perijinan->is_multi_opd) {
                                                     // Gunakan opd_id dari user yang sedang login
                                                     $opdId = auth()->user()->opd_id;
-                                                    // Pastikan data rekomendasi sudah diisi dan disimpan
                                                     $isDraftGenerated = !empty($application->rekom_data_multi[$opdId]) && !empty($application->file_rekom_multi[$opdId]);
                                                 } else {
-                                                    // Pastikan data rekomendasi sudah diisi dan disimpan
                                                     $isDraftGenerated = !empty($application->rekom_data) && !empty($application->file_rekom);
                                                 }
                                             } else if ($isVerifikator) {
-                                                // Pastikan data izin sudah diisi dan disimpan
-                                                $isDraftGenerated = !empty($application->izin_data) && !empty($application->file_izin);
+                                                if ($application->is_pembetulan) {
+                                                    $isDraftGenerated = !empty($application->file_izin_pembetulan) && file_exists(public_path($application->file_izin_pembetulan));
+                                                } else {
+                                                    $isDraftGenerated = !empty($application->izin_data) && !empty($application->file_izin);
+                                                }
                                             } else if ($isBo && $application->perijinan->has_bo_form && $boFields->count() > 0) {
-                                                // Pastikan data BO sudah diisi dan disimpan
                                                 $isDraftGenerated = !empty($application->bo_data);
+                                            }
+
+                                            if ($isBo && $application->is_pembetulan) {
+                                                $hasPembetulanPdf = !empty($application->file_izin_pembetulan) && file_exists(public_path($application->file_izin_pembetulan));
+                                                if (!$hasPembetulanPdf) {
+                                                    $isDraftGenerated = false;
+                                                }
                                             }
 
                                             $disabledTitle = '';
                                             if (!$isDraftGenerated) {
-                                                if ($isBo) {
+                                                if ($isBo && $application->is_pembetulan && empty($application->file_izin_pembetulan)) {
+                                                    $disabledTitle = 'Harap unggah file PDF surat izin pada bagian "Unggah Surat Izin (Siap TTE)" terlebih dahulu';
+                                                } elseif ($isBo) {
                                                     $disabledTitle = 'Harap lengkapi dan simpan Formulir Khusus BO terlebih dahulu';
                                                 } elseif ($isOperatorOpd) {
                                                     $disabledTitle = 'Harap lengkapi formulir dokumen rekomendasi lalu Simpan & Generate Draft terlebih dahulu';
+                                                } elseif ($isVerifikator && $application->is_pembetulan) {
+                                                    $disabledTitle = 'Menunggu BO mengunggah berkas PDF surat izin yang siap ditandatangani (TTE)';
                                                 } else {
                                                     $disabledTitle = 'Harap lengkapi formulir dokumen izin lalu Simpan & Generate Draft terlebih dahulu';
                                                 }
@@ -2256,4 +2399,151 @@
         }
     </script>
     @endpush
+
+{{-- ============================================================ --}}
+{{-- Modal: Daftar Variabel Dinamis PDF Pembetulan               --}}
+{{-- ============================================================ --}}
+<div id="modal-variabel-dinamis" class="hidden fixed inset-0 z-[9999] flex items-center justify-center p-4">
+    {{-- Backdrop --}}
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="document.getElementById('modal-variabel-dinamis').classList.add('hidden')"></div>
+
+    {{-- Modal Panel --}}
+    <div class="relative w-full max-w-2xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
+
+        {{-- Header --}}
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-indigo-600 to-violet-600 flex items-center justify-between flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
+                    <i class="mdi mdi-code-braces text-white text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-white font-black text-sm uppercase tracking-wide">Variabel Dinamis</h3>
+                    <p class="text-indigo-200 text-[10px]">Sisipkan ke dalam PDF — sistem akan mengganti otomatis saat upload</p>
+                </div>
+            </div>
+            <button onclick="document.getElementById('modal-variabel-dinamis').classList.add('hidden')"
+                class="w-8 h-8 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center text-white transition-colors">
+                <i class="mdi mdi-close text-lg"></i>
+            </button>
+        </div>
+
+        {{-- Info Banner --}}
+        <div class="px-6 py-3 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-100 dark:border-amber-800 flex items-start gap-2 flex-shrink-0">
+            <i class="mdi mdi-information-outline text-amber-600 text-base mt-0.5 flex-shrink-0"></i>
+            <p class="text-[11px] text-amber-700 dark:text-amber-400 leading-relaxed">
+                Ketik placeholder tepat seperti yang tertera (huruf kapital, termasuk <code class="bg-amber-100 dark:bg-amber-900/50 px-1 rounded font-mono">${ }</code>).
+                <strong>${QRCODE}</strong> selalu tampil di pojok kanan bawah halaman yang mengandung teks tersebut.
+                Klik tombol <i class="mdi mdi-content-copy"></i> untuk menyalin.
+            </p>
+        </div>
+
+        {{-- Scrollable Content --}}
+        <div class="overflow-y-auto flex-1 p-6 space-y-5">
+            @php
+                $placeholderGroups = [
+                    ['label' => 'QR Code', 'icon' => 'mdi-qrcode', 'color' => 'violet', 'items' => [
+                        '${QRCODE}' => 'QR Code verifikasi izin (gambar di pojok kanan bawah halaman)',
+                    ]],
+                    ['label' => 'Data Pemohon', 'icon' => 'mdi-account-outline', 'color' => 'blue', 'items' => [
+                        '${NAMA_PEMOHON}'    => 'Nama lengkap pemohon',
+                        '${NIK}'             => 'NIK pemohon',
+                        '${NO_HP}'           => 'Nomor HP pemohon',
+                        '${EMAIL}'           => 'Email pemohon',
+                        '${PEKERJAAN}'       => 'Pekerjaan pemohon',
+                        '${NAMA_PERUSAHAAN}' => 'Nama perusahaan',
+                        '${NPWP}'            => 'NPWP pemohon',
+                    ]],
+                    ['label' => 'Alamat', 'icon' => 'mdi-map-marker-outline', 'color' => 'emerald', 'items' => [
+                        '${ALAMAT_KTP}'     => 'Alamat sesuai KTP',
+                        '${ALAMAT_DOMISILI}'=> 'Alamat domisili',
+                        '${ALAMAT_LENGKAP}' => 'Alamat lengkap (dengan kecamatan, kabupaten, dll.)',
+                        '${KELURAHAN}'      => 'Kelurahan/Desa',
+                        '${KECAMATAN}'      => 'Kecamatan',
+                        '${KABUPATEN}'      => 'Kabupaten/Kota',
+                        '${PROVINSI}'       => 'Provinsi',
+                    ]],
+                    ['label' => 'Data Perizinan', 'icon' => 'mdi-certificate-outline', 'color' => 'amber', 'items' => [
+                        '${NAMA_LAYANAN}'    => 'Nama jenis perizinan',
+                        '${NO_REGISTRASI}'   => 'Nomor registrasi pengajuan',
+                        '${NOMOR_IZIN}'      => 'Nomor surat izin',
+                        '${NOMOR_REKOM}'     => 'Nomor surat rekomendasi',
+                        '${TANGGAL}'         => 'Tanggal pengajuan',
+                        '${TANGGAL_HARI_INI}'=> 'Tanggal hari ini (saat upload PDF)',
+                        '${MASA_AKTIF}'      => 'Masa aktif / berlaku izin',
+                    ]],
+                    ['label' => 'Field Formulir Dinamis', 'icon' => 'mdi-form-select', 'color' => 'rose', 'items' => [
+                        '${NAMA_FIELD}' => 'Ganti NAMA_FIELD dengan nama field formulir (global / BO / rekom / izin)',
+                    ]],
+                ];
+
+                $colorMap = [
+                    'violet'  => ['badge' => 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-700',  'icon' => 'text-violet-600',  'header' => 'text-violet-700 dark:text-violet-300'],
+                    'blue'    => ['badge' => 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700',          'icon' => 'text-blue-600',    'header' => 'text-blue-700 dark:text-blue-300'],
+                    'emerald' => ['badge' => 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700', 'icon' => 'text-emerald-600', 'header' => 'text-emerald-700 dark:text-emerald-300'],
+                    'amber'   => ['badge' => 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700',      'icon' => 'text-amber-600',   'header' => 'text-amber-700 dark:text-amber-300'],
+                    'rose'    => ['badge' => 'bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-700',            'icon' => 'text-rose-600',    'header' => 'text-rose-700 dark:text-rose-300'],
+                ];
+            @endphp
+
+            @foreach($placeholderGroups as $group)
+            @php $c = $colorMap[$group['color']]; @endphp
+            <div>
+                {{-- Group Header --}}
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="mdi {{ $group['icon'] }} {{ $c['icon'] }} text-base"></i>
+                    <h4 class="text-xs font-black {{ $c['header'] }} uppercase tracking-widest">{{ $group['label'] }}</h4>
+                    <div class="flex-1 h-px bg-gray-100 dark:bg-gray-700"></div>
+                </div>
+
+                {{-- Variable Grid --}}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    @foreach($group['items'] as $key => $desc)
+                    <div class="flex items-start gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700 group/var hover:border-indigo-200 dark:hover:border-indigo-700 transition-colors">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-1.5 mb-0.5">
+                                <code class="text-[10px] font-mono font-bold {{ $c['badge'] }} px-1.5 py-0.5 rounded border truncate">{{ $key }}</code>
+                            </div>
+                            <p class="text-[10px] text-gray-500 dark:text-gray-400 leading-tight">{{ $desc }}</p>
+                        </div>
+                        <button type="button" onclick="copyVarToClipboard('{{ $key }}', this)"
+                            title="Salin"
+                            class="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors">
+                            <i class="mdi mdi-content-copy text-sm"></i>
+                        </button>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endforeach
+        </div>
+
+        {{-- Footer --}}
+        <div class="px-6 py-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex justify-end flex-shrink-0">
+            <button onclick="document.getElementById('modal-variabel-dinamis').classList.add('hidden')"
+                class="px-5 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-bold uppercase transition-colors">
+                Tutup
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyVarToClipboard(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+        const icon = btn.querySelector('i');
+        icon.classList.replace('mdi-content-copy', 'mdi-check');
+        btn.classList.add('text-emerald-600');
+        setTimeout(() => {
+            icon.classList.replace('mdi-check', 'mdi-content-copy');
+            btn.classList.remove('text-emerald-600');
+        }, 1500);
+    });
+}
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        document.getElementById('modal-variabel-dinamis')?.classList.add('hidden');
+    }
+});
+</script>
 </x-layout>

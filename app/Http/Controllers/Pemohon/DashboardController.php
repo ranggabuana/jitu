@@ -607,6 +607,17 @@ class DashboardController extends Controller
                     }
                 }
 
+                // Physically delete the old signed files and drafts if they exist
+                if ($data->file_izin_tte && file_exists(public_path($data->file_izin_tte))) {
+                    @unlink(public_path($data->file_izin_tte));
+                }
+                if ($data->file_izin && file_exists(public_path($data->file_izin))) {
+                    @unlink(public_path($data->file_izin));
+                }
+                if ($data->file_izin_pembetulan && file_exists(public_path($data->file_izin_pembetulan))) {
+                    @unlink(public_path($data->file_izin_pembetulan));
+                }
+
                 $updateData = [
                     'status' => 'submitted',
                     'current_step' => 1,
@@ -630,6 +641,7 @@ class DashboardController extends Controller
                     'rejected_at' => null,
                     'file_izin_tte' => null,
                     'file_izin' => null,
+                    'file_izin_pembetulan' => null, // Reset the BO manual upload file as well
                 ];
 
                 $data->update($updateData);

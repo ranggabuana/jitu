@@ -40,6 +40,7 @@ class DataPerijinan extends Model
         'file_rekom_multi_tte',
         'file_izin',
         'file_izin_tte',
+        'file_izin_pembetulan',
         'catatan_pemohon',
         'catatan_perbaikan',
         'catatan_reject',
@@ -260,7 +261,7 @@ class DataPerijinan extends Model
      */
     public function getStatusLabelAttribute(): string
     {
-        if (in_array($this->status, ['approved', 'diperbaiki']) && $this->masa_aktif && $this->masa_aktif->isPast()) {
+        if (in_array($this->status, ['approved', 'diperbaiki']) && $this->masa_aktif && $this->masa_aktif->endOfDay()->isPast()) {
             return 'Habis Masa';
         }
 
@@ -283,7 +284,7 @@ class DataPerijinan extends Model
      */
     public function getStatusColorAttribute(): string
     {
-        if (in_array($this->status, ['approved', 'diperbaiki']) && $this->masa_aktif && $this->masa_aktif->isPast()) {
+        if (in_array($this->status, ['approved', 'diperbaiki']) && $this->masa_aktif && $this->masa_aktif->endOfDay()->isPast()) {
             return 'bg-red-100 text-red-800';
         }
 

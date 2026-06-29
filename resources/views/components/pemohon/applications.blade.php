@@ -108,7 +108,7 @@
                             <span class="text-sm text-gray-500">{{ $app->created_at->format('d M Y') }}</span>
                         </td>
                         <td class="p-4 border-b">
-                            <span class="text-sm {{ $app->masa_aktif && $app->masa_aktif->isPast() ? 'text-red-600 font-bold' : 'text-gray-600' }}">
+                            <span class="text-sm {{ $app->masa_aktif && $app->masa_aktif->endOfDay()->isPast() ? 'text-red-600 font-bold' : 'text-gray-600' }}">
                                 {{ $app->masa_aktif ? $app->masa_aktif->format('d M Y') : '-' }}
                             </span>
                         </td>
@@ -124,7 +124,7 @@
                                     $isAllowed = false;
                                     $msg = '';
                                     if (in_array($app->status, ['approved', 'diperbaiki']) && $app->progress_percentage >= 100 && $app->masa_aktif) {
-                                        $isExpired = $app->masa_aktif->isPast();
+                                        $isExpired = $app->masa_aktif->endOfDay()->isPast();
                                         $opsi = $app->perijinan->opsi_perpanjangan;
                                         $formattedDate = $app->masa_aktif->format('d M Y');
                                         

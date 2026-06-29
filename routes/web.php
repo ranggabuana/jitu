@@ -206,6 +206,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{id}/deactivate', [DataPerijinanController::class, 'deactivate'])->name('deactivate');
         Route::post('/{id}/activate', [DataPerijinanController::class, 'activate'])->name('activate');
         Route::post('/{id}/regenerate-documents', [DataPerijinanController::class, 'regenerateDocuments'])->name('regenerate-documents');
+        Route::post('/{id}/pembetulan/refresh', [DataPerijinanController::class, 'refreshPembetulanPdf'])->name('pembetulan.refresh');
     });
 
     // Pemohon Routes (accessible by authenticated pemohon users)
