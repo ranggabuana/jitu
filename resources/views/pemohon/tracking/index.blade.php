@@ -4,6 +4,24 @@
     <!-- Navbar -->
     <x-pemohon.navbar></x-pemohon.navbar>
 
+    @php
+        if (!function_exists('getSortUrl')) {
+            function getSortUrl($column, $currentSort, $currentOrder) {
+                $order = ($currentSort === $column && $currentOrder === 'asc') ? 'desc' : 'asc';
+                return request()->fullUrlWithQuery(['sort' => $column, 'order' => $order]);
+            }
+        }
+        
+        if (!function_exists('getSortIcon')) {
+            function getSortIcon($column, $currentSort, $currentOrder) {
+                if ($currentSort !== $column) {
+                    return 'fa-sort text-gray-300';
+                }
+                return $currentOrder === 'asc' ? 'fa-sort-up text-amber-600' : 'fa-sort-down text-amber-600';
+            }
+        }
+    @endphp
+
     <!-- Main Content -->
     <main class="flex-1 max-w-[95%] mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         <!-- Header -->
@@ -19,79 +37,156 @@
             </div>
         </div>
 
-        <!-- Applications List -->
+        <!-- Filter & Search Bar -->
+        <div class="bg-white rounded-2xl shadow-sm border border-amber-100 p-5">
+            <form method="GET" action="{{ route('pemohon.tracking') }}" class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <input type="hidden" name="sort" value="{{ $sort }}">
+                <input type="hidden" name="order" value="{{ $order }}">
+
+                <!-- Search Input -->
+                <div class="relative flex-1">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                        <i class="fas fa-search text-sm"></i>
+                    </span>
+                    <input type="text" name="search" value="{{ $search }}"
+                           placeholder="Cari Nomor Registrasi atau Jenis Perizinan..." 
+                           class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none text-sm transition-all bg-gray-50/50">
+                </div>
+
+                <!-- Show per page & Buttons -->
+                <div class="flex items-center gap-3 w-full md:w-auto">
+                    <div class="flex items-center gap-2 text-xs font-semibold text-gray-600">
+                        <label for="per_page" class="whitespace-nowrap">Tampilkan:</label>
+                        <select name="per_page" id="per_page" onchange="this.form.submit()" 
+                                class="px-3 py-2 rounded-xl border border-gray-200 focus:border-amber-500 outline-none bg-white transition-all text-xs font-bold cursor-pointer">
+                            <option value="5" {{ $perPage == 5 ? 'selected' : '' }}>5 entri</option>
+                            <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10 entri</option>
+                            <option value="25" {{ $perPage == 25 ? 'selected' : '' }}>25 entri</option>
+                            <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 entri</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="flex-1 md:flex-initial px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl transition-all shadow-sm shadow-amber-200 text-xs flex items-center justify-center gap-2">
+                        Filter
+                    </button>
+                    
+                    @if($search)
+                        <a href="{{ route('pemohon.tracking') }}" class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold rounded-xl transition-all text-xs flex items-center justify-center">
+                            Reset
+                        </a>
+                    @endif
+                </div>
+            </form>
+        </div>
+
+        <!-- Table List -->
         @if ($data->count() > 0)
-            <div class="space-y-4">
-                @foreach ($data as $app)
-                    <a href="{{ route('pemohon.tracking.detail', $app->id) }}"
-                        class="block bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all border border-amber-200 overflow-hidden group">
-                        <div class="p-6">
-                            <div class="flex items-start justify-between gap-4">
-                                <div class="flex-1">
-                                    <div class="flex items-center gap-3 mb-2">
-                                        <span class="font-mono text-sm text-amber-600 font-semibold">
-                                            {{ $app->no_registrasi }}
-                                        </span>
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $app->status_color }}">
+            <div class="bg-white rounded-2xl shadow-sm border border-amber-100 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-amber-50/50 border-b border-amber-100">
+                                <th class="px-6 py-4 text-xs font-black text-amber-900 uppercase tracking-wider">
+                                    <a href="{{ getSortUrl('no_registrasi', $sort, $order) }}" class="flex items-center gap-1.5 hover:text-amber-700 transition-colors">
+                                        No. Registrasi <i class="fas {{ getSortIcon('no_registrasi', $sort, $order) }} text-[10px]"></i>
+                                    </a>
+                                </th>
+                                <th class="px-6 py-4 text-xs font-black text-amber-900 uppercase tracking-wider">
+                                    Jenis Perizinan
+                                </th>
+                                <th class="px-6 py-4 text-xs font-black text-amber-900 uppercase tracking-wider">
+                                    <a href="{{ getSortUrl('created_at', $sort, $order) }}" class="flex items-center gap-1.5 hover:text-amber-700 transition-colors">
+                                        Tgl Pengajuan <i class="fas {{ getSortIcon('created_at', $sort, $order) }} text-[10px]"></i>
+                                    </a>
+                                </th>
+                                <th class="px-6 py-4 text-xs font-black text-amber-900 uppercase tracking-wider">
+                                    <a href="{{ getSortUrl('status', $sort, $order) }}" class="flex items-center gap-1.5 hover:text-amber-700 transition-colors">
+                                        Status <i class="fas {{ getSortIcon('status', $sort, $order) }} text-[10px]"></i>
+                                    </a>
+                                </th>
+                                <th class="px-6 py-4 text-xs font-black text-amber-900 uppercase tracking-wider">
+                                    Progress
+                                </th>
+                                <th class="px-6 py-4 text-xs font-black text-amber-900 uppercase tracking-wider text-center">
+                                    Aksi
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @foreach ($data as $app)
+                                <tr class="hover:bg-amber-50/10 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="font-mono text-xs text-amber-800 font-bold block">{{ $app->no_registrasi }}</span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="text-sm font-bold text-gray-800 line-clamp-2 max-w-sm">{{ $app->perijinan->nama_perijinan }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-medium">
+                                        {{ $app->created_at->format('d M Y') }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold {{ $app->status_color }}">
                                             {{ $app->status_label }}
                                         </span>
-                                    </div>
-                                    <h3 class="text-lg font-bold text-gray-800 mb-2 group-hover:text-amber-600 transition-colors">
-                                        {{ $app->perijinan->nama_perijinan }}
-                                    </h3>
-                                    <div class="flex items-center gap-4 text-sm text-gray-500">
-                                        <span>
-                                            <i class="fas fa-calendar mr-1"></i>
-                                            {{ $app->created_at->format('d M Y') }}
-                                        </span>
-                                        <span>
-                                            <i class="fas fa-layer-group mr-1"></i>
-                                            Tahap {{ $app->current_step }} dari {{ $app->perijinan->activeValidationFlows->count() }}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="flex-shrink-0">
-                                    <i class="fas fa-chevron-right text-gray-400 group-hover:text-amber-600 transition-colors"></i>
-                                </div>
-                            </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-16 bg-gray-200 rounded-full h-1.5">
+                                                <div class="bg-gradient-to-r from-amber-500 to-amber-600 h-1.5 rounded-full"
+                                                     style="width: {{ $app->progress_percentage }}%"></div>
+                                            </div>
+                                            <span class="text-[10px] font-bold text-gray-500">{{ $app->progress_percentage }}%</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                                        <a href="{{ route('pemohon.tracking.detail', $app->id) }}"
+                                           class="inline-flex items-center gap-1 bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold py-1.5 px-3 rounded-lg text-[10px] transition-all shadow-sm">
+                                            <i class="fas fa-eye"></i> Detail
+                                        </a>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
 
-                            <!-- Progress Bar -->
-                            <div class="mt-4">
-                                <div class="flex items-center justify-between text-xs text-gray-500 mb-1">
-                                    <span>Progress</span>
-                                    <span>{{ $app->progress_percentage }}%</span>
-                                </div>
-                                <div class="w-full bg-gray-200 rounded-full h-2">
-                                    <div class="bg-gradient-to-r from-amber-500 to-amber-600 h-2 rounded-full transition-all duration-500"
-                                        style="width: {{ $app->progress_percentage }}%"></div>
-                                </div>
-                            </div>
+                <!-- Footer & Pagination -->
+                <div class="px-6 py-4 bg-amber-50/10 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div class="text-xs text-gray-500 font-semibold">
+                        Menampilkan {{ $data->firstItem() ?? 0 }} sampai {{ $data->lastItem() ?? 0 }} dari {{ $data->total() }} entri
+                    </div>
+                    @if ($data->hasPages())
+                        <div class="flex justify-end">
+                            {{ $data->links('pagination::tailwind') }}
                         </div>
-                    </a>
-                @endforeach
+                    @endif
+                </div>
             </div>
-
-            <!-- Pagination -->
-            @if ($data->hasPages())
-                <div class="mt-8 flex justify-center">
-                    {{ $data->links('pagination::tailwind') }}
-                </div>
-            @endif
         @else
-            <!-- Empty State -->
+            <!-- Empty State / No Results -->
             <div class="bg-white rounded-2xl shadow-sm border border-amber-200 p-12 text-center">
-                <div class="w-24 h-24 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <i class="fas fa-search text-amber-400 text-4xl"></i>
+                <div class="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6 text-amber-500">
+                    <i class="fas fa-search-minus text-3xl"></i>
                 </div>
-                <h3 class="text-xl font-bold text-gray-700 mb-2">Belum Ada Pengajuan</h3>
-                <p class="text-gray-500 mb-6 max-w-md mx-auto">
-                    Anda belum memiliki pengajuan perizinan. Mulai ajukan perizinan Anda sekarang.
+                <h3 class="text-lg font-bold text-gray-700 mb-1">Tidak Ada Pengajuan Ditemukan</h3>
+                <p class="text-gray-500 mb-6 max-w-sm mx-auto text-sm">
+                    @if($search)
+                        Tidak ada pengajuan yang cocok dengan kata kunci "{{ $search }}". Silakan reset pencarian Anda.
+                    @else
+                        Anda belum memiliki pengajuan perizinan aktif saat ini.
+                    @endif
                 </p>
-                <a href="{{ route('pemohon.perijinan') }}"
-                    class="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors">
-                    <i class="fas fa-plus"></i>
-                    Ajukan Perizinan
-                </a>
+                <div class="flex items-center justify-center gap-3">
+                    @if($search)
+                        <a href="{{ route('pemohon.tracking') }}" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold rounded-xl text-xs transition-colors">
+                            Kembali
+                        </a>
+                    @else
+                        <a href="{{ route('pemohon.perijinan') }}" class="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs transition-colors">
+                            Ajukan Perizinan
+                        </a>
+                    @endif
+                </div>
             </div>
         @endif
     </main>

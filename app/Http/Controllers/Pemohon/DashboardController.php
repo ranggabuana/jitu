@@ -778,16 +778,42 @@ class DashboardController extends Controller
     /**
      * Show tracking page for user's applications.
      */
-    public function tracking()
+    public function tracking(\Illuminate\Http\Request $request)
     {
         $user = Auth::user();
+        $search = $request->input('search');
+        $sort = $request->input('sort', 'created_at');
+        $order = $request->input('order', 'desc');
+        $perPage = $request->input('per_page', 10);
 
-        $data = DataPerijinan::with(['perijinan', 'validasiRecords.validationFlow'])
-            ->where('user_id', $user->id)
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        // Validate allowed sort fields
+        $allowedSort = ['created_at', 'no_registrasi', 'status'];
+        if (!in_array($sort, $allowedSort)) {
+            $sort = 'created_at';
+        }
+        
+        $allowedOrder = ['asc', 'desc'];
+        if (!in_array($order, $allowedOrder)) {
+            $order = 'desc';
+        }
 
-        return view('pemohon.tracking.index', compact('data'));
+        $query = DataPerijinan::with(['perijinan', 'validasiRecords.validationFlow'])
+            ->where('user_id', $user->id);
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('no_registrasi', 'like', "%{$search}%")
+                  ->orWhereHas('perijinan', function($q2) use ($search) {
+                      $q2->where('nama_perijinan', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $data = $query->orderBy($sort, $order)
+            ->paginate($perPage)
+            ->withQueryString();
+
+        return view('pemohon.tracking.index', compact('data', 'search', 'sort', 'order', 'perPage'));
     }
 
     /**

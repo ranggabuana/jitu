@@ -587,4 +587,71 @@ class MasaAktifRekomTest extends TestCase
         $response->assertStatus(200);
         $response->assertJsonPath('data.status_label', 'Pengajuan Perpanjangan');
     }
+
+    public function test_pemohon_tracking_page_supports_filtering_searching_sorting_and_per_page()
+    {
+        $user = User::create([
+            'name' => 'Pemohon Tracking',
+            'username' => 'pemohon_track',
+            'email' => 'pemohon_track@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'pemohon',
+            'status' => 'aktif',
+        ]);
+
+        $perijinan1 = Perijinan::create([
+            'nama_perijinan' => 'Izin Kelayakan Lingkungan',
+            'kode_perijinan' => 'IZIN_KL',
+            'is_multi_opd' => false,
+            'dasar_hukum' => 'Dasar Hukum',
+            'persyaratan' => 'Persyaratan',
+            'prosedur' => 'Prosedur',
+        ]);
+
+        $perijinan2 = Perijinan::create([
+            'nama_perijinan' => 'Izin Usaha Mikro',
+            'kode_perijinan' => 'IZIN_IUM',
+            'is_multi_opd' => false,
+            'dasar_hukum' => 'Dasar Hukum',
+            'persyaratan' => 'Persyaratan',
+            'prosedur' => 'Prosedur',
+        ]);
+
+        // Create 2 applications
+        $app1 = DataPerijinan::create([
+            'user_id' => $user->id,
+            'perijinan_id' => $perijinan1->id,
+            'status' => 'submitted',
+        ]);
+
+        $app2 = DataPerijinan::create([
+            'user_id' => $user->id,
+            'perijinan_id' => $perijinan2->id,
+            'status' => 'in_progress',
+        ]);
+
+        // 1. Check index page loads
+        $response = $this->actingAs($user)
+            ->get(route('pemohon.tracking'));
+        $response->assertStatus(200);
+        $response->assertSee($app1->no_registrasi);
+        $response->assertSee($app2->no_registrasi);
+
+        // 2. Test search parameter
+        $responseSearch = $this->actingAs($user)
+            ->get(route('pemohon.tracking', ['search' => 'Mikro']));
+        $responseSearch->assertStatus(200);
+        $responseSearch->assertSee($app2->no_registrasi);
+        $responseSearch->assertDontSee($app1->no_registrasi);
+
+        // 3. Test sorting parameter
+        $responseSort = $this->actingAs($user)
+            ->get(route('pemohon.tracking', ['sort' => 'no_registrasi', 'order' => 'asc']));
+        $responseSort->assertStatus(200);
+
+        // 4. Test per_page parameter
+        $responsePerPage = $this->actingAs($user)
+            ->get(route('pemohon.tracking', ['per_page' => 1]));
+        $responsePerPage->assertStatus(200);
+    }
 }
