@@ -49,7 +49,7 @@
         @endif
 
         <!-- Perijinan Grid -->
-        @if ($perijinans->count() > 0 || $includePencabutanMedis)
+        @if ($perijinans->count() > 0 || $includePencabutanMedis || $includeOperasionalPendidikan || $includePendirianPendidikan)
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 @if($includePencabutanMedis && request('page', 1) == 1)
                     <!-- Card Representatif Pencabutan Medis -->
@@ -84,6 +84,69 @@
                         </div>
                     </div>
                 @endif
+
+                @if($includeOperasionalPendidikan && request('page', 1) == 1)
+                    <!-- Card Representatif Izin Operasional Pendidikan -->
+                    <div class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-purple-100 group cursor-pointer flex flex-col justify-between"
+                        onclick="openOperasionalModal()">
+                        <div class="p-6 flex-1">
+                            <div class="flex items-center gap-4 mb-4">
+                                <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                                    <i class="fas fa-graduation-cap text-white text-2xl"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-lg font-bold text-gray-800 group-hover:text-purple-600 transition-colors">
+                                        IZIN OPERASIONAL PROGRAM ATAU SATUAN PENDIDIKAN
+                                    </h3>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 text-sm mb-4">
+                                Layanan khusus untuk pengajuan izin operasional bagi program atau satuan pendidikan di wilayah Kabupaten Banjarnegara.
+                            </p>
+                        </div>
+                        <div class="px-6 pb-6 pt-4 border-t border-gray-100 flex items-center justify-between">
+                            <span class="text-xs text-gray-500">
+                                <i class="fas fa-list-ul mr-1"></i> {{ $operasionalPendidikanItems->count() }} Layanan
+                            </span>
+                            <button onclick="openOperasionalModal()"
+                                class="inline-flex items-center gap-2 text-purple-600 font-semibold text-sm hover:gap-3 transition-all">
+                                Lihat Daftar <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                @endif
+
+                @if($includePendirianPendidikan && request('page', 1) == 1)
+                    <!-- Card Representatif Izin Pendirian Pendidikan -->
+                    <div class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-emerald-100 group cursor-pointer flex flex-col justify-between"
+                        onclick="openPendirianModal()">
+                        <div class="p-6 flex-1">
+                            <div class="flex items-center gap-4 mb-4">
+                                <div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                                    <i class="fas fa-school text-white text-2xl"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-lg font-bold text-gray-800 group-hover:text-emerald-600 transition-colors">
+                                        IZIN PENDIRIAN PROGRAM ATAU SATUAN PENDIDIKAN
+                                    </h3>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 text-sm mb-4">
+                                Layanan khusus untuk pengajuan izin pendirian bagi program atau satuan pendidikan di wilayah Kabupaten Banjarnegara.
+                            </p>
+                        </div>
+                        <div class="px-6 pb-6 pt-4 border-t border-gray-100 flex items-center justify-between">
+                            <span class="text-xs text-gray-500">
+                                <i class="fas fa-list-ul mr-1"></i> {{ $pendirianPendidikanItems->count() }} Layanan
+                            </span>
+                            <button onclick="openPendirianModal()"
+                                class="inline-flex items-center gap-2 text-emerald-600 font-semibold text-sm hover:gap-3 transition-all">
+                                Lihat Daftar <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                @endif
+
 
                 @foreach ($perijinans as $item)
                     <div class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-amber-100 group cursor-pointer"
@@ -194,8 +257,106 @@
                 @endforeach
             </div>
             <!-- Footer -->
-            <div class="p-6 border-t border-gray-200 bg-white flex justify-end flex-shrink-0">
-                <button onclick="closePencabutanModal()" class="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-colors">
+            <div class="p-4 border-t border-gray-200 bg-white flex justify-end flex-shrink-0">
+                <button onclick="closePencabutanModal()" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-colors">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal List Izin Operasional Pendidikan -->
+    <div id="operasionalModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col transform transition-all duration-300 scale-95 opacity-0" id="operasionalModalContent">
+            <!-- Header -->
+            <div class="bg-gradient-to-br from-purple-600 via-purple-700 to-purple-800 text-white p-6 flex-shrink-0 flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-graduation-cap text-2xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold">IZIN OPERASIONAL PROGRAM ATAU SATUAN PENDIDIKAN</h2>
+                        <p class="text-purple-100 text-xs mt-0.5">Pilih jenis perizinan operasional pendidikan yang ingin diajukan</p>
+                    </div>
+                </div>
+                <button onclick="closeOperasionalModal()" class="text-white/80 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full p-2">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <!-- Body -->
+            <div class="flex-1 overflow-y-auto p-6 space-y-3 bg-gray-50">
+                @foreach($operasionalPendidikanItems as $operasionalItem)
+                    <div onclick="selectOperasionalItem({{ $operasionalItem->id }})" class="cursor-pointer block bg-white hover:bg-purple-50/30 p-4 rounded-2xl border border-gray-200 hover:border-purple-300 transition-all shadow-sm hover:shadow-md group">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1 pr-4">
+                                <h4 class="font-bold text-gray-800 group-hover:text-purple-600 transition-colors">
+                                    {{ $operasionalItem->nama_perijinan }}
+                                </h4>
+                                @if($operasionalItem->dasar_hukum)
+                                    <p class="text-xs text-gray-500 mt-1 line-clamp-1">
+                                        {{ strip_tags($operasionalItem->dasar_hukum) }}
+                                    </p>
+                                @endif
+                            </div>
+                            <div class="text-gray-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all">
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+            <!-- Footer -->
+            <div class="p-4 border-t border-gray-200 bg-white flex justify-end flex-shrink-0">
+                <button onclick="closeOperasionalModal()" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-colors">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal List Izin Pendirian Pendidikan -->
+    <div id="pendirianModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col transform transition-all duration-300 scale-95 opacity-0" id="pendirianModalContent">
+            <!-- Header -->
+            <div class="bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800 text-white p-6 flex-shrink-0 flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-school text-2xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold">IZIN PENDIRIAN PROGRAM ATAU SATUAN PENDIDIKAN</h2>
+                        <p class="text-emerald-100 text-xs mt-0.5">Pilih jenis perizinan pendirian pendidikan yang ingin diajukan</p>
+                    </div>
+                </div>
+                <button onclick="closePendirianModal()" class="text-white/80 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full p-2">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <!-- Body -->
+            <div class="flex-1 overflow-y-auto p-6 space-y-3 bg-gray-50">
+                @foreach($pendirianPendidikanItems as $pendirianItem)
+                    <div onclick="selectPendirianItem({{ $pendirianItem->id }})" class="cursor-pointer block bg-white hover:bg-emerald-50/30 p-4 rounded-2xl border border-gray-200 hover:border-emerald-300 transition-all shadow-sm hover:shadow-md group">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1 pr-4">
+                                <h4 class="font-bold text-gray-800 group-hover:text-emerald-600 transition-colors">
+                                    {{ $pendirianItem->nama_perijinan }}
+                                </h4>
+                                @if($pendirianItem->dasar_hukum)
+                                    <p class="text-xs text-gray-500 mt-1 line-clamp-1">
+                                        {{ strip_tags($pendirianItem->dasar_hukum) }}
+                                    </p>
+                                @endif
+                            </div>
+                            <div class="text-gray-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all">
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+            <!-- Footer -->
+            <div class="p-4 border-t border-gray-200 bg-white flex justify-end flex-shrink-0">
+                <button onclick="closePendirianModal()" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-colors">
                     Tutup
                 </button>
             </div>
@@ -699,6 +860,64 @@
 
         function selectPencabutanItem(id) {
             closePencabutanModal();
+            setTimeout(() => {
+                openDetailModal(id);
+            }, 350);
+        }
+
+        function openOperasionalModal() {
+            const modal = document.getElementById('operasionalModal');
+            const modalContent = document.getElementById('operasionalModalContent');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeOperasionalModal() {
+            const modal = document.getElementById('operasionalModal');
+            const modalContent = document.getElementById('operasionalModalContent');
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            modalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function selectOperasionalItem(id) {
+            closeOperasionalModal();
+            setTimeout(() => {
+                openDetailModal(id);
+            }, 350);
+        }
+
+        function openPendirianModal() {
+            const modal = document.getElementById('pendirianModal');
+            const modalContent = document.getElementById('pendirianModalContent');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closePendirianModal() {
+            const modal = document.getElementById('pendirianModal');
+            const modalContent = document.getElementById('pendirianModalContent');
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            modalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function selectPendirianItem(id) {
+            closePendirianModal();
             setTimeout(() => {
                 openDetailModal(id);
             }, 350);

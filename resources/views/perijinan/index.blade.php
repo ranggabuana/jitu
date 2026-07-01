@@ -66,26 +66,34 @@
                                 @else
                                     <i class="mdi mdi-sort text-gray-300 dark:text-gray-500"></i>
                                 @endif
-                                </div>
-                                </th>
-                                <th
-                                class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                Aksi
-                                </th>
-                                </tr>
-                                </thead>
-                                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                @forelse($perijinans as $index => $perijinan)
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
+                            </div>
+                        </th>
+                        <th
+                            class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Aksi
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    @forelse($perijinans as $index => $perijinan)
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
                                 {{ $perijinans->firstItem() + $index }}
-                                </td>
-                                <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-200">
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-200">
                                 <div class="flex items-center gap-2">
                                     <div class="font-medium">{{ $perijinan->nama_perijinan }}</div>
                                     @if($perijinan->jenis_perijinan === 'pencabutan_medis')
                                         <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
                                             Pencabutan Medis
+                                        </span>
+                                    @elseif($perijinan->jenis_perijinan === 'operasional_pendidikan')
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400">
+                                            Izin Operasional Pendidikan
+                                        </span>
+                                    @elseif($perijinan->jenis_perijinan === 'pendirian_pendidikan')
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">
+                                            Izin Pendirian Pendidikan
                                         </span>
                                     @elseif($perijinan->jenis_perijinan === 'umum')
                                         <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
@@ -94,8 +102,8 @@
                                     @endif
                                 </div>
                                 <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $perijinan->kode_perijinan ?? '-' }}</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex justify-end gap-2 flex-wrap">
                                     <a href="{{ route('perijinan.show', $perijinan->id) }}"
                                         class="inline-flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors">

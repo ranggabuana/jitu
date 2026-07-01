@@ -91,6 +91,8 @@
                     <option value="" disabled>-- Pilih Jenis Perizinan --</option>
                     <option value="umum" {{ old('jenis_perijinan', $perijinan->jenis_perijinan) == 'umum' ? 'selected' : '' }}>Umum</option>
                     <option value="pencabutan_medis" {{ old('jenis_perijinan', $perijinan->jenis_perijinan) == 'pencabutan_medis' ? 'selected' : '' }}>Pencabutan Medis</option>
+                    <option value="operasional_pendidikan" {{ old('jenis_perijinan', $perijinan->jenis_perijinan) == 'operasional_pendidikan' ? 'selected' : '' }}>Izin Operasional Program atau Satuan Pendidikan</option>
+                    <option value="pendirian_pendidikan" {{ old('jenis_perijinan', $perijinan->jenis_perijinan) == 'pendirian_pendidikan' ? 'selected' : '' }}>Izin Pendirian Program atau Satuan Pendidikan</option>
                 </select>
                 @error('jenis_perijinan')
                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>

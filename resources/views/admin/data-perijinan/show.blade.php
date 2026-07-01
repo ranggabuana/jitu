@@ -30,17 +30,13 @@
                                 Pembetulan Izin
                             </span>
                         @elseif($application->perpanjang_dari_id)
-                            @if($application->status_label !== 'Pengajuan Perpanjangan')
-                                <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border border-purple-200 dark:border-purple-800/50">
-                                    Perpanjang Izin
-                                </span>
-                            @endif
+                            <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border border-purple-200 dark:border-purple-800/50">
+                                Perpanjang Izin
+                            </span>
                         @else
-                            @if($application->status_label !== 'Diajukan')
-                                <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50">
-                                    Pengajuan Izin
-                                </span>
-                            @endif
+                            <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50">
+                                Pengajuan Izin
+                            </span>
                         @endif
                     </div>
                     <p class="text-xs text-gray-500 dark:text-gray-400">{{ $application->perijinan->nama_perijinan }}
