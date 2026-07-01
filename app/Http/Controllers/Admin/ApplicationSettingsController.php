@@ -304,6 +304,8 @@ class ApplicationSettingsController extends Controller
             '[NAMA IZIN]' => 'Izin Apotek',
             '[TANGGAL]' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
             '[TANGGAL_HARI_INI]' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
+            '[TANGGAL REKOM TTE]' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
+            '${TANGGAL_REKOM_TTE}' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
             '[NO REGISTRASI]' => 'REG-' . date('Ymd') . '-001',
         ];
 

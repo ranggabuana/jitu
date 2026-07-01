@@ -267,6 +267,14 @@ if (!function_exists('resolveDynamicVariable')) {
         $kodeIzinOpd = $application->no_izin_kode ?? 'DPMPTSP';
         $nomorIzinResolved = "{$kodePerijinan}/{$noIzinUrut}/{$kodeIzinOpd}/{$tahun}";
 
+        // Resolve tanggal rekom ter TTE
+        $rekomTteLog = \App\Models\EsignLog::where('data_perijinan_id', $application->id)
+            ->where('document_type', 'rekomendasi')
+            ->where('status', 'success')
+            ->latest()
+            ->first();
+        $tanggalRekomTte = $rekomTteLog ? Carbon::parse($rekomTteLog->created_at)->translatedFormat('d F Y') : '-';
+
         // System variable map
         $variableMap = [
             '${NAMA_PEMOHON}' => $user->name ?? '-',
@@ -293,6 +301,7 @@ if (!function_exists('resolveDynamicVariable')) {
             '${NOMOR_SURAT}' => $application->no_registrasi ?? '-',
             '${NOMOR_REKOM}' => $nomorRekomResolved,
             '${NOMOR_IZIN}' => $nomorIzinResolved,
+            '${TANGGAL_REKOM_TTE}' => $tanggalRekomTte,
         ];
 
         // Direct match from map

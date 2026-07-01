@@ -500,6 +500,7 @@
                                         '${NOMOR_SURAT}' => 'Nomor Surat Lengkap (Format: KODE/NO/OPD/TAHUN)',
                                         '${LOGO_KABUPATEN}' => 'Logo Kabupaten (Header)',
                                         '${GAMBAR_TTE}' => 'Gambar TTE (Tanda Tangan Elektronik)',
+                                        '${TANGGAL_REKOM_TTE}' => 'Tanggal Rekomendasi TTE',
                                     ] as $code => $label)
                                     <button type="button"
                                         onclick="insertPlaceholder('{{ $code }}')"
@@ -926,6 +927,7 @@
             '${ROLE}': 'Pemohon',
             '${NAMA_IZIN}': '<span style="background:#ede9fe;color:#5b21b6;padding:0 4px;border-radius:3px;font-weight:bold;">Izin Apotek</span>',
             '${TANGGAL_HARI_INI}': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">Banjarnegara, 20 Mei 2026</span>',
+            '${TANGGAL_REKOM_TTE}': '<span style="background:#dbeafe;color:#1e40af;padding:0 4px;border-radius:3px;font-weight:bold;">Banjarnegara, 19 Mei 2026</span>',
             '${NO_REGISTRASI}': '<span style="background:#fef3c7;color:#92400e;padding:0 4px;border-radius:3px;font-weight:bold;">REG-2026-0520-001</span>',
         };
 

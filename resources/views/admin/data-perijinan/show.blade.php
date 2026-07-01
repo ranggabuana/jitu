@@ -2524,6 +2524,7 @@
                         '${TANGGAL}'         => 'Tanggal pengajuan',
                         '${TANGGAL_HARI_INI}'=> 'Tanggal hari ini (saat upload PDF)',
                         '${MASA_AKTIF}'      => 'Masa aktif / berlaku izin',
+                        '${TANGGAL_REKOM_TTE}'=> 'Tanggal rekomendasi ditandatangani secara TTE',
                     ]],
                     ['label' => 'Field Formulir Dinamis', 'icon' => 'mdi-form-select', 'color' => 'rose', 'items' => [
                         '${NAMA_FIELD}' => 'Ganti NAMA_FIELD dengan nama field formulir (global / BO / rekom / izin)',

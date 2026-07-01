@@ -95,6 +95,30 @@ class DocumentGenerator
         $kodeIzinOpd = $application->no_izin_kode ?? 'DPMPTSP';
         $nomorIzinResolved = "{$kodePerijinan}/{$noIzinUrut}/{$kodeIzinOpd}/{$tahun}";
 
+        // Get tanggal rekom ter TTE
+        $rekomTteLogQuery = \App\Models\EsignLog::where('data_perijinan_id', $application->id)
+            ->where('document_type', 'rekomendasi')
+            ->where('status', 'success');
+
+        $rekomOpdId = $targetOpdId;
+        if (!$rekomOpdId && auth()->check() && in_array(auth()->user()->role, ['operator_opd', 'kepala_opd'])) {
+            $rekomOpdId = auth()->user()->opd_id;
+        }
+        if ($rekomOpdId) {
+            $rekomTteLogQuery->whereHas('user', function($q) use ($rekomOpdId) {
+                $q->where('opd_id', $rekomOpdId);
+            });
+        }
+        $rekomTteLog = $rekomTteLogQuery->latest()->first();
+
+        $rekomTteDate = null;
+        if ($rekomTteLog) {
+            $rekomTteDate = $rekomTteLog->created_at;
+        } elseif ($forceOfficial && isset($targetOpdId)) {
+            $rekomTteDate = now();
+        }
+        $tanggalRekomTte = $rekomTteDate ? self::formatDateIndonesian($rekomTteDate) : '-';
+
         // 2. Prepare Replacements Map
         $baseReplacements = [
             '${NAMA_PEMOHON}' => $user->name ?? '-',
@@ -123,6 +147,7 @@ class DocumentGenerator
             '${MASA_AKTIF}' => $application->masa_aktif ? self::formatDateIndonesian($application->masa_aktif) : '-',
             '${NOMOR_REKOM}' => $nomorRekomResolved,
             '${NOMOR_IZIN}' => $nomorIzinResolved,
+            '${TANGGAL_REKOM_TTE}' => $tanggalRekomTte,
         ];
 
         // 3. Define output directory
@@ -2178,6 +2203,26 @@ class DocumentGenerator
         $map['nomor_surat'] = $application->no_izin ?? '-';
         $map['nomor_rekom'] = $nomorRekomResolved;
         $map['nomor_izin'] = $nomorIzinResolved;
+
+        // Find recommendation TTE date
+        $rekomTteLogQuery = \App\Models\EsignLog::where('data_perijinan_id', $application->id)
+            ->where('document_type', 'rekomendasi')
+            ->where('status', 'success');
+
+        $rekomOpd = $currentOpd;
+        if (!$rekomOpd && auth()->check() && in_array(auth()->user()->role, ['operator_opd', 'kepala_opd'])) {
+            $rekomOpd = auth()->user()->opd;
+        }
+
+        if ($rekomOpd) {
+            $rekomTteLogQuery->whereHas('user', function($q) use ($rekomOpd) {
+                $q->where('opd_id', $rekomOpd->id);
+            });
+        }
+        $rekomTteLog = $rekomTteLogQuery->latest()->first();
+        $tanggalRekomTte = $rekomTteLog ? \Carbon\Carbon::parse($rekomTteLog->created_at)->translatedFormat('d F Y') : '-';
+
+        $map['tanggal_rekom_tte'] = $tanggalRekomTte;
 
         // 2. Global form fields
         if ($perijinan && !empty($application->form_data) && is_array($application->form_data)) {

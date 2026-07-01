@@ -222,6 +222,8 @@ class PerijinanController extends Controller
             '[NAMA IZIN]' => $perijinan->nama_perijinan,
             '[TANGGAL]' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
             '[TANGGAL_HARI_INI]' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
+            '[TANGGAL REKOM TTE]' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
+            '${TANGGAL_REKOM_TTE}' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
             '[NO REGISTRASI]' => 'REG-' . date('Ymd') . '-12345',
             '[NOMOR URUT]' => $realNumber,
         ];

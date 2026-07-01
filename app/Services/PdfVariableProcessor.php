@@ -462,6 +462,7 @@ class PdfVariableProcessor
             '${TANGGAL}'          => 'Tanggal pengajuan',
             '${TANGGAL_HARI_INI}' => 'Tanggal hari ini (saat upload)',
             '${MASA_AKTIF}'       => 'Masa aktif / berlaku izin',
+            '${TANGGAL_REKOM_TTE}' => 'Tanggal rekomendasi ditandatangani secara TTE',
 
             // --- Variabel Form Dinamis ---
             '${NAMA_FIELD}'       => 'Ganti NAMA_FIELD dengan nama field formulir (global/rekom/BO/izin)',

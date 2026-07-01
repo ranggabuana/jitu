@@ -549,6 +549,7 @@
                                                 <option value="${TANGGAL_HARI_INI}">Tgl. Hari Ini</option>
                                                 <option value="${NAMA_IZIN}">Nama Layanan</option>
                                                 <option value="${MASA_AKTIF}">Masa Aktif</option>
+                                                <option value="${TANGGAL_REKOM_TTE}">Tgl. Rekom TTE</option>
                                             </optgroup>
                                             <optgroup label="Variabel Data Pemohon">
                                                 <option value="${NAMA_PEMOHON}">Nama Pemohon</option>
@@ -936,6 +937,7 @@
                                         '${LOGO_KABUPATEN}' => 'Logo Kabupaten (Header)',
                                         '${GAMBAR_TTE}' => 'Gambar TTE (Tanda Tangan Elektronik)',
                                         '${QRCODE}' => 'QR Code (Scan untuk Verifikasi Izin)',
+                                        '${TANGGAL_REKOM_TTE}' => 'Tanggal Rekomendasi TTE',
                                         ] as $code => $label)
                                     <button type="button"
                                         onclick="insertPlaceholder('{{ $code }}')"
@@ -1488,6 +1490,7 @@
                                             <option value="${TANGGAL_HARI_INI}">Tgl. Hari Ini</option>
                                             <option value="${NAMA_IZIN}">Nama Layanan</option>
                                             <option value="${MASA_AKTIF}">Masa Aktif</option>
+                                            <option value="${TANGGAL_REKOM_TTE}">Tgl. Rekom TTE</option>
                                         </optgroup>
                                         <optgroup label="Variabel Data Pemohon">
                                             <option value="${NAMA_PEMOHON}">Nama Pemohon</option>
