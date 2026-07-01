@@ -63,7 +63,7 @@
                                 </div>
                                 <div class="flex-1">
                                     <h3 class="text-lg font-bold text-gray-800 group-hover:text-red-600 transition-colors">
-                                        pencabutan Surat Izin Praktik (SIP) tenaga medis dan tenaga kesehatan
+                                        PENCABUTAN SURAT IZIN PRAKTIK TENAGA MEDIS DAN TENAGA KESEHATAN
                                     </h3>
                                 </div>
                             </div>
@@ -163,7 +163,7 @@
                         <i class="fas fa-file-medical-alt text-2xl"></i>
                     </div>
                     <div>
-                        <h2 class="text-xl font-bold">Pencabutan SIP Medis & Nakes</h2>
+                        <h2 class="text-xl font-bold">PENCABUTAN SURAT IZIN PRAKTIK TENAGA MEDIS DAN TENAGA KESEHATAN</h2>
                         <p class="text-red-100 text-xs mt-0.5">Pilih jenis perizinan pencabutan medis yang ingin diajukan</p>
                     </div>
                 </div>

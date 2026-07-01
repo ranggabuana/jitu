@@ -28,7 +28,7 @@ class LayananController extends Controller
             if ($search === '') {
                 $includePencabutanMedis = true;
             } else {
-                $repName = "pencabutan Surat Izin Praktik (SIP) tenaga medis dan tenaga kesehatan";
+                $repName = "PENCABUTAN SURAT IZIN PRAKTIK TENAGA MEDIS DAN TENAGA KESEHATAN";
                 if (stripos($repName, $search) !== false || $pencabutanMedisItems->count() > 0) {
                     $includePencabutanMedis = true;
                 }
