@@ -114,6 +114,7 @@ class PembetulanIzinTest extends TestCase
             ],
             'file_izin' => 'uploads/izin_old.pdf',
             'file_izin_tte' => 'uploads/izin_old_tte.pdf',
+            'file_rekom' => 'uploads/rekom_old.pdf',
             'file_rekom_tte' => 'uploads/rekom_old_tte.pdf',
         ]);
 
@@ -142,6 +143,19 @@ class PembetulanIzinTest extends TestCase
         }
         file_put_contents($dummyPath, 'dummy content');
 
+        // Create dummy files for old TTE files and drafts
+        $oldIzinPath = public_path($completedApp->file_izin_tte);
+        $oldRekomPath = public_path($completedApp->file_rekom_tte);
+        $oldIzinDraftPath = public_path($completedApp->file_izin);
+        $oldRekomDraftPath = public_path($completedApp->file_rekom);
+        if (!file_exists(dirname($oldIzinPath))) {
+            mkdir(dirname($oldIzinPath), 0755, true);
+        }
+        file_put_contents($oldIzinPath, 'dummy old izin tte');
+        file_put_contents($oldRekomPath, 'dummy old rekom tte');
+        file_put_contents($oldIzinDraftPath, 'dummy old izin draft');
+        file_put_contents($oldRekomDraftPath, 'dummy old rekom draft');
+
         // 5. Test POST Store Page as correction
         $storeResponse = $this->actingAs($pemohon)
             ->post(route('pemohon.pengajuan.store'), [
@@ -165,8 +179,9 @@ class PembetulanIzinTest extends TestCase
         $storeResponse->assertRedirect();
 
         // 6. Assert same application is updated (no new row created)
-        $newApp = DataPerijinan::findOrFail($completedApp->id);
         $this->assertEquals(1, DataPerijinan::count());
+
+        $newApp = DataPerijinan::findOrFail($completedApp->id);
         $this->assertTrue($newApp->is_pembetulan);
         $this->assertEquals('Alasan pembetulan tes', $newApp->alasan_pembetulan);
         $this->assertEquals('Dr. Budi Santoso (Dibetulkan)', $newApp->form_data[$fieldNama->id]);
@@ -177,9 +192,19 @@ class PembetulanIzinTest extends TestCase
         $this->assertNotNull($newApp->bo_data);
         $this->assertEquals('Dr. Budi Santoso (Dibetulkan)', $newApp->bo_data['nama_pemilik']);
 
-        // Verify TTE files: file_izin_tte is reset, but file_rekom_tte is kept/preserved!
+        // Verify TTE files: active file_izin_tte is reset, but old one is backed up
         $this->assertNull($newApp->file_izin_tte);
-        $this->assertEquals('uploads/rekom_old_tte.pdf', $newApp->file_rekom_tte);
+        
+        // Verify backup columns are populated
+        $this->assertNotNull($newApp->file_izin_tte_pembetulan_old);
+        $this->assertNotNull($newApp->file_rekom_tte_pembetulan_old);
+        $this->assertNotNull($newApp->file_izin_pembetulan_old);
+        $this->assertNotNull($newApp->file_rekom_pembetulan_old);
+        
+        $this->assertFileExists(public_path($newApp->file_izin_tte_pembetulan_old));
+        $this->assertFileExists(public_path($newApp->file_rekom_tte_pembetulan_old));
+        $this->assertFileExists(public_path($newApp->file_izin_pembetulan_old));
+        $this->assertFileExists(public_path($newApp->file_rekom_pembetulan_old));
 
         // Verify registration number and permit/rekom numbers are preserved
         $this->assertEquals('REG-999', $newApp->no_registrasi);
@@ -195,6 +220,16 @@ class PembetulanIzinTest extends TestCase
         // Clean up newly copied file
         $copiedPath = public_path($newApp->form_files[$fieldFile->id][0]);
         @unlink($copiedPath);
+
+        // Clean up old files
+        @unlink($oldIzinPath);
+        @unlink($oldRekomPath);
+        @unlink($oldIzinDraftPath);
+        @unlink($oldRekomDraftPath);
+        @unlink(public_path($newApp->file_izin_tte_pembetulan_old));
+        @unlink(public_path($newApp->file_rekom_tte_pembetulan_old));
+        @unlink(public_path($newApp->file_izin_pembetulan_old));
+        @unlink(public_path($newApp->file_rekom_pembetulan_old));
 
         // 8. Assert validation flow: only FO, BO, Verifikator, Kadin. Operator/Kepala OPD are skipped!
         $validasiRecords = DataPerijinanValidasi::where('data_perijinan_id', $newApp->id)

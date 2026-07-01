@@ -727,6 +727,82 @@
                             {{-- Pembetulan: BO upload izin PDF section --}}
                             @if($application->is_pembetulan)
                             <div class="mt-8 pt-6 border-t-2 border-dashed border-blue-200 dark:border-blue-800">
+                                {{-- Referensi Dokumen Sebelum Pembetulan --}}
+                                @if($application->file_izin_tte_pembetulan_old || $application->file_izin_pembetulan_old || $application->file_rekom_tte_pembetulan_old || $application->file_rekom_pembetulan_old || !empty($application->file_rekom_multi_tte_pembetulan_old) || !empty($application->file_rekom_multi_pembetulan_old))
+                                    <div class="p-4 bg-amber-50/60 dark:bg-amber-950/20 rounded-xl border border-amber-200 dark:border-amber-900/40 space-y-3 mb-5">
+                                        <p class="text-xs font-black text-amber-800 dark:text-amber-300 flex items-center gap-1.5 uppercase tracking-wide">
+                                            <i class="mdi mdi-file-document-outline text-amber-600 text-lg"></i>
+                                            Acuan Pembetulan (Dokumen Ter-TTE & Draft Sebelumnya)
+                                        </p>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                            {{-- Surat Izin --}}
+                                            @if($application->file_izin_tte_pembetulan_old && file_exists(public_path($application->file_izin_tte_pembetulan_old)))
+                                                <a href="{{ asset($application->file_izin_tte_pembetulan_old) }}" target="_blank" 
+                                                    class="inline-flex items-center justify-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-amber-200 dark:border-gray-700 rounded-lg text-xs font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors shadow-sm">
+                                                    <i class="mdi mdi-file-pdf-box text-red-500 text-sm"></i>
+                                                    Izin Ter-TTE Lama
+                                                </a>
+                                            @endif
+                                            @if($application->file_izin_pembetulan_old && file_exists(public_path($application->file_izin_pembetulan_old)))
+                                                <a href="{{ asset($application->file_izin_pembetulan_old) }}" target="_blank" 
+                                                    class="inline-flex items-center justify-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-amber-200 dark:border-gray-700 rounded-lg text-xs font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors shadow-sm">
+                                                    <i class="mdi mdi-file-pdf-box text-blue-500 text-sm"></i>
+                                                    Draft Izin Lama
+                                                </a>
+                                            @endif
+
+                                            {{-- Surat Rekomendasi --}}
+                                            @if($application->file_rekom_tte_pembetulan_old && file_exists(public_path($application->file_rekom_tte_pembetulan_old)))
+                                                <a href="{{ asset($application->file_rekom_tte_pembetulan_old) }}" target="_blank"
+                                                    class="inline-flex items-center justify-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-amber-200 dark:border-gray-700 rounded-lg text-xs font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors shadow-sm">
+                                                    <i class="mdi mdi-file-pdf-box text-red-500 text-sm"></i>
+                                                    Rekom Ter-TTE Lama
+                                                </a>
+                                            @endif
+                                            @if($application->file_rekom_pembetulan_old && file_exists(public_path($application->file_rekom_pembetulan_old)))
+                                                <a href="{{ asset($application->file_rekom_pembetulan_old) }}" target="_blank"
+                                                    class="inline-flex items-center justify-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-amber-200 dark:border-gray-700 rounded-lg text-xs font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors shadow-sm">
+                                                    <i class="mdi mdi-file-pdf-box text-blue-500 text-sm"></i>
+                                                    Draft Rekom Lama
+                                                </a>
+                                            @endif
+
+                                            {{-- Multi OPD Rekomendasi --}}
+                                            @if(!empty($application->file_rekom_multi_tte_pembetulan_old))
+                                                @foreach($application->file_rekom_multi_tte_pembetulan_old as $opdId => $path)
+                                                    @if($path && file_exists(public_path($path)))
+                                                        @php
+                                                            $opdName = \App\Models\Opd::find($opdId)->nama_opd ?? 'OPD';
+                                                        @endphp
+                                                        <a href="{{ asset($path) }}" target="_blank"
+                                                            class="inline-flex items-center justify-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-amber-200 dark:border-gray-700 rounded-lg text-xs font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
+                                                            title="Rekomendasi {{ $opdName }}">
+                                                            <i class="mdi mdi-file-pdf-box text-red-500 text-sm"></i>
+                                                            Rekom TTE {{ \Illuminate\Support\Str::limit($opdName, 10) }}
+                                                        </a>
+                                                    @endif
+                                                @endforeach
+                                            @endif
+
+                                            @if(!empty($application->file_rekom_multi_pembetulan_old))
+                                                @foreach($application->file_rekom_multi_pembetulan_old as $opdId => $path)
+                                                    @if($path && file_exists(public_path($path)))
+                                                        @php
+                                                            $opdName = \App\Models\Opd::find($opdId)->nama_opd ?? 'OPD';
+                                                        @endphp
+                                                        <a href="{{ asset($path) }}" target="_blank"
+                                                            class="inline-flex items-center justify-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-amber-200 dark:border-gray-700 rounded-lg text-xs font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
+                                                            title="Rekomendasi {{ $opdName }}">
+                                                            <i class="mdi mdi-file-pdf-box text-blue-500 text-sm"></i>
+                                                            Rekom Draft {{ \Illuminate\Support\Str::limit($opdName, 10) }}
+                                                        </a>
+                                                    @endif
+                                                @endforeach
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endif
+
                                 <div class="flex items-center gap-3 mb-4">
                                     <div class="w-9 h-9 bg-blue-100 dark:bg-blue-900/40 rounded-xl flex items-center justify-center border border-blue-200 dark:border-blue-800">
                                         <i class="mdi mdi-file-sign text-blue-600 dark:text-blue-400 text-lg"></i>

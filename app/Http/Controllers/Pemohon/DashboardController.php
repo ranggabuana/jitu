@@ -629,13 +629,8 @@ class DashboardController extends Controller
             }
 
             if ($isPembetulan) {
-                $data = $pembetulanFromApp;
-                
-                // Clear old validation records
-                $data->validasiRecords()->delete();
-
                 // Re-evaluate BO data matching global fields
-                $boData = $data->bo_data ?? [];
+                $boData = $pembetulanFromApp->bo_data ?? [];
                 $allFields = \App\Models\PerijinanFormField::where('perijinan_id', $perijinan->id)
                     ->where('is_active', true)
                     ->get();
@@ -661,6 +656,122 @@ class DashboardController extends Controller
                         } else if ($field->type !== 'table') {
                             $val = ($request->form_fields ?? [])[$matchingGlobalField->id] ?? '';
                             $boData[$field->name] = $val;
+                        }
+                    }
+                }
+
+                $data = $pembetulanFromApp;
+                
+                // Clear old validation records
+                $data->validasiRecords()->delete();
+
+                $fileIzinTteOld = null;
+                $fileRekomTteOld = null;
+                $fileRekomMultiTteOld = null;
+                $fileIzinOld = null;
+                $fileRekomOld = null;
+                $fileRekomMultiOld = null;
+
+                // 1. Copy old TTE Permit
+                if ($data->file_izin_tte && file_exists(public_path($data->file_izin_tte))) {
+                    $oldPath = $data->file_izin_tte;
+                    $info = pathinfo($oldPath);
+                    $newRelativePath = 'uploads/pembetulan_old/' . $data->id . '_izin_tte_old.' . ($info['extension'] ?? 'pdf');
+                    $newAbsolutePath = public_path($newRelativePath);
+                    if (!file_exists(dirname($newAbsolutePath))) {
+                        mkdir(dirname($newAbsolutePath), 0755, true);
+                    }
+                    if (copy(public_path($oldPath), $newAbsolutePath)) {
+                        $fileIzinTteOld = $newRelativePath;
+                    }
+                }
+
+                // 2. Copy old draft Permit
+                if ($data->file_izin && file_exists(public_path($data->file_izin))) {
+                    $oldPath = $data->file_izin;
+                    $info = pathinfo($oldPath);
+                    $newRelativePath = 'uploads/pembetulan_old/' . $data->id . '_izin_old.' . ($info['extension'] ?? 'pdf');
+                    $newAbsolutePath = public_path($newRelativePath);
+                    if (!file_exists(dirname($newAbsolutePath))) {
+                        mkdir(dirname($newAbsolutePath), 0755, true);
+                    }
+                    if (copy(public_path($oldPath), $newAbsolutePath)) {
+                        $fileIzinOld = $newRelativePath;
+                    }
+                }
+
+                // 3. Copy old TTE Rekom
+                if ($data->file_rekom_tte && file_exists(public_path($data->file_rekom_tte))) {
+                    $oldPath = $data->file_rekom_tte;
+                    $info = pathinfo($oldPath);
+                    $newRelativePath = 'uploads/pembetulan_old/' . $data->id . '_rekom_tte_old.' . ($info['extension'] ?? 'pdf');
+                    $newAbsolutePath = public_path($newRelativePath);
+                    if (!file_exists(dirname($newAbsolutePath))) {
+                        mkdir(dirname($newAbsolutePath), 0755, true);
+                    }
+                    if (copy(public_path($oldPath), $newAbsolutePath)) {
+                        $fileRekomTteOld = $newRelativePath;
+                    }
+                }
+
+                // 4. Copy old draft Rekom
+                if ($data->file_rekom && file_exists(public_path($data->file_rekom))) {
+                    $oldPath = $data->file_rekom;
+                    $info = pathinfo($oldPath);
+                    $newRelativePath = 'uploads/pembetulan_old/' . $data->id . '_rekom_old.' . ($info['extension'] ?? 'pdf');
+                    $newAbsolutePath = public_path($newRelativePath);
+                    if (!file_exists(dirname($newAbsolutePath))) {
+                        mkdir(dirname($newAbsolutePath), 0755, true);
+                    }
+                    if (copy(public_path($oldPath), $newAbsolutePath)) {
+                        $fileRekomOld = $newRelativePath;
+                    }
+                }
+
+                // 5. Copy old TTE Multi Rekom
+                if ($data->file_rekom_multi_tte) {
+                    $oldArray = is_array($data->file_rekom_multi_tte) ? $data->file_rekom_multi_tte : json_decode($data->file_rekom_multi_tte, true);
+                    if (is_array($oldArray)) {
+                        $newArray = [];
+                        foreach ($oldArray as $opdId => $oldPath) {
+                            if ($oldPath && file_exists(public_path($oldPath))) {
+                                $info = pathinfo($oldPath);
+                                $newRelativePath = 'uploads/pembetulan_old/' . $data->id . '_rekom_multi_tte_' . $opdId . '_old.' . ($info['extension'] ?? 'pdf');
+                                $newAbsolutePath = public_path($newRelativePath);
+                                if (!file_exists(dirname($newAbsolutePath))) {
+                                    mkdir(dirname($newAbsolutePath), 0755, true);
+                                }
+                                if (copy(public_path($oldPath), $newAbsolutePath)) {
+                                    $newArray[$opdId] = $newRelativePath;
+                                }
+                            }
+                        }
+                        if (!empty($newArray)) {
+                            $fileRekomMultiTteOld = $newArray;
+                        }
+                    }
+                }
+
+                // 6. Copy old draft Multi Rekom
+                if ($data->file_rekom_multi) {
+                    $oldArray = is_array($data->file_rekom_multi) ? $data->file_rekom_multi : json_decode($data->file_rekom_multi, true);
+                    if (is_array($oldArray)) {
+                        $newArray = [];
+                        foreach ($oldArray as $opdId => $oldPath) {
+                            if ($oldPath && file_exists(public_path($oldPath))) {
+                                $info = pathinfo($oldPath);
+                                $newRelativePath = 'uploads/pembetulan_old/' . $data->id . '_rekom_multi_' . $opdId . '_old.' . ($info['extension'] ?? 'pdf');
+                                $newAbsolutePath = public_path($newRelativePath);
+                                if (!file_exists(dirname($newAbsolutePath))) {
+                                    mkdir(dirname($newAbsolutePath), 0755, true);
+                                }
+                                if (copy(public_path($oldPath), $newAbsolutePath)) {
+                                    $newArray[$opdId] = $newRelativePath;
+                                }
+                            }
+                        }
+                        if (!empty($newArray)) {
+                            $fileRekomMultiOld = $newArray;
                         }
                     }
                 }
@@ -701,6 +812,12 @@ class DashboardController extends Controller
                     'file_izin_tte' => null,
                     'file_izin' => null,
                     'file_izin_pembetulan' => null, // Reset the BO manual upload file as well
+                    'file_izin_tte_pembetulan_old' => $fileIzinTteOld,
+                    'file_rekom_tte_pembetulan_old' => $fileRekomTteOld,
+                    'file_rekom_multi_tte_pembetulan_old' => $fileRekomMultiTteOld,
+                    'file_izin_pembetulan_old' => $fileIzinOld,
+                    'file_rekom_pembetulan_old' => $fileRekomOld,
+                    'file_rekom_multi_pembetulan_old' => $fileRekomMultiOld,
                 ];
 
                 $data->update($updateData);

@@ -54,6 +54,12 @@ class DataPerijinan extends Model
         'pembetulan_dari_id',
         'is_pembetulan',
         'alasan_pembetulan',
+        'file_rekom_tte_pembetulan_old',
+        'file_izin_tte_pembetulan_old',
+        'file_rekom_multi_tte_pembetulan_old',
+        'file_rekom_pembetulan_old',
+        'file_izin_pembetulan_old',
+        'file_rekom_multi_pembetulan_old',
     ];
 
     protected $casts = [
@@ -66,6 +72,8 @@ class DataPerijinan extends Model
         'data_pemohon' => 'array',
         'file_rekom_multi' => 'array',
         'file_rekom_multi_tte' => 'array',
+        'file_rekom_multi_tte_pembetulan_old' => 'array',
+        'file_rekom_multi_pembetulan_old' => 'array',
         'is_deactivated' => 'boolean',
         'masa_aktif' => 'date',
         'submitted_at' => 'datetime',
