@@ -69,6 +69,7 @@ class User extends Authenticatable
      */
     protected $appends = [
         'role_label',
+        'status_pemohon_label',
     ];
 
     /**
@@ -224,6 +225,18 @@ class User extends Authenticatable
             'pemohon' => 'Pemohon',
         ];
         return $labels[$this->role] ?? (string)$this->role;
+    }
+
+    /**
+     * Get status pemohon label.
+     */
+    public function getStatusPemohonLabelAttribute(): string
+    {
+        $labels = [
+            'badan_usaha' => 'Badan Usaha',
+            'perorangan' => 'Perorangan',
+        ];
+        return $labels[$this->status_pemohon] ?? (string)$this->status_pemohon;
     }
 
     /**

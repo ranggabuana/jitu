@@ -1866,7 +1866,15 @@
                 <div class="p-5">
                     <div class="flex items-center gap-3 mb-5">
                         <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center border border-blue-200 dark:border-blue-800"><i class="mdi mdi-account text-blue-600 dark:text-blue-400 text-xl"></i></div>
-                        <div class="min-w-0 flex-1"><h3 class="font-bold text-gray-800 dark:text-white truncate text-xs">{{ $application->user->name }}</h3><p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">{{ $application->user->status_pemohon_label }}</p></div>
+                        <div class="min-w-0 flex-1">
+                            <h3 class="font-bold text-gray-800 dark:text-white truncate text-xs">{{ $application->user->name }}</h3>
+                            <p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">{{ $application->user->status_pemohon_label }}</p>
+                            @if ($application->user->status_pemohon === 'badan_usaha')
+                                <p class="text-[10px] text-gray-600 dark:text-gray-400 font-medium mt-1 truncate" title="{{ $application->user->nama_perusahaan }}">
+                                    <i class="mdi mdi-domain mr-0.5"></i>{{ $application->user->nama_perusahaan ?? '-' }}
+                                </p>
+                            @endif
+                        </div>
                     </div>
                     <button type="button" onclick="openIdentityModal()" class="w-full py-2 bg-blue-50 text-blue-700 rounded-xl text-[10px] font-black uppercase transition-all hover:bg-blue-100 flex items-center justify-center gap-2 border border-blue-100"><i class="mdi mdi-account-details-outline text-sm"></i> Detail Profil</button>
                     @if($application->catatan_pemohon)<div class="mt-3 p-3 bg-amber-50 rounded-xl border border-amber-100"><p class="text-[9px] text-amber-700 font-black uppercase">Catatan:</p><p class="text-[10px] text-amber-800 italic">"{{ $application->catatan_pemohon }}"</p></div>@endif

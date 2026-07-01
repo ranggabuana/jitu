@@ -11,6 +11,9 @@
             <div>
                 <p class="font-extrabold text-gray-800">{{ $user->name }}</p>
                 <p class="text-xs text-gray-500">NIK: {{ $user->nip ?? '-' }}</p>
+                @if($user->status_pemohon === 'badan_usaha')
+                    <p class="text-[11px] text-gray-500 mt-0.5"><span class="font-semibold text-gray-600">Perusahaan:</span> {{ $user->nama_perusahaan ?? '-' }}</p>
+                @endif
             </div>
         </div>
         <div class="grid grid-cols-1 gap-3 text-sm">

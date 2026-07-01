@@ -159,6 +159,12 @@
                                         </div>
                                         <div class="text-sm text-gray-500 dark:text-gray-400">
                                             {{ '@' }}{{ $item->username }}</div>
+                                        @if ($item->status_pemohon === 'badan_usaha')
+                                            <div class="text-xs text-purple-600 dark:text-purple-400 font-medium mt-1 flex items-center gap-1">
+                                                <i class="fas fa-building text-[10px]"></i>
+                                                <span>{{ $item->nama_perusahaan ?? '-' }}</span>
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                             </td>
