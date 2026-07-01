@@ -65,6 +65,31 @@
             @endif
             @if(isset($pembetulanFromApp))
                 <input type="hidden" name="pembetulan_from" value="{{ $pembetulanFromApp->id }}">
+                
+                <!-- Alasan Pembetulan Card -->
+                <div class="bg-white rounded-2xl shadow-sm border border-red-200 p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-exclamation-triangle text-red-600"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-gray-800">Alasan Pembetulan</h2>
+                            <p class="text-sm text-gray-500">Berikan penjelasan detail alasan Anda mengajukan pembetulan izin ini</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Alasan Pembetulan <span class="text-red-500">*</span>
+                        </label>
+                        <textarea name="alasan_pembetulan" rows="4" required
+                            class="w-full px-4 py-3 border @error('alasan_pembetulan') border-red-500 @else border-gray-300 @endif rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all outline-none"
+                            placeholder="Tulis alasan pembetulan di sini (wajib diisi)...">{{ old('alasan_pembetulan', $pembetulanFromApp->alasan_pembetulan ?? '') }}</textarea>
+                        @error('alasan_pembetulan')
+                            <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
             @endif
 
             <!-- Info Card -->

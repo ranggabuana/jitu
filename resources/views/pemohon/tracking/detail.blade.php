@@ -44,6 +44,21 @@
                 </button>
             </div>
         </div>
+
+        <!-- Alasan Pembetulan -->
+        @if($data->is_pembetulan && $data->alasan_pembetulan)
+            <div class="bg-red-50 border border-red-200 rounded-2xl p-6 shadow-sm">
+                <div class="flex items-start gap-4">
+                    <div class="w-12 h-12 bg-red-100 text-red-600 rounded-xl flex items-center justify-center text-2xl shadow-inner flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-bold text-red-800">Alasan Pembetulan Izin</h3>
+                        <p class="text-sm text-red-600 leading-relaxed font-semibold italic mt-1">"{{ $data->alasan_pembetulan }}"</p>
+                    </div>
+                </div>
+            </div>
+        @endif
         
         <!-- Dokumen Izin Download Section -->
         @if(in_array($data->status, ['approved', 'diperbaiki']) && ($data->file_izin_tte || $data->file_izin))

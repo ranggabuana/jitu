@@ -379,6 +379,20 @@
 
             <!-- TAB 1: DATA DAN BERKAS PEMOHON -->
             <div id="tab-panel-data-pemohon" class="tab-content-panel space-y-6">
+                @if($application->is_pembetulan && $application->alasan_pembetulan)
+                    <div class="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl p-5 shadow-sm">
+                        <div class="flex items-start gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/40 flex items-center justify-center flex-shrink-0 border border-red-200 dark:border-red-800">
+                                <i class="mdi mdi-alert-circle-outline text-red-600 dark:text-red-400 text-xl"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="text-sm font-bold text-red-800 dark:text-red-300 uppercase tracking-tight mb-1">Alasan Pembetulan Izin</h4>
+                                <p class="text-xs text-red-700 dark:text-red-400 leading-relaxed font-semibold italic">"{{ $application->alasan_pembetulan }}"</p>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 @if($isFutureValidator && $application->status !== 'approved' && $application->status !== 'diperbaiki' && $application->status !== 'rejected')
                     <div class="p-4 bg-rose-50 dark:bg-rose-900/20 border-l-4 border-rose-500 rounded-r-xl flex gap-3 shadow-sm mb-6">
                         <i class="mdi mdi-lock-clock text-rose-600 text-xl mt-0.5"></i>

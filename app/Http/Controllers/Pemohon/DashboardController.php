@@ -323,9 +323,11 @@ class DashboardController extends Controller
             'perijinan_id' => 'required|exists:perijinan,id',
             'form_fields' => 'nullable|array',
             'pernyataan' => 'required|accepted',
+            'alasan_pembetulan' => $request->filled('pembetulan_from') ? 'required|string' : 'nullable|string',
         ], [
             'pernyataan.required' => 'Anda harus menyetujui pernyataan pertanggungjawaban data.',
             'pernyataan.accepted' => 'Anda harus menyetujui pernyataan pertanggungjawaban data.',
+            'alasan_pembetulan.required' => 'Alasan pembetulan wajib diisi.',
         ]);
 
         $perijinan = Perijinan::with(['activeFormFields' => function ($query) {
@@ -623,6 +625,7 @@ class DashboardController extends Controller
                     'current_step' => 1,
                     'is_pembetulan' => true,
                     'pembetulan_dari_id' => $pembetulanDariId,
+                    'alasan_pembetulan' => $request->alasan_pembetulan,
                     'form_data' => $request->form_fields ?? [],
                     'form_files' => !empty($uploadedFiles) ? $uploadedFiles : null,
                     'bo_data' => $boData,

@@ -147,6 +147,7 @@ class PembetulanIzinTest extends TestCase
             ->post(route('pemohon.pengajuan.store'), [
                 'perijinan_id' => $perijinan->id,
                 'pembetulan_from' => $completedApp->id,
+                'alasan_pembetulan' => 'Alasan pembetulan tes',
                 'form_fields' => [
                     $fieldNama->id => 'Dr. Budi Santoso (Dibetulkan)',
                     $fieldAlamat->id => 'Jl. Pemuda No. 45',
@@ -167,6 +168,7 @@ class PembetulanIzinTest extends TestCase
         $newApp = DataPerijinan::findOrFail($completedApp->id);
         $this->assertEquals(1, DataPerijinan::count());
         $this->assertTrue($newApp->is_pembetulan);
+        $this->assertEquals('Alasan pembetulan tes', $newApp->alasan_pembetulan);
         $this->assertEquals('Dr. Budi Santoso (Dibetulkan)', $newApp->form_data[$fieldNama->id]);
         $this->assertEquals('submitted', $newApp->status);
         $this->assertEquals($completedApp->id, $newApp->pembetulan_dari_id);

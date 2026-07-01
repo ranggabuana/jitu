@@ -53,6 +53,7 @@ class DataPerijinan extends Model
         'root_perpanjang_id',
         'pembetulan_dari_id',
         'is_pembetulan',
+        'alasan_pembetulan',
     ];
 
     protected $casts = [
