@@ -472,15 +472,27 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Nama Lengkap <span class="text-red-500">*</span></label>
-                                <input type="text" name="responden_nama" value="{{ auth()->user()->name }}" required class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm">
+                                <input type="text" name="responden_nama" value="{{ auth()->user()->name }}" readonly required class="w-full px-4 py-3 bg-gray-100 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-xl outline-none cursor-not-allowed text-sm text-gray-500 dark:text-gray-400">
                             </div>
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Email <span class="text-red-500">*</span></label>
-                                <input type="email" name="responden_email" value="{{ auth()->user()->email }}" required class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm">
+                                <input type="email" name="responden_email" value="{{ auth()->user()->email }}" readonly required class="w-full px-4 py-3 bg-gray-100 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-xl outline-none cursor-not-allowed text-sm text-gray-500 dark:text-gray-400">
                             </div>
-                            <div class="md:col-span-2">
+                            <div>
                                 <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">NIP / NIK <span class="text-red-500">*</span></label>
-                                <input type="text" name="nip" value="{{ auth()->user()->nip }}" required class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm">
+                                <input type="text" name="nip" value="{{ auth()->user()->nip }}" readonly required class="w-full px-4 py-3 bg-gray-100 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-xl outline-none cursor-not-allowed text-sm text-gray-500 dark:text-gray-400">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Jenis Kelamin <span class="text-red-500">*</span></label>
+                                <input type="text" name="jenis_kelamin" value="{{ auth()->user()->jenis_kelamin }}" readonly required class="w-full px-4 py-3 bg-gray-100 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-xl outline-none cursor-not-allowed text-sm text-gray-500 dark:text-gray-400">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Pendidikan <span class="text-red-500">*</span></label>
+                                <input type="text" name="pendidikan" value="{{ auth()->user()->pendidikan }}" readonly required class="w-full px-4 py-3 bg-gray-100 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-xl outline-none cursor-not-allowed text-sm text-gray-500 dark:text-gray-400">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Pekerjaan <span class="text-red-500">*</span></label>
+                                <input type="text" name="pekerjaan" value="{{ auth()->user()->pekerjaan }}" readonly required class="w-full px-4 py-3 bg-gray-100 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-xl outline-none cursor-not-allowed text-sm text-gray-500 dark:text-gray-400">
                             </div>
                         </div>
 

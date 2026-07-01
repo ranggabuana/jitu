@@ -17,6 +17,9 @@ class HasilSkm extends Model
         'responden_nama',
         'responden_email',
         'nip',
+        'jenis_kelamin',
+        'pendidikan',
+        'pekerjaan',
         'jawaban',
         'saran',
         'ip_address',
@@ -56,6 +59,9 @@ class HasilSkm extends Model
      */
     public function getJawabanLabelAttribute()
     {
+        if ($this->dataSkm) {
+            return $this->dataSkm->getCustomSkalaLabel($this->jawaban);
+        }
         return DataSkm::getSkalaLabel($this->jawaban);
     }
 

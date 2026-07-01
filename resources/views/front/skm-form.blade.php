@@ -103,9 +103,10 @@
                                    name="responden_nama"
                                    id="responden_nama"
                                    value="{{ old('responden_nama', $application->user->name ?? auth()->user()->name ?? '') }}"
+                                   readonly
                                    required
                                    placeholder="Masukkan nama lengkap Anda"
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all @error('responden_nama') border-red-500 @enderror">
+                                   class="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-xl outline-none cursor-not-allowed transition-all text-gray-500 @error('responden_nama') border-red-500 @enderror">
                             @error('responden_nama')
                                 <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                             @enderror
@@ -118,24 +119,75 @@
                                    name="responden_email"
                                    id="responden_email"
                                    value="{{ old('responden_email', $application->user->email ?? auth()->user()->email ?? '') }}"
+                                   readonly
                                    required
                                    placeholder="contoh@email.com"
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all @error('responden_email') border-red-500 @enderror">
+                                   class="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-xl outline-none cursor-not-allowed transition-all text-gray-500 @error('responden_email') border-red-500 @enderror">
                             @error('responden_email')
                                 <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                             @enderror
                         </div>
-                        <div class="md:col-span-2">
+                        <div>
                             <label for="nip" class="block text-sm font-semibold text-gray-700 mb-2">
-                                NIP / NIK (Opsional)
+                                NIP / NIK <span class="text-red-500">*</span>
                             </label>
                             <input type="text"
                                    name="nip"
                                    id="nip"
                                    value="{{ old('nip', $application->user->nip ?? auth()->user()->nip ?? '') }}"
-                                   placeholder="Masukkan NIP/NIK jika ada"
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all @error('nip') border-red-500 @enderror">
+                                   readonly
+                                   required
+                                   placeholder="Masukkan NIP/NIK"
+                                   class="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-xl outline-none cursor-not-allowed transition-all text-gray-500 @error('nip') border-red-500 @enderror">
                             @error('nip')
+                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label for="jenis_kelamin" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Jenis Kelamin <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text"
+                                   name="jenis_kelamin"
+                                   id="jenis_kelamin"
+                                   value="{{ old('jenis_kelamin', $application->user->jenis_kelamin ?? auth()->user()->jenis_kelamin ?? '') }}"
+                                   readonly
+                                   required
+                                   placeholder="Jenis Kelamin"
+                                   class="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-xl outline-none cursor-not-allowed transition-all text-gray-500 @error('jenis_kelamin') border-red-500 @enderror">
+                            @error('jenis_kelamin')
+                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label for="pendidikan" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Pendidikan <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text"
+                                   name="pendidikan"
+                                   id="pendidikan"
+                                   value="{{ old('pendidikan', $application->user->pendidikan ?? auth()->user()->pendidikan ?? '') }}"
+                                   readonly
+                                   required
+                                   placeholder="Pendidikan"
+                                   class="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-xl outline-none cursor-not-allowed transition-all text-gray-500 @error('pendidikan') border-red-500 @enderror">
+                            @error('pendidikan')
+                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label for="pekerjaan" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Pekerjaan <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text"
+                                   name="pekerjaan"
+                                   id="pekerjaan"
+                                   value="{{ old('pekerjaan', $application->user->pekerjaan ?? auth()->user()->pekerjaan ?? '') }}"
+                                   readonly
+                                   required
+                                   placeholder="Pekerjaan"
+                                   class="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-xl outline-none cursor-not-allowed transition-all text-gray-500 @error('pekerjaan') border-red-500 @enderror">
+                            @error('pekerjaan')
                                 <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                             @enderror
                         </div>
