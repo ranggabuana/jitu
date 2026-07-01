@@ -1213,7 +1213,7 @@ class DocumentGenerator
      * Process an uploaded DOCX template for a permit correction, replace variables,
      * convert to PDF, and return the path to the generated PDF.
      */
-    public static function processPembetulanDocx(string $docxAbsPath, DataPerijinan $application): string
+    public static function processPembetulanDocx(string $docxAbsPath, DataPerijinan $application, bool $isDraft = true): string
     {
         $perijinan = $application->perijinan;
         
@@ -1233,7 +1233,7 @@ class DocumentGenerator
         
         // 3. Scan URL and QR Code
         $scanUrl = route('front.perizinan.scan', ['no_registrasi' => $application->no_registrasi, 'type' => 'izin']);
-        $tempQrPath = self::generateQrCodeFile($scanUrl, false); 
+        $tempQrPath = self::generateQrCodeFile($scanUrl, $isDraft); 
         
         if ($tempQrPath && File::exists($tempQrPath)) {
             $baseReplacements['${_IMG_PATH_QRCODE}'] = $tempQrPath;

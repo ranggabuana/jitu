@@ -2667,7 +2667,19 @@ class DataPerijinanController extends Controller
                 $filePath = null;
 
                 if ($application->is_pembetulan) {
-                    // Pembetulan: use the PDF uploaded by BO — do NOT regenerate from template
+                    // Pembetulan: use the template file to regenerate the PDF but with isDraft = false (black QR code)
+                    $docxTemplatePath = str_replace('.pdf', '_template.docx', $application->file_izin_pembetulan);
+                    $docxAbsPath = public_path($docxTemplatePath);
+                    if (file_exists($docxAbsPath)) {
+                        try {
+                            $generatedPdfPath = \App\Services\DocumentGenerator::processPembetulanDocx($docxAbsPath, $application, false);
+                            $application->file_izin_pembetulan = $generatedPdfPath;
+                            $application->save();
+                        } catch (\Exception $e) {
+                            \Log::error('Gagal meregenerasi izin pembetulan sebelum TTE: ' . $e->getMessage());
+                        }
+                    }
+                    
                     $filePath = $application->file_izin_pembetulan ?? null;
                     if (!$filePath || !file_exists(public_path($filePath))) {
                         throw new \Exception("File PDF surat izin yang diunggah BO tidak ditemukan. Minta BO untuk mengunggah ulang.");
