@@ -2672,15 +2672,13 @@ class DataPerijinanController extends Controller
                     $docxAbsPath = public_path($docxTemplatePath);
                     if (file_exists($docxAbsPath)) {
                         try {
-                            $generatedPdfPath = \App\Services\DocumentGenerator::processPembetulanDocx($docxAbsPath, $application, false);
-                            $application->file_izin_pembetulan = $generatedPdfPath;
-                            $application->save();
+                            $filePath = \App\Services\DocumentGenerator::processPembetulanDocx($docxAbsPath, $application, false);
                         } catch (\Exception $e) {
                             \Log::error('Gagal meregenerasi izin pembetulan sebelum TTE: ' . $e->getMessage());
                         }
                     }
                     
-                    $filePath = $application->file_izin_pembetulan ?? null;
+                    $filePath = $filePath ?? ($application->file_izin_pembetulan ?? null);
                     if (!$filePath || !file_exists(public_path($filePath))) {
                         throw new \Exception("File PDF surat izin yang diunggah BO tidak ditemukan. Minta BO untuk mengunggah ulang.");
                     }

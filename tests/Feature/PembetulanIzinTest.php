@@ -637,5 +637,179 @@ class PembetulanIzinTest extends TestCase
             @unlink(public_path(str_replace('.pdf', '_template.docx', $application->fresh()->file_izin_pembetulan)));
         }
     }
+
+    public function test_kadin_can_sign_pembetulan_permit_and_keep_draft_red()
+    {
+        // 1. Setup User Kadin & Pemohon
+        $kadin = User::create([
+            'name' => 'Kadin User',
+            'username' => 'kadin_user',
+            'email' => 'kadin@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'kadin',
+            'nip' => '1234567890123456',
+            'status' => 'aktif',
+        ]);
+
+        $pemohon = User::create([
+            'name' => 'Pemohon Test 3',
+            'username' => 'pemohon_test3',
+            'email' => 'pemohon3@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'pemohon',
+            'status' => 'aktif',
+        ]);
+
+        $perijinan = Perijinan::create([
+            'nama_perijinan' => 'Izin Klinik Kesehatan 3',
+            'kode_perijinan' => 'KLINIK_TES3',
+            'is_multi_opd' => false,
+            'dasar_hukum' => 'UUD',
+            'persyaratan' => 'Persyaratan',
+            'prosedur' => 'Prosedur',
+        ]);
+
+        // Create application with dummy PDF and dummy DOCX template
+        $pdfPath = 'uploads/perijinan/' . $perijinan->id . '/izin_pembetulan_sign_test.pdf';
+        $docxPath = 'uploads/perijinan/' . $perijinan->id . '/izin_pembetulan_sign_test_template.docx';
+        
+        // Make sure destination directory exists
+        @mkdir(public_path('uploads/perijinan/' . $perijinan->id), 0755, true);
+
+        // Generate dynamic docx template
+        $phpWord = new \PhpOffice\PhpWord\PhpWord();
+        $section = $phpWord->addSection();
+        $section->addText('Template Izin Pembetulan ${NAMA_PEMOHON} ${QRCODE} ${NOMOR_SURAT}');
+        $writer = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
+        $writer->save(public_path($docxPath));
+        
+        // Write dummy PDF
+        file_put_contents(public_path($pdfPath), '%PDF-1.4 ... dummy PDF ...');
+
+        $application = DataPerijinan::create([
+            'user_id' => $pemohon->id,
+            'perijinan_id' => $perijinan->id,
+            'status' => 'in_progress',
+            'current_step' => 4, // kadin turn
+            'no_registrasi' => 'REG-SIGN-TEST',
+            'is_pembetulan' => true,
+            'file_izin_pembetulan' => $pdfPath,
+        ]);
+
+        // Mock EsignService response
+        \Illuminate\Support\Facades\Http::fake([
+            '*/sign/pdf' => \Illuminate\Support\Facades\Http::response([
+                'file' => [base64_encode('%PDF-1.4 ... signed PDF ...')]
+            ], 200, ['Content-Type' => 'application/json']),
+        ]);
+
+        // 2. Call the TTE signing route
+        $response = $this->actingAs($kadin)
+            ->post(route('data-perijinan.apply-tte', $application->id), [
+                'doc_type' => 'izin',
+                'passphrase' => 'secret123',
+            ]);
+
+        $response->assertJson(['success' => true]);
+
+        // Refresh application from database
+        $application = $application->fresh();
+
+        // 3. Assert database paths and file statuses
+        $this->assertNotNull($application->file_izin_tte);
+        $this->assertFileExists(public_path($application->file_izin_tte));
+
+        // The draft file path must remain unchanged
+        $this->assertEquals($pdfPath, $application->file_izin_pembetulan);
+        $this->assertFileExists(public_path($pdfPath));
+
+        // The generated official (non-signed/intermediate) PDF file should also exist
+        $officialPdfPath = str_replace('.pdf', '_official.pdf', $pdfPath);
+        $this->assertFileExists(public_path($officialPdfPath));
+
+        // Clean up created files
+        @unlink(public_path($pdfPath));
+        @unlink(public_path($docxPath));
+        @unlink(public_path($officialPdfPath));
+        if ($application->file_izin_tte) {
+            @unlink(public_path($application->file_izin_tte));
+        }
+    }
+
+    public function test_qr_code_scan_result_for_pembetulan_status_checks()
+    {
+        $pemohon = User::create([
+            'name' => 'Pemohon Test 4',
+            'username' => 'pemohon_test4',
+            'email' => 'pemohon4@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'pemohon',
+            'status' => 'aktif',
+        ]);
+
+        $perijinan = Perijinan::create([
+            'nama_perijinan' => 'Izin Klinik Kesehatan 4',
+            'kode_perijinan' => 'KLINIK_TES4',
+            'is_multi_opd' => false,
+            'dasar_hukum' => 'UUD',
+            'persyaratan' => 'Persyaratan',
+            'prosedur' => 'Prosedur',
+        ]);
+
+        // Create application
+        $application = DataPerijinan::create([
+            'user_id' => $pemohon->id,
+            'perijinan_id' => $perijinan->id,
+            'status' => 'in_progress',
+            'current_step' => 2,
+            'no_registrasi' => 'REG-SCAN-CHECK-99',
+            'is_pembetulan' => true,
+            'file_izin_pembetulan' => 'uploads/perijinan/1/izin_draft.pdf',
+            'file_rekom_tte' => 'uploads/perijinan/1/rekom_signed.pdf', // recommendation is signed
+        ]);
+
+        // 1. Scan the BO draft of pembetulan
+        $response1 = $this->get(route('front.perizinan.scan', [
+            'no_registrasi' => $application->no_registrasi,
+            'type' => 'izin',
+            'is_draft' => 1,
+            'is_pembetulan' => 1
+        ]));
+        $response1->assertStatus(200);
+        $response1->assertSee('Draft Dokumen');
+
+        // 2. Kadin signs the permit (simulate setting file_izin_tte)
+        $application->update([
+            'file_izin_tte' => 'uploads/perijinan/1/izin_signed.pdf',
+        ]);
+
+        // 3. Scan the NEW pembetulan permit (should be Resmi TTE)
+        $response2 = $this->get(route('front.perizinan.scan', [
+            'no_registrasi' => $application->no_registrasi,
+            'type' => 'izin',
+            'is_draft' => 0,
+            'is_pembetulan' => 1
+        ]));
+        $response2->assertStatus(200);
+        $response2->assertSee('Resmi (TTE)');
+
+        // 4. Scan the OLD permit letter (no is_pembetulan parameter, should be Tidak Berlaku)
+        $response3 = $this->get(route('front.perizinan.scan', [
+            'no_registrasi' => $application->no_registrasi,
+            'type' => 'izin',
+            'is_draft' => 0
+        ]));
+        $response3->assertStatus(200);
+        $response3->assertSee('sudah tidak berlaku lagi karena telah diterbitkan surat izin baru hasil pembetulan', false);
+
+        // 5. Scan the recommendation (should still be Resmi TTE)
+        $response4 = $this->get(route('front.perizinan.scan', [
+            'no_registrasi' => $application->no_registrasi,
+            'type' => 'rekom',
+            'is_draft' => 0
+        ]));
+        $response4->assertStatus(200);
+        $response4->assertSee('Resmi (TTE)');
+    }
 }
 

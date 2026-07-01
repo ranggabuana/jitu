@@ -1232,7 +1232,12 @@ class DocumentGenerator
         $baseReplacements['${_IMG_PATH_LOGO}'] = $logoKabupaten ? public_path($logoKabupaten) : null;
         
         // 3. Scan URL and QR Code
-        $scanUrl = route('front.perizinan.scan', ['no_registrasi' => $application->no_registrasi, 'type' => 'izin']);
+        $scanUrl = route('front.perizinan.scan', [
+            'no_registrasi' => $application->no_registrasi, 
+            'type' => 'izin',
+            'is_draft' => $isDraft ? 1 : 0,
+            'is_pembetulan' => 1
+        ]);
         $tempQrPath = self::generateQrCodeFile($scanUrl, $isDraft); 
         
         if ($tempQrPath && File::exists($tempQrPath)) {
@@ -1290,6 +1295,11 @@ class DocumentGenerator
         $filename = str_replace('_template.docx', '', $baseName);
         $filename = str_replace('.docx', '', $filename); // fallback
         
+        $pdfFilename = $filename;
+        if (!$isDraft) {
+            $pdfFilename = $filename . '_official';
+        }
+        
         $folderPath = 'uploads/perijinan/' . $application->perijinan_id;
         $absoluteFolder = public_path($folderPath);
         
@@ -1301,7 +1311,7 @@ class DocumentGenerator
             $relativeDocxTemplatePath = substr($relativeDocxTemplatePath, 7);
         }
         
-        $generatedPdfRelativePath = self::generateFromWord($relativeDocxTemplatePath, $finalReplacements, $filename, $folderPath, $absoluteFolder);
+        $generatedPdfRelativePath = self::generateFromWord($relativeDocxTemplatePath, $finalReplacements, $pdfFilename, $folderPath, $absoluteFolder);
         
         // Cleanup temp QR code if generated
         if ($tempQrPath && File::exists($tempQrPath)) {

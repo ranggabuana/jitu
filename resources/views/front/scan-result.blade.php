@@ -136,12 +136,25 @@
                                 </p>
                             </div>
                         </div>
+                    <!-- Pembetulan Alert Box -->
+                    @elseif($documentStatus === 'Tidak Berlaku (Sudah Dilakukan Pembetulan)')
+                        <div class="mb-8 p-5 bg-orange-50 rounded-2xl border border-orange-200 text-orange-850 flex items-start gap-4 shadow-sm">
+                            <div class="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600 shrink-0">
+                                <i class="fas fa-exclamation-circle text-xl"></i>
+                            </div>
+                            <div class="text-left">
+                                <h4 class="font-black text-sm uppercase tracking-tight text-orange-900">PERINGATAN: DOKUMEN TIDAK BERLAKU</h4>
+                                <p class="text-xs text-orange-700 mt-1 leading-relaxed">
+                                    Surat izin ini <strong>sudah tidak berlaku lagi karena telah diterbitkan surat izin baru hasil pembetulan</strong>. Silakan gunakan surat izin pembetulan yang terbaru.
+                                </p>
+                            </div>
+                        </div>
                     @endif
 
                     <!-- Scanned Document Verification Card -->
                     <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100 mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
                         <div class="flex items-center gap-4 text-left w-full">
-                            <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white {{ $documentStatus === 'Resmi (TTE)' ? 'bg-green-600' : 'bg-red-500' }}">
+                            <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white {{ $documentStatus === 'Resmi (TTE)' ? 'bg-green-600' : ($documentStatus === 'Tidak Berlaku (Sudah Dilakukan Pembetulan)' ? 'bg-orange-500' : 'bg-red-500') }}">
                                 @if($type === 'rekom')
                                     <i class="fas fa-file-alt text-xl"></i>
                                 @else
@@ -157,9 +170,11 @@
                             </div>
                         </div>
                         <div class="w-full md:w-auto text-center md:text-right">
-                            <span class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-black uppercase tracking-wider border {{ $documentStatus === 'Resmi (TTE)' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200' }}">
+                            <span class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-black uppercase tracking-wider border {{ $documentStatus === 'Resmi (TTE)' ? 'bg-green-100 text-green-700 border-green-200' : ($documentStatus === 'Tidak Berlaku (Sudah Dilakukan Pembetulan)' ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-red-100 text-red-700 border-red-200') }}">
                                 @if($documentStatus === 'Resmi (TTE)')
                                     <i class="fas fa-check-double"></i> Resmi (TTE)
+                                @elseif($documentStatus === 'Tidak Berlaku (Sudah Dilakukan Pembetulan)')
+                                    <i class="fas fa-ban"></i> Tidak Berlaku
                                 @else
                                     <i class="fas fa-exclamation-triangle"></i> Draft Dokumen
                                 @endif

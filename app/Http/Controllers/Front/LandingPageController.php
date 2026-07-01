@@ -145,9 +145,13 @@ class LandingPageController extends Controller
             $documentType = 'Surat Izin';
         }
 
+        $isPembetulanParam = request('is_pembetulan');
+
         if ($isDraftParam == 1) {
             $documentStatus = 'Draft';
         } else {
+            $hasActivePembetulanTte = $perizinan->is_pembetulan && !empty($perizinan->file_izin_tte);
+
             if ($type === 'rekom') {
                 if ($perizinan->perijinan->is_multi_opd && $opdId) {
                     $documentStatus = !empty($perizinan->file_rekom_multi_tte[$opdId]) ? 'Resmi (TTE)' : 'Draft';
@@ -155,10 +159,18 @@ class LandingPageController extends Controller
                     $documentStatus = !empty($perizinan->file_rekom_tte) ? 'Resmi (TTE)' : 'Draft';
                 }
             } elseif ($type === 'izin') {
-                $documentStatus = !empty($perizinan->file_izin_tte) ? 'Resmi (TTE)' : 'Draft';
+                if ($hasActivePembetulanTte && $isPembetulanParam != 1) {
+                    $documentStatus = 'Tidak Berlaku (Sudah Dilakukan Pembetulan)';
+                } else {
+                    $documentStatus = !empty($perizinan->file_izin_tte) ? 'Resmi (TTE)' : 'Draft';
+                }
             } else {
                 // Default fallback if type is not specified (old QR codes)
-                $documentStatus = !empty($perizinan->file_izin_tte) ? 'Resmi (TTE)' : 'Draft';
+                if ($hasActivePembetulanTte && $isPembetulanParam != 1) {
+                    $documentStatus = 'Tidak Berlaku (Sudah Dilakukan Pembetulan)';
+                } else {
+                    $documentStatus = !empty($perizinan->file_izin_tte) ? 'Resmi (TTE)' : 'Draft';
+                }
             }
         }
 
