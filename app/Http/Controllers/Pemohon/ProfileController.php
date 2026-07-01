@@ -58,15 +58,27 @@ class ProfileController extends Controller
             'alamat_ktp' => 'nullable|string|max:500',
             'alamat_domisili' => 'nullable|string|max:500',
             'foto_ktp' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:2048',
+            'jenis_kelamin' => 'required|in:Laki-laki,Perempuan',
+            'pendidikan' => 'required|in:SD/MI,SMP/MTS,SMA/MA,SMK/MAK,D1,D2,D3,D4,S1,S2,S3',
+            'pekerjaan' => 'required|in:PNS,TNI,POLRI,Swasta,Wirausaha,Lainnya',
+            'pekerjaan_lainnya' => 'required_if:pekerjaan,Lainnya|nullable|string|max:255',
         ], [
             'nip.required' => 'NIK harus diisi.',
             'nip.size' => 'NIK harus terdiri dari 16 digit.',
             'nip.regex' => 'NIK hanya boleh berisi angka.',
             'nip.unique' => 'NIK sudah terdaftar.',
+            'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih.',
+            'jenis_kelamin.in' => 'Pilihan jenis kelamin tidak valid.',
+            'pendidikan.required' => 'Pendidikan wajib dipilih.',
+            'pendidikan.in' => 'Pilihan pendidikan tidak valid.',
+            'pekerjaan.required' => 'Pekerjaan wajib dipilih.',
+            'pekerjaan.in' => 'Pilihan pekerjaan tidak valid.',
+            'pekerjaan_lainnya.required_if' => 'Isian pekerjaan manual wajib diisi jika memilih Lainnya.',
         ]);
 
         $data = $validated;
         unset($data['foto_ktp']);
+        $data['pekerjaan'] = $request->pekerjaan === 'Lainnya' ? $request->pekerjaan_lainnya : $request->pekerjaan;
 
         // Handle KTP file upload
         if ($request->hasFile('foto_ktp')) {

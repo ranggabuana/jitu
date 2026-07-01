@@ -104,6 +104,76 @@
                     </div>
                 </div>
 
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label for="jenis_kelamin" class="block text-sm font-medium text-gray-700 mb-2">
+                            Jenis Kelamin <span class="text-red-500">*</span>
+                        </label>
+                        <select id="jenis_kelamin" name="jenis_kelamin"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('jenis_kelamin') border-red-500 @enderror">
+                            <option value="">-- Pilih Jenis Kelamin --</option>
+                            <option value="Laki-laki" {{ old('jenis_kelamin', $user->jenis_kelamin) === 'Laki-laki' ? 'selected' : '' }}>Laki-laki</option>
+                            <option value="Perempuan" {{ old('jenis_kelamin', $user->jenis_kelamin) === 'Perempuan' ? 'selected' : '' }}>Perempuan</option>
+                        </select>
+                        @error('jenis_kelamin')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label for="pendidikan" class="block text-sm font-medium text-gray-700 mb-2">
+                            Pendidikan Terakhir <span class="text-red-500">*</span>
+                        </label>
+                        <select id="pendidikan" name="pendidikan"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('pendidikan') border-red-500 @enderror">
+                            <option value="">-- Pilih Pendidikan Terakhir --</option>
+                            @foreach(['SD/MI', 'SMP/MTS', 'SMA/MA', 'SMK/MAK', 'D1', 'D2', 'D3', 'D4', 'S1', 'S2', 'S3'] as $edu)
+                                <option value="{{ $edu }}" {{ old('pendidikan', $user->pendidikan) === $edu ? 'selected' : '' }}>{{ $edu }}</option>
+                            @endforeach
+                        </select>
+                        @error('pendidikan')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
+                @php
+                    $pekerjaanPreset = ['PNS', 'TNI', 'POLRI', 'Swasta', 'Wirausaha'];
+                    $isPekerjaanLainnya = !empty($user->pekerjaan) && !in_array($user->pekerjaan, $pekerjaanPreset);
+                @endphp
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label for="pekerjaan" class="block text-sm font-medium text-gray-700 mb-2">
+                            Pekerjaan <span class="text-red-500">*</span>
+                        </label>
+                        <select id="pekerjaan" name="pekerjaan"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('pekerjaan') border-red-500 @enderror"
+                            onchange="togglePekerjaanLainnya()">
+                            <option value="">-- Pilih Pekerjaan --</option>
+                            @foreach($pekerjaanPreset as $job)
+                                <option value="{{ $job }}" {{ old('pekerjaan', $isPekerjaanLainnya ? 'Lainnya' : $user->pekerjaan) === $job ? 'selected' : '' }}>{{ $job }}</option>
+                            @endforeach
+                            <option value="Lainnya" {{ old('pekerjaan', $isPekerjaanLainnya ? 'Lainnya' : $user->pekerjaan) === 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
+                        </select>
+                        @error('pekerjaan')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div id="pekerjaanLainnyaWrapper" class="{{ old('pekerjaan', $isPekerjaanLainnya ? 'Lainnya' : $user->pekerjaan) === 'Lainnya' ? '' : 'hidden' }}">
+                        <label for="pekerjaan_lainnya" class="block text-sm font-medium text-gray-700 mb-2">
+                            Sebutkan Pekerjaan Lainnya <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="pekerjaan_lainnya" name="pekerjaan_lainnya" 
+                            value="{{ old('pekerjaan_lainnya', $isPekerjaanLainnya ? $user->pekerjaan : '') }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('pekerjaan_lainnya') border-red-500 @enderror"
+                            placeholder="Masukkan pekerjaan manual">
+                        @error('pekerjaan_lainnya')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
                 <div id="badan_usaha_fields" class="border-t border-gray-100 pt-6 mb-6"
                     style="{{ old('status_pemohon', $user->status_pemohon) === 'badan_usaha' ? '' : 'display: none;' }}">
                     <h3 class="text-md font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -307,6 +377,7 @@
 
             // Initial load
             loadProvinsi('{{ old("provinsi_id", $user->provinsi_id) }}');
+            togglePekerjaanLainnya();
         });
 
         function loadProvinsi(selectedId = null) {
@@ -398,6 +469,21 @@
                 $('#loader-kelurahan').hide();
                 $('#kelurahan').empty().append('<option value="">-- Gagal memuat data --</option>');
             });
+        }
+
+        function togglePekerjaanLainnya() {
+            const pekerjaanSelect = document.getElementById('pekerjaan');
+            const wrapper = document.getElementById('pekerjaanLainnyaWrapper');
+            const input = document.getElementById('pekerjaan_lainnya');
+
+            if (pekerjaanSelect.value === 'Lainnya') {
+                wrapper.classList.remove('hidden');
+                input.required = true;
+            } else {
+                wrapper.classList.add('hidden');
+                input.required = false;
+                input.value = '';
+            }
         }
     </script>
     @endpush

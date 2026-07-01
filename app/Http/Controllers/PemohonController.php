@@ -104,14 +104,26 @@ class PemohonController extends Controller
             'nip' => 'nullable|string|max:50',
             'no_hp' => 'nullable|string|max:20',
             'status' => 'required|in:aktif,tidak_aktif',
+            'jenis_kelamin' => 'required|in:Laki-laki,Perempuan',
+            'pendidikan' => 'required|in:SD/MI,SMP/MTS,SMA/MA,SMK/MAK,D1,D2,D3,D4,S1,S2,S3',
+            'pekerjaan' => 'required|in:PNS,TNI,POLRI,Swasta,Wirausaha,Lainnya',
+            'pekerjaan_lainnya' => 'required_if:pekerjaan,Lainnya|nullable|string|max:255',
         ], [
             'password.required' => 'Password wajib diisi.',
             'password.confirmed' => 'Konfirmasi password tidak cocok.',
+            'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih.',
+            'jenis_kelamin.in' => 'Pilihan jenis kelamin tidak valid.',
+            'pendidikan.required' => 'Pendidikan wajib dipilih.',
+            'pendidikan.in' => 'Pilihan pendidikan tidak valid.',
+            'pekerjaan.required' => 'Pekerjaan wajib dipilih.',
+            'pekerjaan.in' => 'Pilihan pekerjaan tidak valid.',
+            'pekerjaan_lainnya.required_if' => 'Isian pekerjaan manual wajib diisi jika memilih Lainnya.',
         ]);
 
         $data = $request->except('password', 'password_confirmation');
         $data['password'] = Hash::make($request->password);
         $data['role'] = 'pemohon';
+        $data['pekerjaan'] = $request->pekerjaan === 'Lainnya' ? $request->pekerjaan_lainnya : $request->pekerjaan;
 
         $user = User::create($data);
 
@@ -199,15 +211,27 @@ class PemohonController extends Controller
             'alamat_ktp' => 'nullable|string|max:500',
             'alamat_domisili' => 'nullable|string|max:500',
             'foto_ktp' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:2048',
+            'jenis_kelamin' => 'required|in:Laki-laki,Perempuan',
+            'pendidikan' => 'required|in:SD/MI,SMP/MTS,SMA/MA,SMK/MAK,D1,D2,D3,D4,S1,S2,S3',
+            'pekerjaan' => 'required|in:PNS,TNI,POLRI,Swasta,Wirausaha,Lainnya',
+            'pekerjaan_lainnya' => 'required_if:pekerjaan,Lainnya|nullable|string|max:255',
         ], [
             'nip.required' => 'NIK harus diisi.',
             'nip.size' => 'NIK harus terdiri dari 16 digit.',
             'nip.regex' => 'NIK hanya boleh berisi angka.',
             'nip.unique' => 'NIK sudah terdaftar.',
             'password.confirmed' => 'Konfirmasi password tidak cocok.',
+            'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih.',
+            'jenis_kelamin.in' => 'Pilihan jenis kelamin tidak valid.',
+            'pendidikan.required' => 'Pendidikan wajib dipilih.',
+            'pendidikan.in' => 'Pilihan pendidikan tidak valid.',
+            'pekerjaan.required' => 'Pekerjaan wajib dipilih.',
+            'pekerjaan.in' => 'Pilihan pekerjaan tidak valid.',
+            'pekerjaan_lainnya.required_if' => 'Isian pekerjaan manual wajib diisi jika memilih Lainnya.',
         ]);
 
         $data = $request->except('password', 'password_confirmation', 'foto_ktp');
+        $data['pekerjaan'] = $request->pekerjaan === 'Lainnya' ? $request->pekerjaan_lainnya : $request->pekerjaan;
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);

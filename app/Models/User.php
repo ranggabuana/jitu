@@ -36,6 +36,9 @@ class User extends Authenticatable
         'alamat_domisili',
         'is_alamat_sama',
         'foto_ktp',
+        'jenis_kelamin',
+        'pendidikan',
+        'pekerjaan',
     ];
 
     /**

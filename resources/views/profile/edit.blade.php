@@ -89,6 +89,65 @@
                         placeholder="08xxxxxxxxxx">
                 </div>
 
+                @if ($user->role === 'pemohon')
+                <!-- Jenis Kelamin -->
+                <div>
+                    <label for="jenis_kelamin" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Jenis Kelamin <span class="text-red-500">*</span>
+                    </label>
+                    <select id="jenis_kelamin" name="jenis_kelamin" required
+                        class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all @error('jenis_kelamin') border-red-500 @enderror">
+                        <option value="">-- Pilih Jenis Kelamin --</option>
+                        <option value="Laki-laki" {{ old('jenis_kelamin', $user->jenis_kelamin) === 'Laki-laki' ? 'selected' : '' }}>Laki-laki</option>
+                        <option value="Perempuan" {{ old('jenis_kelamin', $user->jenis_kelamin) === 'Perempuan' ? 'selected' : '' }}>Perempuan</option>
+                    </select>
+                </div>
+
+                <!-- Pendidikan Terakhir -->
+                <div>
+                    <label for="pendidikan" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Pendidikan Terakhir <span class="text-red-500">*</span>
+                    </label>
+                    <select id="pendidikan" name="pendidikan" required
+                        class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all @error('pendidikan') border-red-500 @enderror">
+                        <option value="">-- Pilih Pendidikan Terakhir --</option>
+                        @foreach(['SD/MI', 'SMP/MTS', 'SMA/MA', 'SMK/MAK', 'D1', 'D2', 'D3', 'D4', 'S1', 'S2', 'S3'] as $edu)
+                            <option value="{{ $edu }}" {{ old('pendidikan', $user->pendidikan) === $edu ? 'selected' : '' }}>{{ $edu }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                @php
+                    $pekerjaanPreset = ['PNS', 'TNI', 'POLRI', 'Swasta', 'Wirausaha'];
+                    $isPekerjaanLainnya = !empty($user->pekerjaan) && !in_array($user->pekerjaan, $pekerjaanPreset);
+                @endphp
+                <!-- Pekerjaan -->
+                <div>
+                    <label for="pekerjaan" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Pekerjaan <span class="text-red-500">*</span>
+                    </label>
+                    <select id="pekerjaan" name="pekerjaan" required onchange="togglePekerjaanLainnyaGlobal()"
+                        class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all @error('pekerjaan') border-red-500 @enderror">
+                        <option value="">-- Pilih Pekerjaan --</option>
+                        @foreach($pekerjaanPreset as $job)
+                            <option value="{{ $job }}" {{ old('pekerjaan', $isPekerjaanLainnya ? 'Lainnya' : $user->pekerjaan) === $job ? 'selected' : '' }}>{{ $job }}</option>
+                        @endforeach
+                        <option value="Lainnya" {{ old('pekerjaan', $isPekerjaanLainnya ? 'Lainnya' : $user->pekerjaan) === 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
+                    </select>
+                </div>
+
+                <!-- Pekerjaan Lainnya -->
+                <div id="pekerjaanLainnyaWrapperGlobal" class="{{ old('pekerjaan', $isPekerjaanLainnya ? 'Lainnya' : $user->pekerjaan) === 'Lainnya' ? '' : 'hidden' }}">
+                    <label for="pekerjaan_lainnya" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Sebutkan Pekerjaan Lainnya <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="pekerjaan_lainnya" name="pekerjaan_lainnya" 
+                        value="{{ old('pekerjaan_lainnya', $isPekerjaanLainnya ? $user->pekerjaan : '') }}"
+                        class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all @error('pekerjaan_lainnya') border-red-500 @enderror"
+                        placeholder="Masukkan pekerjaan manual">
+                </div>
+                @endif
+
                 <!-- Buttons -->
                 <div class="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <button type="submit"
@@ -104,4 +163,28 @@
             </form>
         </div>
     </div>
+
+    @if ($user->role === 'pemohon')
+    @push('scripts')
+    <script>
+        function togglePekerjaanLainnyaGlobal() {
+            const pekerjaanSelect = document.getElementById('pekerjaan');
+            const wrapper = document.getElementById('pekerjaanLainnyaWrapperGlobal');
+            const input = document.getElementById('pekerjaan_lainnya');
+
+            if (pekerjaanSelect.value === 'Lainnya') {
+                wrapper.classList.remove('hidden');
+                input.required = true;
+            } else {
+                wrapper.classList.add('hidden');
+                input.required = false;
+                input.value = '';
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            togglePekerjaanLainnyaGlobal();
+        });
+    </script>
+    @endpush
+    @endif
 </x-layout>

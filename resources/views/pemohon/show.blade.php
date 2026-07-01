@@ -74,6 +74,18 @@
                                 @endif
                             </dd>
                         </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Jenis Kelamin</dt>
+                            <dd class="text-base text-gray-900 dark:text-white font-medium">{{ $pemohon->jenis_kelamin ?? '-' }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Pendidikan Terakhir</dt>
+                            <dd class="text-base text-gray-900 dark:text-white font-medium">{{ $pemohon->pendidikan ?? '-' }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Pekerjaan</dt>
+                            <dd class="text-base text-gray-900 dark:text-white font-medium">{{ $pemohon->pekerjaan ?? '-' }}</dd>
+                        </div>
                     </div>
                 </div>
             </div>

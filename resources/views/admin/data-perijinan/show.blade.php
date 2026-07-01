@@ -57,15 +57,15 @@
 
     <!-- Identity Modal -->
     <div id="modal-identity" class="fixed inset-0 z-[400] hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50 dark:bg-gray-800/50">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-4xl overflow-y-auto max-h-[90vh] animate-in fade-in zoom-in duration-200">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 sticky top-0 z-10">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center border border-blue-200 dark:border-blue-800">
                         <i class="mdi mdi-account-details text-blue-600 dark:text-blue-400 text-xl"></i>
                     </div>
                     <div>
                         <h3 class="text-base font-bold text-gray-800 dark:text-white">Identitas Lengkap Pemohon</h3>
-                        <p class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Data Profil & Perusahaan</p>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Data Akun, Wilayah & Perusahaan</p>
                     </div>
                 </div>
                 <button type="button" onclick="closeIdentityModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
@@ -73,13 +73,20 @@
                 </button>
             </div>
             
-            <div class="p-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Column 1: Informasi Pribadi -->
                     <div class="space-y-4">
-                        <h4 class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest border-b border-blue-100 dark:border-blue-900/30 pb-2">Informasi Pribadi</h4>
+                        <h4 class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest border-b border-blue-100 dark:border-blue-900/30 pb-2 flex items-center gap-1.5">
+                            <i class="mdi mdi-account-circle-outline"></i> Informasi Pribadi
+                        </h4>
                         <div>
                             <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Nama Lengkap</label>
                             <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ $application->user->name }}</p>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Username</label>
+                            <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ $application->user->username }}</p>
                         </div>
                         <div>
                             <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">NIK / NIP</label>
@@ -90,13 +97,59 @@
                             <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ $application->user->email }}</p>
                         </div>
                         <div>
-                            <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">No. Telepon</label>
+                            <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">No. Telepon / WA</label>
                             <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ $application->user->no_hp ?? '-' }}</p>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Jenis Kelamin</label>
+                            <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ $application->user->jenis_kelamin ?? '-' }}</p>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Pendidikan Terakhir</label>
+                            <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ $application->user->pendidikan ?? '-' }}</p>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Pekerjaan</label>
+                            <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ $application->user->pekerjaan ?? '-' }}</p>
                         </div>
                     </div>
 
+                    <!-- Column 2: Alamat & Wilayah -->
                     <div class="space-y-4">
-                        <h4 class="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest border-b border-purple-100 dark:border-purple-900/30 pb-2">Domisili & Bisnis</h4>
+                        <h4 class="text-xs font-bold text-green-600 dark:text-green-400 uppercase tracking-widest border-b border-green-100 dark:border-green-900/30 pb-2 flex items-center gap-1.5">
+                            <i class="mdi mdi-map-marker-outline"></i> Wilayah & Alamat
+                        </h4>
+                        <div>
+                            <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Provinsi</label>
+                            <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ $application->user->provinsi->name ?? '-' }}</p>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Kabupaten / Kota</label>
+                            <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ $application->user->kabupaten->name ?? '-' }}</p>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Kecamatan</label>
+                            <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ $application->user->kecamatan->name ?? '-' }}</p>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Kelurahan / Desa</label>
+                            <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ $application->user->kelurahan->name ?? '-' }}</p>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Alamat KTP</label>
+                            <p class="text-xs font-medium text-gray-600 dark:text-gray-400 leading-relaxed bg-gray-50 dark:bg-gray-800/40 p-2 rounded-lg">{{ $application->user->alamat_ktp ?? '-' }}</p>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Alamat Domisili</label>
+                            <p class="text-xs font-medium text-gray-600 dark:text-gray-400 leading-relaxed bg-gray-50 dark:bg-gray-800/40 p-2 rounded-lg">{{ $application->user->alamat_domisili ?? $application->user->alamat_lengkap ?? '-' }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Column 3: Informasi Bisnis & Sistem -->
+                    <div class="space-y-4">
+                        <h4 class="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest border-b border-purple-100 dark:border-purple-900/30 pb-2 flex items-center gap-1.5">
+                            <i class="mdi mdi-domain"></i> Bisnis & Sistem
+                        </h4>
                         <div>
                             <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Status Pemohon</label>
                             <div class="mt-1">
@@ -112,11 +165,35 @@
                                 <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Nama Perusahaan</label>
                                 <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ $application->user->nama_perusahaan ?? '-' }}</p>
                             </div>
+                            <div>
+                                <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">NPWP Perusahaan</label>
+                                <p class="text-sm font-semibold text-gray-800 dark:text-gray-200 font-mono">{{ $application->user->npwp ?? '-' }}</p>
+                            </div>
                         @endif
                         <div>
-                            <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Alamat Domisili</label>
-                            <p class="text-xs font-medium text-gray-600 dark:text-gray-400 leading-relaxed">{{ $application->user->alamat_domisili ?? $application->user->alamat_lengkap ?? '-' }}</p>
+                            <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Status Akun</label>
+                            <div class="mt-1">
+                                @if ($application->user->status === 'aktif')
+                                    <span class="px-2 py-1 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-[10px] font-bold">AKTIF</span>
+                                @else
+                                    <span class="px-2 py-1 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-[10px] font-bold">TIDAK AKTIF</span>
+                                @endif
+                            </div>
                         </div>
+                        <div>
+                            <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Terdaftar Sejak</label>
+                            <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ $application->user->created_at ? $application->user->created_at->format('d M Y') : '-' }}</p>
+                        </div>
+                        @if ($application->user->foto_ktp)
+                            <div>
+                                <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Berkas KTP</label>
+                                <div class="mt-2">
+                                    <a href="{{ asset($application->user->foto_ktp) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50 rounded-lg text-xs font-semibold transition-all">
+                                        <i class="mdi mdi-file-document-outline"></i> Lihat Foto KTP
+                                    </a>
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

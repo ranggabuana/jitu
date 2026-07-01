@@ -359,6 +359,70 @@
                                 <p class="mt-1 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}</p>
                             @enderror
                         </div>
+
+                        <!-- Jenis Kelamin -->
+                        <div>
+                            <label for="jenis_kelamin" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-venus-mars text-blue-600 mr-2"></i>Jenis Kelamin <span class="text-red-500">*</span>
+                            </label>
+                            <select id="jenis_kelamin" name="jenis_kelamin" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all @error('jenis_kelamin') border-red-500 @enderror">
+                                <option value="">-- Pilih Jenis Kelamin --</option>
+                                <option value="Laki-laki" {{ old('jenis_kelamin') === 'Laki-laki' ? 'selected' : '' }}>Laki-laki</option>
+                                <option value="Perempuan" {{ old('jenis_kelamin') === 'Perempuan' ? 'selected' : '' }}>Perempuan</option>
+                            </select>
+                            @error('jenis_kelamin')
+                                <p class="mt-1 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Pendidikan -->
+                        <div>
+                            <label for="pendidikan" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-graduation-cap text-blue-600 mr-2"></i>Pendidikan Terakhir <span class="text-red-500">*</span>
+                            </label>
+                            <select id="pendidikan" name="pendidikan" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all @error('pendidikan') border-red-500 @enderror">
+                                <option value="">-- Pilih Pendidikan Terakhir --</option>
+                                @foreach(['SD/MI', 'SMP/MTS', 'SMA/MA', 'SMK/MAK', 'D1', 'D2', 'D3', 'D4', 'S1', 'S2', 'S3'] as $edu)
+                                    <option value="{{ $edu }}" {{ old('pendidikan') === $edu ? 'selected' : '' }}>{{ $edu }}</option>
+                                @endforeach
+                            </select>
+                            @error('pendidikan')
+                                <p class="mt-1 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Pekerjaan -->
+                        <div>
+                            <label for="pekerjaan" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-briefcase text-blue-600 mr-2"></i>Pekerjaan <span class="text-red-500">*</span>
+                            </label>
+                            <select id="pekerjaan" name="pekerjaan" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all @error('pekerjaan') border-red-500 @enderror"
+                                onchange="togglePekerjaanLainnya()">
+                                <option value="">-- Pilih Pekerjaan --</option>
+                                @foreach(['PNS', 'TNI', 'POLRI', 'Swasta', 'Wirausaha', 'Lainnya'] as $job)
+                                    <option value="{{ $job }}" {{ old('pekerjaan') === $job ? 'selected' : '' }}>{{ $job }}</option>
+                                @endforeach
+                            </select>
+                            @error('pekerjaan')
+                                <p class="mt-1 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Pekerjaan Lainnya (Manual Input) -->
+                        <div id="pekerjaanLainnyaWrapper" class="hidden">
+                            <label for="pekerjaan_lainnya" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-pencil-alt text-blue-600 mr-2"></i>Sebutkan Pekerjaan Lainnya <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="pekerjaan_lainnya" name="pekerjaan_lainnya" value="{{ old('pekerjaan_lainnya', old('pekerjaan') !== 'Lainnya' ? '' : old('pekerjaan')) }}"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all @error('pekerjaan_lainnya') border-red-500 @enderror"
+                                placeholder="Masukkan pekerjaan Anda">
+                            @error('pekerjaan_lainnya')
+                                <p class="mt-1 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}</p>
+                            @enderror
+                        </div>
                     </div>
 
                     <!-- Next Button -->
@@ -784,6 +848,7 @@
             if (statusPemohon === 'badan_usaha') {
                 toggleCompanyFields();
             }
+            togglePekerjaanLainnya();
 
             // Initialize Select2 on wilayah dropdowns
             $('.select2-wilayah').select2({
@@ -1118,6 +1183,23 @@
                 container.classList.remove('hidden');
             }
         }
+
+        function togglePekerjaanLainnya() {
+            const pekerjaanSelect = document.getElementById('pekerjaan');
+            const wrapper = document.getElementById('pekerjaanLainnyaWrapper');
+            const input = document.getElementById('pekerjaan_lainnya');
+
+            if (pekerjaanSelect.value === 'Lainnya') {
+                wrapper.classList.remove('hidden');
+                input.required = true;
+            } else {
+                wrapper.classList.add('hidden');
+                input.required = false;
+                input.value = '';
+            }
+        }
+
+
     </script>
 </body>
 

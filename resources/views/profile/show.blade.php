@@ -158,6 +158,26 @@
                             <p class="text-gray-800 dark:text-gray-200 capitalize">{{ $user->role }}</p>
                         </div>
 
+                        @if($user->role === 'pemohon')
+                            <!-- Jenis Kelamin -->
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Jenis Kelamin</label>
+                                <p class="text-gray-800 dark:text-gray-200">{{ $user->jenis_kelamin ?? '-' }}</p>
+                            </div>
+
+                            <!-- Pendidikan -->
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Pendidikan Terakhir</label>
+                                <p class="text-gray-800 dark:text-gray-200">{{ $user->pendidikan ?? '-' }}</p>
+                            </div>
+
+                            <!-- Pekerjaan -->
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Pekerjaan</label>
+                                <p class="text-gray-800 dark:text-gray-200">{{ $user->pekerjaan ?? '-' }}</p>
+                            </div>
+                        @endif
+
                         @if($user->opd)
                             <!-- OPD -->
                             <div>

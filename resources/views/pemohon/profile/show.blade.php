@@ -125,6 +125,18 @@
                             @endif
                         </p>
                     </div>
+                    <div class="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                        <p class="text-xs text-gray-400 uppercase font-semibold mb-1">Jenis Kelamin</p>
+                        <p class="font-medium text-gray-800">{{ $user->jenis_kelamin ?? '-' }}</p>
+                    </div>
+                    <div class="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                        <p class="text-xs text-gray-400 uppercase font-semibold mb-1">Pendidikan Terakhir</p>
+                        <p class="font-medium text-gray-800">{{ $user->pendidikan ?? '-' }}</p>
+                    </div>
+                    <div class="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                        <p class="text-xs text-gray-400 uppercase font-semibold mb-1">Pekerjaan</p>
+                        <p class="font-medium text-gray-800">{{ $user->pekerjaan ?? '-' }}</p>
+                    </div>
                     <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 md:col-span-2">
                         <p class="text-xs text-gray-400 uppercase font-semibold mb-1">Alamat KTP</p>
                         <p class="font-medium text-gray-800">{{ $user->alamat_ktp ?? '-' }}</p>
