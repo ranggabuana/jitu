@@ -811,5 +811,99 @@ class PembetulanIzinTest extends TestCase
         $response4->assertStatus(200);
         $response4->assertSee('Resmi (TTE)');
     }
+
+    public function test_verifikator_can_return_pembetulan_to_bo()
+    {
+        // 1. Create Users
+        $pemohon = User::create([
+            'name' => 'Pemohon Test',
+            'username' => 'pemohon_test',
+            'email' => 'pemohon@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'pemohon',
+            'status' => 'aktif',
+        ]);
+
+        $verifikator = User::create([
+            'name' => 'Verifikator Test',
+            'username' => 'verifikator_test',
+            'email' => 'verifikator@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'verifikator',
+            'status' => 'aktif',
+        ]);
+
+        // 2. Create Perijinan
+        $perijinan = Perijinan::create([
+            'nama_perijinan' => 'Izin Test Pembetulan Return',
+            'kode_perijinan' => 'TEST_PEMB_RET',
+            'is_multi_opd' => false,
+            'dasar_hukum' => 'UUD',
+            'persyaratan' => 'Persyaratan',
+            'prosedur' => 'Prosedur',
+        ]);
+
+        // Create 6 validation steps: FO, BO, Operator OPD, Kepala OPD, Verifikator, Kadin
+        $roles = ['fo', 'bo', 'operator_opd', 'kepala_opd', 'verifikator', 'kadin'];
+        $flows = [];
+        foreach ($roles as $idx => $role) {
+            $flows[$role] = PerijinanValidationFlow::create([
+                'perijinan_id' => $perijinan->id,
+                'role' => $role,
+                'role_label' => ucfirst($role),
+                'order' => $idx + 1,
+                'status' => 'aktif',
+                'assigned_user_id' => $role === 'verifikator' ? $verifikator->id : null,
+            ]);
+        }
+
+        // 3. Create pembetulan application
+        $application = DataPerijinan::create([
+            'user_id' => $pemohon->id,
+            'perijinan_id' => $perijinan->id,
+            'status' => 'in_progress',
+            'current_step' => 3, // Verifikator step
+            'no_registrasi' => 'REG-PEMBETULAN-RETURN-TEST',
+            'is_pembetulan' => true,
+        ]);
+
+        // 4. Create validation records for pembetulan (skipping operator_opd and kepala_opd)
+        $pembetulanRoles = ['fo', 'bo', 'verifikator', 'kadin'];
+        $records = [];
+        foreach ($pembetulanRoles as $idx => $role) {
+            $records[$role] = DataPerijinanValidasi::create([
+                'data_perijinan_id' => $application->id,
+                'validation_flow_id' => $flows[$role]->id,
+                'user_id' => $role === 'verifikator' ? $verifikator->id : null,
+                'status' => in_array($role, ['fo', 'bo']) ? 'approved' : 'pending',
+                'order' => $idx + 1,
+            ]);
+        }
+
+        // 5. Verify show page displays "Kembalikan ke BO" button for Verifikator
+        $responseShow = $this->actingAs($verifikator)
+            ->get(route('data-perijinan.show', $application->id));
+        $responseShow->assertStatus(200);
+        $responseShow->assertSee('Kembalikan ke BO');
+        $responseShow->assertDontSee('onclick="handleReturnKepalaOpd()"', false);
+
+        // 6. Submit validation return_to_bo as Verifikator
+        $responsePost = $this->actingAs($verifikator)
+            ->post(route('data-perijinan.validate', $application->id), [
+                'action' => 'return_to_bo',
+                'catatan' => 'Kembali ke BO karena berkas salah',
+            ]);
+
+        $responsePost->assertRedirect(route('data-perijinan.show', $application->id));
+
+        // 7. Assert that current step is now 2 (BO step)
+        $application->refresh();
+        $this->assertEquals(2, $application->current_step);
+        $this->assertEquals('in_progress', $application->status);
+
+        // Assert that BO's and Verifikator's steps are pending
+        $this->assertEquals('pending', $records['bo']->fresh()->status);
+        $this->assertEquals('pending', $records['verifikator']->fresh()->status);
+    }
 }
 

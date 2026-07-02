@@ -2227,7 +2227,7 @@
                                     @endif
                                     
                                     @if($isVerifikator)
-                                        @if($application->perijinan->validasi_tanpa_opd)
+                                        @if($application->is_pembetulan || $application->perijinan->validasi_tanpa_opd)
                                             <button type="button" onclick="submitValidation('return_to_bo')" class="py-2.5 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase">Kembalikan ke BO</button>
                                         @else
                                             <button type="button" onclick="handleReturnKepalaOpd()" class="py-2.5 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase">Kembalikan ke Kepala OPD</button>
