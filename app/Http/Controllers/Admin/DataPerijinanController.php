@@ -2435,22 +2435,53 @@ class DataPerijinanController extends Controller
         $pathParts = explode('/', ltrim($filepath, '/'));
         $perijinanIdFromPath = $pathParts[0] ?? null;
 
-        // Access Control Check
+        // Access Control Check: Resolve the actual perijinan (permit type) ID
         if (!$user->isAdmin() && $perijinanIdFromPath) {
+            $perijinanIdForCheck = null;
+            if ($perijinanIdFromPath === 'uploads' && isset($pathParts[1]) && $pathParts[1] === 'pembetulan_old' && isset($pathParts[2])) {
+                $appId = (int)explode('_', $pathParts[2])[0];
+                $app = \App\Models\DataPerijinan::find($appId);
+                if ($app) {
+                    $perijinanIdForCheck = $app->perijinan_id;
+                }
+            } else if (str_starts_with($perijinanIdFromPath, 'generated_')) {
+                $safeNoRegistrasi = substr($perijinanIdFromPath, 10);
+                $app = \App\Models\DataPerijinan::where('no_registrasi', str_replace('_', '-', $safeNoRegistrasi))
+                    ->orWhere(\DB::raw("REPLACE(no_registrasi, '-', '_')"), $safeNoRegistrasi)
+                    ->first();
+                if ($app) {
+                    $perijinanIdForCheck = $app->perijinan_id;
+                }
+            } else if (is_numeric($perijinanIdFromPath)) {
+                $app = \App\Models\DataPerijinan::find($perijinanIdFromPath);
+                if ($app) {
+                    $perijinanIdForCheck = $app->perijinan_id;
+                } else {
+                    $perijinanIdForCheck = (int)$perijinanIdFromPath;
+                }
+            }
+
             $accessibleIds = $user->getAccessiblePerijinanIds();
-            if (!empty($accessibleIds) && !in_array($perijinanIdFromPath, $accessibleIds)) {
-                \Log::warning('Unauthorized file access attempt', [
-                    'user_id' => $user->id,
-                    'role' => $user->role,
-                    'perijinan_id' => $perijinanIdFromPath,
-                    'filepath' => $filepath
-                ]);
-                abort(403, 'Anda tidak memiliki akses ke berkas ini.');
+            if (!empty($accessibleIds)) {
+                if (!$perijinanIdForCheck || !in_array($perijinanIdForCheck, $accessibleIds)) {
+                    \Log::warning('Unauthorized file access attempt', [
+                        'user_id' => $user->id,
+                        'role' => $user->role,
+                        'perijinan_id_from_path' => $perijinanIdFromPath,
+                        'resolved_perijinan_id' => $perijinanIdForCheck,
+                        'filepath' => $filepath
+                    ]);
+                    abort(403, 'Anda tidak memiliki akses ke berkas ini.');
+                }
             }
         }
 
         // Get the full path relative to public folder
-        $relativePath = 'uploads/perijinan/' . ltrim($filepath, '/');
+        if (str_starts_with(ltrim($filepath, '/'), 'uploads/')) {
+            $relativePath = ltrim($filepath, '/');
+        } else {
+            $relativePath = 'uploads/perijinan/' . ltrim($filepath, '/');
+        }
         $path = public_path($relativePath);
         
         // Fallback for hosting environments using unique public folder mappings

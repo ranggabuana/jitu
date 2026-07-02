@@ -1187,7 +1187,8 @@ class DocumentGenerator
             }
 
             if ($returnVar === 0) {
-                @unlink($tempDocxPath);
+                // Keep the generated DOCX file for download/viewing
+                // @unlink($tempDocxPath);
                 return $folderPath . '/' . $filename . '.pdf';
             } else {
                 \Log::error("LibreOffice Error: " . implode("\n", $output));
@@ -1196,7 +1197,7 @@ class DocumentGenerator
                     // Testing fallback: create a dummy PDF file to bypass missing LibreOffice in test environments
                     $dummyPdfPath = $absoluteFolder . '/' . $filename . '.pdf';
                     File::put($dummyPdfPath, "%PDF-1.4\n1 0 obj\n<<\n/Type /Catalog\n/Pages 2 0 R\n>>\nendobj\n2 0 obj\n<<\n/Type /Pages\n/Kids [3 0 R]\n/Count 1\n>>\nendobj\n3 0 obj\n<<\n/Type /Page\n/Parent 2 0 R\n/Resources << >>\n/MediaBox [0 0 595 842]\n>>\nendobj\nxref\n0 4\n0000000000 65535 f\n0000000009 00000 n\n0000000058 00000 n\n0000000115 00000 n\ntrailer\n<<\n/Size 4\n/Root 1 0 R\n>>\nstartxref\n190\n%%EOF");
-                    @unlink($tempDocxPath);
+                    // @unlink($tempDocxPath);
                     return $folderPath . '/' . $filename . '.pdf';
                 }
                 

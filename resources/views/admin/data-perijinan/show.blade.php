@@ -450,9 +450,100 @@
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div class="xl:col-span-2 space-y-6">
 
-            {{-- Dokumen Sebelum Pembetulan: Tampilkan di bagian utama untuk Kadin, Verifikator, & Admin --}}
-            @if($application->is_pembetulan && ($isVerifikator || $isKadin || $isAdmin))
-                @if($application->file_izin_tte_pembetulan_old || $application->file_izin_pembetulan_old || $application->file_rekom_tte_pembetulan_old || $application->file_rekom_pembetulan_old || !empty($application->file_rekom_multi_tte_pembetulan_old) || !empty($application->file_rekom_multi_pembetulan_old))
+            {{-- Alasan Pembetulan Izin --}}
+            @if($application->is_pembetulan && $application->alasan_pembetulan)
+                <div class="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl p-5 shadow-sm mb-6">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/40 flex items-center justify-center flex-shrink-0 border border-red-200 dark:border-red-800">
+                            <i class="mdi mdi-alert-circle-outline text-red-600 dark:text-red-400 text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="text-sm font-bold text-red-800 dark:text-red-300 uppercase tracking-tight mb-1">Alasan Pembetulan Izin</h4>
+                            <p class="text-xs text-red-700 dark:text-red-400 leading-relaxed font-semibold italic">"{{ $application->alasan_pembetulan }}"</p>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            {{-- Dokumen Referensi: Tampilkan di bagian utama untuk Kadin, Verifikator, & Admin --}}
+            @if($application->is_pembetulan && ($isVerifikator || $isKadin || $isAdmin || $isBo))
+                @php
+                    $hasOldFiles = $application->file_izin_tte_pembetulan_old 
+                        || $application->file_izin_pembetulan_old 
+                        || $application->file_rekom_tte_pembetulan_old 
+                        || $application->file_rekom_pembetulan_old 
+                        || !empty($application->file_rekom_multi_tte_pembetulan_old) 
+                        || !empty($application->file_rekom_multi_pembetulan_old);
+                    
+                    $activeIzinPath = $application->file_izin_pembetulan ?: $application->file_izin;
+                    $currentIzinDocx = $activeIzinPath ? str_ireplace('.pdf', '.docx', $activeIzinPath) : null;
+                    $hasCurrentIzinDocx = $currentIzinDocx && file_exists(public_path($currentIzinDocx));
+                    
+                    $currentRekomDocx = $application->file_rekom ? str_ireplace('.pdf', '.docx', $application->file_rekom) : null;
+                    $hasCurrentRekomDocx = $currentRekomDocx && file_exists(public_path($currentRekomDocx));
+                    
+                    $hasCurrentRekomMultiDocx = false;
+                    if (!empty($application->file_rekom_multi)) {
+                        foreach ($application->file_rekom_multi as $path) {
+                            if ($path && file_exists(public_path(str_ireplace('.pdf', '.docx', $path)))) {
+                                $hasCurrentRekomMultiDocx = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Pre-calculate old DOCX files
+                    $oldIzinTteDocx = $application->file_izin_tte_pembetulan_old ? str_ireplace('.pdf', '.docx', $application->file_izin_tte_pembetulan_old) : null;
+                    $oldIzinDocx = $application->file_izin_pembetulan_old ? str_ireplace('.pdf', '.docx', $application->file_izin_pembetulan_old) : null;
+                    $oldRekomTteDocx = $application->file_rekom_tte_pembetulan_old ? str_ireplace('.pdf', '.docx', $application->file_rekom_tte_pembetulan_old) : null;
+                    $oldRekomDocx = $application->file_rekom_pembetulan_old ? str_ireplace('.pdf', '.docx', $application->file_rekom_pembetulan_old) : null;
+
+                    $hasOldDocx = ($oldIzinTteDocx && file_exists(public_path($oldIzinTteDocx)))
+                        || ($oldIzinDocx && file_exists(public_path($oldIzinDocx)))
+                        || ($oldRekomTteDocx && file_exists(public_path($oldRekomTteDocx)))
+                        || ($oldRekomDocx && file_exists(public_path($oldRekomDocx)));
+                        
+                    if (!$hasOldDocx && !empty($application->file_rekom_multi_tte_pembetulan_old)) {
+                        foreach($application->file_rekom_multi_tte_pembetulan_old as $path) {
+                            if ($path && file_exists(public_path(str_ireplace('.pdf', '.docx', $path)))) {
+                                $hasOldDocx = true; break;
+                            }
+                        }
+                    }
+                    if (!$hasOldDocx && !empty($application->file_rekom_multi_pembetulan_old)) {
+                        foreach($application->file_rekom_multi_pembetulan_old as $path) {
+                            if ($path && file_exists(public_path(str_ireplace('.pdf', '.docx', $path)))) {
+                                $hasOldDocx = true; break;
+                            }
+                        }
+                    }
+
+                    $hasAnyDocx = $hasCurrentIzinDocx || $hasCurrentRekomDocx || $hasCurrentRekomMultiDocx || $hasOldDocx;
+                    
+                    $hasAnyPdf = ($activeIzinPath && file_exists(public_path($activeIzinPath)))
+                        || ($application->file_rekom && file_exists(public_path($application->file_rekom)))
+                        || ($application->file_izin_tte_pembetulan_old && file_exists(public_path($application->file_izin_tte_pembetulan_old)))
+                        || ($application->file_rekom_tte_pembetulan_old && file_exists(public_path($application->file_rekom_tte_pembetulan_old)));
+
+                    if (!$hasAnyPdf && !empty($application->file_rekom_multi)) {
+                        foreach($application->file_rekom_multi as $path) {
+                            if ($path && file_exists(public_path($path))) {
+                                $hasAnyPdf = true; break;
+                            }
+                        }
+                    }
+                    if (!$hasAnyPdf && !empty($application->file_rekom_multi_tte_pembetulan_old)) {
+                        foreach($application->file_rekom_multi_tte_pembetulan_old as $path) {
+                            if ($path && file_exists(public_path($path))) {
+                                $hasAnyPdf = true; break;
+                            }
+                        }
+                    }
+
+                    $showReferenceCard = $hasAnyDocx || $hasAnyPdf;
+                @endphp
+
+                @if($showReferenceCard)
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-6">
                         <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 flex items-center justify-between">
                             <div class="flex items-center gap-3">
@@ -460,96 +551,285 @@
                                     <i class="mdi mdi-file-document-outline text-amber-600 dark:text-amber-400 text-xl"></i>
                                 </div>
                                 <div>
-                                    <h2 class="font-bold text-gray-800 dark:text-white text-base">Referensi Dokumen Sebelum Pembetulan</h2>
-                                    <p class="text-gray-500 text-[10px] uppercase font-bold mt-0.5 tracking-wider">Arsip Surat Rekomendasi & Izin Terbit Sebelumnya</p>
+                                    <h2 class="font-bold text-gray-800 dark:text-white text-base">Referensi Dokumen</h2>
+                                    <p class="text-gray-500 text-[10px] uppercase font-bold mt-0.5 tracking-wider">Arsip Surat Rekomendasi & Izin (Draft DOCX & Terbit Sebelumnya)</p>
                                 </div>
                             </div>
                         </div>
-                        <div class="p-5">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {{-- Surat Izin --}}
-                                @if($application->file_izin_tte_pembetulan_old && file_exists(public_path($application->file_izin_tte_pembetulan_old)))
-                                    <a href="{{ asset($application->file_izin_tte_pembetulan_old) }}" target="_blank" 
-                                        class="inline-flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-amber-50/30 dark:hover:bg-amber-950/10 transition-all shadow-sm">
-                                        <div class="flex items-center gap-2">
-                                            <i class="mdi mdi-file-pdf-box text-red-500 text-lg"></i>
-                                            <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Izin Ter-TTE Lama</span>
-                                        </div>
-                                        <i class="mdi mdi-open-in-new text-gray-400 text-xs"></i>
-                                    </a>
-                                @endif
-                                @if($application->file_izin_pembetulan_old && file_exists(public_path($application->file_izin_pembetulan_old)))
-                                    <a href="{{ asset($application->file_izin_pembetulan_old) }}" target="_blank" 
-                                        class="inline-flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-amber-50/30 dark:hover:bg-amber-950/10 transition-all shadow-sm">
-                                        <div class="flex items-center gap-2">
-                                            <i class="mdi mdi-file-pdf-box text-blue-500 text-lg"></i>
-                                            <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Draft Izin Lama</span>
-                                        </div>
-                                        <i class="mdi mdi-open-in-new text-gray-400 text-xs"></i>
-                                    </a>
-                                @endif
-
-                                {{-- Surat Rekomendasi --}}
-                                @if($application->file_rekom_tte_pembetulan_old && file_exists(public_path($application->file_rekom_tte_pembetulan_old)))
-                                    <a href="{{ asset($application->file_rekom_tte_pembetulan_old) }}" target="_blank"
-                                        class="inline-flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-amber-50/30 dark:hover:bg-amber-950/10 transition-all shadow-sm">
-                                        <div class="flex items-center gap-2">
-                                            <i class="mdi mdi-file-pdf-box text-red-500 text-lg"></i>
-                                            <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Rekom Ter-TTE Lama</span>
-                                        </div>
-                                        <i class="mdi mdi-open-in-new text-gray-400 text-xs"></i>
-                                    </a>
-                                @endif
-                                @if($application->file_rekom_pembetulan_old && file_exists(public_path($application->file_rekom_pembetulan_old)))
-                                    <a href="{{ asset($application->file_rekom_pembetulan_old) }}" target="_blank"
-                                        class="inline-flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-amber-50/30 dark:hover:bg-amber-950/10 transition-all shadow-sm">
-                                        <div class="flex items-center gap-2">
-                                            <i class="mdi mdi-file-pdf-box text-blue-500 text-lg"></i>
-                                            <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Draft Rekom Lama</span>
-                                        </div>
-                                        <i class="mdi mdi-open-in-new text-gray-400 text-xs"></i>
-                                    </a>
-                                @endif
-
-                                {{-- Multi OPD Rekomendasi --}}
-                                @if(!empty($application->file_rekom_multi_tte_pembetulan_old))
-                                    @foreach($application->file_rekom_multi_tte_pembetulan_old as $opdId => $path)
-                                        @if($path && file_exists(public_path($path)))
+                        <div class="p-5 flex flex-col gap-6">
+                            {{-- DOCX Section --}}
+                            @if($hasAnyDocx)
+                                <div>
+                                    <h3 class="text-xs font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-3 flex items-center gap-1.5 border-b border-blue-100 dark:border-blue-900 pb-1.5">
+                                        <i class="mdi mdi-file-word text-base"></i> Dokumen Kerja (Format Word / DOCX)
+                                    </h3>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {{-- Active Draft Izin (DOCX) --}}
+                                        @if($hasCurrentIzinDocx)
                                             @php
-                                                $opdName = \App\Models\Opd::find($opdId)->nama_opd ?? 'OPD';
+                                                $rpIzinDocx = str_ireplace('uploads/perijinan/', '', $currentIzinDocx);
                                             @endphp
-                                            <a href="{{ asset($path) }}" target="_blank"
-                                                class="inline-flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-amber-50/30 dark:hover:bg-amber-950/10 transition-all shadow-sm"
-                                                title="Rekomendasi {{ $opdName }}">
-                                                <div class="flex items-center gap-2">
+                                            <div class="flex items-center justify-between p-3 bg-blue-50/40 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/50 hover:bg-blue-100/30 transition-all shadow-sm">
+                                                <a href="{{ route('data-perijinan.download-file', $rpIzinDocx) }}" class="flex items-center gap-2 flex-1 hover:underline">
+                                                    <i class="mdi mdi-file-word text-blue-500 text-lg"></i>
+                                                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Draft Izin (DOCX)</span>
+                                                </a>
+                                                <a href="{{ route('data-perijinan.download-file', $rpIzinDocx) }}" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-blue-600 transition-colors shadow-sm" title="Unduh DOCX">
+                                                    <i class="mdi mdi-download"></i>
+                                                </a>
+                                            </div>
+                                        @endif
+
+                                        {{-- Active Draft Rekomendasi (DOCX) --}}
+                                        @if($hasCurrentRekomDocx)
+                                            @php
+                                                $rpRekomDocx = str_ireplace('uploads/perijinan/', '', $currentRekomDocx);
+                                            @endphp
+                                            <div class="flex items-center justify-between p-3 bg-blue-50/40 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/50 hover:bg-blue-100/30 transition-all shadow-sm">
+                                                <a href="{{ route('data-perijinan.download-file', $rpRekomDocx) }}" class="flex items-center gap-2 flex-1 hover:underline">
+                                                    <i class="mdi mdi-file-word text-blue-500 text-lg"></i>
+                                                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Draft Rekom (DOCX)</span>
+                                                </a>
+                                                <a href="{{ route('data-perijinan.download-file', $rpRekomDocx) }}" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-blue-600 transition-colors shadow-sm" title="Unduh DOCX">
+                                                    <i class="mdi mdi-download"></i>
+                                                </a>
+                                            </div>
+                                        @endif
+
+                                        {{-- Multi OPD Active Draft Rekomendasi (DOCX) --}}
+                                        @if(!empty($application->file_rekom_multi))
+                                            @foreach($application->file_rekom_multi as $opdId => $path)
+                                                @if($path)
+                                                    @php
+                                                        $currentRekomMultiDocx = str_ireplace('.pdf', '.docx', $path);
+                                                        $opdName = \App\Models\Opd::find($opdId)->nama_opd ?? 'OPD';
+                                                    @endphp
+                                                    @if(file_exists(public_path($currentRekomMultiDocx)))
+                                                        @php
+                                                            $rpMultiDocx = str_ireplace('uploads/perijinan/', '', $currentRekomMultiDocx);
+                                                        @endphp
+                                                        <div class="flex items-center justify-between p-3 bg-blue-50/40 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/50 hover:bg-blue-100/30 transition-all shadow-sm" title="Rekomendasi {{ $opdName }}">
+                                                            <a href="{{ route('data-perijinan.download-file', $rpMultiDocx) }}" class="flex items-center gap-2 flex-1 hover:underline">
+                                                                <i class="mdi mdi-file-word text-blue-500 text-lg"></i>
+                                                                <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Rekom Draft {{ \Illuminate\Support\Str::limit($opdName, 12) }} (DOCX)</span>
+                                                            </a>
+                                                            <a href="{{ route('data-perijinan.download-file', $rpMultiDocx) }}" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-blue-600 transition-colors shadow-sm" title="Unduh DOCX">
+                                                                <i class="mdi mdi-download"></i>
+                                                            </a>
+                                                        </div>
+                                                    @endif
+                                                @endif
+                                            @endforeach
+                                        @endif
+
+                                        {{-- Old Izin TTE DOCX --}}
+                                        @if($oldIzinTteDocx && file_exists(public_path($oldIzinTteDocx)))
+                                            @php $rpOldIzinTteDocx = str_ireplace('uploads/perijinan/', '', $oldIzinTteDocx); @endphp
+                                            <div class="flex items-center justify-between p-3 bg-blue-50/40 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/50 hover:bg-blue-100/30 transition-all shadow-sm">
+                                                <a href="{{ route('data-perijinan.download-file', $rpOldIzinTteDocx) }}" class="flex items-center gap-2 flex-1 hover:underline">
+                                                    <i class="mdi mdi-file-word text-blue-500 text-lg"></i>
+                                                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Izin Ter-TTE (DOCX)</span>
+                                                </a>
+                                                <a href="{{ route('data-perijinan.download-file', $rpOldIzinTteDocx) }}" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-blue-600 transition-colors shadow-sm" title="Unduh DOCX">
+                                                    <i class="mdi mdi-download"></i>
+                                                </a>
+                                            </div>
+                                        @endif
+
+                                        {{-- Old Izin Draft DOCX --}}
+                                        @if($oldIzinDocx && file_exists(public_path($oldIzinDocx)))
+                                            @php $rpOldIzinDocx = str_ireplace('uploads/perijinan/', '', $oldIzinDocx); @endphp
+                                            <div class="flex items-center justify-between p-3 bg-blue-50/40 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/50 hover:bg-blue-100/30 transition-all shadow-sm">
+                                                <a href="{{ route('data-perijinan.download-file', $rpOldIzinDocx) }}" class="flex items-center gap-2 flex-1 hover:underline">
+                                                    <i class="mdi mdi-file-word text-blue-500 text-lg"></i>
+                                                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Draft Izin (DOCX)</span>
+                                                </a>
+                                                <a href="{{ route('data-perijinan.download-file', $rpOldIzinDocx) }}" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-blue-600 transition-colors shadow-sm" title="Unduh DOCX">
+                                                    <i class="mdi mdi-download"></i>
+                                                </a>
+                                            </div>
+                                        @endif
+
+                                        {{-- Old Rekom TTE DOCX --}}
+                                        @if($oldRekomTteDocx && file_exists(public_path($oldRekomTteDocx)))
+                                            @php $rpOldRekomTteDocx = str_ireplace('uploads/perijinan/', '', $oldRekomTteDocx); @endphp
+                                            <div class="flex items-center justify-between p-3 bg-blue-50/40 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/50 hover:bg-blue-100/30 transition-all shadow-sm">
+                                                <a href="{{ route('data-perijinan.download-file', $rpOldRekomTteDocx) }}" class="flex items-center gap-2 flex-1 hover:underline">
+                                                    <i class="mdi mdi-file-word text-blue-500 text-lg"></i>
+                                                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Rekom Ter-TTE (DOCX)</span>
+                                                </a>
+                                                <a href="{{ route('data-perijinan.download-file', $rpOldRekomTteDocx) }}" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-blue-600 transition-colors shadow-sm" title="Unduh DOCX">
+                                                    <i class="mdi mdi-download"></i>
+                                                </a>
+                                            </div>
+                                        @endif
+
+                                        {{-- Old Rekom Draft DOCX --}}
+                                        @if($oldRekomDocx && file_exists(public_path($oldRekomDocx)))
+                                            @php $rpOldRekomDocx = str_ireplace('uploads/perijinan/', '', $oldRekomDocx); @endphp
+                                            <div class="flex items-center justify-between p-3 bg-blue-50/40 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/50 hover:bg-blue-100/30 transition-all shadow-sm">
+                                                <a href="{{ route('data-perijinan.download-file', $rpOldRekomDocx) }}" class="flex items-center gap-2 flex-1 hover:underline">
+                                                    <i class="mdi mdi-file-word text-blue-500 text-lg"></i>
+                                                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Draft Rekom (DOCX)</span>
+                                                </a>
+                                                <a href="{{ route('data-perijinan.download-file', $rpOldRekomDocx) }}" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-blue-600 transition-colors shadow-sm" title="Unduh DOCX">
+                                                    <i class="mdi mdi-download"></i>
+                                                </a>
+                                            </div>
+                                        @endif
+
+                                        {{-- Old Multi OPD Rekom TTE DOCX --}}
+                                        @if(!empty($application->file_rekom_multi_tte_pembetulan_old))
+                                            @foreach($application->file_rekom_multi_tte_pembetulan_old as $opdId => $path)
+                                                @if($path)
+                                                    @php
+                                                        $opdName = \App\Models\Opd::find($opdId)->nama_opd ?? 'OPD';
+                                                        $oldRekomMultiTteDocx = str_ireplace('.pdf', '.docx', $path);
+                                                        $rpOldMultiTteDocx = str_ireplace('uploads/perijinan/', '', $oldRekomMultiTteDocx);
+                                                    @endphp
+                                                    @if(file_exists(public_path($oldRekomMultiTteDocx)))
+                                                        <div class="flex items-center justify-between p-3 bg-blue-50/40 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/50 hover:bg-blue-100/30 transition-all shadow-sm" title="Rekomendasi {{ $opdName }}">
+                                                            <a href="{{ route('data-perijinan.download-file', $rpOldMultiTteDocx) }}" class="flex items-center gap-2 flex-1 hover:underline">
+                                                                <i class="mdi mdi-file-word text-blue-500 text-lg"></i>
+                                                                <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Rekom TTE {{ \Illuminate\Support\Str::limit($opdName, 15) }} (DOCX)</span>
+                                                            </a>
+                                                            <a href="{{ route('data-perijinan.download-file', $rpOldMultiTteDocx) }}" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-blue-600 transition-colors shadow-sm" title="Unduh DOCX">
+                                                                <i class="mdi mdi-download"></i>
+                                                            </a>
+                                                        </div>
+                                                    @endif
+                                                @endif
+                                            @endforeach
+                                        @endif
+
+                                        {{-- Old Multi OPD Rekom Draft DOCX --}}
+                                        @if(!empty($application->file_rekom_multi_pembetulan_old))
+                                            @foreach($application->file_rekom_multi_pembetulan_old as $opdId => $path)
+                                                @if($path)
+                                                    @php
+                                                        $opdName = \App\Models\Opd::find($opdId)->nama_opd ?? 'OPD';
+                                                        $oldRekomMultiDocx = str_ireplace('.pdf', '.docx', $path);
+                                                        $rpOldMultiDocx = str_ireplace('uploads/perijinan/', '', $oldRekomMultiDocx);
+                                                    @endphp
+                                                    @if(file_exists(public_path($oldRekomMultiDocx)))
+                                                        <div class="flex items-center justify-between p-3 bg-blue-50/40 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/50 hover:bg-blue-100/30 transition-all shadow-sm" title="Rekomendasi {{ $opdName }}">
+                                                            <a href="{{ route('data-perijinan.download-file', $rpOldMultiDocx) }}" class="flex items-center gap-2 flex-1 hover:underline">
+                                                                <i class="mdi mdi-file-word text-blue-500 text-lg"></i>
+                                                                <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Rekom Draft {{ \Illuminate\Support\Str::limit($opdName, 15) }} (DOCX)</span>
+                                                            </a>
+                                                            <a href="{{ route('data-perijinan.download-file', $rpOldMultiDocx) }}" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-blue-600 transition-colors shadow-sm" title="Unduh DOCX">
+                                                                <i class="mdi mdi-download"></i>
+                                                            </a>
+                                                        </div>
+                                                    @endif
+                                                @endif
+                                            @endforeach
+                                        @endif
+                                    </div>
+                                </div>
+                            @endif
+
+                            {{-- PDF Section --}}
+                            @if($hasAnyPdf)
+                                <div>
+                                    <h3 class="text-xs font-black uppercase tracking-wider text-red-600 dark:text-red-400 mb-3 flex items-center gap-1.5 border-b border-red-100 dark:border-red-900 pb-1.5">
+                                        <i class="mdi mdi-file-pdf-box text-base"></i> Pratinjau Dokumen (Format PDF)
+                                    </h3>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {{-- Active Draft Izin (PDF) --}}
+                                        @if($activeIzinPath && file_exists(public_path($activeIzinPath)))
+                                            <div class="flex items-center justify-between p-3 bg-red-50/40 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-800/50 hover:bg-red-100/30 transition-all shadow-sm">
+                                                <a href="{{ asset($activeIzinPath) }}" target="_blank" class="flex items-center gap-2 flex-1 hover:underline">
                                                     <i class="mdi mdi-file-pdf-box text-red-500 text-lg"></i>
-                                                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Rekom TTE {{ \Illuminate\Support\Str::limit($opdName, 15) }}</span>
-                                                </div>
-                                                <i class="mdi mdi-open-in-new text-gray-400 text-xs"></i>
-                                            </a>
+                                                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Draft Izin (PDF)</span>
+                                                </a>
+                                                <a href="{{ asset($activeIzinPath) }}" target="_blank" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-red-600 transition-colors shadow-sm" title="Buka PDF">
+                                                    <i class="mdi mdi-open-in-new"></i>
+                                                </a>
+                                            </div>
                                         @endif
-                                    @endforeach
-                                @endif
 
-                                @if(!empty($application->file_rekom_multi_pembetulan_old))
-                                    @foreach($application->file_rekom_multi_pembetulan_old as $opdId => $path)
-                                        @if($path && file_exists(public_path($path)))
-                                            @php
-                                                $opdName = \App\Models\Opd::find($opdId)->nama_opd ?? 'OPD';
-                                            @endphp
-                                            <a href="{{ asset($path) }}" target="_blank"
-                                                class="inline-flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-amber-50/30 dark:hover:bg-amber-950/10 transition-all shadow-sm"
-                                                title="Rekomendasi {{ $opdName }}">
-                                                <div class="flex items-center gap-2">
-                                                    <i class="mdi mdi-file-pdf-box text-blue-500 text-lg"></i>
-                                                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Rekom Draft {{ \Illuminate\Support\Str::limit($opdName, 15) }}</span>
-                                                </div>
-                                                <i class="mdi mdi-open-in-new text-gray-400 text-xs"></i>
-                                            </a>
+                                        {{-- Active Draft Rekomendasi (PDF) --}}
+                                        @if($application->file_rekom && file_exists(public_path($application->file_rekom)))
+                                            <div class="flex items-center justify-between p-3 bg-red-50/40 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-800/50 hover:bg-red-100/30 transition-all shadow-sm">
+                                                <a href="{{ asset($application->file_rekom) }}" target="_blank" class="flex items-center gap-2 flex-1 hover:underline">
+                                                    <i class="mdi mdi-file-pdf-box text-red-500 text-lg"></i>
+                                                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Draft Rekom (PDF)</span>
+                                                </a>
+                                                <a href="{{ asset($application->file_rekom) }}" target="_blank" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-red-600 transition-colors shadow-sm" title="Buka PDF">
+                                                    <i class="mdi mdi-open-in-new"></i>
+                                                </a>
+                                            </div>
                                         @endif
-                                    @endforeach
-                                @endif
-                            </div>
+
+                                        {{-- Multi OPD Active Draft Rekomendasi (PDF) --}}
+                                        @if(!empty($application->file_rekom_multi))
+                                            @foreach($application->file_rekom_multi as $opdId => $path)
+                                                @if($path && file_exists(public_path($path)))
+                                                    @php
+                                                        $opdName = \App\Models\Opd::find($opdId)->nama_opd ?? 'OPD';
+                                                    @endphp
+                                                    <div class="flex items-center justify-between p-3 bg-red-50/40 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-800/50 hover:bg-red-100/30 transition-all shadow-sm" title="Rekomendasi {{ $opdName }}">
+                                                        <a href="{{ asset($path) }}" target="_blank" class="flex items-center gap-2 flex-1 hover:underline">
+                                                            <i class="mdi mdi-file-pdf-box text-red-500 text-lg"></i>
+                                                            <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Rekom Draft {{ \Illuminate\Support\Str::limit($opdName, 12) }} (PDF)</span>
+                                                        </a>
+                                                        <a href="{{ asset($path) }}" target="_blank" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-red-600 transition-colors shadow-sm" title="Buka PDF">
+                                                            <i class="mdi mdi-open-in-new"></i>
+                                                        </a>
+                                                    </div>
+                                                @endif
+                                            @endforeach
+                                        @endif
+
+                                        {{-- Surat Izin Lama PDF --}}
+                                        @if($application->file_izin_tte_pembetulan_old && file_exists(public_path($application->file_izin_tte_pembetulan_old)))
+                                            <div class="flex items-center justify-between p-3 bg-red-50/40 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-800/50 hover:bg-red-100/30 transition-all shadow-sm">
+                                                <a href="{{ asset($application->file_izin_tte_pembetulan_old) }}" target="_blank" class="flex items-center gap-2 flex-1 hover:underline">
+                                                    <i class="mdi mdi-file-pdf-box text-red-500 text-lg"></i>
+                                                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300 hover:underline">Izin Ter-TTE (PDF)</span>
+                                                </a>
+                                                <a href="{{ asset($application->file_izin_tte_pembetulan_old) }}" target="_blank" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-red-600 transition-colors shadow-sm" title="Buka PDF">
+                                                    <i class="mdi mdi-open-in-new"></i>
+                                                </a>
+                                            </div>
+                                        @endif
+
+                                        {{-- Surat Rekomendasi Lama PDF --}}
+                                        @if($application->file_rekom_tte_pembetulan_old && file_exists(public_path($application->file_rekom_tte_pembetulan_old)))
+                                            <div class="flex items-center justify-between p-3 bg-red-50/40 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-800/50 hover:bg-red-100/30 transition-all shadow-sm">
+                                                <a href="{{ asset($application->file_rekom_tte_pembetulan_old) }}" target="_blank" class="flex items-center gap-2 flex-1 hover:underline">
+                                                    <i class="mdi mdi-file-pdf-box text-red-500 text-lg"></i>
+                                                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300 hover:underline">Rekom Ter-TTE (PDF)</span>
+                                                </a>
+                                                <a href="{{ asset($application->file_rekom_tte_pembetulan_old) }}" target="_blank" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-red-600 transition-colors shadow-sm" title="Buka PDF">
+                                                    <i class="mdi mdi-open-in-new"></i>
+                                                </a>
+                                            </div>
+                                        @endif
+
+                                        {{-- Multi OPD Rekomendasi Lama PDF --}}
+                                        @if(!empty($application->file_rekom_multi_tte_pembetulan_old))
+                                            @foreach($application->file_rekom_multi_tte_pembetulan_old as $opdId => $path)
+                                                @if($path && file_exists(public_path($path)))
+                                                    @php
+                                                        $opdName = \App\Models\Opd::find($opdId)->nama_opd ?? 'OPD';
+                                                    @endphp
+                                                    <div class="flex items-center justify-between p-3 bg-red-50/40 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-800/50 hover:bg-red-100/30 transition-all shadow-sm" title="Rekomendasi {{ $opdName }}">
+                                                        <a href="{{ asset($path) }}" target="_blank" class="flex items-center gap-2 flex-1 hover:underline">
+                                                            <i class="mdi mdi-file-pdf-box text-red-500 text-lg"></i>
+                                                            <span class="text-xs font-bold text-gray-700 dark:text-gray-300 hover:underline">Rekom TTE {{ \Illuminate\Support\Str::limit($opdName, 15) }} (PDF)</span>
+                                                        </a>
+                                                        <a href="{{ asset($path) }}" target="_blank" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-red-600 transition-colors shadow-sm" title="Buka PDF">
+                                                            <i class="mdi mdi-open-in-new"></i>
+                                                        </a>
+                                                    </div>
+                                                @endif
+                                            @endforeach
+                                        @endif
+                                    </div>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 @endif
@@ -557,19 +837,7 @@
 
             <!-- TAB 1: DATA DAN BERKAS PEMOHON -->
             <div id="tab-panel-data-pemohon" class="tab-content-panel space-y-6">
-                @if($application->is_pembetulan && $application->alasan_pembetulan)
-                    <div class="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl p-5 shadow-sm">
-                        <div class="flex items-start gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/40 flex items-center justify-center flex-shrink-0 border border-red-200 dark:border-red-800">
-                                <i class="mdi mdi-alert-circle-outline text-red-600 dark:text-red-400 text-xl"></i>
-                            </div>
-                            <div class="flex-1">
-                                <h4 class="text-sm font-bold text-red-800 dark:text-red-300 uppercase tracking-tight mb-1">Alasan Pembetulan Izin</h4>
-                                <p class="text-xs text-red-700 dark:text-red-400 leading-relaxed font-semibold italic">"{{ $application->alasan_pembetulan }}"</p>
-                            </div>
-                        </div>
-                    </div>
-                @endif
+
 
                 @if($isFutureValidator && $application->status !== 'approved' && $application->status !== 'diperbaiki' && $application->status !== 'rejected')
                     <div class="p-4 bg-rose-50 dark:bg-rose-900/20 border-l-4 border-rose-500 rounded-r-xl flex gap-3 shadow-sm mb-6">
@@ -656,9 +924,9 @@
                     // - BO: can edit (if their turn) or read-only
                     // - Admin: always read-only
                     // - Verifikator & Kadin: read-only (validators above BO who need to review BO data)
-                    $canViewBoForm = $application->perijinan->has_bo_form
+                    $canViewBoForm = ($application->perijinan->has_bo_form || $application->is_pembetulan)
                         && ($isBo || $isAdmin || $isVerifikator || $isKadin)
-                        && ($canEditBo || !empty($application->bo_data));
+                        && ($canEditBo || !empty($application->bo_data) || $application->is_pembetulan);
                 @endphp
                 @if($canViewBoForm)
                 <!-- Card: Form Khusus BO -->
@@ -832,81 +1100,6 @@
                             {{-- Pembetulan: BO upload izin PDF section --}}
                             @if($application->is_pembetulan)
                             <div class="mt-8 pt-6 border-t-2 border-dashed border-blue-200 dark:border-blue-800">
-                                {{-- Referensi Dokumen Sebelum Pembetulan --}}
-                                @if($application->file_izin_tte_pembetulan_old || $application->file_izin_pembetulan_old || $application->file_rekom_tte_pembetulan_old || $application->file_rekom_pembetulan_old || !empty($application->file_rekom_multi_tte_pembetulan_old) || !empty($application->file_rekom_multi_pembetulan_old))
-                                    <div class="p-4 bg-amber-50/60 dark:bg-amber-950/20 rounded-xl border border-amber-200 dark:border-amber-900/40 space-y-3 mb-5">
-                                        <p class="text-xs font-black text-amber-800 dark:text-amber-300 flex items-center gap-1.5 uppercase tracking-wide">
-                                            <i class="mdi mdi-file-document-outline text-amber-600 text-lg"></i>
-                                            Acuan Pembetulan (Dokumen Ter-TTE & Draft Sebelumnya)
-                                        </p>
-                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                            {{-- Surat Izin --}}
-                                            @if($application->file_izin_tte_pembetulan_old && file_exists(public_path($application->file_izin_tte_pembetulan_old)))
-                                                <a href="{{ asset($application->file_izin_tte_pembetulan_old) }}" target="_blank" 
-                                                    class="inline-flex items-center justify-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-amber-200 dark:border-gray-700 rounded-lg text-xs font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors shadow-sm">
-                                                    <i class="mdi mdi-file-pdf-box text-red-500 text-sm"></i>
-                                                    Izin Ter-TTE Lama
-                                                </a>
-                                            @endif
-                                            @if($application->file_izin_pembetulan_old && file_exists(public_path($application->file_izin_pembetulan_old)))
-                                                <a href="{{ asset($application->file_izin_pembetulan_old) }}" target="_blank" 
-                                                    class="inline-flex items-center justify-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-amber-200 dark:border-gray-700 rounded-lg text-xs font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors shadow-sm">
-                                                    <i class="mdi mdi-file-pdf-box text-blue-500 text-sm"></i>
-                                                    Draft Izin Lama
-                                                </a>
-                                            @endif
-
-                                            {{-- Surat Rekomendasi --}}
-                                            @if($application->file_rekom_tte_pembetulan_old && file_exists(public_path($application->file_rekom_tte_pembetulan_old)))
-                                                <a href="{{ asset($application->file_rekom_tte_pembetulan_old) }}" target="_blank"
-                                                    class="inline-flex items-center justify-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-amber-200 dark:border-gray-700 rounded-lg text-xs font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors shadow-sm">
-                                                    <i class="mdi mdi-file-pdf-box text-red-500 text-sm"></i>
-                                                    Rekom Ter-TTE Lama
-                                                </a>
-                                            @endif
-                                            @if($application->file_rekom_pembetulan_old && file_exists(public_path($application->file_rekom_pembetulan_old)))
-                                                <a href="{{ asset($application->file_rekom_pembetulan_old) }}" target="_blank"
-                                                    class="inline-flex items-center justify-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-amber-200 dark:border-gray-700 rounded-lg text-xs font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors shadow-sm">
-                                                    <i class="mdi mdi-file-pdf-box text-blue-500 text-sm"></i>
-                                                    Draft Rekom Lama
-                                                </a>
-                                            @endif
-
-                                            {{-- Multi OPD Rekomendasi --}}
-                                            @if(!empty($application->file_rekom_multi_tte_pembetulan_old))
-                                                @foreach($application->file_rekom_multi_tte_pembetulan_old as $opdId => $path)
-                                                    @if($path && file_exists(public_path($path)))
-                                                        @php
-                                                            $opdName = \App\Models\Opd::find($opdId)->nama_opd ?? 'OPD';
-                                                        @endphp
-                                                        <a href="{{ asset($path) }}" target="_blank"
-                                                            class="inline-flex items-center justify-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-amber-200 dark:border-gray-700 rounded-lg text-xs font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
-                                                            title="Rekomendasi {{ $opdName }}">
-                                                            <i class="mdi mdi-file-pdf-box text-red-500 text-sm"></i>
-                                                            Rekom TTE {{ \Illuminate\Support\Str::limit($opdName, 10) }}
-                                                        </a>
-                                                    @endif
-                                                @endforeach
-                                            @endif
-
-                                            @if(!empty($application->file_rekom_multi_pembetulan_old))
-                                                @foreach($application->file_rekom_multi_pembetulan_old as $opdId => $path)
-                                                    @if($path && file_exists(public_path($path)))
-                                                        @php
-                                                            $opdName = \App\Models\Opd::find($opdId)->nama_opd ?? 'OPD';
-                                                        @endphp
-                                                        <a href="{{ asset($path) }}" target="_blank"
-                                                            class="inline-flex items-center justify-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-amber-200 dark:border-gray-700 rounded-lg text-xs font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
-                                                            title="Rekomendasi {{ $opdName }}">
-                                                            <i class="mdi mdi-file-pdf-box text-blue-500 text-sm"></i>
-                                                            Rekom Draft {{ \Illuminate\Support\Str::limit($opdName, 10) }}
-                                                        </a>
-                                                    @endif
-                                                @endforeach
-                                            @endif
-                                        </div>
-                                    </div>
-                                @endif
 
                                 <div class="flex items-center gap-3 mb-4">
                                     <div class="w-9 h-9 bg-blue-100 dark:bg-blue-900/40 rounded-xl flex items-center justify-center border border-blue-200 dark:border-blue-800">
@@ -950,9 +1143,26 @@
                                                 <div class="flex items-center gap-2 flex-shrink-0">
                                                     @if(file_exists(public_path($docxTemplatePath)))
                                                         <a href="{{ asset($docxTemplatePath) }}" download
-                                                            class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 shadow-sm">
-                                                            <i class="mdi mdi-download"></i> Unduh DOCX Template
+                                                            class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 shadow-sm"
+                                                            title="Unduh file template asli yang Anda unggah">
+                                                            <i class="mdi mdi-download"></i> Unduh Template
                                                         </a>
+                                                    @endif
+                                                    @php
+                                                        $filledDocx = str_replace('.pdf', '.docx', $application->file_izin_pembetulan);
+                                                    @endphp
+                                                    @if(file_exists(public_path($filledDocx)))
+                                                        <a href="{{ asset($filledDocx) }}" download
+                                                            class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 shadow-sm"
+                                                            title="Unduh hasil generate DOCX dengan QR Code dan data pemohon">
+                                                            <i class="mdi mdi-download"></i> Unduh Hasil DOCX
+                                                        </a>
+                                                    @endif
+                                                    @if(file_exists(public_path($application->file_izin_pembetulan)))
+                                                        <button type="button" onclick="openPdfPreview('{{ asset($application->file_izin_pembetulan) }}?t={{ time() }}', 'Draft Izin Pembetulan')"
+                                                            class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 shadow-sm">
+                                                            <i class="mdi mdi-eye"></i> Buka PDF
+                                                        </button>
                                                     @endif
                                                 </div>
                                             </div>
@@ -1606,6 +1816,14 @@
                                         <i class="mdi mdi-refresh"></i> Perbarui PDF
                                     </button>
                                 </form>
+                            @endif
+                            @php
+                                $filledIzinDocx = str_replace('.pdf', '.docx', $application->file_izin_pembetulan);
+                            @endphp
+                            @if(file_exists(public_path($filledIzinDocx)))
+                                <a href="{{ asset($filledIzinDocx) }}" download class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm flex items-center gap-1">
+                                    <i class="mdi mdi-file-word"></i> Unduh DOCX
+                                </a>
                             @endif
                             <button onclick="openPdfPreview('{{ asset($application->file_izin_pembetulan) }}?t={{ time() }}', 'Draft Izin Pembetulan dari BO')" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm">Buka PDF</button>
                         </div>

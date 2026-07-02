@@ -905,5 +905,139 @@ class PembetulanIzinTest extends TestCase
         $this->assertEquals('pending', $records['bo']->fresh()->status);
         $this->assertEquals('pending', $records['verifikator']->fresh()->status);
     }
+
+    public function test_bo_can_see_docx_downloads_during_validation()
+    {
+        // 1. Create Users
+        $pemohon = User::create([
+            'name' => 'Pemohon Test Docx',
+            'username' => 'pemohon_test_docx',
+            'email' => 'pemohon_docx@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'pemohon',
+            'status' => 'aktif',
+        ]);
+
+        $boUser = User::create([
+            'name' => 'BO Test Docx',
+            'username' => 'bo_test_docx',
+            'email' => 'bo_docx@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'bo',
+            'status' => 'aktif',
+        ]);
+
+        // 2. Create Perijinan
+        $perijinan = Perijinan::create([
+            'nama_perijinan' => 'Izin Test Docx',
+            'kode_perijinan' => 'TEST_DOCX_RET',
+            'is_multi_opd' => false,
+            'dasar_hukum' => 'UUD',
+            'persyaratan' => 'Persyaratan',
+            'prosedur' => 'Prosedur',
+        ]);
+
+        // Create 6 validation steps: FO, BO, Operator OPD, Kepala OPD, Verifikator, Kadin
+        $roles = ['fo', 'bo', 'operator_opd', 'kepala_opd', 'verifikator', 'kadin'];
+        $flows = [];
+        foreach ($roles as $idx => $role) {
+            $flows[$role] = PerijinanValidationFlow::create([
+                'perijinan_id' => $perijinan->id,
+                'role' => $role,
+                'role_label' => ucfirst($role),
+                'order' => $idx + 1,
+                'status' => 'aktif',
+                'assigned_user_id' => $role === 'bo' ? $boUser->id : null,
+            ]);
+        }
+
+        // Create directory for dummy files
+        $directory = public_path('uploads/perijinan/1');
+        if (!file_exists($directory)) {
+            mkdir($directory, 0777, true);
+        }
+
+        // Create dummy files: old files (before pembetulan)
+        $oldIzinPdf = 'uploads/perijinan/1/old_izin.pdf';
+        $oldIzinDocx = 'uploads/perijinan/1/old_izin.docx';
+        $oldRekomPdf = 'uploads/perijinan/1/old_rekom.pdf';
+        $oldRekomDocx = 'uploads/perijinan/1/old_rekom.docx';
+        $currentIzinPembetulanPdf = 'uploads/perijinan/1/current_izin_pembetulan.pdf';
+        $currentIzinPembetulanDocx = 'uploads/perijinan/1/current_izin_pembetulan.docx';
+
+        file_put_contents(public_path($oldIzinPdf), 'dummy pdf');
+        file_put_contents(public_path($oldIzinDocx), 'dummy docx');
+        file_put_contents(public_path($oldRekomPdf), 'dummy pdf');
+        file_put_contents(public_path($oldRekomDocx), 'dummy docx');
+        file_put_contents(public_path($currentIzinPembetulanPdf), 'dummy pdf');
+        file_put_contents(public_path($currentIzinPembetulanDocx), 'dummy docx');
+
+        // 3. Create pembetulan application with old file references
+        $application = DataPerijinan::create([
+            'user_id' => $pemohon->id,
+            'perijinan_id' => $perijinan->id,
+            'status' => 'in_progress',
+            'current_step' => 2, // BO step
+            'no_registrasi' => 'REG-PEMBETULAN-DOCX-TEST',
+            'is_pembetulan' => true,
+            'file_izin_pembetulan' => $currentIzinPembetulanPdf,
+            'file_izin_pembetulan_old' => $oldIzinPdf,
+            'file_rekom_pembetulan_old' => $oldRekomPdf,
+        ]);
+
+        // 4. Create validation records
+        $pembetulanRoles = ['fo', 'bo', 'verifikator', 'kadin'];
+        $records = [];
+        foreach ($pembetulanRoles as $idx => $role) {
+            $records[$role] = DataPerijinanValidasi::create([
+                'data_perijinan_id' => $application->id,
+                'validation_flow_id' => $flows[$role]->id,
+                'user_id' => $role === 'bo' ? $boUser->id : null,
+                'status' => $role === 'fo' ? 'approved' : 'pending',
+                'order' => $idx + 1,
+            ]);
+        }
+
+        // 5. Access the show page as BO user
+        $response = $this->actingAs($boUser)
+            ->get(route('data-perijinan.show', $application->id));
+
+        $response->assertStatus(200);
+
+        // Assert that the reference panel is visible to BO
+        $response->assertSee('Referensi Dokumen');
+
+        // Assert that the old/reference DOCX files are visible/downloadable
+        $response->assertSee('old_izin.docx');
+        $response->assertSee('old_rekom.docx');
+
+        // Assert that the current/pembetulan draft DOCX is visible/downloadable next to Buka PDF
+        $response->assertSee('current_izin_pembetulan.docx');
+
+        // Assert download routes work and return 200 / download response
+        $rpIzinDocx = str_ireplace('uploads/perijinan/', '', $currentIzinPembetulanDocx);
+        $rpOldIzinDocx = str_ireplace('uploads/perijinan/', '', $oldIzinDocx);
+        $rpOldRekomDocx = str_ireplace('uploads/perijinan/', '', $oldRekomDocx);
+
+        $downloadIzinResponse = $this->actingAs($boUser)
+            ->get(route('data-perijinan.download-file', $rpIzinDocx));
+        $downloadIzinResponse->assertStatus(200);
+
+        $downloadOldIzinResponse = $this->actingAs($boUser)
+            ->get(route('data-perijinan.download-file', $rpOldIzinDocx));
+        $downloadOldIzinResponse->assertStatus(200);
+
+        $downloadOldRekomResponse = $this->actingAs($boUser)
+            ->get(route('data-perijinan.download-file', $rpOldRekomDocx));
+        $downloadOldRekomResponse->assertStatus(200);
+
+        // Clean up dummy files
+        @unlink(public_path($oldIzinPdf));
+        @unlink(public_path($oldIzinDocx));
+        @unlink(public_path($oldRekomPdf));
+        @unlink(public_path($oldRekomDocx));
+        @unlink(public_path($currentIzinPembetulanPdf));
+        @unlink(public_path($currentIzinPembetulanDocx));
+    }
 }
 
