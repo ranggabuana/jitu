@@ -99,8 +99,8 @@ class PdfVariableProcessor
         $replacements['${QRCODE}'] = [
             'type'   => 'image',
             'path'   => $qrPath,
-            'width'  => 70.87, // ~25mm in points
-            'height' => 70.87,
+            'width'  => 56.69, // 20mm (2x2 cm) in points
+            'height' => 56.69,
         ];
 
         return $replacements;
@@ -194,7 +194,7 @@ class PdfVariableProcessor
             return;
         }
 
-        $qrSize = $replacement['width'] ?? 70.87; // ~25mm in points
+        $qrSize = $replacement['width'] ?? 56.69; // 20mm (2x2 cm) in points
         
         // Try to find the exact position of ${QRCODE} placeholder on the page
         $x = null;

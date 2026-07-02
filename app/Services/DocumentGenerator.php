@@ -1057,8 +1057,8 @@ class DocumentGenerator
                     $isQr = ($macro === 'QRCODE' || $macro === 'QR_CODE');
                     $imgConfig = [
                         'path' => $actualPath,
-                        'width' => $isTte ? 208 : ($isQr ? 60 : 80), // 5.5cm in pixels (approx 208px @96dpi)
-                        'height' => $isTte ? 94 : ($isQr ? 60 : 100), // 2.5cm in pixels (approx 94px @96dpi)
+                        'width' => $isTte ? 208 : ($isQr ? 76 : 80), // 5.5cm in pixels (approx 208px @96dpi), 2cm in pixels (approx 76px @96dpi)
+                        'height' => $isTte ? 94 : ($isQr ? 76 : 100), // 2.5cm in pixels (approx 94px @96dpi), 2cm in pixels (approx 76px @96dpi)
                         'ratio' => $isTte ? false : true // Force exact size for TTE
                     ];
 
