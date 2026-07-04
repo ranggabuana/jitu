@@ -545,6 +545,7 @@
                                             <optgroup label="Variabel Sistem / Surat">
                                                 <option value="${NO_REGISTRASI}">No. Registrasi</option>
                                                 <option value="${NOMOR_SURAT}">No. Surat (Lengkap / Format)</option>
+                                                <option value="${NOMOR_SURAT2}">No. Surat Kedua (Berurutan)</option>
                                                 <option value="${TANGGAL}">Tgl. Daftar</option>
                                                 <option value="${TANGGAL_HARI_INI}">Tgl. Hari Ini</option>
                                                 <option value="${NAMA_IZIN}">Nama Layanan</option>
@@ -574,7 +575,7 @@
                                                 @foreach($groupedFields as $type => $fields)
                                                     <optgroup label="Form {{ strtoupper($type) }}">
                                                         @if($type === 'rekom')
-                                                            <option value="${NOMOR_REKOM}">No. Surat Rekomendasi (Tergenerate)</option>
+                                                            <option value="${NOMOR_REKOM}" class="rekom-var-option">No. Surat Rekomendasi (Tergenerate)</option>
                                                         @endif
                                                         @if($type === 'izin')
                                                             <option value="${NOMOR_IZIN}">No. Surat Izin (Tergenerate)</option>
@@ -934,6 +935,7 @@
                                         '${TANGGAL_HARI_INI}' => 'Tanggal Hari Ini (Lengkap)',
                                         '${NO_REGISTRASI}' => 'Nomor Registrasi Permohonan',
                                         '${NOMOR_SURAT}' => 'Nomor Surat Lengkap (Format: KODE/NO/OPD/TAHUN)',
+                                        '${NOMOR_SURAT2}' => 'Nomor Surat Kedua (Berurutan)',
                                         '${LOGO_KABUPATEN}' => 'Logo Kabupaten (Header)',
                                         '${GAMBAR_TTE}' => 'Gambar TTE (Tanda Tangan Elektronik)',
                                         '${QRCODE}' => 'QR Code (Scan untuk Verifikasi Izin)',
@@ -970,13 +972,6 @@
                             <div class="dynamic-var-section hidden" id="var-section-rekom">
                                 <span class="text-[10px] uppercase tracking-wider font-bold text-purple-800 dark:text-purple-300 block mb-2">Variabel Khusus Rekom Form:</span>
                                 <div class="flex flex-wrap gap-2">
-                                    <button type="button"
-                                        onclick="insertPlaceholder('${NOMOR_REKOM}')"
-                                        title="Nomor Surat Rekomendasi"
-                                        class="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300 hover:bg-purple-600 hover:text-white dark:hover:bg-purple-700 hover:border-purple-600 rounded-lg px-2.5 py-1.5 text-[11px] font-mono font-bold transition-all shadow-sm">
-                                        <i class="mdi mdi-plus text-xs"></i>${NOMOR_REKOM}
-                                    </button>
-
                                     <button type="button"
                                         onclick="insertPlaceholder('${MASA_AKTIF_REKOM}')"
                                         title="Masa Aktif Rekomendasi"
@@ -1486,6 +1481,7 @@
                                         <optgroup label="Variabel Sistem / Surat">
                                             <option value="${NO_REGISTRASI}">No. Registrasi</option>
                                             <option value="${NOMOR_SURAT}">No. Surat (Lengkap / Format)</option>
+                                            <option value="${NOMOR_SURAT2}">No. Surat Kedua (Berurutan)</option>
                                             <option value="${TANGGAL}">Tgl. Daftar</option>
                                             <option value="${TANGGAL_HARI_INI}">Tgl. Hari Ini</option>
                                             <option value="${NAMA_IZIN}">Nama Layanan</option>
@@ -1515,7 +1511,7 @@
                                             @foreach($groupedFields as $type => $fields)
                                                 <optgroup label="Form {{ strtoupper($type) }}">
                                                     @if($type === 'rekom')
-                                                        <option value="${NOMOR_REKOM}">No. Surat Rekomendasi (Tergenerate)</option>
+                                                         <option value="${NOMOR_REKOM}" class="rekom-var-option">No. Surat Rekomendasi (Tergenerate)</option>
                                                     @endif
                                                     @if($type === 'izin')
                                                         <option value="${NOMOR_IZIN}">No. Surat Izin (Tergenerate)</option>
@@ -2720,7 +2716,23 @@
                 if (opdFieldStatus) opdFieldStatus.classList.add('hidden');
                 if (opdTemplateStatus) opdTemplateStatus.classList.add('hidden');
                 if (varSectionBo) varSectionBo.classList.add('hidden');
-            }        }
+            }
+
+            // Show/hide NOMOR_REKOM option in dynamic var dropdowns
+            const rekomVarOptions = document.querySelectorAll('.rekom-var-option');
+            rekomVarOptions.forEach(opt => {
+                if (tabId === 'rekom') {
+                    opt.disabled = true;
+                    opt.style.display = 'none';
+                    if (opt.selected) {
+                        opt.selected = false;
+                    }
+                } else {
+                    opt.disabled = false;
+                    opt.style.display = 'block';
+                }
+            });
+        }
 
         function togglePlaceholderGuide() {
             const guide = document.getElementById('placeholder-guide');

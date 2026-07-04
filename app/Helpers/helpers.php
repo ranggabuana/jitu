@@ -275,6 +275,24 @@ if (!function_exists('resolveDynamicVariable')) {
             ->first();
         $tanggalRekomTte = $rekomTteLog ? Carbon::parse($rekomTteLog->created_at)->translatedFormat('d F Y') : '-';
 
+        // Calculate NOMOR_SURAT2
+        $noUrutVal = $application->no_izin ?? $application->no_rekom ?? null;
+        $kodeOpdVal = $application->no_izin_kode ?? $application->no_rekom_kode ?? null;
+        if ($noUrutVal === null) {
+            if ($perijinan->next_nomor_izin) {
+                $noUrutVal = $perijinan->next_nomor_izin;
+                $kodeOpdVal = 'DPMPTSP';
+            } else {
+                $noUrutVal = $perijinan->next_nomor_rekom ?? '1';
+                $kodeOpdVal = $kodeOpd ?? 'OPD';
+            }
+        }
+        if (!$kodeOpdVal) {
+            $kodeOpdVal = $kodeOpd ?? 'OPD';
+        }
+        $noUrut2Val = is_numeric($noUrutVal) ? ($noUrutVal + 1) : '-';
+        $nomorSurat2Resolved = is_numeric($noUrutVal) ? "{$kodePerijinan}/{$noUrut2Val}/{$kodeOpdVal}/{$tahun}" : '-';
+
         // System variable map
         $variableMap = [
             '${NAMA_PEMOHON}' => $user->name ?? '-',
@@ -299,6 +317,7 @@ if (!function_exists('resolveDynamicVariable')) {
             '${TANGGAL_HARI_INI}' => Carbon::now()->translatedFormat('d F Y'),
             '${MASA_AKTIF}' => $application->masa_aktif ? Carbon::parse($application->masa_aktif)->translatedFormat('d F Y') : '-',
             '${NOMOR_SURAT}' => $application->no_registrasi ?? '-',
+            '${NOMOR_SURAT2}' => $nomorSurat2Resolved,
             '${NOMOR_REKOM}' => $nomorRekomResolved,
             '${NOMOR_IZIN}' => $nomorIzinResolved,
             '${TANGGAL_REKOM_TTE}' => $tanggalRekomTte,

@@ -498,6 +498,7 @@
                                         '${TANGGAL_HARI_INI}' => 'Tanggal Hari Ini (Lengkap)',
                                         '${NO_REGISTRASI}' => 'Nomor Registrasi Permohonan',
                                         '${NOMOR_SURAT}' => 'Nomor Surat Lengkap (Format: KODE/NO/OPD/TAHUN)',
+                                        '${NOMOR_SURAT2}' => 'Nomor Surat Kedua (Berurutan)',
                                         '${LOGO_KABUPATEN}' => 'Logo Kabupaten (Header)',
                                         '${GAMBAR_TTE}' => 'Gambar TTE (Tanda Tangan Elektronik)',
                                         '${TANGGAL_REKOM_TTE}' => 'Tanggal Rekomendasi TTE',

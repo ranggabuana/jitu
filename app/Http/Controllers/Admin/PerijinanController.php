@@ -261,6 +261,9 @@ class PerijinanController extends Controller
 
         $replacements['[NOMOR SURAT]'] = ($perijinan->kode_perijinan ?? 'KODE') . '/' . $realNumber . '/' . $kodeOpd . '/' . date('Y');
         $replacements['${NOMOR_SURAT}'] = $replacements['[NOMOR SURAT]'];
+        $realNumber2 = $realNumber + 1;
+        $replacements['[NOMOR SURAT 2]'] = ($perijinan->kode_perijinan ?? 'KODE') . '/' . $realNumber2 . '/' . $kodeOpd . '/' . date('Y');
+        $replacements['${NOMOR_SURAT2}'] = $replacements['[NOMOR SURAT 2]'];
 
         // Determine preview NOMOR_REKOM
         $noRekomUrutPreview = $request->input('next_nomor_rekom') ?? $perijinan->next_nomor_rekom ?? 1;

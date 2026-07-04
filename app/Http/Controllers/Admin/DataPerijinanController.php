@@ -628,11 +628,29 @@ class DataPerijinanController extends Controller
 
                     if ($application->no_rekom === null) {
                         $applicationUpdateData['no_rekom'] = $perijinan->next_nomor_rekom;
-                        $perijinan->increment('next_nomor_rekom');
+                        $opdId = null;
+                        if ($application->user && $application->user->opd_id) {
+                            $opdId = $application->user->opd_id;
+                        } else {
+                            $flowWithOpd = $perijinan->activeValidationFlows()
+                                ->whereIn('role', ['operator_opd', 'kepala_opd'])
+                                ->whereNotNull('assigned_user_id')
+                                ->with('assignedUser')
+                                ->get()
+                                ->first(function($f) {
+                                    return $f->assignedUser && $f->assignedUser->opd_id;
+                                });
+                            if ($flowWithOpd) {
+                                $opdId = $flowWithOpd->assignedUser->opd_id;
+                            }
+                        }
+                        $incrementAmount = $perijinan->usesNomorSurat2('rekom', $opdId) ? 2 : 1;
+                        $perijinan->increment('next_nomor_rekom', $incrementAmount);
                     }
                     if ($application->no_izin === null) {
                         $applicationUpdateData['no_izin'] = $perijinan->next_nomor_izin;
-                        $perijinan->increment('next_nomor_izin');
+                        $incrementAmount = $perijinan->usesNomorSurat2('izin') ? 2 : 1;
+                        $perijinan->increment('next_nomor_izin', $incrementAmount);
                     }
 
                     if ($application->user && $application->user->email) {
@@ -1912,11 +1930,30 @@ class DataPerijinanController extends Controller
             $perijinan = $application->perijinan;
             if ($application->no_rekom === null) {
                 $updateData['no_rekom'] = $perijinan->next_nomor_rekom;
-                $perijinan->increment('next_nomor_rekom');
+                $opdId = null;
+                $currentUser = auth()->user();
+                if ($currentUser && $currentUser->opd_id) {
+                    $opdId = $currentUser->opd_id;
+                } else {
+                    $flowWithOpd = $perijinan->activeValidationFlows()
+                        ->whereIn('role', ['operator_opd', 'kepala_opd'])
+                        ->whereNotNull('assigned_user_id')
+                        ->with('assignedUser')
+                        ->get()
+                        ->first(function($f) {
+                            return $f->assignedUser && $f->assignedUser->opd_id;
+                        });
+                    if ($flowWithOpd) {
+                        $opdId = $flowWithOpd->assignedUser->opd_id;
+                    }
+                }
+                $incrementAmount = $perijinan->usesNomorSurat2('rekom', $opdId) ? 2 : 1;
+                $perijinan->increment('next_nomor_rekom', $incrementAmount);
             }
             if ($application->no_izin === null) {
                 $updateData['no_izin'] = $perijinan->next_nomor_izin;
-                $perijinan->increment('next_nomor_izin');
+                $incrementAmount = $perijinan->usesNomorSurat2('izin') ? 2 : 1;
+                $perijinan->increment('next_nomor_izin', $incrementAmount);
             }
 
             // Check if all validations are complete

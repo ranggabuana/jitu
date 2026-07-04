@@ -112,4 +112,47 @@ class Perijinan extends Model
     {
         return $this->hasMany(PerijinanOpdConfig::class, 'perijinan_id');
     }
+
+    /**
+     * Check if a template type (rekom/izin) for this perijinan (and optional OPD) uses NOMOR_SURAT2.
+     */
+    public function usesNomorSurat2(string $type, $opdId = null): bool
+    {
+        $template = null;
+        if ($type === 'rekom') {
+            if ($opdId) {
+                $opdConfig = $this->opdConfigs()->where('opd_id', $opdId)->first();
+                if ($opdConfig && $opdConfig->template_surat_rekom) {
+                    $template = $opdConfig->template_surat_rekom;
+                }
+            }
+            if (!$template) {
+                $template = $this->template_surat_rekom ?? \App\Models\Setting::get('template_rekom');
+            }
+        } else {
+            $template = $this->template_surat_izin ?? \App\Models\Setting::get('template_izin');
+        }
+
+        if (empty($template)) {
+            return false;
+        }
+
+        // If it's a docx file path, read from docx archive
+        if (is_string($template) && str_ends_with($template, '.docx')) {
+            $fullPath = public_path($template);
+            if (file_exists($fullPath)) {
+                $zip = new \ZipArchive();
+                if ($zip->open($fullPath) === true) {
+                    $xml = $zip->getFromName('word/document.xml');
+                    $zip->close();
+                    if ($xml !== false) {
+                        return str_contains($xml, 'NOMOR_SURAT2');
+                    }
+                }
+            }
+            return false;
+        }
+
+        return str_contains((string)$template, 'NOMOR_SURAT2');
+    }
 }

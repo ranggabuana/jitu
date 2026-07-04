@@ -665,6 +665,8 @@ class DocumentGenerator
 
             $finalReplacements['${NOMOR_URUT}'] = $noUrut;
             $finalReplacements['${NOMOR_SURAT}'] = "{$kodePerijinan}/{$noUrut}/{$kodeOpd}/{$tahun}";
+            $noUrut2 = is_numeric($noUrut) ? ($noUrut + 1) : '-';
+            $finalReplacements['${NOMOR_SURAT2}'] = is_numeric($noUrut) ? "{$kodePerijinan}/{$noUrut2}/{$kodeOpd}/{$tahun}" : '-';
 
             // Override ${GAMBAR_TTE} for specific OPD
             if ($opd && $opd->gambar_tte) {
@@ -859,6 +861,8 @@ class DocumentGenerator
                 $tahun = now()->year;
                 $finalReplacements['${NOMOR_URUT}'] = $noUrut;
                 $finalReplacements['${NOMOR_SURAT}'] = "{$kodePerijinan}/{$noUrut}/{$kodeOpd}/{$tahun}";
+                $noUrut2 = is_numeric($noUrut) ? ($noUrut + 1) : '-';
+                $finalReplacements['${NOMOR_SURAT2}'] = is_numeric($noUrut) ? "{$kodePerijinan}/{$noUrut2}/{$kodeOpd}/{$tahun}" : '-';
             }
 
             if (Str::endsWith($rawTemplate, '.docx')) {
@@ -1259,6 +1263,8 @@ class DocumentGenerator
         $baseReplacements['${NOMOR_URUT}'] = $noUrut;
         $baseReplacements['${NOMOR_SURAT}'] = $fullNomorSurat;
         $baseReplacements['${NOMOR_IZIN}'] = $fullNomorSurat;
+        $noUrut2 = is_numeric($noUrut) ? ($noUrut + 1) : '-';
+        $baseReplacements['${NOMOR_SURAT2}'] = is_numeric($noUrut) ? "{$kodePerijinan}/{$noUrut2}/{$kodeOpd}/{$tahun}" : '-';
         
         // 5. Merge replacements: baseReplacements overrides generic ones so they take priority
         $finalReplacements = array_merge($replacements, $baseReplacements);
