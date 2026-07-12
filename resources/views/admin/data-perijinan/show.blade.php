@@ -2477,7 +2477,7 @@
                                     
                                     <div>
                                         <div class="flex items-center gap-2">
-                                            <a href="{{ route('data-perijinan.show', $hApp->id) }}" 
+                                            <a href="{{ route('data-perijinan.show', $hApp->no_registrasi) }}" 
                                                class="font-mono text-xs font-bold {{ $isSelf ? 'text-blue-600 dark:text-blue-400 font-extrabold' : 'text-gray-700 dark:text-gray-300 hover:text-blue-500' }}">
                                                 {{ $hApp->no_registrasi }}
                                             </a>

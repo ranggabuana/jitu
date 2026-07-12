@@ -951,11 +951,11 @@ class DataPerijinanController extends Controller
     /**
      * Display detail of an application.
      */
-    public function show($id)
+    public function show($no_registrasi)
     {
         $user = auth()->user();
 
-        $application = DataPerijinan::with([
+        $query = DataPerijinan::with([
             'user',
             'user.provinsi',
             'user.kabupaten',
@@ -965,7 +965,16 @@ class DataPerijinanController extends Controller
             'perijinan.activeFormFields',
             'validasiRecords.validationFlow.assignedUser.opd',
             'validasiRecords.validator.opd'
-        ])->findOrFail($id);
+        ]);
+
+        if (is_numeric($no_registrasi)) {
+            $application = $query->find($no_registrasi);
+            if (!$application) {
+                $application = $query->where('no_registrasi', $no_registrasi)->firstOrFail();
+            }
+        } else {
+            $application = $query->where('no_registrasi', $no_registrasi)->firstOrFail();
+        }
 
         // Find the specific validation record for the current user
         $userRole = auth()->user()->role;

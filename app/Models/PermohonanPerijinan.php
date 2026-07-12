@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class PermohonanPerijinan extends Model
 {
@@ -64,13 +65,13 @@ class PermohonanPerijinan extends Model
     private static function generateNoRegistrasi()
     {
         $date = now()->format('Ymd');
-        $random = str_pad(random_int(1, 99999), 5, '0', STR_PAD_LEFT);
+        $random = strtoupper(Str::random(8));
         
         $noRegistrasi = 'REG-' . $date . '-' . $random;
         
         // Ensure uniqueness
         while (static::where('no_registrasi', $noRegistrasi)->exists()) {
-            $random = str_pad(random_int(1, 99999), 5, '0', STR_PAD_LEFT);
+            $random = strtoupper(Str::random(8));
             $noRegistrasi = 'REG-' . $date . '-' . $random;
         }
         

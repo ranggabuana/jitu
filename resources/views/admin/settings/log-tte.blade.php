@@ -78,7 +78,7 @@
                             <td class="px-6 py-4">
                                 @if($log->dataPerijinan)
                                     <div class="text-sm font-bold text-blue-600 dark:text-blue-400">
-                                        <a href="{{ route('data-perijinan.show', $log->data_perijinan_id) }}" class="hover:underline">
+                                        <a href="{{ route('data-perijinan.show', $log->dataPerijinan->no_registrasi) }}" class="hover:underline">
                                             {{ $log->dataPerijinan->no_registrasi }}
                                         </a>
                                     </div>

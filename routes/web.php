@@ -194,7 +194,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/selesai/export-sla', [DataPerijinanController::class, 'exportSla'])->name('selesai.export-sla');
         Route::get('/ditolak', [DataPerijinanController::class, 'ditolak'])->name('ditolak');
         Route::get('/ditolak/export', [DataPerijinanController::class, 'exportDitolak'])->name('ditolak.export');
-        Route::get('/{id}', [DataPerijinanController::class, 'show'])->name('show');
+        Route::get('/{no_registrasi}', [DataPerijinanController::class, 'show'])->name('show')->where('no_registrasi', 'REG-[A-Za-z0-9\-_]+|[0-9]+');
         Route::post('/{id}/verify-pdf', [DataPerijinanController::class, 'verifyPdf'])->name('verify-pdf');
         Route::post('/{id}/apply-tte', [DataPerijinanController::class, 'applyTte'])->name('apply-tte');
         Route::put('/{id}/rekom-data', [DataPerijinanController::class, 'saveRekomData'])->name('rekom-data.save');

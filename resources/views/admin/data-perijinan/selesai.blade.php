@@ -220,7 +220,7 @@
                                          <i class="mdi mdi-timer-star"></i>
                                          <span>SLA</span>
                                      </a>
-                                     <a href="{{ route('data-perijinan.show', $app->id) }}"
+                                     <a href="{{ route('data-perijinan.show', $app->no_registrasi) }}"
                                          class="inline-flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors font-semibold">
                                          <i class="mdi mdi-eye"></i>
                                          <span>Detail</span>

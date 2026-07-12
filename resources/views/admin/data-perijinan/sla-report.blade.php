@@ -179,7 +179,7 @@
                     </div>
 
                     <div class="pt-4">
-                        <a href="{{ route('data-perijinan.show', $application->id) }}" 
+                        <a href="{{ route('data-perijinan.show', $application->no_registrasi) }}" 
                             class="flex items-center justify-center gap-2 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-lg active:scale-95">
                             <i class="mdi mdi-eye text-lg"></i> Lihat Detail Berkas
                         </a>
