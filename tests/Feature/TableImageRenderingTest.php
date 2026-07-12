@@ -78,7 +78,7 @@ class TableImageRenderingTest extends TestCase
         ]);
 
         // 5. Setup mock image file in public path
-        $testImagePath = public_path('uploads/perijinan/1/test_img.jpg');
+        $testImagePath = secure_upload_path('uploads/perijinan/1/test_img.jpg');
         File::ensureDirectoryExists(dirname($testImagePath));
         
         // Copy real test image if exists, or use fake

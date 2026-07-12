@@ -100,7 +100,7 @@
                                         <i class="mdi mdi-file-document text-blue-500"></i>
                                         <span class="truncate">{{ basename($myDoc->file_path) }}</span>
                                     </div>
-                                    <a href="{{ asset($myDoc->file_path) }}" target="_blank"
+                                    <a href="{{ route('secure-file', ['filepath' => $myDoc->file_path]) }}" target="_blank"
                                         class="text-blue-600 hover:underline text-xs flex-shrink-0 ml-2">Lihat File</a>
                                 </div>
                             @endif
@@ -169,7 +169,7 @@
                                         <i class="mdi mdi-file-document text-blue-500"></i>
                                         <span class="truncate">{{ basename($myDoc->file_path) }}</span>
                                     </div>
-                                    <a href="{{ asset($myDoc->file_path) }}" target="_blank"
+                                    <a href="{{ route('secure-file', ['filepath' => $myDoc->file_path]) }}" target="_blank"
                                         class="text-blue-600 hover:underline text-xs flex-shrink-0 ml-2">Lihat File</a>
                                 </div>
                             @endif

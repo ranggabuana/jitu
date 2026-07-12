@@ -73,7 +73,7 @@
                             <p class="text-sm text-emerald-600">Pengajuan Anda telah disetujui. Silakan unduh dokumen izin Anda di bawah ini.</p>
                         </div>
                     </div>
-                    <a href="{{ asset($data->file_izin_tte ?: $data->file_izin) }}" target="_blank" download class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-all transform hover:-translate-y-1">
+                    <a href="{{ route('secure-file', ['filepath' => $data->file_izin_tte ?: $data->file_izin]) }}" target="_blank" download class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-all transform hover:-translate-y-1">
                         <i class="fas fa-download"></i> Unduh Dokumen Izin
                     </a>
                 </div>

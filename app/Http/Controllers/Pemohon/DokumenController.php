@@ -45,7 +45,7 @@ class DokumenController extends Controller
         $extension = $file->getClientOriginalExtension();
         $filename = $originalName . '_' . time() . '.' . $extension;
         
-        $uploadPath = public_path('uploads/dokumen_pemohon/' . $user->id);
+        $uploadPath = storage_path('app/uploads/dokumen_pemohon/' . $user->id);
         
         if (!file_exists($uploadPath)) {
             mkdir($uploadPath, 0755, true);
@@ -58,7 +58,10 @@ class DokumenController extends Controller
         $userDokumen = UserDokumen::where('user_id', $user->id)->where('master_dokumen_id', $master->id)->first();
         if ($userDokumen) {
             // Delete old file
-            if (file_exists(public_path($userDokumen->file_path))) {
+            $oldFilePath = storage_path('app/' . $userDokumen->file_path);
+            if (file_exists($oldFilePath)) {
+                unlink($oldFilePath);
+            } else if (file_exists(public_path($userDokumen->file_path))) {
                 unlink(public_path($userDokumen->file_path));
             }
             $userDokumen->update(['file_path' => $filePath]);

@@ -29,6 +29,7 @@ use App\Http\Controllers\Front\PanduanController as FrontPanduanController;
 use App\Http\Controllers\Front\AuthController;
 use App\Http\Controllers\Front\PengaduanController as FrontPengaduanController;
 use App\Http\Controllers\Front\RegulasiController as FrontRegulasiController;
+use App\Http\Controllers\FileAccessController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
@@ -302,3 +303,9 @@ Route::get('/perizinan/scan/{no_registrasi}', [LandingPageController::class, 'sc
 // Regulasi page (Front-end - Public) - Use different path to avoid conflict with admin
 Route::get('/regulasi-public', [FrontRegulasiController::class, 'index'])->name('regulasi.public');
 Route::get('/regulasi-public/{id}/download', [FrontRegulasiController::class, 'download'])->name('regulasi.public.download');
+
+Route::get('/secure-file/{filepath}', [FileAccessController::class, 'serve'])
+    ->name('secure-file')
+    ->where('filepath', '.*')
+    ->middleware('auth');
+

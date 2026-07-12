@@ -137,17 +137,17 @@ class PembetulanIzinTest extends TestCase
         ]);
 
         // Create dummy file for copy check
-        $dummyPath = public_path('uploads/perijinan/1/test_sk.pdf');
+        $dummyPath = secure_upload_path('uploads/perijinan/1/test_sk.pdf');
         if (!file_exists(dirname($dummyPath))) {
             mkdir(dirname($dummyPath), 0755, true);
         }
         file_put_contents($dummyPath, 'dummy content');
 
         // Create dummy files for old TTE files and drafts
-        $oldIzinPath = public_path($completedApp->file_izin_tte);
-        $oldRekomPath = public_path($completedApp->file_rekom_tte);
-        $oldIzinDraftPath = public_path($completedApp->file_izin);
-        $oldRekomDraftPath = public_path($completedApp->file_rekom);
+        $oldIzinPath = secure_upload_path($completedApp->file_izin_tte);
+        $oldRekomPath = secure_upload_path($completedApp->file_rekom_tte);
+        $oldIzinDraftPath = secure_upload_path($completedApp->file_izin);
+        $oldRekomDraftPath = secure_upload_path($completedApp->file_rekom);
         if (!file_exists(dirname($oldIzinPath))) {
             mkdir(dirname($oldIzinPath), 0755, true);
         }
@@ -201,10 +201,10 @@ class PembetulanIzinTest extends TestCase
         $this->assertNotNull($newApp->file_izin_pembetulan_old);
         $this->assertNotNull($newApp->file_rekom_pembetulan_old);
         
-        $this->assertFileExists(public_path($newApp->file_izin_tte_pembetulan_old));
-        $this->assertFileExists(public_path($newApp->file_rekom_tte_pembetulan_old));
-        $this->assertFileExists(public_path($newApp->file_izin_pembetulan_old));
-        $this->assertFileExists(public_path($newApp->file_rekom_pembetulan_old));
+        $this->assertFileExists(secure_upload_path($newApp->file_izin_tte_pembetulan_old));
+        $this->assertFileExists(secure_upload_path($newApp->file_rekom_tte_pembetulan_old));
+        $this->assertFileExists(secure_upload_path($newApp->file_izin_pembetulan_old));
+        $this->assertFileExists(secure_upload_path($newApp->file_rekom_pembetulan_old));
 
         // Verify registration number and permit/rekom numbers are preserved
         $this->assertEquals('REG-999', $newApp->no_registrasi);
@@ -218,7 +218,7 @@ class PembetulanIzinTest extends TestCase
         $this->assertNotEmpty($newApp->form_files[$fieldFile->id]);
         $this->assertStringContainsString('test_sk', $newApp->form_files[$fieldFile->id][0]);
         // Clean up newly copied file
-        $copiedPath = public_path($newApp->form_files[$fieldFile->id][0]);
+        $copiedPath = secure_upload_path($newApp->form_files[$fieldFile->id][0]);
         @unlink($copiedPath);
 
         // Clean up old files
@@ -226,10 +226,10 @@ class PembetulanIzinTest extends TestCase
         @unlink($oldRekomPath);
         @unlink($oldIzinDraftPath);
         @unlink($oldRekomDraftPath);
-        @unlink(public_path($newApp->file_izin_tte_pembetulan_old));
-        @unlink(public_path($newApp->file_rekom_tte_pembetulan_old));
-        @unlink(public_path($newApp->file_izin_pembetulan_old));
-        @unlink(public_path($newApp->file_rekom_pembetulan_old));
+        @unlink(secure_upload_path($newApp->file_izin_tte_pembetulan_old));
+        @unlink(secure_upload_path($newApp->file_rekom_tte_pembetulan_old));
+        @unlink(secure_upload_path($newApp->file_izin_pembetulan_old));
+        @unlink(secure_upload_path($newApp->file_rekom_pembetulan_old));
 
         // 8. Assert validation flow: only FO, BO, Verifikator, Kadin. Operator/Kepala OPD are skipped!
         $validasiRecords = DataPerijinanValidasi::where('data_perijinan_id', $newApp->id)
@@ -554,15 +554,15 @@ class PembetulanIzinTest extends TestCase
         $this->assertNotNull($application->file_izin_pembetulan);
         // Path should be a PDF
         $this->assertStringEndsWith('.pdf', $application->file_izin_pembetulan);
-        $this->assertFileExists(public_path($application->file_izin_pembetulan));
+        $this->assertFileExists(secure_upload_path($application->file_izin_pembetulan));
         
         // And the corresponding docx template should also exist on disk
         $docxTemplatePath = str_replace('.pdf', '_template.docx', $application->file_izin_pembetulan);
-        $this->assertFileExists(public_path($docxTemplatePath));
+        $this->assertFileExists(secure_upload_path($docxTemplatePath));
 
         // Clean up created files
-        @unlink(public_path($application->file_izin_pembetulan));
-        @unlink(public_path($docxTemplatePath));
+        @unlink(secure_upload_path($application->file_izin_pembetulan));
+        @unlink(secure_upload_path($docxTemplatePath));
     }
 
     public function test_verifier_can_refresh_pembetulan_pdf()
@@ -600,17 +600,17 @@ class PembetulanIzinTest extends TestCase
         $docxPath = 'uploads/perijinan/' . $perijinan->id . '/izin_pembetulan_test_template.docx';
         
         // Make sure destination directory exists
-        @mkdir(public_path('uploads/perijinan/' . $perijinan->id), 0755, true);
+        @mkdir(secure_upload_path('uploads/perijinan/' . $perijinan->id), 0755, true);
 
         // Generate dynamic docx template
         $phpWord = new \PhpOffice\PhpWord\PhpWord();
         $section = $phpWord->addSection();
         $section->addText('Template Izin Pembetulan ${NAMA_PEMOHON} ${QRCODE} ${NOMOR_SURAT}');
         $writer = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
-        $writer->save(public_path($docxPath));
+        $writer->save(secure_upload_path($docxPath));
         
         // Write dummy PDF
-        file_put_contents(public_path($pdfPath), '%PDF-1.4 ... dummy PDF ...');
+        file_put_contents(secure_upload_path($pdfPath), '%PDF-1.4 ... dummy PDF ...');
 
         $application = DataPerijinan::create([
             'user_id' => $pemohon->id,
@@ -630,11 +630,11 @@ class PembetulanIzinTest extends TestCase
         $response->assertSessionHas('success');
 
         // Clean up created files
-        @unlink(public_path($pdfPath));
-        @unlink(public_path($docxPath));
+        @unlink(secure_upload_path($pdfPath));
+        @unlink(secure_upload_path($docxPath));
         if ($application->fresh()->file_izin_pembetulan) {
-            @unlink(public_path($application->fresh()->file_izin_pembetulan));
-            @unlink(public_path(str_replace('.pdf', '_template.docx', $application->fresh()->file_izin_pembetulan)));
+            @unlink(secure_upload_path($application->fresh()->file_izin_pembetulan));
+            @unlink(secure_upload_path(str_replace('.pdf', '_template.docx', $application->fresh()->file_izin_pembetulan)));
         }
     }
 
@@ -674,17 +674,17 @@ class PembetulanIzinTest extends TestCase
         $docxPath = 'uploads/perijinan/' . $perijinan->id . '/izin_pembetulan_sign_test_template.docx';
         
         // Make sure destination directory exists
-        @mkdir(public_path('uploads/perijinan/' . $perijinan->id), 0755, true);
+        @mkdir(secure_upload_path('uploads/perijinan/' . $perijinan->id), 0755, true);
 
         // Generate dynamic docx template
         $phpWord = new \PhpOffice\PhpWord\PhpWord();
         $section = $phpWord->addSection();
         $section->addText('Template Izin Pembetulan ${NAMA_PEMOHON} ${QRCODE} ${NOMOR_SURAT}');
         $writer = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
-        $writer->save(public_path($docxPath));
+        $writer->save(secure_upload_path($docxPath));
         
         // Write dummy PDF
-        file_put_contents(public_path($pdfPath), '%PDF-1.4 ... dummy PDF ...');
+        file_put_contents(secure_upload_path($pdfPath), '%PDF-1.4 ... dummy PDF ...');
 
         $application = DataPerijinan::create([
             'user_id' => $pemohon->id,
@@ -717,22 +717,22 @@ class PembetulanIzinTest extends TestCase
 
         // 3. Assert database paths and file statuses
         $this->assertNotNull($application->file_izin_tte);
-        $this->assertFileExists(public_path($application->file_izin_tte));
+        $this->assertFileExists(secure_upload_path($application->file_izin_tte));
 
         // The draft file path must remain unchanged
         $this->assertEquals($pdfPath, $application->file_izin_pembetulan);
-        $this->assertFileExists(public_path($pdfPath));
+        $this->assertFileExists(secure_upload_path($pdfPath));
 
         // The generated official (non-signed/intermediate) PDF file should also exist
         $officialPdfPath = str_replace('.pdf', '_official.pdf', $pdfPath);
-        $this->assertFileExists(public_path($officialPdfPath));
+        $this->assertFileExists(secure_upload_path($officialPdfPath));
 
         // Clean up created files
-        @unlink(public_path($pdfPath));
-        @unlink(public_path($docxPath));
-        @unlink(public_path($officialPdfPath));
+        @unlink(secure_upload_path($pdfPath));
+        @unlink(secure_upload_path($docxPath));
+        @unlink(secure_upload_path($officialPdfPath));
         if ($application->file_izin_tte) {
-            @unlink(public_path($application->file_izin_tte));
+            @unlink(secure_upload_path($application->file_izin_tte));
         }
     }
 
@@ -952,7 +952,7 @@ class PembetulanIzinTest extends TestCase
         }
 
         // Create directory for dummy files
-        $directory = public_path('uploads/perijinan/1');
+        $directory = secure_upload_path('uploads/perijinan/1');
         if (!file_exists($directory)) {
             mkdir($directory, 0777, true);
         }
@@ -965,12 +965,12 @@ class PembetulanIzinTest extends TestCase
         $currentIzinPembetulanPdf = 'uploads/perijinan/1/current_izin_pembetulan.pdf';
         $currentIzinPembetulanDocx = 'uploads/perijinan/1/current_izin_pembetulan.docx';
 
-        file_put_contents(public_path($oldIzinPdf), 'dummy pdf');
-        file_put_contents(public_path($oldIzinDocx), 'dummy docx');
-        file_put_contents(public_path($oldRekomPdf), 'dummy pdf');
-        file_put_contents(public_path($oldRekomDocx), 'dummy docx');
-        file_put_contents(public_path($currentIzinPembetulanPdf), 'dummy pdf');
-        file_put_contents(public_path($currentIzinPembetulanDocx), 'dummy docx');
+        file_put_contents(secure_upload_path($oldIzinPdf), 'dummy pdf');
+        file_put_contents(secure_upload_path($oldIzinDocx), 'dummy docx');
+        file_put_contents(secure_upload_path($oldRekomPdf), 'dummy pdf');
+        file_put_contents(secure_upload_path($oldRekomDocx), 'dummy docx');
+        file_put_contents(secure_upload_path($currentIzinPembetulanPdf), 'dummy pdf');
+        file_put_contents(secure_upload_path($currentIzinPembetulanDocx), 'dummy docx');
 
         // 3. Create pembetulan application with old file references
         $application = DataPerijinan::create([
@@ -1032,12 +1032,12 @@ class PembetulanIzinTest extends TestCase
         $downloadOldRekomResponse->assertStatus(200);
 
         // Clean up dummy files
-        @unlink(public_path($oldIzinPdf));
-        @unlink(public_path($oldIzinDocx));
-        @unlink(public_path($oldRekomPdf));
-        @unlink(public_path($oldRekomDocx));
-        @unlink(public_path($currentIzinPembetulanPdf));
-        @unlink(public_path($currentIzinPembetulanDocx));
+        @unlink(secure_upload_path($oldIzinPdf));
+        @unlink(secure_upload_path($oldIzinDocx));
+        @unlink(secure_upload_path($oldRekomPdf));
+        @unlink(secure_upload_path($oldRekomDocx));
+        @unlink(secure_upload_path($currentIzinPembetulanPdf));
+        @unlink(secure_upload_path($currentIzinPembetulanDocx));
     }
 }
 

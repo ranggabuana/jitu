@@ -184,11 +184,11 @@
                                 $extension = pathinfo($pemohon->foto_ktp, PATHINFO_EXTENSION);
                             @endphp
                             @if (in_array(strtolower($extension), ['jpg', 'jpeg', 'png', 'gif']))
-                                <img src="{{ asset($pemohon->foto_ktp) }}" alt="Foto KTP {{ $pemohon->name }}"
+                                <img src="{{ route('secure-file', ['filepath' => $pemohon->foto_ktp]) }}" alt="Foto KTP {{ $pemohon->name }}"
                                     class="max-w-sm w-full h-auto rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm cursor-zoom-in hover:shadow-md transition-shadow"
-                                    onclick="window.open('{{ asset($pemohon->foto_ktp) }}', '_blank')">
+                                    onclick="window.open('{{ route('secure-file', ['filepath' => $pemohon->foto_ktp]) }}', '_blank')">
                             @elseif (strtolower($extension) === 'pdf')
-                                <a href="{{ asset($pemohon->foto_ktp) }}" target="_blank"
+                                <a href="{{ route('secure-file', ['filepath' => $pemohon->foto_ktp]) }}" target="_blank"
                                     class="inline-flex items-center gap-3 px-5 py-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                     <i class="mdi mdi-file-pdf-box text-red-500 text-2xl"></i>
                                     <div class="text-left">
@@ -198,7 +198,7 @@
                                     </div>
                                 </a>
                             @else
-                                <a href="{{ asset($pemohon->foto_ktp) }}" target="_blank"
+                                <a href="{{ route('secure-file', ['filepath' => $pemohon->foto_ktp]) }}" target="_blank"
                                     class="inline-flex items-center gap-2 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                     <i class="mdi mdi-file-outline text-gray-500 dark:text-gray-400"></i>
                                     <span class="text-sm text-gray-700 dark:text-gray-300">Lihat File KTP</span>

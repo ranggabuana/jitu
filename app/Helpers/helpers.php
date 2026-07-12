@@ -381,3 +381,39 @@ if (!function_exists('resolveDynamicVariable')) {
         return '';
     }
 }
+
+if (!function_exists('secure_upload_path')) {
+    /**
+     * Resolve the absolute path for an upload file.
+     * Maps migrated folders to storage/app/ and others to public_path().
+     *
+     * @param string|null $path
+     * @return string
+     */
+    function secure_upload_path(?string $path): string
+    {
+        if (empty($path)) {
+            return '';
+        }
+        $cleanPath = ltrim(str_replace('..', '', $path), '/');
+        
+        // List of folders that should always reside in storage
+        $migratedFolders = [
+            'uploads/register',
+            'uploads/dokumen_pemohon',
+            'uploads/pembetulan_old',
+            'uploads/perijinan',
+            'uploads/data-perijinan',
+            'uploads/templates'
+        ];
+        
+        foreach ($migratedFolders as $folder) {
+            if (str_starts_with($cleanPath, $folder)) {
+                return storage_path('app/' . $cleanPath);
+            }
+        }
+        
+        return public_path($cleanPath);
+    }
+}
+

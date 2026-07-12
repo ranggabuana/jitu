@@ -10,6 +10,7 @@ use App\Mail\AccountActivatedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Str;
 
 class PemohonController extends Controller
 {
@@ -240,14 +241,19 @@ class PemohonController extends Controller
         // Handle KTP file upload
         if ($request->hasFile('foto_ktp')) {
             // Delete old file if exists
-            if ($pemohon->foto_ktp && file_exists(public_path($pemohon->foto_ktp))) {
-                @unlink(public_path($pemohon->foto_ktp));
+            if ($pemohon->foto_ktp) {
+                $oldKtpPath = storage_path('app/' . $pemohon->foto_ktp);
+                if (file_exists($oldKtpPath)) {
+                    @unlink($oldKtpPath);
+                } else if (file_exists(public_path($pemohon->foto_ktp))) {
+                    @unlink(public_path($pemohon->foto_ktp));
+                }
             }
 
             $file = $request->file('foto_ktp');
             $extension = $file->getClientOriginalExtension();
-            $filename = 'ktp_' . time() . '_' . $request->nip . '.' . $extension;
-            $uploadPath = public_path('uploads/register');
+            $filename = 'ktp_' . Str::random(40) . '.' . $extension;
+            $uploadPath = storage_path('app/uploads/register');
 
             if (!file_exists($uploadPath)) {
                 mkdir($uploadPath, 0755, true);

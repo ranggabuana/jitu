@@ -115,7 +115,7 @@ class PerijinanController extends Controller
             $gambarAlurName = time() . '_alur_' . str_replace(' ', '_', $request->nama_perijinan) . '.' . $gambarAlur->getClientOriginalExtension();
             
             // Ensure directory exists
-            $uploadPath = public_path('uploads/data-perijinan');
+            $uploadPath = secure_upload_path('uploads/data-perijinan');
             if (!file_exists($uploadPath)) {
                 mkdir($uploadPath, 0755, true);
             }
@@ -869,14 +869,14 @@ class PerijinanController extends Controller
             $gambarAlur = $request->file('gambar_alur');
             $gambarAlurName = time() . '_alur_' . str_replace(' ', '_', $request->nama_perijinan) . '.' . $gambarAlur->getClientOriginalExtension();
             
-            $uploadPath = public_path('uploads/data-perijinan');
+            $uploadPath = secure_upload_path('uploads/data-perijinan');
             if (!file_exists($uploadPath)) {
                 mkdir($uploadPath, 0755, true);
             }
             
             // Delete old image if exists
-            if ($perijinan->gambar_alur && file_exists(public_path($perijinan->gambar_alur))) {
-                @unlink(public_path($perijinan->gambar_alur));
+            if ($perijinan->gambar_alur && file_exists(secure_upload_path($perijinan->gambar_alur))) {
+                @unlink(secure_upload_path($perijinan->gambar_alur));
             }
             
             $gambarAlur->move($uploadPath, $gambarAlurName);
@@ -978,13 +978,13 @@ class PerijinanController extends Controller
             // Handle file uploads
             if ($request->hasFile('file_template_rekom')) {
                 // Delete old file if exists
-                if ($perijinan->template_surat_rekom && file_exists(public_path($perijinan->template_surat_rekom))) {
-                    @unlink(public_path($perijinan->template_surat_rekom));
+                if ($perijinan->template_surat_rekom && file_exists(secure_upload_path($perijinan->template_surat_rekom))) {
+                    @unlink(secure_upload_path($perijinan->template_surat_rekom));
                 }
 
                 $file = $request->file('file_template_rekom');
                 $filename = 'template_rekom_' . $perijinan->id . '_' . time() . '.docx';
-                $uploadPath = public_path('uploads/templates');
+                $uploadPath = secure_upload_path('uploads/templates');
                 if (!file_exists($uploadPath)) {
                     mkdir($uploadPath, 0755, true);
                 }
@@ -994,13 +994,13 @@ class PerijinanController extends Controller
             }
             if ($request->hasFile('file_template_izin')) {
                 // Delete old file if exists
-                if ($perijinan->template_surat_izin && file_exists(public_path($perijinan->template_surat_izin))) {
-                    @unlink(public_path($perijinan->template_surat_izin));
+                if ($perijinan->template_surat_izin && file_exists(secure_upload_path($perijinan->template_surat_izin))) {
+                    @unlink(secure_upload_path($perijinan->template_surat_izin));
                 }
 
                 $file = $request->file('file_template_izin');
                 $filename = 'template_izin_' . $perijinan->id . '_' . time() . '.docx';
-                $uploadPath = public_path('uploads/templates');
+                $uploadPath = secure_upload_path('uploads/templates');
                 if (!file_exists($uploadPath)) {
                     mkdir($uploadPath, 0755, true);
                 }
@@ -1042,13 +1042,13 @@ class PerijinanController extends Controller
                 
                 if ($request->hasFile('file_template_rekom')) {
                     // Delete old file if exists
-                    if ($opdConfig->template_surat_rekom && file_exists(public_path($opdConfig->template_surat_rekom))) {
-                        @unlink(public_path($opdConfig->template_surat_rekom));
+                    if ($opdConfig->template_surat_rekom && file_exists(secure_upload_path($opdConfig->template_surat_rekom))) {
+                        @unlink(secure_upload_path($opdConfig->template_surat_rekom));
                     }
 
                     $file = $request->file('file_template_rekom');
                     $filename = 'template_rekom_' . $perijinan->id . '_opd_' . $user->opd_id . '_' . time() . '.docx';
-                    $uploadPath = public_path('uploads/templates');
+                    $uploadPath = secure_upload_path('uploads/templates');
                     if (!file_exists($uploadPath)) {
                         mkdir($uploadPath, 0755, true);
                     }
@@ -1076,13 +1076,13 @@ class PerijinanController extends Controller
                 if ($request->has('next_nomor_izin')) $updateData['next_nomor_izin'] = $request->next_nomor_izin;
                 if ($request->hasFile('file_template_izin')) {
                     // Delete old file if exists
-                    if ($perijinan->template_surat_izin && file_exists(public_path($perijinan->template_surat_izin))) {
-                        @unlink(public_path($perijinan->template_surat_izin));
+                    if ($perijinan->template_surat_izin && file_exists(secure_upload_path($perijinan->template_surat_izin))) {
+                        @unlink(secure_upload_path($perijinan->template_surat_izin));
                     }
 
                     $file = $request->file('file_template_izin');
                     $filename = 'template_izin_' . $perijinan->id . '_' . time() . '.docx';
-                    $uploadPath = public_path('uploads/templates');
+                    $uploadPath = secure_upload_path('uploads/templates');
                     if (!file_exists($uploadPath)) {
                         mkdir($uploadPath, 0755, true);
                     }
@@ -1173,7 +1173,7 @@ class PerijinanController extends Controller
         }
 
         // Files are now stored in public/uploads/templates
-        $absolutePath = public_path($path);
+        $absolutePath = secure_upload_path($path);
 
         if (!file_exists($absolutePath)) {
             return redirect()->back()->with('error', 'File fisik template tidak ditemukan di server.');

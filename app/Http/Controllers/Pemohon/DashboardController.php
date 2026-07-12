@@ -472,7 +472,7 @@ class DashboardController extends Controller
                     if ($field) {
                         $userDoc = \App\Models\UserDokumen::find($userDokumenId);
                         if ($userDoc) {
-                            $originalPath = public_path($userDoc->file_path);
+                            $originalPath = secure_upload_path($userDoc->file_path);
                             if (file_exists($originalPath)) {
                                 $extension = strtolower(pathinfo($originalPath, PATHINFO_EXTENSION));
                                 $allowedTypesStr = strtolower($field->file_types ?: 'pdf,doc,docx,jpg,jpeg,png');
@@ -519,15 +519,15 @@ class DashboardController extends Controller
                 foreach ($existingFiles as $fieldId => $userDokumenId) {
                     if ($userDokumenId) {
                         $userDoc = \App\Models\UserDokumen::find($userDokumenId);
-                        if ($userDoc && file_exists(public_path($userDoc->file_path))) {
+                        if ($userDoc && file_exists(secure_upload_path($userDoc->file_path))) {
                             // Cukup simpan path nya atau copy file.
                             // Kita simpan path referensinya saja untuk menghemat space,
                             // tapi disarankan untuk copy file agar independen per pengajuan.
-                            $originalPath = public_path($userDoc->file_path);
+                            $originalPath = secure_upload_path($userDoc->file_path);
                             
                             $extension = pathinfo($originalPath, PATHINFO_EXTENSION);
                             $filename = 'doc_saya_' . $fieldId . '_' . time() . '.' . $extension;
-                            $uploadPath = public_path('uploads/perijinan/' . $perijinan->id);
+                            $uploadPath = secure_upload_path('uploads/perijinan/' . $perijinan->id);
                             
                             if (!file_exists($uploadPath)) {
                                 mkdir($uploadPath, 0755, true);
@@ -552,7 +552,7 @@ class DashboardController extends Controller
                                 $extension = $file->getClientOriginalExtension();
                                 $filename = $originalName . '_' . time() . '.' . $extension;
 
-                                $uploadPath = public_path('uploads/perijinan/' . $perijinan->id);
+                                $uploadPath = secure_upload_path('uploads/perijinan/' . $perijinan->id);
 
                                 if (!file_exists($uploadPath)) {
                                     mkdir($uploadPath, 0755, true);
@@ -573,12 +573,12 @@ class DashboardController extends Controller
                     // Check if we already have files for this field (uploaded or selected from My Documents)
                     if (empty($uploadedFiles[$fieldId])) {
                         foreach ((array) $paths as $oldPath) {
-                            $originalPath = public_path($oldPath);
+                            $originalPath = secure_upload_path($oldPath);
                             if (file_exists($originalPath)) {
                                 $extension = pathinfo($originalPath, PATHINFO_EXTENSION);
                                 $originalName = pathinfo($originalPath, PATHINFO_FILENAME);
                                 $filename = $originalName . '_' . time() . '.' . $extension;
-                                $uploadPath = public_path('uploads/perijinan/' . $perijinan->id);
+                                $uploadPath = secure_upload_path('uploads/perijinan/' . $perijinan->id);
 
                                 if (!file_exists($uploadPath)) {
                                     mkdir($uploadPath, 0755, true);
@@ -673,57 +673,57 @@ class DashboardController extends Controller
                 $fileRekomMultiOld = null;
 
                 // 1. Copy old TTE Permit
-                if ($data->file_izin_tte && file_exists(public_path($data->file_izin_tte))) {
+                if ($data->file_izin_tte && file_exists(secure_upload_path($data->file_izin_tte))) {
                     $oldPath = $data->file_izin_tte;
                     $info = pathinfo($oldPath);
                     $newRelativePath = 'uploads/pembetulan_old/' . $data->id . '_izin_tte_old.' . ($info['extension'] ?? 'pdf');
-                    $newAbsolutePath = public_path($newRelativePath);
+                    $newAbsolutePath = secure_upload_path($newRelativePath);
                     if (!file_exists(dirname($newAbsolutePath))) {
                         mkdir(dirname($newAbsolutePath), 0755, true);
                     }
-                    if (copy(public_path($oldPath), $newAbsolutePath)) {
+                    if (copy(secure_upload_path($oldPath), $newAbsolutePath)) {
                         $fileIzinTteOld = $newRelativePath;
                     }
                 }
 
                 // 2. Copy old draft Permit
-                if ($data->file_izin && file_exists(public_path($data->file_izin))) {
+                if ($data->file_izin && file_exists(secure_upload_path($data->file_izin))) {
                     $oldPath = $data->file_izin;
                     $info = pathinfo($oldPath);
                     $newRelativePath = 'uploads/pembetulan_old/' . $data->id . '_izin_old.' . ($info['extension'] ?? 'pdf');
-                    $newAbsolutePath = public_path($newRelativePath);
+                    $newAbsolutePath = secure_upload_path($newRelativePath);
                     if (!file_exists(dirname($newAbsolutePath))) {
                         mkdir(dirname($newAbsolutePath), 0755, true);
                     }
-                    if (copy(public_path($oldPath), $newAbsolutePath)) {
+                    if (copy(secure_upload_path($oldPath), $newAbsolutePath)) {
                         $fileIzinOld = $newRelativePath;
                     }
                 }
 
                 // 3. Copy old TTE Rekom
-                if ($data->file_rekom_tte && file_exists(public_path($data->file_rekom_tte))) {
+                if ($data->file_rekom_tte && file_exists(secure_upload_path($data->file_rekom_tte))) {
                     $oldPath = $data->file_rekom_tte;
                     $info = pathinfo($oldPath);
                     $newRelativePath = 'uploads/pembetulan_old/' . $data->id . '_rekom_tte_old.' . ($info['extension'] ?? 'pdf');
-                    $newAbsolutePath = public_path($newRelativePath);
+                    $newAbsolutePath = secure_upload_path($newRelativePath);
                     if (!file_exists(dirname($newAbsolutePath))) {
                         mkdir(dirname($newAbsolutePath), 0755, true);
                     }
-                    if (copy(public_path($oldPath), $newAbsolutePath)) {
+                    if (copy(secure_upload_path($oldPath), $newAbsolutePath)) {
                         $fileRekomTteOld = $newRelativePath;
                     }
                 }
 
                 // 4. Copy old draft Rekom
-                if ($data->file_rekom && file_exists(public_path($data->file_rekom))) {
+                if ($data->file_rekom && file_exists(secure_upload_path($data->file_rekom))) {
                     $oldPath = $data->file_rekom;
                     $info = pathinfo($oldPath);
                     $newRelativePath = 'uploads/pembetulan_old/' . $data->id . '_rekom_old.' . ($info['extension'] ?? 'pdf');
-                    $newAbsolutePath = public_path($newRelativePath);
+                    $newAbsolutePath = secure_upload_path($newRelativePath);
                     if (!file_exists(dirname($newAbsolutePath))) {
                         mkdir(dirname($newAbsolutePath), 0755, true);
                     }
-                    if (copy(public_path($oldPath), $newAbsolutePath)) {
+                    if (copy(secure_upload_path($oldPath), $newAbsolutePath)) {
                         $fileRekomOld = $newRelativePath;
                     }
                 }
@@ -734,14 +734,14 @@ class DashboardController extends Controller
                     if (is_array($oldArray)) {
                         $newArray = [];
                         foreach ($oldArray as $opdId => $oldPath) {
-                            if ($oldPath && file_exists(public_path($oldPath))) {
+                            if ($oldPath && file_exists(secure_upload_path($oldPath))) {
                                 $info = pathinfo($oldPath);
                                 $newRelativePath = 'uploads/pembetulan_old/' . $data->id . '_rekom_multi_tte_' . $opdId . '_old.' . ($info['extension'] ?? 'pdf');
-                                $newAbsolutePath = public_path($newRelativePath);
+                                $newAbsolutePath = secure_upload_path($newRelativePath);
                                 if (!file_exists(dirname($newAbsolutePath))) {
                                     mkdir(dirname($newAbsolutePath), 0755, true);
                                 }
-                                if (copy(public_path($oldPath), $newAbsolutePath)) {
+                                if (copy(secure_upload_path($oldPath), $newAbsolutePath)) {
                                     $newArray[$opdId] = $newRelativePath;
                                 }
                             }
@@ -758,14 +758,14 @@ class DashboardController extends Controller
                     if (is_array($oldArray)) {
                         $newArray = [];
                         foreach ($oldArray as $opdId => $oldPath) {
-                            if ($oldPath && file_exists(public_path($oldPath))) {
+                            if ($oldPath && file_exists(secure_upload_path($oldPath))) {
                                 $info = pathinfo($oldPath);
                                 $newRelativePath = 'uploads/pembetulan_old/' . $data->id . '_rekom_multi_' . $opdId . '_old.' . ($info['extension'] ?? 'pdf');
-                                $newAbsolutePath = public_path($newRelativePath);
+                                $newAbsolutePath = secure_upload_path($newRelativePath);
                                 if (!file_exists(dirname($newAbsolutePath))) {
                                     mkdir(dirname($newAbsolutePath), 0755, true);
                                 }
-                                if (copy(public_path($oldPath), $newAbsolutePath)) {
+                                if (copy(secure_upload_path($oldPath), $newAbsolutePath)) {
                                     $newArray[$opdId] = $newRelativePath;
                                 }
                             }
@@ -777,14 +777,14 @@ class DashboardController extends Controller
                 }
 
                 // Physically delete the old signed files and drafts if they exist
-                if ($data->file_izin_tte && file_exists(public_path($data->file_izin_tte))) {
-                    @unlink(public_path($data->file_izin_tte));
+                if ($data->file_izin_tte && file_exists(secure_upload_path($data->file_izin_tte))) {
+                    @unlink(secure_upload_path($data->file_izin_tte));
                 }
-                if ($data->file_izin && file_exists(public_path($data->file_izin))) {
-                    @unlink(public_path($data->file_izin));
+                if ($data->file_izin && file_exists(secure_upload_path($data->file_izin))) {
+                    @unlink(secure_upload_path($data->file_izin));
                 }
-                if ($data->file_izin_pembetulan && file_exists(public_path($data->file_izin_pembetulan))) {
-                    @unlink(public_path($data->file_izin_pembetulan));
+                if ($data->file_izin_pembetulan && file_exists(secure_upload_path($data->file_izin_pembetulan))) {
+                    @unlink(secure_upload_path($data->file_izin_pembetulan));
                 }
 
                 $updateData = [
@@ -1210,7 +1210,7 @@ class DashboardController extends Controller
                     if ($field) {
                         $userDoc = \App\Models\UserDokumen::find($userDokumenId);
                         if ($userDoc) {
-                            $originalPath = public_path($userDoc->file_path);
+                            $originalPath = secure_upload_path($userDoc->file_path);
                             if (file_exists($originalPath)) {
                                 $extension = strtolower(pathinfo($originalPath, PATHINFO_EXTENSION));
                                 $allowedTypesStr = strtolower($field->file_types ?: 'pdf,doc,docx,jpg,jpeg,png');
@@ -1257,11 +1257,11 @@ class DashboardController extends Controller
             foreach ($existingFiles as $fieldId => $userDokumenId) {
                 if ($userDokumenId) {
                     $userDoc = \App\Models\UserDokumen::find($userDokumenId);
-                    if ($userDoc && file_exists(public_path($userDoc->file_path))) {
-                        $originalPath = public_path($userDoc->file_path);
+                    if ($userDoc && file_exists(secure_upload_path($userDoc->file_path))) {
+                        $originalPath = secure_upload_path($userDoc->file_path);
                         $extension = pathinfo($originalPath, PATHINFO_EXTENSION);
                         $filename = 'doc_saya_' . $fieldId . '_' . time() . '.' . $extension;
-                        $uploadPath = public_path('uploads/perijinan/' . $perijinan->id);
+                        $uploadPath = secure_upload_path('uploads/perijinan/' . $perijinan->id);
                         
                         if (!file_exists($uploadPath)) {
                             mkdir($uploadPath, 0755, true);
@@ -1288,7 +1288,7 @@ class DashboardController extends Controller
                             $filename = $originalName . '_' . time() . '.' . $extension;
 
                             // Path upload
-                            $uploadPath = public_path('uploads/perijinan/' . $perijinan->id);
+                            $uploadPath = secure_upload_path('uploads/perijinan/' . $perijinan->id);
 
                             if (!file_exists($uploadPath)) {
                                 mkdir($uploadPath, 0755, true);

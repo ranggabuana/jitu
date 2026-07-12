@@ -560,7 +560,7 @@ class DataPerijinanController extends Controller
 
             // Guard: on pembetulan, BO must upload the izin PDF before approving
             if ($request->action === 'approved' && $application->is_pembetulan && $userRole === 'bo') {
-                if (empty($application->file_izin_pembetulan) || !file_exists(public_path($application->file_izin_pembetulan))) {
+                if (empty($application->file_izin_pembetulan) || !file_exists(secure_upload_path($application->file_izin_pembetulan))) {
                     return redirect()->back()->with('error', 'Harap unggah file PDF surat izin yang siap TTE terlebih dahulu sebelum menyetujui tahap ini.');
                 }
             }
@@ -701,31 +701,31 @@ class DataPerijinanController extends Controller
                 // Send back for revision - RESET SLA
                 
                 // Delete generated recommendation/permit files from disk
-                if ($application->file_rekom && file_exists(public_path($application->file_rekom))) {
-                    @unlink(public_path($application->file_rekom));
+                if ($application->file_rekom && file_exists(secure_upload_path($application->file_rekom))) {
+                    @unlink(secure_upload_path($application->file_rekom));
                 }
-                if ($application->file_rekom_tte && file_exists(public_path($application->file_rekom_tte))) {
-                    @unlink(public_path($application->file_rekom_tte));
+                if ($application->file_rekom_tte && file_exists(secure_upload_path($application->file_rekom_tte))) {
+                    @unlink(secure_upload_path($application->file_rekom_tte));
                 }
                 if (!empty($application->file_rekom_multi) && is_array($application->file_rekom_multi)) {
                     foreach ($application->file_rekom_multi as $path) {
-                        if ($path && file_exists(public_path($path))) {
-                            @unlink(public_path($path));
+                        if ($path && file_exists(secure_upload_path($path))) {
+                            @unlink(secure_upload_path($path));
                         }
                     }
                 }
                 if (!empty($application->file_rekom_multi_tte) && is_array($application->file_rekom_multi_tte)) {
                     foreach ($application->file_rekom_multi_tte as $path) {
-                        if ($path && file_exists(public_path($path))) {
-                            @unlink(public_path($path));
+                        if ($path && file_exists(secure_upload_path($path))) {
+                            @unlink(secure_upload_path($path));
                         }
                     }
                 }
-                if ($application->file_izin && file_exists(public_path($application->file_izin))) {
-                    @unlink(public_path($application->file_izin));
+                if ($application->file_izin && file_exists(secure_upload_path($application->file_izin))) {
+                    @unlink(secure_upload_path($application->file_izin));
                 }
-                if ($application->file_izin_tte && file_exists(public_path($application->file_izin_tte))) {
-                    @unlink(public_path($application->file_izin_tte));
+                if ($application->file_izin_tte && file_exists(secure_upload_path($application->file_izin_tte))) {
+                    @unlink(secure_upload_path($application->file_izin_tte));
                 }
 
                 $application->update([
@@ -864,21 +864,21 @@ class DataPerijinanController extends Controller
                                 if ($isMultiOpd && $opdId) {
                                     $multiTte = $application->file_rekom_multi_tte ?? [];
                                     if (isset($multiTte[$opdId])) {
-                                        if (file_exists(public_path($multiTte[$opdId]))) {
-                                            @unlink(public_path($multiTte[$opdId]));
+                                        if (file_exists(secure_upload_path($multiTte[$opdId]))) {
+                                            @unlink(secure_upload_path($multiTte[$opdId]));
                                         }
                                         unset($multiTte[$opdId]);
                                         $application->file_rekom_multi_tte = $multiTte;
                                     }
                                 } else {
-                                    if ($application->file_rekom_tte && file_exists(public_path($application->file_rekom_tte))) {
-                                        @unlink(public_path($application->file_rekom_tte));
+                                    if ($application->file_rekom_tte && file_exists(secure_upload_path($application->file_rekom_tte))) {
+                                        @unlink(secure_upload_path($application->file_rekom_tte));
                                     }
                                     $application->file_rekom_tte = null;
                                 }
                             } elseif ($record->validationFlow->role === 'kadin') {
-                                if ($application->file_izin_tte && file_exists(public_path($application->file_izin_tte))) {
-                                    @unlink(public_path($application->file_izin_tte));
+                                if ($application->file_izin_tte && file_exists(secure_upload_path($application->file_izin_tte))) {
+                                    @unlink(secure_upload_path($application->file_izin_tte));
                                 }
                                 $application->file_izin_tte = null;
                             }
@@ -1204,7 +1204,7 @@ class DataPerijinanController extends Controller
                         $file = $request->file($field->name);
                         $filename = 'rekom_' . $opdId . '_' . $field->name . '_' . time() . '.' . $file->getClientOriginalExtension();
                         $path = 'uploads/perijinan/' . $application->perijinan_id;
-                        $file->move(public_path($path), $filename);
+                        $file->move(secure_upload_path($path), $filename);
                         $currentData[$field->name] = $path . '/' . $filename;
                     } elseif (empty($currentData[$field->name])) {
                         // Auto-fill dari BO atau global
@@ -1324,7 +1324,7 @@ class DataPerijinanController extends Controller
                         $file = $request->file($field->name);
                         $filename = 'rekom_' . $field->name . '_' . time() . '.' . $file->getClientOriginalExtension();
                         $path = 'uploads/perijinan/' . $application->perijinan_id;
-                        $file->move(public_path($path), $filename);
+                        $file->move(secure_upload_path($path), $filename);
                         $rekomData[$field->name] = $path . '/' . $filename;
                     } elseif (empty($rekomData[$field->name])) {
                         // Auto-fill dari BO atau global
@@ -1568,7 +1568,7 @@ class DataPerijinanController extends Controller
                         if ($file->isValid()) {
                             $filename = 'izin_' . $field->name . '_' . time() . '.' . $file->getClientOriginalExtension();
                             $path = 'uploads/perijinan/' . $application->perijinan_id;
-                            $file->move(public_path($path), $filename);
+                            $file->move(secure_upload_path($path), $filename);
                             $izinData[$field->name] = $path . '/' . $filename;
                         }
                     } elseif (empty($izinData[$field->name])) {
@@ -1735,7 +1735,7 @@ class DataPerijinanController extends Controller
 
         // Pembetulan: validate the uploaded izin DOCX template
         if ($application->is_pembetulan) {
-            $hasPembetulanFile = !empty($application->file_izin_pembetulan) && file_exists(public_path($application->file_izin_pembetulan));
+            $hasPembetulanFile = !empty($application->file_izin_pembetulan) && file_exists(secure_upload_path($application->file_izin_pembetulan));
             $rules['file_izin_pembetulan'] = $hasPembetulanFile ? ['nullable', 'file', 'mimes:docx', 'max:10240'] : ['required', 'file', 'mimes:docx', 'max:10240'];
             $messages['file_izin_pembetulan.required'] = 'Harap unggah file template DOCX surat izin.';
             $messages['file_izin_pembetulan.mimes'] = 'File surat izin harus berformat DOCX.';
@@ -1753,7 +1753,7 @@ class DataPerijinanController extends Controller
                     if ($file->isValid()) {
                         $filename = 'bo_' . $field->name . '_' . time() . '.' . $file->getClientOriginalExtension();
                         $path = 'uploads/perijinan/' . $application->perijinan_id;
-                        $file->move(public_path($path), $filename);
+                        $file->move(secure_upload_path($path), $filename);
                         $boData[$field->name] = $path . '/' . $filename;
                     }
                 } elseif (empty($boData[$field->name])) {
@@ -1825,12 +1825,12 @@ class DataPerijinanController extends Controller
             $docxFile = $request->file('file_izin_pembetulan');
             if ($docxFile->isValid()) {
                 // If there's an existing PDF, clean it up
-                if ($application->file_izin_pembetulan && file_exists(public_path($application->file_izin_pembetulan))) {
-                    @unlink(public_path($application->file_izin_pembetulan));
+                if ($application->file_izin_pembetulan && file_exists(secure_upload_path($application->file_izin_pembetulan))) {
+                    @unlink(secure_upload_path($application->file_izin_pembetulan));
                     // Also clean up its matching template docx if any
                     $oldDocxTemplate = str_replace('.pdf', '_template.docx', $application->file_izin_pembetulan);
-                    if (file_exists(public_path($oldDocxTemplate))) {
-                        @unlink(public_path($oldDocxTemplate));
+                    if (file_exists(secure_upload_path($oldDocxTemplate))) {
+                        @unlink(secure_upload_path($oldDocxTemplate));
                     }
                 }
                 
@@ -1839,8 +1839,8 @@ class DataPerijinanController extends Controller
                 
                 // Save the uploaded DOCX template file on disk
                 $docxFilename = 'izin_pembetulan_' . $application->id . '_' . $time . '_template.docx';
-                $docxFile->move(public_path($destPath), $docxFilename);
-                $docxAbsPath = public_path($destPath . '/' . $docxFilename);
+                $docxFile->move(secure_upload_path($destPath), $docxFilename);
+                $docxAbsPath = secure_upload_path($destPath . '/' . $docxFilename);
                 
                 // Also reset TTE so Kadin must sign the new file
                 $application->file_izin_tte = null;
@@ -2519,7 +2519,7 @@ class DataPerijinanController extends Controller
         } else {
             $relativePath = 'uploads/perijinan/' . ltrim($filepath, '/');
         }
-        $path = public_path($relativePath);
+        $path = secure_upload_path($relativePath);
         
         // Fallback for hosting environments using unique public folder mappings
         if (!file_exists($path)) {
@@ -2622,7 +2622,7 @@ class DataPerijinanController extends Controller
         }
 
         $docxTemplatePath = str_replace('.pdf', '_template.docx', $application->file_izin_pembetulan);
-        $docxAbsPath = public_path($docxTemplatePath);
+        $docxAbsPath = secure_upload_path($docxTemplatePath);
 
         if (!file_exists($docxAbsPath)) {
             return redirect()->back()->with('error', 'File template DOCX asli tidak ditemukan di server.');
@@ -2701,19 +2701,19 @@ class DataPerijinanController extends Controller
                     \Log::error('Gagal meregenerasi rekom sebelum TTE: ' . $e->getMessage());
                 }
 
-                if (!$filePath || !file_exists(public_path($filePath))) {
+                if (!$filePath || !file_exists(secure_upload_path($filePath))) {
                     throw new \Exception("Dokumen draft rekomendasi tidak ditemukan.");
                 }
 
                 // Process TTE
-                $signedPdfData = \App\Services\EsignService::signPdf($nik, $request->passphrase, public_path($filePath));
+                $signedPdfData = \App\Services\EsignService::signPdf($nik, $request->passphrase, secure_upload_path($filePath));
 
                 // Save to new signed file
                 $pathInfo = pathinfo($filePath);
                 $newFilename = $pathInfo['filename'] . '_signed_' . time() . '.' . $pathInfo['extension'];
                 $newFilePath = $pathInfo['dirname'] . '/' . $newFilename;
 
-                file_put_contents(public_path($newFilePath), $signedPdfData);
+                file_put_contents(secure_upload_path($newFilePath), $signedPdfData);
 
                 // Update DB path in the new TTE column
                 if ($isMultiOpd) {
@@ -2737,7 +2737,7 @@ class DataPerijinanController extends Controller
                 if ($application->is_pembetulan) {
                     // Pembetulan: use the template file to regenerate the PDF but with isDraft = false (black QR code)
                     $docxTemplatePath = str_replace('.pdf', '_template.docx', $application->file_izin_pembetulan);
-                    $docxAbsPath = public_path($docxTemplatePath);
+                    $docxAbsPath = secure_upload_path($docxTemplatePath);
                     if (file_exists($docxAbsPath)) {
                         try {
                             $filePath = \App\Services\DocumentGenerator::processPembetulanDocx($docxAbsPath, $application, false);
@@ -2747,7 +2747,7 @@ class DataPerijinanController extends Controller
                     }
                     
                     $filePath = $filePath ?? ($application->file_izin_pembetulan ?? null);
-                    if (!$filePath || !file_exists(public_path($filePath))) {
+                    if (!$filePath || !file_exists(secure_upload_path($filePath))) {
                         throw new \Exception("File PDF surat izin yang diunggah BO tidak ditemukan. Minta BO untuk mengunggah ulang.");
                     }
                 } else {
@@ -2759,19 +2759,19 @@ class DataPerijinanController extends Controller
                         \Log::error('Gagal meregenerasi izin sebelum TTE: ' . $e->getMessage());
                     }
 
-                    if (!$filePath || !file_exists(public_path($filePath))) {
+                    if (!$filePath || !file_exists(secure_upload_path($filePath))) {
                         throw new \Exception("Dokumen draft izin tidak ditemukan.");
                     }
                 }
 
                 // Process TTE
-                $signedPdfData = \App\Services\EsignService::signPdf($nik, $request->passphrase, public_path($filePath));
+                $signedPdfData = \App\Services\EsignService::signPdf($nik, $request->passphrase, secure_upload_path($filePath));
 
                 $pathInfo = pathinfo($filePath);
                 $newFilename = $pathInfo['filename'] . '_signed_' . time() . '.' . $pathInfo['extension'];
                 $newFilePath = $pathInfo['dirname'] . '/' . $newFilename;
 
-                file_put_contents(public_path($newFilePath), $signedPdfData);
+                file_put_contents(secure_upload_path($newFilePath), $signedPdfData);
                 $application->file_izin_tte = $newFilePath;
                 $application->save();
 
@@ -2846,14 +2846,14 @@ class DataPerijinanController extends Controller
                 $filePath = $application->file_izin;
             }
 
-            if (!$filePath || !file_exists(public_path($filePath))) {
+            if (!$filePath || !file_exists(secure_upload_path($filePath))) {
                 return response()->json([
                     'error' => true,
                     'message' => 'Dokumen fisik tidak ditemukan di server.'
                 ]);
             }
 
-            $result = \App\Services\EsignService::verifyPdf(public_path($filePath));
+            $result = \App\Services\EsignService::verifyPdf(secure_upload_path($filePath));
             
             return response()->json($result);
 

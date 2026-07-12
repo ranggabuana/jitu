@@ -153,7 +153,7 @@ class DocumentGenerator
         // 3. Define output directory
         $safeNoRegistrasi = str_replace('-', '_', $application->no_registrasi);
         $folderPath = 'uploads/perijinan/generated_' . $safeNoRegistrasi;
-        $absoluteFolder = public_path($folderPath);
+        $absoluteFolder = storage_path('app/' . $folderPath);
 
         if (!File::exists($absoluteFolder)) {
             File::makeDirectory($absoluteFolder, 0755, true);
@@ -256,7 +256,10 @@ class DocumentGenerator
                     $file = is_array($files) ? ($files[0] ?? null) : $files;
                     
                     if ($file) {
-                        $absolutePath = public_path($file);
+                        $absolutePath = storage_path('app/' . $file);
+                        if (!File::exists($absolutePath)) {
+                            $absolutePath = public_path($file);
+                        }
                         if (!File::exists($absolutePath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($file)) {
                             $absolutePath = \Illuminate\Support\Facades\Storage::disk('public')->path($file);
                         }
@@ -301,7 +304,10 @@ class DocumentGenerator
                 $field = $perijinan->activeFormFields->where('form_type', 'bo')->firstWhere('name', $key);
                 if ($field && ($field->type === 'pas_foto' || $field->type === 'gambar')) {
                     if ($value) {
-                        $absolutePath = public_path($value);
+                        $absolutePath = storage_path('app/' . $value);
+                        if (!File::exists($absolutePath)) {
+                            $absolutePath = public_path($value);
+                        }
                         if (!File::exists($absolutePath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($value)) {
                             $absolutePath = \Illuminate\Support\Facades\Storage::disk('public')->path($value);
                         }
@@ -386,7 +392,10 @@ class DocumentGenerator
             $field = $rekomFields->firstWhere('name', $key);
             if ($field && ($field->type === 'pas_foto' || $field->type === 'gambar')) {
                 if ($value) {
-                    $absolutePath = public_path($value);
+                    $absolutePath = storage_path('app/' . $value);
+                    if (!File::exists($absolutePath)) {
+                        $absolutePath = public_path($value);
+                    }
                     if (!File::exists($absolutePath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($value)) {
                         $absolutePath = \Illuminate\Support\Facades\Storage::disk('public')->path($value);
                     }
@@ -540,7 +549,10 @@ class DocumentGenerator
                 $field = $perijinan->activeFormFields->where('form_type', 'rekom')->firstWhere('name', $key);
                 if ($field && ($field->type === 'pas_foto' || $field->type === 'gambar')) {
                     if ($value) {
-                        $absolutePath = public_path($value);
+                        $absolutePath = storage_path('app/' . $value);
+                        if (!File::exists($absolutePath)) {
+                            $absolutePath = public_path($value);
+                        }
                         if (!File::exists($absolutePath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($value)) {
                             $absolutePath = \Illuminate\Support\Facades\Storage::disk('public')->path($value);
                         }
@@ -734,7 +746,10 @@ class DocumentGenerator
                         $field = $perijinan->activeFormFields->where('form_type', 'izin')->firstWhere('name', $key);
                         if ($field && ($field->type === 'pas_foto' || $field->type === 'gambar')) {
                             if ($value) {
-                                $absolutePath = public_path($value);
+                                $absolutePath = storage_path('app/' . $value);
+                                if (!File::exists($absolutePath)) {
+                                    $absolutePath = public_path($value);
+                                }
                                 if (!File::exists($absolutePath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($value)) {
                                     $absolutePath = \Illuminate\Support\Facades\Storage::disk('public')->path($value);
                                 }
@@ -948,8 +963,11 @@ class DocumentGenerator
     public static function generateFromWord($templatePathDB, $replacements, $filename, $folderPath, $absoluteFolder)
     {
         $replacements = array_merge($replacements, self::$tableImageReplacements);
-        // Templates are now stored in public/uploads/templates
-        $realTemplatePath = public_path($templatePathDB);
+        // Templates are now stored in storage/app/uploads/templates
+        $realTemplatePath = storage_path('app/' . $templatePathDB);
+        if (!File::exists($realTemplatePath)) {
+            $realTemplatePath = public_path($templatePathDB);
+        }
         
         // Backward compatibility fallback for old files in storage/app/private/ or storage/app/
         if (!File::exists($realTemplatePath)) {
@@ -1050,7 +1068,10 @@ class DocumentGenerator
                 if ($path && (strpos($path, '/') === 0 || strpos($path, ':\\') !== false || strpos($path, ':/') !== false)) {
                     $actualPath = $path;
                 } else {
-                    $actualPath = $path ? public_path($path) : null;
+                    $actualPath = $path ? storage_path('app/' . $path) : null;
+                    if (!$actualPath || !File::exists($actualPath)) {
+                        $actualPath = $path ? public_path($path) : null;
+                    }
                     if ($path && !File::exists($actualPath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
                         $actualPath = \Illuminate\Support\Facades\Storage::disk('public')->path($path);
                     }
@@ -1308,12 +1329,12 @@ class DocumentGenerator
         }
         
         $folderPath = 'uploads/perijinan/' . $application->perijinan_id;
-        $absoluteFolder = public_path($folderPath);
+        $absoluteFolder = storage_path('app/' . $folderPath);
         
-        $normalizedPublicPath = str_replace('\\', '/', public_path());
+        $normalizedStoragePath = str_replace('\\', '/', storage_path('app'));
         $normalizedDocxAbsPath = str_replace('\\', '/', $docxAbsPath);
         
-        $relativeDocxTemplatePath = str_replace($normalizedPublicPath . '/', '', $normalizedDocxAbsPath);
+        $relativeDocxTemplatePath = str_replace($normalizedStoragePath . '/', '', $normalizedDocxAbsPath);
         if (str_starts_with($relativeDocxTemplatePath, 'public/')) {
             $relativeDocxTemplatePath = substr($relativeDocxTemplatePath, 7);
         }
@@ -1577,12 +1598,15 @@ class DocumentGenerator
                             }
 
                             // Fallback to direct cell value if it's already a path
-                            if (!$filePath && !empty($cellVal) && is_string($cellVal) && (str_contains($cellVal, 'uploads/') || file_exists(public_path($cellVal)))) {
+                            if (!$filePath && !empty($cellVal) && is_string($cellVal) && (str_contains($cellVal, 'uploads/') || file_exists(storage_path('app/' . $cellVal)) || file_exists(public_path($cellVal)))) {
                                 $filePath = $cellVal;
                             }
 
                             if ($filePath) {
-                                $absolutePath = public_path($filePath);
+                                $absolutePath = storage_path('app/' . $filePath);
+                                if (!File::exists($absolutePath)) {
+                                    $absolutePath = public_path($filePath);
+                                }
                                 if (!File::exists($absolutePath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($filePath)) {
                                     $absolutePath = \Illuminate\Support\Facades\Storage::disk('public')->path($filePath);
                                 }
@@ -2019,12 +2043,15 @@ class DocumentGenerator
                                 }
 
                                 // Fallback to direct cell value if it's already a path
-                                if (!$filePath && !empty($cellVal) && is_string($cellVal) && (str_contains($cellVal, 'uploads/') || file_exists(public_path($cellVal)))) {
+                                if (!$filePath && !empty($cellVal) && is_string($cellVal) && (str_contains($cellVal, 'uploads/') || file_exists(storage_path('app/' . $cellVal)) || file_exists(public_path($cellVal)))) {
                                     $filePath = $cellVal;
                                 }
 
                                 if ($filePath) {
-                                    $absolutePath = public_path($filePath);
+                                    $absolutePath = storage_path('app/' . $filePath);
+                                    if (!File::exists($absolutePath)) {
+                                        $absolutePath = public_path($filePath);
+                                    }
                                     if (!File::exists($absolutePath) && \Illuminate\Support\Facades\Storage::disk('public')->exists($filePath)) {
                                         $absolutePath = \Illuminate\Support\Facades\Storage::disk('public')->path($filePath);
                                     }

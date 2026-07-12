@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -150,8 +151,8 @@ class AuthController extends Controller
         if ($request->hasFile('foto_ktp')) {
             $file = $request->file('foto_ktp');
             $extension = $file->getClientOriginalExtension();
-            $filename = 'ktp_' . time() . '_' . $request->nik . '.' . $extension;
-            $uploadPath = public_path('uploads/register');
+            $filename = 'ktp_' . Str::random(40) . '.' . $extension;
+            $uploadPath = storage_path('app/uploads/register');
 
             if (!file_exists($uploadPath)) {
                 mkdir($uploadPath, 0755, true);
@@ -161,10 +162,14 @@ class AuthController extends Controller
             $userData['foto_ktp'] = 'uploads/register/' . $filename;
         } elseif ($request->temp_foto_ktp) {
             // Use temporary file
-            $tempFile = public_path($request->temp_foto_ktp);
+            $tempFile = storage_path('app/' . $request->temp_foto_ktp);
+            if (!file_exists($tempFile)) {
+                $tempFile = public_path($request->temp_foto_ktp);
+            }
             if (file_exists($tempFile)) {
-                $filename = basename($tempFile);
-                $uploadPath = public_path('uploads/register');
+                $extension = pathinfo($tempFile, PATHINFO_EXTENSION);
+                $filename = 'ktp_' . Str::random(40) . '.' . $extension;
+                $uploadPath = storage_path('app/uploads/register');
 
                 if (!file_exists($uploadPath)) {
                     mkdir($uploadPath, 0755, true);
@@ -237,8 +242,8 @@ class AuthController extends Controller
         if ($request->hasFile('foto_ktp')) {
             $file = $request->file('foto_ktp');
             $extension = $file->getClientOriginalExtension();
-            $filename = 'temp_ktp_' . time() . '_' . uniqid() . '.' . $extension;
-            $uploadPath = public_path('uploads/temp');
+            $filename = 'temp_ktp_' . Str::random(40) . '.' . $extension;
+            $uploadPath = storage_path('app/uploads/temp');
 
             if (!file_exists($uploadPath)) {
                 mkdir($uploadPath, 0755, true);

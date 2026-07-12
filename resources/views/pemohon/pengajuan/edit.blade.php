@@ -337,7 +337,7 @@
                 @if(isset($userDokumens) && $userDokumens->count() > 0)
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         @foreach($userDokumens as $doc)
-                            <div class="border border-gray-200 rounded-xl p-4 hover:border-purple-500 hover:bg-purple-50 cursor-pointer transition-colors group" onclick="selectDokumen({{ $doc->id }}, '{{ addslashes($doc->masterDokumen->nama_dokumen) }}', '{{ asset($doc->file_path) }}', '{{ basename($doc->file_path) }}')">
+                            <div class="border border-gray-200 rounded-xl p-4 hover:border-purple-500 hover:bg-purple-50 cursor-pointer transition-colors group" onclick="selectDokumen({{ $doc->id }}, '{{ addslashes($doc->masterDokumen->nama_dokumen) }}', '{{ route('secure-file', ['filepath' => $doc->file_path]) }}', '{{ basename($doc->file_path) }}')">
                                 <div class="flex items-start gap-3">
                                     <div class="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0 group-hover:bg-purple-200">
                                         <i class="mdi mdi-file-document text-xl"></i>

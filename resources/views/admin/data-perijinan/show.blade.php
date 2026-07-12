@@ -184,7 +184,7 @@
                             <div>
                                 <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Berkas KTP</label>
                                 <div class="mt-2">
-                                    <a href="{{ asset($application->user->foto_ktp) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50 rounded-lg text-xs font-semibold transition-all">
+                                    <a href="{{ route('secure-file', ['filepath' => $application->user->foto_ktp]) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50 rounded-lg text-xs font-semibold transition-all">
                                         <i class="mdi mdi-file-document-outline"></i> Lihat Foto KTP
                                     </a>
                                 </div>
@@ -770,11 +770,11 @@
                                                         $opdName = \App\Models\Opd::find($opdId)->nama_opd ?? 'OPD';
                                                     @endphp
                                                     <div class="flex items-center justify-between p-3 bg-red-50/40 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-800/50 hover:bg-red-100/30 transition-all shadow-sm" title="Rekomendasi {{ $opdName }}">
-                                                        <a href="{{ asset($path) }}" target="_blank" class="flex items-center gap-2 flex-1 hover:underline">
+                                                        <a href="{{ route('secure-file', ['filepath' => $path]) }}" target="_blank" class="flex items-center gap-2 flex-1 hover:underline">
                                                             <i class="mdi mdi-file-pdf-box text-red-500 text-lg"></i>
                                                             <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Rekom Draft {{ \Illuminate\Support\Str::limit($opdName, 12) }} (PDF)</span>
                                                         </a>
-                                                        <a href="{{ asset($path) }}" target="_blank" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-red-600 transition-colors shadow-sm" title="Buka PDF">
+                                                        <a href="{{ route('secure-file', ['filepath' => $path]) }}" target="_blank" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-red-600 transition-colors shadow-sm" title="Buka PDF">
                                                             <i class="mdi mdi-open-in-new"></i>
                                                         </a>
                                                     </div>
@@ -785,11 +785,11 @@
                                         {{-- Surat Izin Lama PDF --}}
                                         @if($application->file_izin_tte_pembetulan_old && file_exists(public_path($application->file_izin_tte_pembetulan_old)))
                                             <div class="flex items-center justify-between p-3 bg-red-50/40 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-800/50 hover:bg-red-100/30 transition-all shadow-sm">
-                                                <a href="{{ asset($application->file_izin_tte_pembetulan_old) }}" target="_blank" class="flex items-center gap-2 flex-1 hover:underline">
+                                                <a href="{{ route('secure-file', ['filepath' => $application->file_izin_tte_pembetulan_old]) }}" target="_blank" class="flex items-center gap-2 flex-1 hover:underline">
                                                     <i class="mdi mdi-file-pdf-box text-red-500 text-lg"></i>
                                                     <span class="text-xs font-bold text-gray-700 dark:text-gray-300 hover:underline">Izin Ter-TTE (PDF)</span>
                                                 </a>
-                                                <a href="{{ asset($application->file_izin_tte_pembetulan_old) }}" target="_blank" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-red-600 transition-colors shadow-sm" title="Buka PDF">
+                                                <a href="{{ route('secure-file', ['filepath' => $application->file_izin_tte_pembetulan_old]) }}" target="_blank" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-red-600 transition-colors shadow-sm" title="Buka PDF">
                                                     <i class="mdi mdi-open-in-new"></i>
                                                 </a>
                                             </div>
@@ -798,11 +798,11 @@
                                         {{-- Surat Rekomendasi Lama PDF --}}
                                         @if($application->file_rekom_tte_pembetulan_old && file_exists(public_path($application->file_rekom_tte_pembetulan_old)))
                                             <div class="flex items-center justify-between p-3 bg-red-50/40 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-800/50 hover:bg-red-100/30 transition-all shadow-sm">
-                                                <a href="{{ asset($application->file_rekom_tte_pembetulan_old) }}" target="_blank" class="flex items-center gap-2 flex-1 hover:underline">
+                                                <a href="{{ route('secure-file', ['filepath' => $application->file_rekom_tte_pembetulan_old]) }}" target="_blank" class="flex items-center gap-2 flex-1 hover:underline">
                                                     <i class="mdi mdi-file-pdf-box text-red-500 text-lg"></i>
                                                     <span class="text-xs font-bold text-gray-700 dark:text-gray-300 hover:underline">Rekom Ter-TTE (PDF)</span>
                                                 </a>
-                                                <a href="{{ asset($application->file_rekom_tte_pembetulan_old) }}" target="_blank" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-red-600 transition-colors shadow-sm" title="Buka PDF">
+                                                <a href="{{ route('secure-file', ['filepath' => $application->file_rekom_tte_pembetulan_old]) }}" target="_blank" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-red-600 transition-colors shadow-sm" title="Buka PDF">
                                                     <i class="mdi mdi-open-in-new"></i>
                                                 </a>
                                             </div>
@@ -816,11 +816,11 @@
                                                         $opdName = \App\Models\Opd::find($opdId)->nama_opd ?? 'OPD';
                                                     @endphp
                                                     <div class="flex items-center justify-between p-3 bg-red-50/40 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-800/50 hover:bg-red-100/30 transition-all shadow-sm" title="Rekomendasi {{ $opdName }}">
-                                                        <a href="{{ asset($path) }}" target="_blank" class="flex items-center gap-2 flex-1 hover:underline">
+                                                        <a href="{{ route('secure-file', ['filepath' => $path]) }}" target="_blank" class="flex items-center gap-2 flex-1 hover:underline">
                                                             <i class="mdi mdi-file-pdf-box text-red-500 text-lg"></i>
                                                             <span class="text-xs font-bold text-gray-700 dark:text-gray-300 hover:underline">Rekom TTE {{ \Illuminate\Support\Str::limit($opdName, 15) }} (PDF)</span>
                                                         </a>
-                                                        <a href="{{ asset($path) }}" target="_blank" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-red-600 transition-colors shadow-sm" title="Buka PDF">
+                                                        <a href="{{ route('secure-file', ['filepath' => $path]) }}" target="_blank" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-red-600 transition-colors shadow-sm" title="Buka PDF">
                                                             <i class="mdi mdi-open-in-new"></i>
                                                         </a>
                                                     </div>

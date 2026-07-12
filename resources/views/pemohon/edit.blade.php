@@ -282,8 +282,8 @@
                         @if($pemohon->foto_ktp)
                             <div class="shrink-0">
                                 <p class="text-xs text-gray-500 mb-1">KTP Saat Ini:</p>
-                                <a href="{{ asset($pemohon->foto_ktp) }}" target="_blank" class="block">
-                                    <img src="{{ asset($pemohon->foto_ktp) }}" alt="KTP" class="w-32 h-20 object-cover rounded-lg border border-gray-300 dark:border-gray-600">
+                                <a href="{{ route('secure-file', ['filepath' => $pemohon->foto_ktp]) }}" target="_blank" class="block">
+                                    <img src="{{ route('secure-file', ['filepath' => $pemohon->foto_ktp]) }}" alt="KTP" class="w-32 h-20 object-cover rounded-lg border border-gray-300 dark:border-gray-600">
                                 </a>
                             </div>
                         @endif
