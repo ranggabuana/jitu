@@ -477,15 +477,15 @@
                     
                     $activeIzinPath = $application->file_izin_pembetulan ?: $application->file_izin;
                     $currentIzinDocx = $activeIzinPath ? str_ireplace('.pdf', '.docx', $activeIzinPath) : null;
-                    $hasCurrentIzinDocx = $currentIzinDocx && file_exists(public_path($currentIzinDocx));
+                    $hasCurrentIzinDocx = $currentIzinDocx && file_exists(secure_upload_path($currentIzinDocx));
                     
                     $currentRekomDocx = $application->file_rekom ? str_ireplace('.pdf', '.docx', $application->file_rekom) : null;
-                    $hasCurrentRekomDocx = $currentRekomDocx && file_exists(public_path($currentRekomDocx));
+                    $hasCurrentRekomDocx = $currentRekomDocx && file_exists(secure_upload_path($currentRekomDocx));
                     
                     $hasCurrentRekomMultiDocx = false;
                     if (!empty($application->file_rekom_multi)) {
                         foreach ($application->file_rekom_multi as $path) {
-                            if ($path && file_exists(public_path(str_ireplace('.pdf', '.docx', $path)))) {
+                            if ($path && file_exists(secure_upload_path(str_ireplace('.pdf', '.docx', $path)))) {
                                 $hasCurrentRekomMultiDocx = true;
                                 break;
                             }
@@ -498,21 +498,21 @@
                     $oldRekomTteDocx = $application->file_rekom_tte_pembetulan_old ? str_ireplace('.pdf', '.docx', $application->file_rekom_tte_pembetulan_old) : null;
                     $oldRekomDocx = $application->file_rekom_pembetulan_old ? str_ireplace('.pdf', '.docx', $application->file_rekom_pembetulan_old) : null;
 
-                    $hasOldDocx = ($oldIzinTteDocx && file_exists(public_path($oldIzinTteDocx)))
-                        || ($oldIzinDocx && file_exists(public_path($oldIzinDocx)))
-                        || ($oldRekomTteDocx && file_exists(public_path($oldRekomTteDocx)))
-                        || ($oldRekomDocx && file_exists(public_path($oldRekomDocx)));
+                    $hasOldDocx = ($oldIzinTteDocx && file_exists(secure_upload_path($oldIzinTteDocx)))
+                        || ($oldIzinDocx && file_exists(secure_upload_path($oldIzinDocx)))
+                        || ($oldRekomTteDocx && file_exists(secure_upload_path($oldRekomTteDocx)))
+                        || ($oldRekomDocx && file_exists(secure_upload_path($oldRekomDocx)));
                         
                     if (!$hasOldDocx && !empty($application->file_rekom_multi_tte_pembetulan_old)) {
                         foreach($application->file_rekom_multi_tte_pembetulan_old as $path) {
-                            if ($path && file_exists(public_path(str_ireplace('.pdf', '.docx', $path)))) {
+                            if ($path && file_exists(secure_upload_path(str_ireplace('.pdf', '.docx', $path)))) {
                                 $hasOldDocx = true; break;
                             }
                         }
                     }
                     if (!$hasOldDocx && !empty($application->file_rekom_multi_pembetulan_old)) {
                         foreach($application->file_rekom_multi_pembetulan_old as $path) {
-                            if ($path && file_exists(public_path(str_ireplace('.pdf', '.docx', $path)))) {
+                            if ($path && file_exists(secure_upload_path(str_ireplace('.pdf', '.docx', $path)))) {
                                 $hasOldDocx = true; break;
                             }
                         }
@@ -520,21 +520,21 @@
 
                     $hasAnyDocx = $hasCurrentIzinDocx || $hasCurrentRekomDocx || $hasCurrentRekomMultiDocx || $hasOldDocx;
                     
-                    $hasAnyPdf = ($activeIzinPath && file_exists(public_path($activeIzinPath)))
-                        || ($application->file_rekom && file_exists(public_path($application->file_rekom)))
-                        || ($application->file_izin_tte_pembetulan_old && file_exists(public_path($application->file_izin_tte_pembetulan_old)))
-                        || ($application->file_rekom_tte_pembetulan_old && file_exists(public_path($application->file_rekom_tte_pembetulan_old)));
+                    $hasAnyPdf = ($activeIzinPath && file_exists(secure_upload_path($activeIzinPath)))
+                        || ($application->file_rekom && file_exists(secure_upload_path($application->file_rekom)))
+                        || ($application->file_izin_tte_pembetulan_old && file_exists(secure_upload_path($application->file_izin_tte_pembetulan_old)))
+                        || ($application->file_rekom_tte_pembetulan_old && file_exists(secure_upload_path($application->file_rekom_tte_pembetulan_old)));
 
                     if (!$hasAnyPdf && !empty($application->file_rekom_multi)) {
                         foreach($application->file_rekom_multi as $path) {
-                            if ($path && file_exists(public_path($path))) {
+                            if ($path && file_exists(secure_upload_path($path))) {
                                 $hasAnyPdf = true; break;
                             }
                         }
                     }
                     if (!$hasAnyPdf && !empty($application->file_rekom_multi_tte_pembetulan_old)) {
                         foreach($application->file_rekom_multi_tte_pembetulan_old as $path) {
-                            if ($path && file_exists(public_path($path))) {
+                            if ($path && file_exists(secure_upload_path($path))) {
                                 $hasAnyPdf = true; break;
                             }
                         }
@@ -604,7 +604,7 @@
                                                         $currentRekomMultiDocx = str_ireplace('.pdf', '.docx', $path);
                                                         $opdName = \App\Models\Opd::find($opdId)->nama_opd ?? 'OPD';
                                                     @endphp
-                                                    @if(file_exists(public_path($currentRekomMultiDocx)))
+                                                    @if(file_exists(secure_upload_path($currentRekomMultiDocx)))
                                                         @php
                                                             $rpMultiDocx = str_ireplace('uploads/perijinan/', '', $currentRekomMultiDocx);
                                                         @endphp
@@ -623,7 +623,7 @@
                                         @endif
 
                                         {{-- Old Izin TTE DOCX --}}
-                                        @if($oldIzinTteDocx && file_exists(public_path($oldIzinTteDocx)))
+                                        @if($oldIzinTteDocx && file_exists(secure_upload_path($oldIzinTteDocx)))
                                             @php $rpOldIzinTteDocx = str_ireplace('uploads/perijinan/', '', $oldIzinTteDocx); @endphp
                                             <div class="flex items-center justify-between p-3 bg-blue-50/40 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/50 hover:bg-blue-100/30 transition-all shadow-sm">
                                                 <a href="{{ route('data-perijinan.download-file', $rpOldIzinTteDocx) }}" class="flex items-center gap-2 flex-1 hover:underline">
@@ -637,7 +637,7 @@
                                         @endif
 
                                         {{-- Old Izin Draft DOCX --}}
-                                        @if($oldIzinDocx && file_exists(public_path($oldIzinDocx)))
+                                        @if($oldIzinDocx && file_exists(secure_upload_path($oldIzinDocx)))
                                             @php $rpOldIzinDocx = str_ireplace('uploads/perijinan/', '', $oldIzinDocx); @endphp
                                             <div class="flex items-center justify-between p-3 bg-blue-50/40 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/50 hover:bg-blue-100/30 transition-all shadow-sm">
                                                 <a href="{{ route('data-perijinan.download-file', $rpOldIzinDocx) }}" class="flex items-center gap-2 flex-1 hover:underline">
@@ -651,7 +651,7 @@
                                         @endif
 
                                         {{-- Old Rekom TTE DOCX --}}
-                                        @if($oldRekomTteDocx && file_exists(public_path($oldRekomTteDocx)))
+                                        @if($oldRekomTteDocx && file_exists(secure_upload_path($oldRekomTteDocx)))
                                             @php $rpOldRekomTteDocx = str_ireplace('uploads/perijinan/', '', $oldRekomTteDocx); @endphp
                                             <div class="flex items-center justify-between p-3 bg-blue-50/40 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/50 hover:bg-blue-100/30 transition-all shadow-sm">
                                                 <a href="{{ route('data-perijinan.download-file', $rpOldRekomTteDocx) }}" class="flex items-center gap-2 flex-1 hover:underline">
@@ -665,7 +665,7 @@
                                         @endif
 
                                         {{-- Old Rekom Draft DOCX --}}
-                                        @if($oldRekomDocx && file_exists(public_path($oldRekomDocx)))
+                                        @if($oldRekomDocx && file_exists(secure_upload_path($oldRekomDocx)))
                                             @php $rpOldRekomDocx = str_ireplace('uploads/perijinan/', '', $oldRekomDocx); @endphp
                                             <div class="flex items-center justify-between p-3 bg-blue-50/40 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/50 hover:bg-blue-100/30 transition-all shadow-sm">
                                                 <a href="{{ route('data-perijinan.download-file', $rpOldRekomDocx) }}" class="flex items-center gap-2 flex-1 hover:underline">
@@ -687,7 +687,7 @@
                                                         $oldRekomMultiTteDocx = str_ireplace('.pdf', '.docx', $path);
                                                         $rpOldMultiTteDocx = str_ireplace('uploads/perijinan/', '', $oldRekomMultiTteDocx);
                                                     @endphp
-                                                    @if(file_exists(public_path($oldRekomMultiTteDocx)))
+                                                    @if(file_exists(secure_upload_path($oldRekomMultiTteDocx)))
                                                         <div class="flex items-center justify-between p-3 bg-blue-50/40 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/50 hover:bg-blue-100/30 transition-all shadow-sm" title="Rekomendasi {{ $opdName }}">
                                                             <a href="{{ route('data-perijinan.download-file', $rpOldMultiTteDocx) }}" class="flex items-center gap-2 flex-1 hover:underline">
                                                                 <i class="mdi mdi-file-word text-blue-500 text-lg"></i>
@@ -711,7 +711,7 @@
                                                         $oldRekomMultiDocx = str_ireplace('.pdf', '.docx', $path);
                                                         $rpOldMultiDocx = str_ireplace('uploads/perijinan/', '', $oldRekomMultiDocx);
                                                     @endphp
-                                                    @if(file_exists(public_path($oldRekomMultiDocx)))
+                                                    @if(file_exists(secure_upload_path($oldRekomMultiDocx)))
                                                         <div class="flex items-center justify-between p-3 bg-blue-50/40 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/50 hover:bg-blue-100/30 transition-all shadow-sm" title="Rekomendasi {{ $opdName }}">
                                                             <a href="{{ route('data-perijinan.download-file', $rpOldMultiDocx) }}" class="flex items-center gap-2 flex-1 hover:underline">
                                                                 <i class="mdi mdi-file-word text-blue-500 text-lg"></i>
@@ -737,26 +737,26 @@
                                     </h3>
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         {{-- Active Draft Izin (PDF) --}}
-                                        @if($activeIzinPath && file_exists(public_path($activeIzinPath)))
+                                        @if($activeIzinPath && file_exists(secure_upload_path($activeIzinPath)))
                                             <div class="flex items-center justify-between p-3 bg-red-50/40 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-800/50 hover:bg-red-100/30 transition-all shadow-sm">
-                                                <a href="{{ asset($activeIzinPath) }}" target="_blank" class="flex items-center gap-2 flex-1 hover:underline">
+                                                <a href="{{ route('secure-file', ['filepath' => $activeIzinPath]) }}" target="_blank" class="flex items-center gap-2 flex-1 hover:underline">
                                                     <i class="mdi mdi-file-pdf-box text-red-500 text-lg"></i>
                                                     <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Draft Izin (PDF)</span>
                                                 </a>
-                                                <a href="{{ asset($activeIzinPath) }}" target="_blank" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-red-600 transition-colors shadow-sm" title="Buka PDF">
+                                                <a href="{{ route('secure-file', ['filepath' => $activeIzinPath]) }}" target="_blank" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-red-600 transition-colors shadow-sm" title="Buka PDF">
                                                     <i class="mdi mdi-open-in-new"></i>
                                                 </a>
                                             </div>
                                         @endif
 
                                         {{-- Active Draft Rekomendasi (PDF) --}}
-                                        @if($application->file_rekom && file_exists(public_path($application->file_rekom)))
+                                        @if($application->file_rekom && file_exists(secure_upload_path($application->file_rekom)))
                                             <div class="flex items-center justify-between p-3 bg-red-50/40 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-800/50 hover:bg-red-100/30 transition-all shadow-sm">
-                                                <a href="{{ asset($application->file_rekom) }}" target="_blank" class="flex items-center gap-2 flex-1 hover:underline">
+                                                <a href="{{ route('secure-file', ['filepath' => $application->file_rekom]) }}" target="_blank" class="flex items-center gap-2 flex-1 hover:underline">
                                                     <i class="mdi mdi-file-pdf-box text-red-500 text-lg"></i>
                                                     <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Draft Rekom (PDF)</span>
                                                 </a>
-                                                <a href="{{ asset($application->file_rekom) }}" target="_blank" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-red-600 transition-colors shadow-sm" title="Buka PDF">
+                                                <a href="{{ route('secure-file', ['filepath' => $application->file_rekom]) }}" target="_blank" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-red-600 transition-colors shadow-sm" title="Buka PDF">
                                                     <i class="mdi mdi-open-in-new"></i>
                                                 </a>
                                             </div>
@@ -765,7 +765,7 @@
                                         {{-- Multi OPD Active Draft Rekomendasi (PDF) --}}
                                         @if(!empty($application->file_rekom_multi))
                                             @foreach($application->file_rekom_multi as $opdId => $path)
-                                                @if($path && file_exists(public_path($path)))
+                                                @if($path && file_exists(secure_upload_path($path)))
                                                     @php
                                                         $opdName = \App\Models\Opd::find($opdId)->nama_opd ?? 'OPD';
                                                     @endphp
@@ -783,7 +783,7 @@
                                         @endif
 
                                         {{-- Surat Izin Lama PDF --}}
-                                        @if($application->file_izin_tte_pembetulan_old && file_exists(public_path($application->file_izin_tte_pembetulan_old)))
+                                        @if($application->file_izin_tte_pembetulan_old && file_exists(secure_upload_path($application->file_izin_tte_pembetulan_old)))
                                             <div class="flex items-center justify-between p-3 bg-red-50/40 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-800/50 hover:bg-red-100/30 transition-all shadow-sm">
                                                 <a href="{{ route('secure-file', ['filepath' => $application->file_izin_tte_pembetulan_old]) }}" target="_blank" class="flex items-center gap-2 flex-1 hover:underline">
                                                     <i class="mdi mdi-file-pdf-box text-red-500 text-lg"></i>
@@ -796,7 +796,7 @@
                                         @endif
 
                                         {{-- Surat Rekomendasi Lama PDF --}}
-                                        @if($application->file_rekom_tte_pembetulan_old && file_exists(public_path($application->file_rekom_tte_pembetulan_old)))
+                                        @if($application->file_rekom_tte_pembetulan_old && file_exists(secure_upload_path($application->file_rekom_tte_pembetulan_old)))
                                             <div class="flex items-center justify-between p-3 bg-red-50/40 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-800/50 hover:bg-red-100/30 transition-all shadow-sm">
                                                 <a href="{{ route('secure-file', ['filepath' => $application->file_rekom_tte_pembetulan_old]) }}" target="_blank" class="flex items-center gap-2 flex-1 hover:underline">
                                                     <i class="mdi mdi-file-pdf-box text-red-500 text-lg"></i>
@@ -811,7 +811,7 @@
                                         {{-- Multi OPD Rekomendasi Lama PDF --}}
                                         @if(!empty($application->file_rekom_multi_tte_pembetulan_old))
                                             @foreach($application->file_rekom_multi_tte_pembetulan_old as $opdId => $path)
-                                                @if($path && file_exists(public_path($path)))
+                                                @if($path && file_exists(secure_upload_path($path)))
                                                     @php
                                                         $opdName = \App\Models\Opd::find($opdId)->nama_opd ?? 'OPD';
                                                     @endphp
@@ -908,7 +908,7 @@
                                                 </div>
                                             </div>
                                             <div class="flex items-center gap-2 mt-auto">
-                                                <button onclick="openPdfPreview('{{ asset($doc['file']) }}', '{{ $doc['label'] }}')" class="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold uppercase tracking-wider">Pratinjau</button>
+                                                <button onclick="openPdfPreview('{{ route('secure-file', ['filepath' => $doc['file']]) }}', '{{ $doc['label'] }}')" class="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold uppercase tracking-wider">Pratinjau</button>
                                                 <a href="{{ route('data-perijinan.download-file', $rp) }}" class="p-1.5 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg text-gray-600 transition-colors"><i class="mdi mdi-download"></i></a>
                                             </div>
                                         </div>
@@ -1033,16 +1033,16 @@
                                                 @if($val)
                                                     @if($field->type === 'pas_foto')
                                                         <div class="mb-2 mt-2">
-                                                            <img src="{{ asset($val) }}" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" class="rounded border shadow-sm" alt="Pas Foto" />
+                                                            <img src="{{ route('secure-file', ['filepath' => $val]) }}" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" class="rounded border shadow-sm" alt="Pas Foto" />
                                                         </div>
                                                     @elseif($field->type === 'gambar')
                                                         <div class="mb-2 mt-2">
-                                                            <img src="{{ asset($val) }}" style="max-width: 300px; max-height: 200px; object-fit: contain;" class="rounded border shadow-sm" alt="Gambar" />
+                                                            <img src="{{ route('secure-file', ['filepath' => $val]) }}" style="max-width: 300px; max-height: 200px; object-fit: contain;" class="rounded border shadow-sm" alt="Gambar" />
                                                         </div>
                                                     @endif
                                                     <div class="flex items-center gap-2 mt-2 p-2 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg border border-emerald-100 dark:border-emerald-800">
                                                         <i class="mdi mdi-file-check text-emerald-600"></i>
-                                                        <a href="{{ asset($val) }}" target="_blank" class="text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:underline truncate">Lihat File Terupload</a>
+                                                        <a href="{{ route('secure-file', ['filepath' => $val]) }}" target="_blank" class="text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:underline truncate">Lihat File Terupload</a>
                                                     </div>
                                                 @endif
 
@@ -1066,7 +1066,7 @@
                                                     <div class="flex items-center gap-2 mt-1 p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800/50">
                                                         <i class="mdi mdi-information-outline text-amber-600 text-sm"></i>
                                                         <span class="text-[10px] text-amber-700 dark:text-amber-400 font-bold">Referensi Pemohon:</span>
-                                                        <a href="{{ asset($globalFile) }}" target="_blank" class="text-[10px] font-bold text-blue-600 hover:underline truncate">Buka Berkas Pemohon</a>
+                                                        <a href="{{ route('secure-file', ['filepath' => $globalFile]) }}" target="_blank" class="text-[10px] font-bold text-blue-600 hover:underline truncate">Buka Berkas Pemohon</a>
                                                     </div>
                                                 @endif
                                             </div>
@@ -1128,7 +1128,7 @@
                                             @enderror
                                         @endif
 
-                                        @if($application->file_izin_pembetulan && file_exists(public_path($application->file_izin_pembetulan)))
+                                        @if($application->file_izin_pembetulan && file_exists(secure_upload_path($application->file_izin_pembetulan)))
                                             @php
                                                 $docxTemplatePath = str_replace('.pdf', '_template.docx', $application->file_izin_pembetulan);
                                             @endphp
@@ -1138,11 +1138,11 @@
                                                 </div>
                                                 <div class="flex-1 min-w-0">
                                                     <p class="text-xs font-bold text-blue-700 dark:text-blue-300">Template DOCX Terupload <span class="font-normal text-[10px] text-blue-500 dark:text-blue-400">(siap dikonversi ke PDF)</span></p>
-                                                    <p class="text-[10px] text-blue-600 dark:text-blue-400 truncate">{{ file_exists(public_path($docxTemplatePath)) ? basename($docxTemplatePath) : basename($application->file_izin_pembetulan) }}</p>
+                                                    <p class="text-[10px] text-blue-600 dark:text-blue-400 truncate">{{ file_exists(secure_upload_path($docxTemplatePath)) ? basename($docxTemplatePath) : basename($application->file_izin_pembetulan) }}</p>
                                                 </div>
                                                 <div class="flex items-center gap-2 flex-shrink-0">
-                                                    @if(file_exists(public_path($docxTemplatePath)))
-                                                        <a href="{{ asset($docxTemplatePath) }}" download
+                                                    @if(file_exists(secure_upload_path($docxTemplatePath)))
+                                                        <a href="{{ route('secure-file', ['filepath' => $docxTemplatePath]) }}" download
                                                             class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 shadow-sm"
                                                             title="Unduh file template asli yang Anda unggah">
                                                             <i class="mdi mdi-download"></i> Unduh Template
@@ -1151,15 +1151,15 @@
                                                     @php
                                                         $filledDocx = str_replace('.pdf', '.docx', $application->file_izin_pembetulan);
                                                     @endphp
-                                                    @if(file_exists(public_path($filledDocx)))
-                                                        <a href="{{ asset($filledDocx) }}" download
+                                                    @if(file_exists(secure_upload_path($filledDocx)))
+                                                        <a href="{{ route('secure-file', ['filepath' => $filledDocx]) }}" download
                                                             class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 shadow-sm"
                                                             title="Unduh hasil generate DOCX dengan QR Code dan data pemohon">
                                                             <i class="mdi mdi-download"></i> Unduh Hasil DOCX
                                                         </a>
                                                     @endif
-                                                    @if(file_exists(public_path($application->file_izin_pembetulan)))
-                                                        <button type="button" onclick="openPdfPreview('{{ asset($application->file_izin_pembetulan) }}?t={{ time() }}', 'Draft Izin Pembetulan')"
+                                                    @if(file_exists(secure_upload_path($application->file_izin_pembetulan)))
+                                                        <button type="button" onclick="openPdfPreview('{{ route('secure-file', ['filepath' => $application->file_izin_pembetulan]) }}?t={{ time() }}', 'Draft Izin Pembetulan')"
                                                             class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 shadow-sm">
                                                             <i class="mdi mdi-eye"></i> Buka PDF
                                                         </button>
@@ -1256,7 +1256,7 @@
                                 </div>
                                 @if($opdFileRekom)
                                     <div class="flex gap-2">
-                                        <button onclick="openPdfPreview('{{ asset($opdFileRekom) }}?t={{ time() }}', 'Draft Rekomendasi {{ $opd->nama_opd }}')" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[9px] font-black uppercase shadow-sm">Buka PDF</button>
+                                        <button onclick="openPdfPreview('{{ route('secure-file', ['filepath' => $opdFileRekom]) }}?t={{ time() }}', 'Draft Rekomendasi {{ $opd->nama_opd }}')" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[9px] font-black uppercase shadow-sm">Buka PDF</button>
                                     </div>
                                 @endif
                             </div>
@@ -1279,7 +1279,7 @@
                                     @if($isKepalaOpd || $isKadin || $isAdmin || $isVerifikator)
                                         <button onclick="verifyEsignPdf('rekom', {{ $opd->id }})" class="px-3 py-1.5 bg-green-600 text-white rounded-lg text-[9px] font-black uppercase shadow-sm" title="Verifikasi TTE"><i class="mdi mdi-shield-check"></i> Cek Dokumen TTE</button>
                                     @endif
-                                    <button onclick="openPdfPreview('{{ asset($signedFile) }}?t={{ time() }}', 'Surat Rekomendasi Resmi {{ $opd->nama_opd }}')" class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase shadow-sm">Buka PDF</button>
+                                    <button onclick="openPdfPreview('{{ route('secure-file', ['filepath' => $signedFile]) }}?t={{ time() }}', 'Surat Rekomendasi Resmi {{ $opd->nama_opd }}')" class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase shadow-sm">Buka PDF</button>
                                 </div>
                             </div>
                             @endif
@@ -1378,16 +1378,16 @@
                                                         @if($val)
                                                             @if($field->type === 'pas_foto')
                                                                 <div class="mb-2">
-                                                                    <img src="{{ asset($val) }}" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" class="rounded border shadow-sm" alt="Pas Foto" />
+                                                                    <img src="{{ route('secure-file', ['filepath' => $val]) }}" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" class="rounded border shadow-sm" alt="Pas Foto" />
                                                                 </div>
                                                             @elseif($field->type === 'gambar')
                                                                 <div class="mb-2">
-                                                                    <img src="{{ asset($val) }}" style="max-width: 300px; max-height: 200px; object-fit: contain;" class="rounded border shadow-sm" alt="Gambar" />
+                                                                    <img src="{{ route('secure-file', ['filepath' => $val]) }}" style="max-width: 300px; max-height: 200px; object-fit: contain;" class="rounded border shadow-sm" alt="Gambar" />
                                                                 </div>
                                                             @endif
                                                             <div class="flex items-center gap-2 mt-2 p-2 bg-purple-50 dark:bg-purple-900/30 rounded-lg border border-purple-100 dark:border-purple-800">
                                                                 <i class="mdi mdi-file-check text-purple-600"></i>
-                                                                <a href="{{ asset($val) }}" target="_blank" class="text-xs font-bold text-purple-700 dark:text-purple-300 hover:underline truncate">Lihat File Terupload</a>
+                                                                <a href="{{ route('secure-file', ['filepath' => $val]) }}" target="_blank" class="text-xs font-bold text-purple-700 dark:text-purple-300 hover:underline truncate">Lihat File Terupload</a>
                                                             </div>
                                                         @endif
 
@@ -1410,7 +1410,7 @@
                                                             <div class="flex items-center gap-2 mt-1 p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800/50">
                                                                 <i class="mdi mdi-information-outline text-amber-600 text-sm"></i>
                                                                 <span class="text-[10px] text-amber-700 dark:text-amber-400 font-bold">Referensi Pemohon:</span>
-                                                                <a href="{{ asset($globalFile) }}" target="_blank" class="text-[10px] font-bold text-blue-600 hover:underline truncate">Buka Berkas Pemohon</a>
+                                                                <a href="{{ route('secure-file', ['filepath' => $globalFile]) }}" target="_blank" class="text-[10px] font-bold text-blue-600 hover:underline truncate">Buka Berkas Pemohon</a>
                                                             </div>
                                                         @endif
                                                     </div>
@@ -1475,14 +1475,14 @@
                                                 @elseif(($field->type === 'file' || $field->type === 'pas_foto' || $field->type === 'gambar') && $v !== '-')
                                                     @if($field->type === 'pas_foto')
                                                         <div class="mb-2">
-                                                            <img src="{{ asset($v) }}" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" class="rounded border shadow-sm" alt="Pas Foto" />
+                                                            <img src="{{ route('secure-file', ['filepath' => $v]) }}" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" class="rounded border shadow-sm" alt="Pas Foto" />
                                                         </div>
                                                     @elseif($field->type === 'gambar')
                                                         <div class="mb-2">
-                                                            <img src="{{ asset($v) }}" style="max-width: 300px; max-height: 200px; object-fit: contain;" class="rounded border shadow-sm" alt="Gambar" />
+                                                            <img src="{{ route('secure-file', ['filepath' => $v]) }}" style="max-width: 300px; max-height: 200px; object-fit: contain;" class="rounded border shadow-sm" alt="Gambar" />
                                                         </div>
                                                     @endif
-                                                    <a href="{{ asset($v) }}" target="_blank" class="text-blue-600 hover:underline">Buka Berkas</a>
+                                                    <a href="{{ route('secure-file', ['filepath' => $v]) }}" target="_blank" class="text-blue-600 hover:underline">Buka Berkas</a>
                                                 @else
                                                     {{ $v }}
                                                 @endif
@@ -1506,7 +1506,7 @@
                                                 @if($globalFile && $globalFile !== $v)
                                                     <div class="mt-2 flex items-center gap-1.5 text-[10px]">
                                                         <span class="text-amber-600 font-bold uppercase tracking-tighter">Ref Pemohon:</span>
-                                                        <a href="{{ asset($globalFile) }}" target="_blank" class="text-blue-600 font-bold hover:underline">Lihat Dokumen</a>
+                                                        <a href="{{ route('secure-file', ['filepath' => $globalFile]) }}" target="_blank" class="text-blue-600 font-bold hover:underline">Lihat Dokumen</a>
                                                     </div>
                                                 @endif
                                             @endif
@@ -1547,7 +1547,7 @@
                                     <div><h3 class="text-sm font-bold text-gray-800 dark:text-white">Draft Surat Rekomendasi</h3><p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Hasil Generate Otomatis</p></div>
                                 </div>
                                 <div class="flex gap-2">
-                                    <button onclick="openPdfPreview('{{ asset($application->file_rekom) }}?t={{ time() }}', 'Draft Surat Rekomendasi')" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm">Buka PDF</button>
+                                    <button onclick="openPdfPreview('{{ route('secure-file', ['filepath' => $application->file_rekom]) }}?t={{ time() }}', 'Draft Surat Rekomendasi')" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm">Buka PDF</button>
                                 </div>
                             </div>
                         </div>
@@ -1564,7 +1564,7 @@
                                     @if($isKepalaOpd || $isKadin || $isAdmin || $isVerifikator)
                                         <button onclick="verifyEsignPdf('rekom', null)" class="px-4 py-2 bg-green-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm" title="Verifikasi TTE"><i class="mdi mdi-shield-check"></i> Cek Dokumen TTE</button>
                                     @endif
-                                    <button onclick="openPdfPreview('{{ asset($application->file_rekom_tte) }}?t={{ time() }}', 'Surat Rekomendasi Resmi')" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm">Buka PDF</button>
+                                    <button onclick="openPdfPreview('{{ route('secure-file', ['filepath' => $application->file_rekom_tte]) }}?t={{ time() }}', 'Surat Rekomendasi Resmi')" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm">Buka PDF</button>
                                 </div>
                             </div>
                         </div>
@@ -1698,16 +1698,16 @@
                                                     @if($val)
                                                         @if($field->type === 'pas_foto')
                                                             <div class="mb-2">
-                                                                <img src="{{ asset($val) }}" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" class="rounded border shadow-sm" alt="Pas Foto" />
+                                                                <img src="{{ route('secure-file', ['filepath' => $val]) }}" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" class="rounded border shadow-sm" alt="Pas Foto" />
                                                             </div>
                                                         @elseif($field->type === 'gambar')
                                                             <div class="mb-2">
-                                                                <img src="{{ asset($val) }}" style="max-width: 300px; max-height: 200px; object-fit: contain;" class="rounded border shadow-sm" alt="Gambar" />
+                                                                <img src="{{ route('secure-file', ['filepath' => $val]) }}" style="max-width: 300px; max-height: 200px; object-fit: contain;" class="rounded border shadow-sm" alt="Gambar" />
                                                             </div>
                                                         @endif
                                                         <div class="flex items-center gap-2 mt-2 p-2 bg-purple-50 dark:bg-purple-900/30 rounded-lg border border-purple-100 dark:border-purple-800">
                                                             <i class="mdi mdi-file-check text-purple-600"></i>
-                                                            <a href="{{ asset($val) }}" target="_blank" class="text-xs font-bold text-purple-700 dark:text-purple-300 hover:underline truncate">Lihat File Terupload</a>
+                                                            <a href="{{ route('secure-file', ['filepath' => $val]) }}" target="_blank" class="text-xs font-bold text-purple-700 dark:text-purple-300 hover:underline truncate">Lihat File Terupload</a>
                                                         </div>
                                                     @endif
 
@@ -1731,7 +1731,7 @@
                                                         <div class="flex items-center gap-2 mt-1 p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800/50">
                                                             <i class="mdi mdi-information-outline text-amber-600 text-sm"></i>
                                                             <span class="text-[10px] text-amber-700 dark:text-amber-400 font-bold">Referensi Pemohon:</span>
-                                                            <a href="{{ asset($globalFile) }}" target="_blank" class="text-[10px] font-bold text-blue-600 hover:underline truncate">Buka Berkas Pemohon</a>
+                                                            <a href="{{ route('secure-file', ['filepath' => $globalFile]) }}" target="_blank" class="text-[10px] font-bold text-blue-600 hover:underline truncate">Buka Berkas Pemohon</a>
                                                         </div>
                                                     @endif
                                                 </div>
@@ -1798,7 +1798,7 @@
                 @endif
 
 
-                @if($application->is_pembetulan && $application->file_izin_pembetulan && file_exists(public_path($application->file_izin_pembetulan)))
+                @if($application->is_pembetulan && $application->file_izin_pembetulan && file_exists(secure_upload_path($application->file_izin_pembetulan)))
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-blue-200 dark:border-blue-900/30 overflow-hidden mb-2">
                     <div class="px-5 py-4 border-b border-blue-100 dark:border-blue-900/50 bg-blue-50/50 dark:bg-blue-900/20 flex items-center justify-between">
                         <div class="flex items-center gap-3">
@@ -1820,12 +1820,12 @@
                             @php
                                 $filledIzinDocx = str_replace('.pdf', '.docx', $application->file_izin_pembetulan);
                             @endphp
-                            @if(file_exists(public_path($filledIzinDocx)))
-                                <a href="{{ asset($filledIzinDocx) }}" download class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm flex items-center gap-1">
+                            @if(file_exists(secure_upload_path($filledIzinDocx)))
+                                <a href="{{ route('secure-file', ['filepath' => $filledIzinDocx]) }}" download class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm flex items-center gap-1">
                                     <i class="mdi mdi-file-word"></i> Unduh DOCX
                                 </a>
                             @endif
-                            <button onclick="openPdfPreview('{{ asset($application->file_izin_pembetulan) }}?t={{ time() }}', 'Draft Izin Pembetulan dari BO')" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm">Buka PDF</button>
+                            <button onclick="openPdfPreview('{{ route('secure-file', ['filepath' => $application->file_izin_pembetulan]) }}?t={{ time() }}', 'Draft Izin Pembetulan dari BO')" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm">Buka PDF</button>
                         </div>
                     </div>
                 </div>
@@ -1844,7 +1844,7 @@
                                 <div><h3 class="text-sm font-bold text-gray-800 dark:text-white">Draft Surat Izin / SK</h3><p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Hasil Generate Otomatis</p></div>
                             </div>
                             <div class="flex gap-2">
-                                <button onclick="openPdfPreview('{{ asset($application->file_izin) }}?t={{ time() }}', 'Draft Dokumen Izin / SK')" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm">Buka PDF</button>
+                                <button onclick="openPdfPreview('{{ route('secure-file', ['filepath' => $application->file_izin]) }}?t={{ time() }}', 'Draft Dokumen Izin / SK')" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm">Buka PDF</button>
                             </div>
                         </div>
                     </div>
@@ -1862,7 +1862,7 @@
                                 @if($isKadin || $isAdmin || $isVerifikator)
                                     <button onclick="verifyEsignPdf('izin', null)" class="px-4 py-2 bg-green-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm" title="Verifikasi TTE"><i class="mdi mdi-shield-check"></i> Cek Dokumen TTE</button>
                                 @endif
-                                <button onclick="openPdfPreview('{{ asset($application->file_izin_tte) }}?t={{ time() }}', 'Surat Izin / SK Resmi')" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm">Buka PDF</button>
+                                <button onclick="openPdfPreview('{{ route('secure-file', ['filepath' => $application->file_izin_tte]) }}?t={{ time() }}', 'Surat Izin / SK Resmi')" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm">Buka PDF</button>
                             </div>
                         </div>
                     </div>
@@ -2040,16 +2040,16 @@
                                                 @if($val)
                                                     @if($field->type === 'pas_foto')
                                                         <div class="mb-2">
-                                                            <img src="{{ asset($val) }}" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" class="rounded border shadow-sm" alt="Pas Foto" />
+                                                            <img src="{{ route('secure-file', ['filepath' => $val]) }}" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" class="rounded border shadow-sm" alt="Pas Foto" />
                                                         </div>
                                                     @elseif($field->type === 'gambar')
                                                         <div class="mb-2">
-                                                            <img src="{{ asset($val) }}" style="max-width: 300px; max-height: 200px; object-fit: contain;" class="rounded border shadow-sm" alt="Gambar" />
+                                                            <img src="{{ route('secure-file', ['filepath' => $val]) }}" style="max-width: 300px; max-height: 200px; object-fit: contain;" class="rounded border shadow-sm" alt="Gambar" />
                                                         </div>
                                                     @endif
                                                     <div class="flex items-center gap-2 mt-2 p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg border border-indigo-100 dark:border-indigo-800">
                                                         <i class="mdi mdi-file-check text-indigo-600"></i>
-                                                        <a href="{{ asset($val) }}" target="_blank" class="text-xs font-bold text-indigo-700 dark:text-indigo-300 hover:underline truncate">Lihat File Terupload</a>
+                                                        <a href="{{ route('secure-file', ['filepath' => $val]) }}" target="_blank" class="text-xs font-bold text-indigo-700 dark:text-indigo-300 hover:underline truncate">Lihat File Terupload</a>
                                                     </div>
                                                 @endif
 
@@ -2108,7 +2108,7 @@
                                                     <div class="flex items-center gap-2 mt-1 p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800/50">
                                                         <i class="mdi mdi-information-outline text-amber-600 text-sm"></i>
                                                         <span class="text-[10px] text-amber-700 dark:text-amber-400 font-bold">Referensi:</span>
-                                                        <a href="{{ asset($globalFile) }}" target="_blank" class="text-[10px] font-bold text-blue-600 hover:underline truncate">Buka Berkas Sebelumnya</a>
+                                                        <a href="{{ route('secure-file', ['filepath' => $globalFile]) }}" target="_blank" class="text-[10px] font-bold text-blue-600 hover:underline truncate">Buka Berkas Sebelumnya</a>
                                                     </div>
                                                 @endif
                                             </div>
@@ -2388,7 +2388,7 @@
                                                 }
                                             } else if ($isVerifikator) {
                                                 if ($application->is_pembetulan) {
-                                                    $isDraftGenerated = !empty($application->file_izin_pembetulan) && file_exists(public_path($application->file_izin_pembetulan));
+                                                    $isDraftGenerated = !empty($application->file_izin_pembetulan) && file_exists(secure_upload_path($application->file_izin_pembetulan));
                                                 } else {
                                                     $isDraftGenerated = !empty($application->izin_data) && !empty($application->file_izin);
                                                 }
@@ -2397,7 +2397,7 @@
                                             }
 
                                             if ($isBo && $application->is_pembetulan) {
-                                                $hasPembetulanPdf = !empty($application->file_izin_pembetulan) && file_exists(public_path($application->file_izin_pembetulan));
+                                                $hasPembetulanPdf = !empty($application->file_izin_pembetulan) && file_exists(secure_upload_path($application->file_izin_pembetulan));
                                                 if (!$hasPembetulanPdf) {
                                                     $isDraftGenerated = false;
                                                 }
@@ -2555,14 +2555,14 @@
                                             @foreach($filesArray as $file)
                                                 @if($field->type === 'pas_foto')
                                                     <div class="mb-2">
-                                                        <img src="{{ asset($file) }}" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" class="rounded border shadow-sm" alt="Pas Foto" />
+                                                        <img src="{{ route('secure-file', ['filepath' => $file]) }}" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" class="rounded border shadow-sm" alt="Pas Foto" />
                                                     </div>
                                                 @elseif($field->type === 'gambar')
                                                     <div class="mb-2">
-                                                        <img src="{{ asset($file) }}" style="max-width: 300px; max-height: 200px; object-fit: contain;" class="rounded border shadow-sm" alt="Gambar" />
+                                                        <img src="{{ route('secure-file', ['filepath' => $file]) }}" style="max-width: 300px; max-height: 200px; object-fit: contain;" class="rounded border shadow-sm" alt="Gambar" />
                                                     </div>
                                                 @endif
-                                                <a href="{{ asset($file) }}" target="_blank" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-bold text-xs truncate">
+                                                <a href="{{ route('secure-file', ['filepath' => $file]) }}" target="_blank" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-bold text-xs truncate">
                                                     <i class="mdi mdi-file-download-outline text-base"></i>
                                                     Buka Berkas
                                                 </a>

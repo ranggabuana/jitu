@@ -300,11 +300,11 @@
                                             $opdId = $validasi->validationFlow->assignedUser->opd_id ?? null;
                                             if ($opdId && !empty($data->file_rekom_multi_tte[$opdId])) {
                                                 $showTteDocument = true;
-                                                $tteDocumentUrl = asset($data->file_rekom_multi_tte[$opdId]);
+                                                $tteDocumentUrl = route('secure-file', ['filepath' => $data->file_rekom_multi_tte[$opdId]]);
                                             }
                                         } else if (!empty($data->file_rekom_tte)) {
                                             $showTteDocument = true;
-                                            $tteDocumentUrl = asset($data->file_rekom_tte);
+                                            $tteDocumentUrl = route('secure-file', ['filepath' => $data->file_rekom_tte]);
                                         }
                                     }
                                 @endphp
@@ -715,14 +715,14 @@
                                             @foreach($filesArray as $file)
                                                 @if($field->type === 'pas_foto')
                                                     <div class="mb-2">
-                                                        <img src="{{ asset($file) }}" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" class="rounded border shadow-sm" alt="Pas Foto" />
+                                                        <img src="{{ route('secure-file', ['filepath' => $file]) }}" style="width: 2.79cm; height: 3.81cm; object-fit: cover;" class="rounded border shadow-sm" alt="Pas Foto" />
                                                     </div>
                                                 @elseif($field->type === 'gambar')
                                                     <div class="mb-2">
-                                                        <img src="{{ asset($file) }}" style="max-width: 300px; max-height: 200px; object-fit: contain;" class="rounded border shadow-sm" alt="Gambar" />
+                                                        <img src="{{ route('secure-file', ['filepath' => $file]) }}" style="max-width: 300px; max-height: 200px; object-fit: contain;" class="rounded border shadow-sm" alt="Gambar" />
                                                     </div>
                                                 @endif
-                                                <a href="{{ asset($file) }}" target="_blank" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-bold text-sm truncate">
+                                                <a href="{{ route('secure-file', ['filepath' => $file]) }}" target="_blank" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-bold text-sm truncate">
                                                     <i class="fas fa-file-download"></i> Buka Berkas
                                                 </a>
                                             @endforeach

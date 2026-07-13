@@ -156,7 +156,7 @@
                                                     <i class="fas fa-file text-orange-500"></i>
                                                     <span class="flex-1 truncate">{{ basename($file) }}</span>
                                                     <div class="flex items-center gap-1">
-                                                        <a href="{{ asset($file) }}" target="_blank" 
+                                                        <a href="{{ route('secure-file', ['filepath' => $file]) }}" target="_blank" 
                                                            class="text-blue-600 hover:text-blue-700 p-1" 
                                                            title="Download">
                                                             <i class="fas fa-download"></i>

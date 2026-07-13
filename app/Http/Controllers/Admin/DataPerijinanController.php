@@ -2482,28 +2482,40 @@ class DataPerijinanController extends Controller
         $perijinanIdFromPath = $pathParts[0] ?? null;
 
         // Access Control Check: Resolve the actual perijinan (permit type) ID
-        if (!$user->isAdmin() && $perijinanIdFromPath) {
+        if (!$user->isAdmin()) {
             $perijinanIdForCheck = null;
-            if ($perijinanIdFromPath === 'uploads' && isset($pathParts[1]) && $pathParts[1] === 'pembetulan_old' && isset($pathParts[2])) {
+
+            $targetFolder = $perijinanIdFromPath;
+            $subFolder = null;
+            if ($targetFolder === 'uploads' && isset($pathParts[1])) {
+                $targetFolder = $pathParts[1];
+                if ($targetFolder === 'perijinan' && isset($pathParts[2])) {
+                    $subFolder = $pathParts[2];
+                }
+            } else {
+                $subFolder = $perijinanIdFromPath;
+            }
+
+            if ($targetFolder === 'pembetulan_old' && isset($pathParts[2])) {
                 $appId = (int)explode('_', $pathParts[2])[0];
                 $app = \App\Models\DataPerijinan::find($appId);
                 if ($app) {
                     $perijinanIdForCheck = $app->perijinan_id;
                 }
-            } else if (str_starts_with($perijinanIdFromPath, 'generated_')) {
-                $safeNoRegistrasi = substr($perijinanIdFromPath, 10);
+            } else if ($subFolder && str_starts_with($subFolder, 'generated_')) {
+                $safeNoRegistrasi = substr($subFolder, 10);
                 $app = \App\Models\DataPerijinan::where('no_registrasi', str_replace('_', '-', $safeNoRegistrasi))
                     ->orWhere(\DB::raw("REPLACE(no_registrasi, '-', '_')"), $safeNoRegistrasi)
                     ->first();
                 if ($app) {
                     $perijinanIdForCheck = $app->perijinan_id;
                 }
-            } else if (is_numeric($perijinanIdFromPath)) {
-                $app = \App\Models\DataPerijinan::find($perijinanIdFromPath);
+            } else if ($subFolder && is_numeric($subFolder)) {
+                $app = \App\Models\DataPerijinan::find((int)$subFolder);
                 if ($app) {
                     $perijinanIdForCheck = $app->perijinan_id;
                 } else {
-                    $perijinanIdForCheck = (int)$perijinanIdFromPath;
+                    $perijinanIdForCheck = (int)$subFolder;
                 }
             }
 

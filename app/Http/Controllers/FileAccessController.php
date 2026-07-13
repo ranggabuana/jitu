@@ -66,21 +66,54 @@ class FileAccessController extends Controller
                 $filename = basename($filepath);
                 $appId = (int)explode('_', $filename)[0];
                 $app = DataPerijinan::find($appId);
-                if ($app && $app->user_id === $user->id) {
-                    return response()->file($fullPath);
+                if ($app) {
+                    if ($app->user_id === $user->id) {
+                        return response()->file($fullPath);
+                    }
+                    
+                    // Also check OPD staff access
+                    $accessibleIds = $user->getAccessiblePerijinanIds();
+                    if (!empty($accessibleIds) && in_array($app->perijinan_id, $accessibleIds)) {
+                        return response()->file($fullPath);
+                    }
                 }
                 break;
 
             case 'perijinan':
                 // Folder structure is: uploads/perijinan/{perijinanId}/{filename}
-                $perijinanId = $pathParts[2] ?? null;
-                if ($perijinanId) {
-                    // Check if user has an application for this perijinan type
-                    $hasApp = DataPerijinan::where('user_id', $user->id)
-                        ->where('perijinan_id', $perijinanId)
-                        ->exists();
-                    if ($hasApp) {
-                        return response()->file($fullPath);
+                // or: uploads/perijinan/generated_{no_registrasi}/{filename}
+                $perijinanIdOrFolder = $pathParts[2] ?? null;
+                if ($perijinanIdOrFolder) {
+                    if (str_starts_with($perijinanIdOrFolder, 'generated_')) {
+                        $safeNoRegistrasi = substr($perijinanIdOrFolder, 10);
+                        $app = DataPerijinan::where('no_registrasi', str_replace('_', '-', $safeNoRegistrasi))
+                            ->orWhere(\DB::raw("REPLACE(no_registrasi, '-', '_')"), $safeNoRegistrasi)
+                            ->first();
+                        if ($app) {
+                            if ($app->user_id === $user->id) {
+                                return response()->file($fullPath);
+                            }
+                            
+                            // Check accessible perijinan IDs for OPD staff
+                            $accessibleIds = $user->getAccessiblePerijinanIds();
+                            if (!empty($accessibleIds) && in_array($app->perijinan_id, $accessibleIds)) {
+                                return response()->file($fullPath);
+                            }
+                        }
+                    } else {
+                        // Check if user is pemohon and has an application for this perijinan type
+                        $hasApp = DataPerijinan::where('user_id', $user->id)
+                            ->where('perijinan_id', $perijinanIdOrFolder)
+                            ->exists();
+                        if ($hasApp) {
+                            return response()->file($fullPath);
+                        }
+                        
+                        // Check using getAccessiblePerijinanIds for OPD staff
+                        $accessibleIds = $user->getAccessiblePerijinanIds();
+                        if (!empty($accessibleIds) && in_array((int)$perijinanIdOrFolder, $accessibleIds)) {
+                            return response()->file($fullPath);
+                        }
                     }
                 }
                 break;

@@ -321,7 +321,7 @@
                                                                 <p class="text-[10px] text-gray-500">Berkas sebelumnya</p>
                                                             </div>
                                                             <div class="flex items-center gap-2">
-                                                                <a href="{{ asset($oldFilePath) }}" target="_blank" class="text-amber-600 hover:text-amber-800 p-1" title="Lihat Berkas">
+                                                                <a href="{{ route('secure-file', ['filepath' => $oldFilePath]) }}" target="_blank" class="text-amber-600 hover:text-amber-800 p-1" title="Lihat Berkas">
                                                                     <i class="fas fa-eye"></i>
                                                                 </a>
                                                                 <button type="button" onclick="removeOldFile({{ $field->id }}, {{ $oldIdx }})" class="text-red-500 hover:text-red-700 p-1" title="Hapus Berkas">

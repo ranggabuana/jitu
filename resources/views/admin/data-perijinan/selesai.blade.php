@@ -189,7 +189,7 @@
                                         <!-- Dropdown Menu -->
                                         <div class="daftar-surat-dropdown absolute right-0 top-full mt-1 w-max min-w-[12rem] max-w-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl transition-all flex flex-col p-1.5 gap-1.5 hidden">
                                             @if($app->file_izin_tte)
-                                                <a href="{{ asset($app->file_izin_tte) }}" target="_blank" class="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-400 px-3 py-2 rounded-md text-[10px] font-bold uppercase transition-colors">
+                                                <a href="{{ route('secure-file', ['filepath' => $app->file_izin_tte]) }}" target="_blank" class="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-400 px-3 py-2 rounded-md text-[10px] font-bold uppercase transition-colors">
                                                     <i class="mdi mdi-certificate text-sm"></i> Izin TTE
                                                 </a>
                                             @endif
@@ -199,7 +199,7 @@
                                                     @php
                                                         $opdName = \App\Models\Opd::find($opdId)->nama_opd ?? 'OPD';
                                                      @endphp
-                                                     <a href="{{ asset($path) }}" target="_blank" class="flex items-center gap-2 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 text-green-700 dark:text-green-400 px-3 py-2 rounded-md text-[10px] font-bold uppercase transition-colors whitespace-normal" title="Rekomendasi {{ $opdName }}">
+                                                     <a href="{{ route('secure-file', ['filepath' => $path]) }}" target="_blank" class="flex items-center gap-2 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 text-green-700 dark:text-green-400 px-3 py-2 rounded-md text-[10px] font-bold uppercase transition-colors whitespace-normal" title="Rekomendasi {{ $opdName }}">
                                                          <i class="mdi mdi-file-check text-sm flex-shrink-0"></i> Rekom TTE ({{ $opdName }})
                                                      </a>
                                                  @endforeach
@@ -207,7 +207,7 @@
                                                   @php
                                                       $singleOpdName = $app->perijinan->opdConfigs->first()?->opd?->nama_opd;
                                                   @endphp
-                                                  <a href="{{ asset($app->file_rekom_tte) }}" target="_blank" class="flex items-center gap-2 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 text-green-700 dark:text-green-400 px-3 py-2 rounded-md text-[10px] font-bold uppercase transition-colors whitespace-normal" title="Rekomendasi {{ $singleOpdName ?? 'OPD' }}">
+                                                  <a href="{{ route('secure-file', ['filepath' => $app->file_rekom_tte]) }}" target="_blank" class="flex items-center gap-2 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 text-green-700 dark:text-green-400 px-3 py-2 rounded-md text-[10px] font-bold uppercase transition-colors whitespace-normal" title="Rekomendasi {{ $singleOpdName ?? 'OPD' }}">
                                                       <i class="mdi mdi-file-check text-sm flex-shrink-0"></i> Rekom TTE {{ $singleOpdName ? "($singleOpdName)" : '' }}
                                                   </a>
                                              @endif
