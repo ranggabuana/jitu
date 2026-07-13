@@ -26,46 +26,50 @@ class SecurityHeaders
         $response->headers->set('Permissions-Policy', 'geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()');
         $response->headers->set('X-Permitted-Cross-Domain-Policies', 'none');
 
-        // Content-Security-Policy
-        $csp = implode('; ', [
-            // Default fallback: only allow same origin
-            "default-src 'self'",
+        // Content-Security-Policy (hanya aktif di production, bukan di development)
+        // Di development, Vite dev server menggunakan alamat dinamis (http://[::1]:5173, ws://, dll.)
+        // yang sulit di-whitelist secara konsisten di semua browser
+        if (!app()->environment('local', 'development', 'dev')) {
+            $csp = implode('; ', [
+                // Default fallback: only allow same origin
+                "default-src 'self'",
 
-            // Scripts: self + CDN sources + inline/eval needed by Tailwind CDN, CKEditor, TinyMCE, SweetAlert2
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' cdn.jsdelivr.net cdn.tailwindcss.com cdn.ckeditor.com cdnjs.cloudflare.com code.jquery.com",
+                // Scripts: self + CDN sources + inline/eval needed by Tailwind CDN, CKEditor, TinyMCE, SweetAlert2
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' cdn.jsdelivr.net cdn.tailwindcss.com cdn.ckeditor.com cdnjs.cloudflare.com code.jquery.com",
 
-            // Styles: self + CDN sources + inline styles (Tailwind, component styles)
-            "style-src 'self' 'unsafe-inline' cdn.jsdelivr.net cdnjs.cloudflare.com fonts.googleapis.com",
+                // Styles: self + CDN sources + inline styles (Tailwind, component styles)
+                "style-src 'self' 'unsafe-inline' cdn.jsdelivr.net cdnjs.cloudflare.com fonts.googleapis.com",
 
-            // Images: self + data URIs (base64 images) + blob (file previews) + https (external images)
-            "img-src 'self' data: blob: https:",
+                // Images: self + data URIs (base64 images) + blob (file previews) + https (external images)
+                "img-src 'self' data: blob: https:",
 
-            // Fonts: self + Google Fonts + Font Awesome + MDI icons
-            "font-src 'self' fonts.gstatic.com cdnjs.cloudflare.com cdn.jsdelivr.net data:",
+                // Fonts: self + Google Fonts + Font Awesome + MDI icons
+                "font-src 'self' fonts.gstatic.com cdnjs.cloudflare.com cdn.jsdelivr.net data:",
 
-            // Connections (AJAX/fetch): self only
-            "connect-src 'self'",
+                // Connections (AJAX/fetch): self only
+                "connect-src 'self'",
 
-            // Frames: self only (PDF viewer iframes)
-            "frame-src 'self' blob:",
+                // Frames: self only (PDF viewer iframes)
+                "frame-src 'self' blob:",
 
-            // Media: self only
-            "media-src 'self'",
+                // Media: self only
+                "media-src 'self'",
 
-            // Objects (Flash, Java, etc): none
-            "object-src 'none'",
+                // Objects (Flash, Java, etc): none
+                "object-src 'none'",
 
-            // Base URI: self only (prevent base tag injection)
-            "base-uri 'self'",
+                // Base URI: self only (prevent base tag injection)
+                "base-uri 'self'",
 
-            // Form actions: self only
-            "form-action 'self'",
+                // Form actions: self only
+                "form-action 'self'",
 
-            // Frame ancestors: self only (same as X-Frame-Options SAMEORIGIN)
-            "frame-ancestors 'self'",
-        ]);
+                // Frame ancestors: self only (same as X-Frame-Options SAMEORIGIN)
+                "frame-ancestors 'self'",
+            ]);
 
-        $response->headers->set('Content-Security-Policy', $csp);
+            $response->headers->set('Content-Security-Policy', $csp);
+        }
 
         return $response;
     }
