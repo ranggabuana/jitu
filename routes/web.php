@@ -304,8 +304,8 @@ Route::get('/perizinan/scan/{no_registrasi}', [LandingPageController::class, 'sc
 Route::get('/regulasi-public', [FrontRegulasiController::class, 'index'])->name('regulasi.public');
 Route::get('/regulasi-public/{id}/download', [FrontRegulasiController::class, 'download'])->name('regulasi.public.download');
 
-Route::get('/secure-file/{filepath}', [FileAccessController::class, 'serve'])
+Route::get('/secure-file/{secure_path?}', [FileAccessController::class, 'serve'])
     ->name('secure-file')
-    ->where('filepath', '.*')
+    ->where('secure_path', '.*')
     ->middleware('auth');
 

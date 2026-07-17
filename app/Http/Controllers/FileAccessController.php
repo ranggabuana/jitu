@@ -12,11 +12,18 @@ class FileAccessController extends Controller
     /**
      * Serve sensitive uploads securely after checking permissions.
      */
-    public function serve(Request $request, $filepath)
+    public function serve(Request $request, $secure_path = null)
     {
         $user = auth()->user();
         if (!$user) {
             abort(401, 'Unauthorized');
+        }
+
+        // Get filepath from query parameter if not provided in the route path
+        $filepath = $secure_path ?: $request->query('filepath') ?: $request->query('path');
+
+        if (!$filepath) {
+            abort(400, 'Parameter filepath tidak ditentukan.');
         }
 
         // Clean filepath to prevent directory traversal
@@ -35,8 +42,8 @@ class FileAccessController extends Controller
             abort(404, 'File tidak ditemukan.');
         }
 
-        // 1. Admin/Superadmin bypass
-        if ($user->isAdmin()) {
+        // 1. Admin/Superadmin/Staff bypass (roles allowed on the admin dashboard)
+        if (in_array($user->role, ['admin', 'fo', 'bo', 'operator_opd', 'kepala_opd', 'verifikator', 'kadin'])) {
             return response()->file($fullPath);
         }
 
