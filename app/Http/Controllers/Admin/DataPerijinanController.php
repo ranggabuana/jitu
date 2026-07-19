@@ -2859,12 +2859,14 @@ class DataPerijinanController extends Controller
 
             if ($request->doc_type === 'rekom') {
                 if ($application->perijinan->is_multi_opd && $request->opd_id) {
-                    $filePath = $application->file_rekom_multi[$request->opd_id] ?? null;
+                    // Cek file TTE terlebih dahulu, fallback ke file draft asli jika belum di-TTE
+                    $filePath = ($application->file_rekom_multi_tte[$request->opd_id] ?? null)
+                        ?: ($application->file_rekom_multi[$request->opd_id] ?? null);
                 } else {
-                    $filePath = $application->file_rekom;
+                    $filePath = $application->file_rekom_tte ?: $application->file_rekom;
                 }
             } else {
-                $filePath = $application->file_izin;
+                $filePath = $application->file_izin_tte ?: $application->file_izin;
             }
 
             if (!$filePath || !file_exists(secure_upload_path($filePath))) {
