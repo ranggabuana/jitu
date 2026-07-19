@@ -62,13 +62,25 @@ class EsignService
                 // Sometimes API returns JSON with fileBase64
                 if (str_contains($contentType, 'application/json')) {
                     $data = $response->json();
+                    
+                    // BSrE API v2 typically wraps the response in a 'data' key:
+                    // {"success": true, "code": 200, "data": {"file": "base64..."}}
+                    if (isset($data['data']['file']) && is_array($data['data']['file'])) {
+                        return base64_decode($data['data']['file'][0]);
+                    }
+                    if (isset($data['data']['file'])) {
+                        return base64_decode($data['data']['file']);
+                    }
+
+                    // Fallback to direct 'file' key if present
                     if (isset($data['file']) && is_array($data['file'])) {
                         return base64_decode($data['file'][0]);
                     }
                     if (isset($data['file'])) {
                         return base64_decode($data['file']);
                     }
-                    // if no file property but successful, maybe just raw
+                    
+                    // If no file property but successful, maybe just raw
                     return $response->body();
                 }
 
