@@ -2819,10 +2819,24 @@
 
                         if (res.signatureInformations && res.signatureInformations.length > 0) {
                             res.signatureInformations.forEach((sig, idx) => {
+                                let formattedDate = sig.signatureDate || '-';
+                                if (sig.signatureDate) {
+                                    try {
+                                        const d = new Date(sig.signatureDate);
+                                        if (!isNaN(d.getTime())) {
+                                            formattedDate = d.toLocaleString('id-ID', {
+                                                dateStyle: 'long',
+                                                timeStyle: 'medium'
+                                            });
+                                        }
+                                    } catch (e) {
+                                        console.error('Error parsing date:', e);
+                                    }
+                                }
+
                                 html += '<div class="p-2 bg-gray-50 border rounded mt-2">';
                                 html += '<p><strong>Penanda Tangan:</strong> ' + (sig.signerName || '-') + '</p>';
-                                html += '<p><strong>Waktu TTE:</strong> ' + (sig.signatureDate || '-') + '</p>';
-                                html += '<p><strong>Alasan:</strong> ' + (sig.reason || '-') + '</p>';
+                                html += '<p><strong>Waktu TTE:</strong> ' + formattedDate + '</p>';
                                 html += '</div>';
                             });
                         }
