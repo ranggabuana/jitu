@@ -509,7 +509,7 @@
                                     {{ $index + 1 }}. {{ $question->pertanyaan }}
                                 </p>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                    @foreach(['1' => 'Kurang Baik', '2' => 'Cukup Baik', '3' => 'Baik', '4' => 'Sangat Baik'] as $value => $label)
+                                    @foreach($question->getCustomSkalaLabels() as $value => $label)
                                     <label class="relative cursor-pointer group">
                                         <input type="radio" name="jawaban[{{ $question->id }}]" value="{{ $value }}" required class="peer sr-only">
                                         <div class="px-4 py-3 rounded-xl border-2 border-gray-100 dark:border-gray-700 text-center transition-all group-hover:border-amber-300 peer-checked:border-amber-600 peer-checked:bg-amber-600 peer-checked:text-white">
