@@ -2556,7 +2556,7 @@ class DocumentGenerator
 <body>
     <footer>
         <div class="footer-text">
-            Dokumen ini dibuat secara elektronik melalui Sistem Perizinan Online "Dawet Ayu" Banjarnegara.<br/>
+            Dokumen ini dibuat secara elektronik melalui Sistem Perizinan Online JITU (Jaringan Informasi Terpadu) Banjarnegara.<br/>
             Nomor Dokumen: ' . $noRegistrasi . '
         </div>
     </footer>
@@ -2662,7 +2662,7 @@ class DocumentGenerator
     </tbody>
 </table>
 <p>Dengan ini mengajukan permohonan untuk memperoleh :<br />Perizinan: <strong>${NAMA_IZIN}</strong></p>
-<p>Sebagai bahan pertimbangan, bersama ini kami sampaikan kelengkapan persyaratan melalui Sistem Perizinan Online "Dawet Ayu" Banjarnegara.</p>
+<p>Sebagai bahan pertimbangan, bersama ini kami sampaikan kelengkapan persyaratan melalui Sistem Perizinan Online JITU (Jaringan Informasi Terpadu) Banjarnegara.</p>
 <p>Demikian permohonan ini disampaikan, atas perhatian dan perkenannya diucapkan terima kasih.</p>
 <table class="signature-table">
     <tbody>

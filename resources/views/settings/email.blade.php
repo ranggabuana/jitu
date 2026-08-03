@@ -557,7 +557,7 @@
                                             hormat, Tim @{{ appName }}"</p>
                                         <i class="mdi mdi-arrow-down text-center block text-gray-300 text-xs my-1"></i>
                                         <p class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                                            "Salam hormat, Tim Dawet Ayu Banjarnegara"</p>
+                                            "Salam hormat, Tim JITU (Jaringan Informasi Terpadu) Banjarnegara"</p>
                                     </div>
                                 </div>
                             </div>

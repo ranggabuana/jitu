@@ -114,7 +114,7 @@ class EmailSettingsController extends Controller
             $user = auth()->user();
 
             // We'll use a simple callback to test sending
-            Mail::raw('Ini adalah email uji coba untuk verifikasi konfigurasi SMTP di aplikasi Dawet Ayu Banjarnegara.', function ($message) use ($toEmail) {
+            Mail::raw('Ini adalah email uji coba untuk verifikasi konfigurasi SMTP di aplikasi JITU (Jaringan Informasi Terpadu) Banjarnegara.', function ($message) use ($toEmail) {
                 $message->to($toEmail)
                     ->subject('Tes Koneksi Email - ' . config('app.name'));
             });
