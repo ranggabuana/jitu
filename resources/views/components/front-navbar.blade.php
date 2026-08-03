@@ -8,7 +8,7 @@
                         class="w-10 h-10 object-contain drop-shadow-md">
                     <div>
                         <span class="font-bold text-2xl tracking-tight text-blue-900">JITU</span>
-                        <p class="text-[10px] text-gray-500 leading-tight">Sistem Informasi Perijinan Terpadu</p>
+                        <p class="text-[10px] text-gray-500 leading-tight">Jaringan Informasi Terpadu</p>
                         <p class="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Banjarnegara</p>
                     </div>
                 </div>

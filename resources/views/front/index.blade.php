@@ -1014,7 +1014,7 @@
                 <div class="w-full lg:w-1/2 space-y-8">
                     <div>
                         <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Mengapa Menggunakan JITU?</h2>
-                        <p class="text-gray-500 leading-relaxed">Aplikasi JITU (Sistem Informasi Perijinan Terpadu)
+                        <p class="text-gray-500 leading-relaxed">Aplikasi JITU (Jaringan Informasi Terpadu)
                             dirancang untuk mempermudah masyarakat dalam mengurus perizinan dengan transparan dan
                             akuntabel.</p>
                     </div>

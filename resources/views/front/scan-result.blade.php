@@ -59,7 +59,7 @@
                         <i class="fas fa-certificate text-4xl"></i>
                     </div>
                     <h1 class="text-2xl font-black uppercase tracking-tight">Verifikasi Dokumen Elektronik</h1>
-                    <p class="text-blue-100 mt-2 font-medium">Sistem Informasi Perizinan Terpadu Banjarnegara</p>
+                    <p class="text-blue-100 mt-2 font-medium">Jaringan Informasi Terpadu Banjarnegara</p>
                 </div>
                 
                 <div class="p-8">

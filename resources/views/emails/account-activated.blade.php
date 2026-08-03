@@ -155,7 +155,7 @@
                     <!-- Footer -->
                     <div class="footer">
                         <div class="footer-logo">{{ $appName }}</div>
-                        <p>Sistem Informasi Perijinan Terpadu</p>
+                        <p>Jaringan Informasi Terpadu</p>
                         <p>&copy; {{ date('Y') }} Pemerintah Kabupaten Banjarnegara. All rights reserved.</p>
                     </div>
                 </td>

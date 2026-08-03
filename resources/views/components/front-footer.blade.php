@@ -9,12 +9,12 @@
                             class="w-8 h-8 object-contain">
                         <div>
                             <span class="font-bold text-xl text-blue-900 leading-tight">JITU</span>
-                            <p class="text-[10px] text-gray-500 leading-tight">Sistem Informasi Perijinan Terpadu
+                            <p class="text-[10px] text-gray-500 leading-tight">Jaringan Informasi Terpadu
                             </p>
                         </div>
                     </div>
                     <p class="text-gray-500 text-sm leading-relaxed mb-6">
-                        {{ setting('app_description', 'Aplikasi JITU (Sistem Informasi Perijinan Terpadu) adalah inovasi layanan perizinan terpadu Kabupaten Banjarnegara.') }}
+                        {{ setting('app_description', 'Aplikasi JITU (Jaringan Informasi Terpadu) adalah inovasi layanan perizinan terpadu Kabupaten Banjarnegara.') }}
                     </p>
                     <div class="flex gap-4">
                         @if(setting('facebook'))
