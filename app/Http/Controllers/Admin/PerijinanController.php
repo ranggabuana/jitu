@@ -124,6 +124,15 @@ class PerijinanController extends Controller
             $data['gambar_alur'] = 'uploads/data-perijinan/' . $gambarAlurName;
         }
 
+        // If kode_perijinan is set, inherit the existing shared sequence numbers
+        if (!empty($data['kode_perijinan'])) {
+            $existing = Perijinan::where('kode_perijinan', $data['kode_perijinan'])->first();
+            if ($existing) {
+                $data['next_nomor_rekom'] = $existing->getSharedNextNomorRekom();
+                $data['next_nomor_izin'] = $existing->getSharedNextNomorIzin();
+            }
+        }
+
         $perijinan = Perijinan::create($data);
 
         // Log activity
@@ -885,6 +894,19 @@ class PerijinanController extends Controller
 
         $perijinan->update($data);
 
+        // Sync shared sequence numbers with existing perijinan sharing the same kode_perijinan
+        if (!empty($perijinan->kode_perijinan)) {
+            $maxRekom = Perijinan::where('kode_perijinan', $perijinan->kode_perijinan)->max('next_nomor_rekom');
+            $maxIzin = Perijinan::where('kode_perijinan', $perijinan->kode_perijinan)->max('next_nomor_izin');
+            $syncData = [];
+            if ($maxRekom) $syncData['next_nomor_rekom'] = $maxRekom;
+            if ($maxIzin) $syncData['next_nomor_izin'] = $maxIzin;
+            if (!empty($syncData)) {
+                Perijinan::where('kode_perijinan', $perijinan->kode_perijinan)->update($syncData);
+                $perijinan->refresh();
+            }
+        }
+
         if ($perijinan->validasi_tanpa_opd) {
             $perijinan->validationFlows()->whereIn('role', ['operator_opd', 'kepala_opd'])->delete();
         }
@@ -1095,6 +1117,20 @@ class PerijinanController extends Controller
 
         if (!empty($updateData)) {
             $perijinan->update($updateData);
+
+            // Sync shared nomor urut across all perijinan with the same kode_perijinan
+            if (!empty($perijinan->kode_perijinan)) {
+                $syncNomor = [];
+                if (isset($updateData['next_nomor_rekom'])) {
+                    $syncNomor['next_nomor_rekom'] = $updateData['next_nomor_rekom'];
+                }
+                if (isset($updateData['next_nomor_izin'])) {
+                    $syncNomor['next_nomor_izin'] = $updateData['next_nomor_izin'];
+                }
+                if (!empty($syncNomor)) {
+                    Perijinan::where('kode_perijinan', $perijinan->kode_perijinan)->update($syncNomor);
+                }
+            }
 
             // Log activity
             ActivityLog::log(

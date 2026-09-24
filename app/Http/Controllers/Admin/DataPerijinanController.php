@@ -627,7 +627,7 @@ class DataPerijinanController extends Controller
                     }
 
                     if ($application->no_rekom === null) {
-                        $applicationUpdateData['no_rekom'] = $perijinan->next_nomor_rekom;
+                        $applicationUpdateData['no_rekom'] = $perijinan->getSharedNextNomorRekom();
                         $opdId = null;
                         if ($application->user && $application->user->opd_id) {
                             $opdId = $application->user->opd_id;
@@ -645,12 +645,12 @@ class DataPerijinanController extends Controller
                             }
                         }
                         $incrementAmount = $perijinan->usesNomorSurat2('rekom', $opdId) ? 2 : 1;
-                        $perijinan->increment('next_nomor_rekom', $incrementAmount);
+                        $perijinan->incrementSharedNomor('rekom', $incrementAmount);
                     }
                     if ($application->no_izin === null) {
-                        $applicationUpdateData['no_izin'] = $perijinan->next_nomor_izin;
+                        $applicationUpdateData['no_izin'] = $perijinan->getSharedNextNomorIzin();
                         $incrementAmount = $perijinan->usesNomorSurat2('izin') ? 2 : 1;
-                        $perijinan->increment('next_nomor_izin', $incrementAmount);
+                        $perijinan->incrementSharedNomor('izin', $incrementAmount);
                     }
 
                     if ($application->user && $application->user->email) {
@@ -1938,7 +1938,7 @@ class DataPerijinanController extends Controller
             // Assign Rekom & Izin Numbers if not already assigned
             $perijinan = $application->perijinan;
             if ($application->no_rekom === null) {
-                $updateData['no_rekom'] = $perijinan->next_nomor_rekom;
+                $updateData['no_rekom'] = $perijinan->getSharedNextNomorRekom();
                 $opdId = null;
                 $currentUser = auth()->user();
                 if ($currentUser && $currentUser->opd_id) {
@@ -1957,12 +1957,12 @@ class DataPerijinanController extends Controller
                     }
                 }
                 $incrementAmount = $perijinan->usesNomorSurat2('rekom', $opdId) ? 2 : 1;
-                $perijinan->increment('next_nomor_rekom', $incrementAmount);
+                $perijinan->incrementSharedNomor('rekom', $incrementAmount);
             }
             if ($application->no_izin === null) {
-                $updateData['no_izin'] = $perijinan->next_nomor_izin;
+                $updateData['no_izin'] = $perijinan->getSharedNextNomorIzin();
                 $incrementAmount = $perijinan->usesNomorSurat2('izin') ? 2 : 1;
-                $perijinan->increment('next_nomor_izin', $incrementAmount);
+                $perijinan->incrementSharedNomor('izin', $incrementAmount);
             }
 
             // Check if all validations are complete

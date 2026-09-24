@@ -155,4 +155,60 @@ class Perijinan extends Model
 
         return str_contains((string)$template, 'NOMOR_SURAT2');
     }
+
+    /**
+     * Get shared next nomor urut for rekom across all perijinan with the same kode_perijinan.
+     */
+    public function getSharedNextNomorRekom(): int
+    {
+        if (!empty($this->kode_perijinan)) {
+            $max = static::where('kode_perijinan', $this->kode_perijinan)->max('next_nomor_rekom');
+            return max((int)($max ?? 1), 1);
+        }
+        return max((int)($this->next_nomor_rekom ?? 1), 1);
+    }
+
+    /**
+     * Get shared next nomor urut for izin across all perijinan with the same kode_perijinan.
+     */
+    public function getSharedNextNomorIzin(): int
+    {
+        if (!empty($this->kode_perijinan)) {
+            $max = static::where('kode_perijinan', $this->kode_perijinan)->max('next_nomor_izin');
+            return max((int)($max ?? 1), 1);
+        }
+        return max((int)($this->next_nomor_izin ?? 1), 1);
+    }
+
+    /**
+     * Increment shared nomor urut across all perijinan with the same kode_perijinan.
+     */
+    public function incrementSharedNomor(string $type, int $amount = 1): void
+    {
+        $column = ($type === 'rekom') ? 'next_nomor_rekom' : 'next_nomor_izin';
+
+        if (!empty($this->kode_perijinan)) {
+            $currentMax = (int)(static::where('kode_perijinan', $this->kode_perijinan)->max($column) ?? 1);
+            $newNumber = $currentMax + $amount;
+            static::where('kode_perijinan', $this->kode_perijinan)->update([$column => $newNumber]);
+            $this->$column = $newNumber;
+        } else {
+            $this->increment($column, $amount);
+        }
+    }
+
+    /**
+     * Synchronize a specific nomor urut across all perijinan with the same kode_perijinan.
+     */
+    public function syncSharedNomor(string $type, int $number): void
+    {
+        $column = ($type === 'rekom') ? 'next_nomor_rekom' : 'next_nomor_izin';
+
+        if (!empty($this->kode_perijinan)) {
+            static::where('kode_perijinan', $this->kode_perijinan)->update([$column => $number]);
+            $this->$column = $number;
+        } else {
+            $this->update([$column => $number]);
+        }
+    }
 }

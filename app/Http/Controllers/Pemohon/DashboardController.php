@@ -864,6 +864,44 @@ class DashboardController extends Controller
             }
 
             // ===============================
+            // 🔹 NOMOR SURAT BERURUTAN (REKOM & IZIN)
+            // ===============================
+            if (!$isPembetulan && $data->no_rekom === null && $data->no_izin === null) {
+                $opdId = null;
+                $flowWithOpd = $perijinan->activeValidationFlows()
+                    ->whereIn('role', ['operator_opd', 'kepala_opd'])
+                    ->whereNotNull('assigned_user_id')
+                    ->with('assignedUser.opd')
+                    ->get()
+                    ->first(function($f) {
+                        return $f->assignedUser && $f->assignedUser->opd_id;
+                    });
+                if ($flowWithOpd) {
+                    $opdId = $flowWithOpd->assignedUser->opd_id;
+                }
+
+                $noRekomKode = $flowWithOpd ? ($flowWithOpd->assignedUser->opd->kode_opd ?? 'OPD') : 'OPD';
+                $noIzinKode = 'DPMPTSP';
+
+                $noRekom = $perijinan->getSharedNextNomorRekom();
+                $noIzin = $perijinan->getSharedNextNomorIzin();
+
+                $data->update([
+                    'no_rekom' => $noRekom,
+                    'no_rekom_kode' => $noRekomKode,
+                    'no_izin' => $noIzin,
+                    'no_izin_kode' => $noIzinKode,
+                ]);
+
+                // Increment shared counters for same kode_perijinan
+                $incRekom = $perijinan->usesNomorSurat2('rekom', $opdId) ? 2 : 1;
+                $incIzin = $perijinan->usesNomorSurat2('izin') ? 2 : 1;
+
+                $perijinan->incrementSharedNomor('rekom', $incRekom);
+                $perijinan->incrementSharedNomor('izin', $incIzin);
+            }
+
+            // ===============================
             // 🔹 VALIDASI FLOW
             // ===============================
             $validationFlows = $perijinan->activeValidationFlows()->orderBy('order')->get();
@@ -1371,6 +1409,42 @@ class DashboardController extends Controller
             'catatan_pemohon' => $request->catatan_pemohon, // Save applicant note
             'current_step' => 1, // Reset to first validation step
         ]);
+
+        // Re-assign letter numbers if they were reset during perbaikan
+        $perijinan = $data->perijinan;
+        if ($perijinan && $data->no_rekom === null && $data->no_izin === null) {
+            $opdId = null;
+            $flowWithOpd = $perijinan->activeValidationFlows()
+                ->whereIn('role', ['operator_opd', 'kepala_opd'])
+                ->whereNotNull('assigned_user_id')
+                ->with('assignedUser.opd')
+                ->get()
+                ->first(function($f) {
+                    return $f->assignedUser && $f->assignedUser->opd_id;
+                });
+            if ($flowWithOpd) {
+                $opdId = $flowWithOpd->assignedUser->opd_id;
+            }
+
+            $noRekomKode = $flowWithOpd ? ($flowWithOpd->assignedUser->opd->kode_opd ?? 'OPD') : 'OPD';
+            $noIzinKode = 'DPMPTSP';
+
+            $noRekom = $perijinan->getSharedNextNomorRekom();
+            $noIzin = $perijinan->getSharedNextNomorIzin();
+
+            $data->update([
+                'no_rekom' => $noRekom,
+                'no_rekom_kode' => $noRekomKode,
+                'no_izin' => $noIzin,
+                'no_izin_kode' => $noIzinKode,
+            ]);
+
+            $incRekom = $perijinan->usesNomorSurat2('rekom', $opdId) ? 2 : 1;
+            $incIzin = $perijinan->usesNomorSurat2('izin') ? 2 : 1;
+
+            $perijinan->incrementSharedNomor('rekom', $incRekom);
+            $perijinan->incrementSharedNomor('izin', $incIzin);
+        }
 
         // ===============================
         // 🔹 RE-GENERATE DOKUMEN SURAT
