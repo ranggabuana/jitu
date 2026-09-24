@@ -182,11 +182,28 @@
                         </div>
                         @if ($application->user->foto_ktp)
                             <div>
-                                <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Berkas KTP</label>
+                                <label class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Foto KTP</label>
                                 <div class="mt-2">
-                                    <a href="{{ route('secure-file', ['filepath' => $application->user->foto_ktp]) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50 rounded-lg text-xs font-semibold transition-all">
-                                        <i class="mdi mdi-file-document-outline"></i> Lihat Foto KTP
-                                    </a>
+                                    @php
+                                        $extension = strtolower(pathinfo($application->user->foto_ktp, PATHINFO_EXTENSION));
+                                    @endphp
+                                    @if ($extension !== 'pdf')
+                                        <div class="group relative inline-block rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm bg-gray-50 dark:bg-gray-800">
+                                            <img src="{{ route('secure-file', ['filepath' => $application->user->foto_ktp]) }}" alt="Foto KTP" class="w-48 h-32 object-cover rounded-xl cursor-pointer hover:scale-105 transition-transform" onclick="window.open('{{ route('secure-file', ['filepath' => $application->user->foto_ktp]) }}', '_blank')">
+                                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-semibold transition-opacity pointer-events-none">
+                                                <i class="mdi mdi-magnify-plus mr-1"></i> Perbesar
+                                            </div>
+                                        </div>
+                                        <div class="mt-1.5">
+                                            <a href="{{ route('secure-file', ['filepath' => $application->user->foto_ktp]) }}" target="_blank" class="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 font-semibold">
+                                                <i class="mdi mdi-open-in-new"></i> Buka Ukuran Penuh
+                                            </a>
+                                        </div>
+                                    @else
+                                        <a href="{{ route('secure-file', ['filepath' => $application->user->foto_ktp]) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50 rounded-lg text-xs font-semibold transition-all">
+                                            <i class="mdi mdi-file-pdf-box text-red-500"></i> Buka File KTP (PDF)
+                                        </a>
+                                    @endif
                                 </div>
                             </div>
                         @endif

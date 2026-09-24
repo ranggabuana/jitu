@@ -87,7 +87,7 @@ class AuthController extends Controller
             'alamat_ktp' => 'nullable|string|max:500',
             'is_alamat_sama' => 'boolean',
             'alamat_domisili' => 'nullable|required_if:is_alamat_sama,0|string|max:500',
-            'foto_ktp' => 'nullable|required_without:temp_foto_ktp|file|mimes:jpeg,png,jpg,pdf|max:2048',
+            'foto_ktp' => 'nullable|required_without:temp_foto_ktp|file|mimes:jpeg,png,jpg|max:2048',
             'temp_foto_ktp' => 'nullable|string',
             'jenis_kelamin' => 'required|in:Laki-laki,Perempuan',
             'pendidikan' => 'required|in:SD/MI,SMP/MTS,SMA/MA,SMK/MAK,D1,D2,D3,D4,S1,S2,S3',
@@ -101,7 +101,7 @@ class AuthController extends Controller
             'alamat_domisili.required_if' => 'Alamat domisili harus diisi jika tidak sama dengan alamat KTP.',
             'foto_ktp.required_without' => 'Foto KTP wajib diunggah.',
             'foto_ktp.file' => 'File KTP tidak valid.',
-            'foto_ktp.mimes' => 'Format KTP harus jpeg, png, jpg, atau pdf.',
+            'foto_ktp.mimes' => 'Format KTP harus berupa gambar (JPG, JPEG, atau PNG). File PDF tidak diperbolehkan.',
             'foto_ktp.max' => 'Ukuran file KTP maksimal 2MB.',
             'password.required' => 'Password wajib diisi.',
             'password.confirmed' => 'Konfirmasi password tidak cocok.',
@@ -236,7 +236,12 @@ class AuthController extends Controller
     public function uploadTempKtp(Request $request)
     {
         $request->validate([
-            'foto_ktp' => 'required|file|mimes:jpeg,png,jpg,pdf|max:2048',
+            'foto_ktp' => 'required|file|mimes:jpeg,png,jpg|max:2048',
+        ], [
+            'foto_ktp.required' => 'Foto KTP wajib diunggah.',
+            'foto_ktp.file' => 'File KTP tidak valid.',
+            'foto_ktp.mimes' => 'Format KTP harus berupa gambar (JPG, JPEG, atau PNG). File PDF tidak diperbolehkan.',
+            'foto_ktp.max' => 'Ukuran file KTP maksimal 2MB.',
         ]);
 
         if ($request->hasFile('foto_ktp')) {

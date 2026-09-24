@@ -297,9 +297,9 @@
                                 </div>
                             @endif
                             <div class="flex-1 w-full">
-                                <input type="file" id="foto_ktp" name="foto_ktp" accept="image/jpeg,image/png,image/jpg,application/pdf"
+                                <input type="file" id="foto_ktp" name="foto_ktp" accept="image/jpeg,image/png,image/jpg"
                                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('foto_ktp') border-red-500 @enderror">
-                                <p class="mt-1 text-xs text-gray-500">Format: JPG, PNG, PDF (Maks. 2MB)</p>
+                                <p class="mt-1 text-xs text-gray-500">Format: JPG, JPEG, PNG (Maks. 2MB)</p>
                                 @error('foto_ktp')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror

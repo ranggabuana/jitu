@@ -172,37 +172,48 @@
             @if ($pemohon->foto_ktp)
                 <div
                     class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                            <i class="mdi mdi-badge-account text-gray-600 dark:text-gray-300"></i>
+                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                                <i class="mdi mdi-badge-account text-gray-600 dark:text-gray-300"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-base font-semibold text-gray-900 dark:text-white">Foto KTP</h2>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Berkas identitas kependudukan pemohon</p>
+                            </div>
                         </div>
-                        <h2 class="text-base font-semibold text-gray-900 dark:text-white">Foto KTP</h2>
+                        <a href="{{ route('secure-file', ['filepath' => $pemohon->foto_ktp]) }}" target="_blank"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-300 rounded-lg text-xs font-semibold transition-colors">
+                            <i class="mdi mdi-open-in-new"></i> Buka Ukuran Asli
+                        </a>
                     </div>
                     <div class="p-6">
-                        <div class="flex justify-center bg-gray-50 dark:bg-gray-700/30 rounded-lg p-6">
+                        <div class="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-700/30 rounded-xl p-6 border border-dashed border-gray-200 dark:border-gray-700">
                             @php
-                                $extension = pathinfo($pemohon->foto_ktp, PATHINFO_EXTENSION);
+                                $extension = strtolower(pathinfo($pemohon->foto_ktp, PATHINFO_EXTENSION));
                             @endphp
-                            @if (in_array(strtolower($extension), ['jpg', 'jpeg', 'png', 'gif']))
-                                <img src="{{ route('secure-file', ['filepath' => $pemohon->foto_ktp]) }}" alt="Foto KTP {{ $pemohon->name }}"
-                                    class="max-w-sm w-full h-auto rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm cursor-zoom-in hover:shadow-md transition-shadow"
-                                    onclick="window.open('{{ route('secure-file', ['filepath' => $pemohon->foto_ktp]) }}', '_blank')">
-                            @elseif (strtolower($extension) === 'pdf')
-                                <a href="{{ route('secure-file', ['filepath' => $pemohon->foto_ktp]) }}" target="_blank"
-                                    class="inline-flex items-center gap-3 px-5 py-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                    <i class="mdi mdi-file-pdf-box text-red-500 text-2xl"></i>
-                                    <div class="text-left">
-                                        <div class="text-sm font-medium text-gray-900 dark:text-white">File KTP (PDF)
-                                        </div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400">Klik untuk membuka</div>
+                            @if ($extension !== 'pdf')
+                                <div class="relative group max-w-lg w-full rounded-xl overflow-hidden border border-gray-200 dark:border-gray-600 shadow-md bg-white dark:bg-gray-800">
+                                    <img src="{{ route('secure-file', ['filepath' => $pemohon->foto_ktp]) }}" alt="Foto KTP {{ $pemohon->name }}"
+                                        class="w-full h-auto max-h-[380px] object-contain rounded-xl cursor-zoom-in transition-transform duration-300 group-hover:scale-[1.02]"
+                                        onclick="window.open('{{ route('secure-file', ['filepath' => $pemohon->foto_ktp]) }}', '_blank')">
+                                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-sm font-semibold transition-opacity pointer-events-none">
+                                        <i class="mdi mdi-magnify-plus text-2xl mr-1"></i> Klik untuk melihat ukuran penuh
                                     </div>
-                                </a>
+                                </div>
+                                <p class="mt-3 text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                                    <i class="mdi mdi-information-outline"></i> Klik foto KTP di atas untuk memperbesar di tab baru.
+                                </p>
                             @else
-                                <a href="{{ route('secure-file', ['filepath' => $pemohon->foto_ktp]) }}" target="_blank"
-                                    class="inline-flex items-center gap-2 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                    <i class="mdi mdi-file-outline text-gray-500 dark:text-gray-400"></i>
-                                    <span class="text-sm text-gray-700 dark:text-gray-300">Lihat File KTP</span>
-                                </a>
+                                <div class="text-center p-4">
+                                    <i class="mdi mdi-file-pdf-box text-red-500 text-5xl mb-2"></i>
+                                    <p class="text-sm font-medium text-gray-800 dark:text-gray-200">Berkas KTP (Format PDF Terdeteksi)</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Berkas ini diunggah sebelum format dibatasi hanya gambar</p>
+                                    <a href="{{ route('secure-file', ['filepath' => $pemohon->foto_ktp]) }}" target="_blank"
+                                        class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-colors">
+                                        <i class="mdi mdi-open-in-new"></i> Buka File PDF
+                                    </a>
+                                </div>
                             @endif
                         </div>
                     </div>

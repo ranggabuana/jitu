@@ -145,6 +145,37 @@
                         <p class="text-xs text-gray-400 uppercase font-semibold mb-1">Alamat Domisili</p>
                         <p class="font-medium text-gray-800">{{ $user->alamat_domisili ?? '-' }}</p>
                     </div>
+                    <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 md:col-span-2">
+                        <p class="text-xs text-gray-400 uppercase font-semibold mb-2">Foto KTP</p>
+                        @if($user->foto_ktp)
+                            @php
+                                $extension = strtolower(pathinfo($user->foto_ktp, PATHINFO_EXTENSION));
+                            @endphp
+                            @if($extension !== 'pdf')
+                                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                                    <a href="{{ route('secure-file', ['filepath' => $user->foto_ktp]) }}" target="_blank" class="block group relative overflow-hidden rounded-xl border border-gray-200 shadow-sm hover:shadow transition-all bg-white">
+                                        <img src="{{ route('secure-file', ['filepath' => $user->foto_ktp]) }}" alt="Foto KTP {{ $user->name }}" class="w-48 h-32 object-cover transition-transform duration-300 group-hover:scale-105">
+                                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-semibold transition-opacity pointer-events-none">
+                                            <i class="fas fa-search-plus mr-1"></i> Perbesar
+                                        </div>
+                                    </a>
+                                    <div class="text-sm">
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-green-50 text-green-700 border border-green-200 mb-2">
+                                            <i class="fas fa-check-circle"></i> Foto KTP Terverifikasi
+                                        </span>
+                                        <p class="text-xs text-gray-500">Klik gambar untuk melihat dalam ukuran penuh.</p>
+                                    </div>
+                                </div>
+                            @else
+                                <a href="{{ route('secure-file', ['filepath' => $user->foto_ktp]) }}" target="_blank" class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
+                                    <i class="fas fa-file-pdf text-red-500 text-lg"></i>
+                                    <span>Lihat File KTP (PDF)</span>
+                                </a>
+                            @endif
+                        @else
+                            <p class="text-sm text-gray-400 italic">Belum ada foto KTP yang diunggah.</p>
+                        @endif
+                    </div>
                     <div class="bg-gray-50 border border-gray-200 rounded-xl p-4">
                         <p class="text-xs text-gray-400 uppercase font-semibold mb-1">Terdaftar Sejak</p>
                         <p class="font-medium text-gray-800">{{ $user->created_at->format('d M Y') }}</p>

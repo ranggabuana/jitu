@@ -543,17 +543,17 @@
                             </label>
                             <div class="file-upload-wrapper">
                                 <input type="hidden" name="temp_foto_ktp" id="temp_foto_ktp" value="{{ old('temp_foto_ktp') }}">
-                                <input type="file" id="foto_ktp" name="foto_ktp" accept="image/jpeg,image/png,image/jpg,application/pdf" onchange="previewKTP(this)">
+                                <input type="file" id="foto_ktp" name="foto_ktp" accept="image/jpeg,image/png,image/jpg" onchange="previewKTP(this)">
                                 <label for="foto_ktp" class="file-upload-label {{ old('temp_foto_ktp') ? 'has-file' : '' }}" id="ktpUploadLabel">
                                     <i class="fas fa-{{ old('temp_foto_ktp') ? 'check-circle' : 'cloud-upload-alt' }}"></i>
                                     <span class="text-sm text-gray-600">
                                         @if(old('temp_foto_ktp'))
                                             File KTP Tersimpan: {{ basename(old('temp_foto_ktp')) }}
                                         @else
-                                            Klik atau drag & drop untuk mengunggah KTP
+                                            Klik atau drag & drop untuk mengunggah Foto KTP
                                         @endif
                                     </span>
-                                    <span class="text-xs text-gray-500 mt-1">Format: JPG, PNG, PDF (Maks. 2MB)</span>
+                                    <span class="text-xs text-gray-500 mt-1">Format: JPG, JPEG, PNG (Maks. 2MB)</span>
                                     <img id="ktpPreview" class="preview-image hidden" alt="Preview KTP">
                                 </label>
                             </div>
@@ -1063,15 +1063,32 @@
 
             if (input.files && input.files[0]) {
                 const file = input.files[0];
-                const fileType = file.type;
+                const fileType = file.type.toLowerCase();
+                const fileName = file.name.toLowerCase();
                 const fileSize = file.size;
+
+                // Validate file type (only image JPG, JPEG, PNG - strictly no PDF)
+                const isImage = fileType === 'image/jpeg' || fileType === 'image/png' || fileType === 'image/jpg' ||
+                                fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.png');
+
+                if (!isImage || fileType === 'application/pdf' || fileName.endsWith('.pdf')) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Format File Tidak Didukung',
+                        text: 'File yang diunggah harus berupa gambar (JPG, JPEG, PNG). File PDF tidak diperbolehkan.',
+                        confirmButtonColor: '#3b82f6',
+                        confirmButtonText: 'Mengerti'
+                    });
+                    input.value = '';
+                    return;
+                }
 
                 // Validate file size (2MB max)
                 if (fileSize > 2 * 1024 * 1024) {
                     Swal.fire({
                         icon: 'error',
                         title: 'File Terlalu Besar',
-                        text: 'Ukuran file terlalu besar. Maksimal 2MB.',
+                        text: 'Ukuran file foto KTP terlalu besar. Maksimal 2MB.',
                         confirmButtonColor: '#3b82f6',
                         confirmButtonText: 'OK'
                     });
@@ -1081,7 +1098,7 @@
 
                 // Show uploading state
                 labelIcon.className = 'fas fa-spinner fa-spin';
-                labelText.textContent = 'Sedang mengunggah...';
+                labelText.textContent = 'Sedang mengunggah foto KTP...';
 
                 // Create FormData for AJAX upload
                 const formData = new FormData();
@@ -1090,27 +1107,33 @@
 
                 fetch('{{ route("api.upload-temp-ktp") }}', {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
                 })
-                .then(response => response.json())
+                .then(async response => {
+                    const data = await response.json();
+                    if (!response.ok) {
+                        const errMsg = data.errors && data.errors.foto_ktp ? data.errors.foto_ktp[0] : (data.message || 'Upload gagal');
+                        throw new Error(errMsg);
+                    }
+                    return data;
+                })
                 .then(data => {
                     if (data.success) {
                         label.classList.add('has-file');
-                        labelIcon.className = 'fas fa-check-circle';
-                        labelText.textContent = 'File Berhasil Diunggah: ' + data.filename;
+                        labelIcon.className = 'fas fa-check-circle text-green-500';
+                        labelText.textContent = 'Foto KTP Berhasil Diunggah: ' + data.filename;
                         tempInput.value = data.path;
 
                         // Show preview for images
-                        if (fileType.startsWith('image/')) {
-                            const reader = new FileReader();
-                            reader.onload = function(e) {
-                                preview.src = e.target.result;
-                                preview.classList.remove('hidden');
-                            };
-                            reader.readAsDataURL(file);
-                        } else {
-                            preview.classList.add('hidden');
-                        }
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            preview.src = e.target.result;
+                            preview.classList.remove('hidden');
+                        };
+                        reader.readAsDataURL(file);
                     } else {
                         throw new Error('Upload gagal');
                     }
@@ -1119,13 +1142,15 @@
                     console.error('Error uploading KTP:', error);
                     labelIcon.className = 'fas fa-cloud-upload-alt';
                     labelText.textContent = 'Gagal mengunggah. Klik untuk coba lagi.';
+                    preview.classList.add('hidden');
                     Swal.fire({
                         icon: 'error',
                         title: 'Upload Gagal',
-                        text: 'Terjadi kesalahan saat mengunggah KTP. Silakan coba lagi.',
+                        text: error.message || 'Terjadi kesalahan saat mengunggah foto KTP. Silakan coba lagi.',
                         confirmButtonColor: '#3b82f6',
                         confirmButtonText: 'OK'
                     });
+                    input.value = '';
                 });
             }
         }
