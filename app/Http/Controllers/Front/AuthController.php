@@ -155,29 +155,51 @@ class AuthController extends Controller
             $uploadPath = storage_path('app/uploads/register');
 
             if (!file_exists($uploadPath)) {
-                mkdir($uploadPath, 0755, true);
+                mkdir($uploadPath, 0775, true);
             }
 
             $file->move($uploadPath, $filename);
             $userData['foto_ktp'] = 'uploads/register/' . $filename;
         } elseif ($request->temp_foto_ktp) {
-            // Use temporary file
-            $tempFile = storage_path('app/' . $request->temp_foto_ktp);
-            if (!file_exists($tempFile)) {
-                $tempFile = public_path($request->temp_foto_ktp);
-            }
-            if (file_exists($tempFile)) {
-                $extension = pathinfo($tempFile, PATHINFO_EXTENSION);
-                $filename = 'ktp_' . Str::random(40) . '.' . $extension;
-                $uploadPath = storage_path('app/uploads/register');
-
-                if (!file_exists($uploadPath)) {
-                    mkdir($uploadPath, 0755, true);
+            // Check if temp_foto_ktp is a Base64 Data URL
+            if (preg_match('/^data:image\/(\w+);base64,/', $request->temp_foto_ktp, $typeMatches)) {
+                $imageType = strtolower($typeMatches[1]);
+                if ($imageType === 'jpeg') {
+                    $imageType = 'jpg';
                 }
+                $base64Content = substr($request->temp_foto_ktp, strpos($request->temp_foto_ktp, ',') + 1);
+                $decodedImage = base64_decode($base64Content);
 
-                $newPath = $uploadPath . '/' . $filename;
-                rename($tempFile, $newPath);
-                $userData['foto_ktp'] = 'uploads/register/' . $filename;
+                if ($decodedImage !== false) {
+                    $filename = 'ktp_' . Str::random(40) . '.' . $imageType;
+                    $uploadPath = storage_path('app/uploads/register');
+
+                    if (!file_exists($uploadPath)) {
+                        mkdir($uploadPath, 0775, true);
+                    }
+
+                    file_put_contents($uploadPath . '/' . $filename, $decodedImage);
+                    $userData['foto_ktp'] = 'uploads/register/' . $filename;
+                }
+            } else {
+                // Use temporary file path
+                $tempFile = storage_path('app/' . $request->temp_foto_ktp);
+                if (!file_exists($tempFile)) {
+                    $tempFile = public_path($request->temp_foto_ktp);
+                }
+                if (file_exists($tempFile)) {
+                    $extension = pathinfo($tempFile, PATHINFO_EXTENSION);
+                    $filename = 'ktp_' . Str::random(40) . '.' . $extension;
+                    $uploadPath = storage_path('app/uploads/register');
+
+                    if (!file_exists($uploadPath)) {
+                        mkdir($uploadPath, 0775, true);
+                    }
+
+                    $newPath = $uploadPath . '/' . $filename;
+                    rename($tempFile, $newPath);
+                    $userData['foto_ktp'] = 'uploads/register/' . $filename;
+                }
             }
         }
 
